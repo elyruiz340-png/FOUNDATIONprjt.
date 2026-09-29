@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>HalinaQR Ordering</title>
 
   <style>
@@ -38,7 +39,7 @@
     }
 
     .hero p {
-      margin: 8px 0 0;
+      margin-top: 8px;
     }
 
     .container {
@@ -192,7 +193,6 @@
 
     <h2>🍗 Our Menu</h2>
 
-
     <!-- TERIYAKI -->
     <div class="menu-card">
 
@@ -214,7 +214,6 @@
         <div class="controls">
 
           <button
-            type="button"
             class="qty-btn"
             onclick="changeQty('teriyaki', -1)">
             −
@@ -227,7 +226,6 @@
           </span>
 
           <button
-            type="button"
             class="qty-btn"
             onclick="changeQty('teriyaki', 1)">
             +
@@ -260,7 +258,6 @@
         <div class="controls">
 
           <button
-            type="button"
             class="qty-btn"
             onclick="changeQty('yangnyeom', -1)">
             −
@@ -273,7 +270,6 @@
           </span>
 
           <button
-            type="button"
             class="qty-btn"
             onclick="changeQty('yangnyeom', 1)">
             +
@@ -306,7 +302,6 @@
         <div class="controls">
 
           <button
-            type="button"
             class="qty-btn"
             onclick="changeQty('honeygarlic', -1)">
             −
@@ -319,7 +314,6 @@
           </span>
 
           <button
-            type="button"
             class="qty-btn"
             onclick="changeQty('honeygarlic', 1)">
             +
@@ -331,7 +325,7 @@
     </div>
 
 
-    <!-- ORDER SUMMARY -->
+    <!-- ORDER -->
     <div class="order-box">
 
       <h2>🛒 Your Order</h2>
@@ -353,7 +347,6 @@
       </div>
 
       <button
-        type="button"
         class="send-btn"
         onclick="sendOrder()">
         SEND ORDER
@@ -366,8 +359,6 @@
 
   <script>
 
-    /* SUPABASE */
-
     const SUPABASE_URL =
       "https://isqcuycjrbjtmqhzckvb.supabase.co";
 
@@ -375,23 +366,19 @@
       "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
 
 
-    /* TABLE NUMBER FROM QR */
-
     const params =
       new URLSearchParams(window.location.search);
 
     const table =
       params.get("table") || "?";
 
-    document.getElementById(
-      "tableNumber"
-    ).textContent = table;
+    document.getElementById("tableNumber").textContent = table;
 
 
-    /* MENU */
+    let cart = [];
+
 
     const menu = {
-
       teriyaki: {
         name: "Teriyaki Chicken",
         price: 120
@@ -406,45 +393,30 @@
         name: "Honey Garlic Butter",
         price: 120
       }
-
     };
 
 
-    /* CART */
-
-    let cart = [];
-
-
-    /* PLUS / MINUS */
-
     function changeQty(id, amount) {
 
-      const menuItem = menu[id];
+      const item = menu[id];
 
       let existing =
-        cart.find(item => item.id === id);
+        cart.find(x => x.id === id);
 
-
-      /* PLUS */
 
       if (amount === 1) {
 
         if (existing) {
 
-          existing.quantity += 1;
+          existing.quantity++;
 
         } else {
 
           cart.push({
-
             id: id,
-
-            name: menuItem.name,
-
-            price: menuItem.price,
-
+            name: item.name,
+            price: item.price,
             quantity: 1
-
           });
 
         }
@@ -452,22 +424,18 @@
       }
 
 
-      /* MINUS */
-
       if (amount === -1) {
 
         if (!existing) {
           return;
         }
 
-        existing.quantity -= 1;
-
+        existing.quantity--;
 
         if (existing.quantity <= 0) {
 
-          cart = cart.filter(
-            item => item.id !== id
-          );
+          cart =
+            cart.filter(x => x.id !== id);
 
         }
 
@@ -479,14 +447,10 @@
     }
 
 
-    /* UPDATE SCREEN */
-
     function updateDisplay() {
 
       let total = 0;
 
-
-      /* UPDATE QUANTITY NUMBERS */
 
       Object.keys(menu).forEach(id => {
 
@@ -504,12 +468,8 @@
 
 
       const orderList =
-        document.getElementById(
-          "orderList"
-        );
+        document.getElementById("orderList");
 
-
-      /* EMPTY CART */
 
       if (cart.length === 0) {
 
@@ -525,8 +485,6 @@
       }
 
 
-      /* SHOW ITEMS */
-
       let html = "";
 
 
@@ -539,7 +497,6 @@
 
 
         html += `
-
           <div class="order-item">
 
             <span>
@@ -551,7 +508,6 @@
             </span>
 
           </div>
-
         `;
 
       });
@@ -559,15 +515,12 @@
 
       orderList.innerHTML = html;
 
-
       document.getElementById(
         "total"
       ).textContent = total;
 
     }
 
-
-    /* SEND ORDER TO SUPABASE */
 
     async function sendOrder() {
 
@@ -578,7 +531,6 @@
         );
 
         return;
-
       }
 
 
@@ -589,7 +541,6 @@
         );
 
         return;
-
       }
 
 
@@ -619,15 +570,9 @@
 
       try {
 
-        alert("Sending your order...");
-
-
         const response =
           await fetch(
-
-            SUPABASE_URL +
-            "/rest/v1/orders",
-
+            SUPABASE_URL + "/rest/v1/orders",
             {
 
               method: "POST",
@@ -641,8 +586,7 @@
                   SUPABASE_KEY,
 
                 "Authorization":
-                  "Bearer " +
-                  SUPABASE_KEY,
+                  "Bearer " + SUPABASE_KEY,
 
                 "Prefer":
                   "return=minimal"
@@ -650,12 +594,9 @@
               },
 
               body:
-                JSON.stringify(
-                  orderData
-                )
+                JSON.stringify(orderData)
 
             }
-
           );
 
 
@@ -664,18 +605,13 @@
           const errorText =
             await response.text();
 
-          alert(
-            "❌ Order failed:\n\n" +
-            errorText
-          );
-
-          return;
+          throw new Error(errorText);
 
         }
 
 
         alert(
-          "✅ ORDER SENT SUCCESSFULLY!"
+          "✅ Order sent successfully!"
         );
 
 
@@ -686,9 +622,10 @@
 
       } catch (error) {
 
+        console.error(error);
+
         alert(
-          "❌ Connection error:\n\n" +
-          error.message
+          "❌ Order failed. Please try again."
         );
 
       }
