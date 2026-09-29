@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HalinaQR Menu</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .item {
+      background: white;
+      padding: 16px;
+      margin: 12px 0;
+      border-radius: 12px;
+    }
+
+    .item h2 {
+      margin: 0 0 8px;
+    }
+
+    .price {
+      font-weight: bold;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #1877f2;
+      color: white;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>HalinaQR</h1>
+
+    <div class="item">
+      <h2>Teriyaki Chicken</h2>
+      <p class="price">₱120</p>
+      <button onclick="order('Teriyaki Chicken')">
+        Order Now
+      </button>
+    </div>
+
+    <div class="item">
+      <h2>Yangnyeom Chicken</h2>
+      <p class="price">₱120</p>
+      <button onclick="order('Yangnyeom Chicken')">
+        Order Now
+      </button>
+    </div>
+
+    <div class="item">
+      <h2>Honey Garlic Butter</h2>
+      <p class="price">₱120</p>
+      <button onclick="order('Honey Garlic Butter')">
+        Order Now
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function order(item) {
+      const message =
+        "Hello! I would like to order: " + item;
+
+      const messenger =
+        "https://m.me/halinaqr?text=" +
+        encodeURIComponent(message);
+
+      window.location.href = messenger;
+    }
+  </script>
+</body>
+</html>
