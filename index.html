@@ -524,6 +524,75 @@
 
     async function sendOrder() {
 
+  if (cart.length === 0) {
+    alert("Please select at least one item.");
+    return;
+  }
+
+  if (table === "?") {
+    alert("Table number is missing.");
+    return;
+  }
+
+  alert("Sending your order...");
+
+  let total = 0;
+
+  cart.forEach(item => {
+    total += item.price * item.quantity;
+  });
+
+  const orderData = {
+    table_number: table,
+    items: cart,
+    total: total,
+    status: "new"
+  };
+
+  try {
+
+    const response = await fetch(
+      SUPABASE_URL + "/rest/v1/orders",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY,
+          "Prefer": "return=minimal"
+        },
+
+        body: JSON.stringify(orderData)
+      }
+    );
+
+    if (!response.ok) {
+
+      const errorText = await response.text();
+
+      alert(
+        "Order failed:\n\n" + errorText
+      );
+
+      return;
+    }
+
+    alert("✅ ORDER SENT SUCCESSFULLY!");
+
+    cart = [];
+
+    updateDisplay();
+
+  } catch (error) {
+
+    alert(
+      "Connection error:\n\n" + error.message
+    );
+
+  }
+}
+
       if (cart.length === 0) {
 
         alert(
