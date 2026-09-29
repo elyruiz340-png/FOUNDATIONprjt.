@@ -139,29 +139,50 @@ body{
   font-weight:bold;
 }
 
+/* PAYMENT */
+
 .payment-title{
-  margin-top:20px;
-  margin-bottom:10px;
+  margin-top:24px;
+  margin-bottom:12px;
+  font-size:18px;
   font-weight:bold;
 }
 
+.payment-options{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
 .payment-option{
+  display:flex;
+  align-items:center;
+  gap:10px;
   border:1px solid #ddd;
-  padding:13px;
+  padding:15px;
   border-radius:10px;
-  margin-bottom:9px;
   cursor:pointer;
+  background:#fff;
+}
+
+.payment-option:hover{
+  background:#faf7f2;
 }
 
 .payment-option input{
-  margin-right:8px;
+  width:18px;
+  height:18px;
+  margin:0;
+  flex-shrink:0;
 }
+
+/* QR */
 
 #qrSection{
   display:none;
   text-align:center;
-  margin-top:15px;
-  padding:15px;
+  margin-top:16px;
+  padding:18px;
   background:#f7f1e8;
   border-radius:12px;
 }
@@ -182,6 +203,13 @@ body{
   font-weight:bold;
 }
 
+#paymentMessage{
+  margin-top:10px;
+  font-weight:bold;
+}
+
+/* SEND */
+
 .send-button{
   width:100%;
   background:#238636;
@@ -199,6 +227,8 @@ body{
   opacity:.6;
 }
 
+/* SUCCESS */
+
 .success{
   display:none;
   background:#e8f7ed;
@@ -214,6 +244,8 @@ body{
   margin-bottom:7px;
 }
 
+/* ERROR */
+
 .error{
   display:none;
   background:#fff0f0;
@@ -223,9 +255,11 @@ body{
   border-radius:12px;
   margin:20px 0;
   text-align:center;
+  white-space:pre-wrap;
 }
 
 @media(max-width:600px){
+
   .hero{
     height:190px;
   }
@@ -237,11 +271,14 @@ body{
   .menu-card img{
     height:170px;
   }
+
 }
 </style>
 </head>
 
 <body>
+
+<!-- HERO -->
 
 <div class="hero">
   <div>
@@ -250,151 +287,260 @@ body{
   </div>
 </div>
 
+
+<!-- TABLE -->
+
 <div class="table-box">
   TABLE <span id="tableNumber">?</span>
 </div>
 
+
 <div class="container">
 
-  <!-- TERIYAKI -->
-  <div class="menu-card">
-    <img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80">
 
-    <div class="menu-content">
-      <h3>Teriyaki Chicken</h3>
-      <div class="price">₱120</div>
+<!-- TERIYAKI -->
 
-      <div class="controls">
-        <button onclick="changeQty('teriyaki',-1)">−</button>
-        <span class="qty" id="qty-teriyaki">0</span>
-        <button onclick="changeQty('teriyaki',1)">+</button>
-      </div>
+<div class="menu-card">
+
+  <img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80">
+
+  <div class="menu-content">
+
+    <h3>Teriyaki Chicken</h3>
+
+    <div class="price">
+      ₱120
     </div>
+
+    <div class="controls">
+
+      <button onclick="changeQty('teriyaki',-1)">
+        −
+      </button>
+
+      <span class="qty" id="qty-teriyaki">
+        0
+      </span>
+
+      <button onclick="changeQty('teriyaki',1)">
+        +
+      </button>
+
+    </div>
+
   </div>
 
-  <!-- YANGNyeom -->
-  <div class="menu-card">
-    <img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=900&q=80">
+</div>
 
-    <div class="menu-content">
-      <h3>Yangnyeom Chicken</h3>
-      <div class="price">₱120</div>
 
-      <div class="controls">
-        <button onclick="changeQty('yangnyeom',-1)">−</button>
-        <span class="qty" id="qty-yangnyeom">0</span>
-        <button onclick="changeQty('yangnyeom',1)">+</button>
-      </div>
+<!-- YANGNyeom -->
+
+<div class="menu-card">
+
+  <img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=900&q=80">
+
+  <div class="menu-content">
+
+    <h3>Yangnyeom Chicken</h3>
+
+    <div class="price">
+      ₱120
     </div>
+
+    <div class="controls">
+
+      <button onclick="changeQty('yangnyeom',-1)">
+        −
+      </button>
+
+      <span class="qty" id="qty-yangnyeom">
+        0
+      </span>
+
+      <button onclick="changeQty('yangnyeom',1)">
+        +
+      </button>
+
+    </div>
+
   </div>
 
-  <!-- HONEY GARLIC -->
-  <div class="menu-card">
-    <img src="https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80">
+</div>
 
-    <div class="menu-content">
-      <h3>Honey Garlic Butter</h3>
-      <div class="price">₱120</div>
 
-      <div class="controls">
-        <button onclick="changeQty('honeyGarlic',-1)">−</button>
-        <span class="qty" id="qty-honeyGarlic">0</span>
-        <button onclick="changeQty('honeyGarlic',1)">+</button>
-      </div>
+<!-- HONEY GARLIC -->
+
+<div class="menu-card">
+
+  <img src="https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80">
+
+  <div class="menu-content">
+
+    <h3>Honey Garlic Butter</h3>
+
+    <div class="price">
+      ₱120
     </div>
+
+    <div class="controls">
+
+      <button onclick="changeQty('honeyGarlic',-1)">
+        −
+      </button>
+
+      <span class="qty" id="qty-honeyGarlic">
+        0
+      </span>
+
+      <button onclick="changeQty('honeyGarlic',1)">
+        +
+      </button>
+
+    </div>
+
   </div>
 
-  <!-- ORDER -->
-  <div class="order-box">
+</div>
 
-    <h2>Your Order</h2>
 
-    <div id="orderSummary">
-      <p>No items selected.</p>
-    </div>
+<!-- ORDER BOX -->
 
-    <div class="total">
-      Total: ₱<span id="total">0</span>
-    </div>
+<div class="order-box">
 
-    <!-- PAYMENT -->
-    <div class="payment-title">
-      Payment Method
-    </div>
+  <h2>Your Order</h2>
+
+  <div id="orderSummary">
+    <p>No items selected.</p>
+  </div>
+
+
+  <div class="total">
+    Total: ₱<span id="total">0</span>
+  </div>
+
+
+  <!-- PAYMENT -->
+
+  <div class="payment-title">
+    Payment Method
+  </div>
+
+
+  <div class="payment-options">
 
     <label class="payment-option">
+
       <input
         type="radio"
         name="payment"
         value="online"
         onchange="selectPayment('online')"
       >
-      💳 Pay via QR
+
+      <span>💳 Pay via QR</span>
+
     </label>
 
+
     <label class="payment-option">
+
       <input
         type="radio"
         name="payment"
         value="cash"
-        onchange="selectPayment('cash')"
+        onchange="selectPayment('cash-counter')"
       >
-      💵 Pay at Counter
+
+      <span>💵 Pay at Counter</span>
+
     </label>
 
+
     <label class="payment-option">
+
       <input
         type="radio"
         name="payment"
         value="cash"
         onchange="selectPayment('cash-table')"
       >
-      🪑 Pay at Table
+
+      <span>🪑 Pay at Table</span>
+
     </label>
 
-    <!-- QR -->
-    <div id="qrSection">
+  </div>
 
-      <strong>Scan to Pay</strong>
 
-      <div id="qrcode"></div>
+  <!-- QR SECTION -->
 
-      <p style="font-size:14px;">
-        Demo QR payment
-      </p>
+  <div id="qrSection">
 
-      <button class="pay-button" onclick="markAsPaid()">
-        I've Paid
-      </button>
+    <strong>Scan to Pay</strong>
 
-      <p id="paymentMessage"
-         style="margin-top:10px;font-weight:bold;">
-      </p>
+    <div id="qrcode"></div>
 
-    </div>
+    <p style="font-size:14px;">
+      Demo QR payment
+    </p>
 
     <button
-      class="send-button"
-      id="sendButton"
-      onclick="sendOrder()"
+      class="pay-button"
+      onclick="markAsPaid()"
     >
-      Send Order
+      I've Paid
     </button>
 
+    <p id="paymentMessage"></p>
+
   </div>
 
-  <!-- SUCCESS -->
-  <div class="success" id="successBox">
-    <h3>Order Sent Successfully!</h3>
-    <p>Your order has been received by the restaurant.</p>
-  </div>
 
-  <!-- ERROR -->
-  <div class="error" id="errorBox"></div>
+  <!-- SEND -->
+
+  <button
+    class="send-button"
+    id="sendButton"
+    onclick="sendOrder()"
+  >
+    Send Order
+  </button>
 
 </div>
 
+
+<!-- SUCCESS -->
+
+<div
+  class="success"
+  id="successBox"
+
+
+  <h3>
+    Order Sent Successfully!
+  </h3>
+
+  <p>
+    Your order has been received by the restaurant.
+  </p>
+
+</div>
+
+
+<!-- ERROR -->
+
+<div
+  class="error"
+  id="errorBox"
+</div>
+
+
+
+</div>
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 
 <script>
 
@@ -416,13 +562,17 @@ const RESTAURANT_ID =
    TABLE
 ========================= */
 
-const params = new URLSearchParams(window.location.search);
+const params =
+new URLSearchParams(
+  window.location.search
+);
 
 const table =
 params.get("table") || "?";
 
-document.getElementById("tableNumber").textContent =
-table;
+document.getElementById(
+  "tableNumber"
+).textContent = table;
 
 
 /* =========================
@@ -458,13 +608,13 @@ const menu = {
 
 let selectedPayment = null;
 
-let paymentStatus = "Pending";
+let paymentStatus = "pending";
 
 let paymentReference = null;
 
 
 /* =========================
-   CHANGE QTY
+   CHANGE QUANTITY
 ========================= */
 
 function changeQty(item, amount){
@@ -477,7 +627,8 @@ function changeQty(item, amount){
 
   document.getElementById(
     "qty-" + item
-  ).textContent = menu[item].qty;
+  ).textContent =
+    menu[item].qty;
 
   updateOrder();
 
@@ -491,11 +642,14 @@ function changeQty(item, amount){
 function updateOrder(){
 
   const summary =
-    document.getElementById("orderSummary");
+    document.getElementById(
+      "orderSummary"
+    );
 
   let total = 0;
 
   let html = "";
+
 
   Object.values(menu).forEach(item => {
 
@@ -507,7 +661,9 @@ function updateOrder(){
       total += subtotal;
 
       html += `
+
         <div class="order-item">
+
           <span>
             ${item.name} x${item.qty}
           </span>
@@ -515,21 +671,32 @@ function updateOrder(){
           <span>
             ₱${subtotal}
           </span>
+
         </div>
+
       `;
+
     }
 
   });
 
 
   if(html === ""){
-    html = "<p>No items selected.</p>";
+
+    html =
+      "<p>No items selected.</p>";
+
   }
 
-  summary.innerHTML = html;
 
-  document.getElementById("total")
-    .textContent = total;
+  summary.innerHTML =
+    html;
+
+
+  document.getElementById(
+    "total"
+  ).textContent =
+    total;
 
 }
 
@@ -540,22 +707,30 @@ function updateOrder(){
 
 function selectPayment(method){
 
-  selectedPayment = method;
+  selectedPayment =
+    method;
 
   const qrSection =
-    document.getElementById("qrSection");
+    document.getElementById(
+      "qrSection"
+    );
 
   const paymentMessage =
-    document.getElementById("paymentMessage");
+    document.getElementById(
+      "paymentMessage"
+    );
 
 
   if(method === "online"){
 
-    qrSection.style.display = "block";
+    qrSection.style.display =
+      "block";
 
-    paymentStatus = "Pending";
+    paymentStatus =
+      "pending";
 
-    paymentReference = null;
+    paymentReference =
+      null;
 
     paymentMessage.textContent =
       "Payment is still pending.";
@@ -564,11 +739,14 @@ function selectPayment(method){
 
   }else{
 
-    qrSection.style.display = "none";
+    qrSection.style.display =
+      "none";
 
-    paymentStatus = "Pending";
+    paymentStatus =
+      "pending";
 
-    paymentReference = null;
+    paymentReference =
+      null;
 
   }
 
@@ -576,18 +754,24 @@ function selectPayment(method){
 
 
 /* =========================
-   DEMO QR
+   GENERATE DEMO QR
 ========================= */
 
 function generateQR(){
 
   const qr =
-    document.getElementById("qrcode");
+    document.getElementById(
+      "qrcode"
+    );
 
   qr.innerHTML = "";
 
+
   const total =
-    document.getElementById("total").textContent;
+    document.getElementById(
+      "total"
+    ).textContent;
+
 
   const demoPayment =
     "HALINAQR-DEMO-" +
@@ -595,29 +779,44 @@ function generateQR(){
     "-" +
     total;
 
+
   new QRCode(qr,{
+
     text:demoPayment,
+
     width:180,
+
     height:180
+
   });
 
 }
 
 
 /* =========================
-   MARK PAID
+   MARK AS PAID
 ========================= */
 
 function markAsPaid(){
 
-  if(selectedPayment !== "online"){
+  if(
+    selectedPayment !==
+    "online"
+  ){
+
     return;
+
   }
 
-  paymentStatus = "PAID";
+
+  paymentStatus =
+    "paid";
+
 
   paymentReference =
-    "DEMO-" + Date.now();
+    "DEMO-" +
+    Date.now();
+
 
   document.getElementById(
     "paymentMessage"
@@ -634,21 +833,29 @@ function markAsPaid(){
 async function sendOrder(){
 
   const errorBox =
-    document.getElementById("errorBox");
+    document.getElementById(
+      "errorBox"
+    );
 
   const successBox =
-    document.getElementById("successBox");
+    document.getElementById(
+      "successBox"
+    );
 
   const sendButton =
-    document.getElementById("sendButton");
+    document.getElementById(
+      "sendButton"
+    );
 
 
-  errorBox.style.display = "none";
+  errorBox.style.display =
+    "none";
 
-  successBox.style.display = "none";
+  successBox.style.display =
+    "none";
 
 
-  /* CHECK ITEMS */
+  /* BUILD CART */
 
   let cart = [];
 
@@ -660,27 +867,37 @@ async function sendOrder(){
     if(item.qty > 0){
 
       cart.push({
+
         name:item.name,
+
         quantity:item.qty,
+
         price:item.price
+
       });
 
+
       total +=
-        item.qty * item.price;
+        item.qty *
+        item.price;
 
     }
 
   });
 
 
+  /* CHECK ITEMS */
+
   if(cart.length === 0){
 
     errorBox.textContent =
       "Please select at least one item.";
 
-    errorBox.style.display = "block";
+    errorBox.style.display =
+      "block";
 
     return;
+
   }
 
 
@@ -691,39 +908,48 @@ async function sendOrder(){
     errorBox.textContent =
       "Please select a payment method.";
 
-    errorBox.style.display = "block";
+    errorBox.style.display =
+      "block";
 
     return;
+
   }
 
 
-  /* QR MUST BE PAID */
+  /* QR PAYMENT MUST BE PAID */
 
-  if(selectedPayment === "online" &&
-     paymentStatus !== "PAID"){
+  if(
+    selectedPayment === "online" &&
+    paymentStatus !== "paid"
+  ){
 
     errorBox.textContent =
       "Please complete the QR payment first.";
 
-    errorBox.style.display = "block";
+    errorBox.style.display =
+      "block";
 
     return;
+
   }
 
 
-  sendButton.disabled = true;
+  sendButton.disabled =
+    true;
 
   sendButton.textContent =
     "Sending Order...";
 
 
-  /* PAYMENT METHOD
-     
-     online = QR
-     cash   = Counter / Table
+  /*
+    DATABASE VALUES:
+
+    QR     = online
+    Counter = cash
+    Table   = cash
   */
 
-  let dbPaymentMethod =
+  const dbPaymentMethod =
     selectedPayment === "online"
       ? "online"
       : "cash";
@@ -762,12 +988,16 @@ async function sendOrder(){
 
     const response =
       await fetch(
+
         SUPABASE_URL +
         "/rest/v1/orders",
+
         {
+
           method:"POST",
 
           headers:{
+
             "Content-Type":
               "application/json",
 
@@ -780,11 +1010,16 @@ async function sendOrder(){
 
             "Prefer":
               "return=minimal"
+
           },
 
           body:
-            JSON.stringify(orderData)
+            JSON.stringify(
+              orderData
+            )
+
         }
+
       );
 
 
@@ -794,10 +1029,12 @@ async function sendOrder(){
         await response.text();
 
       throw new Error(
+
         "Status " +
         response.status +
         ": " +
         errorText
+
       );
 
     }
@@ -808,6 +1045,7 @@ async function sendOrder(){
     successBox.style.display =
       "block";
 
+
     successBox.scrollIntoView({
       behavior:"smooth"
     });
@@ -817,15 +1055,17 @@ async function sendOrder(){
       "Order Sent";
 
 
-    /* RESET */
+    /* RESET MENU */
 
     Object.keys(menu).forEach(item => {
 
-      menu[item].qty = 0;
+      menu[item].qty =
+        0;
 
       document.getElementById(
         "qty-" + item
-      ).textContent = "0";
+      ).textContent =
+        "0";
 
     });
 
@@ -837,14 +1077,19 @@ async function sendOrder(){
 
     console.error(error);
 
+
     errorBox.textContent =
       "❌ Order could not be sent.\n" +
       error.message;
 
+
     errorBox.style.display =
       "block";
 
-    sendButton.disabled = false;
+
+    sendButton.disabled =
+      false;
+
 
     sendButton.textContent =
       "Send Order";
