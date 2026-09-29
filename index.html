@@ -1273,3 +1273,1550 @@
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>HalinaQR</title>
+
+<!-- QR CODE LIBRARY -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+
+/* =====================================================
+   🎨 HALINAQR COLOR PALETTE
+   EDIT THESE COLORS ONLY IF YOU WANT A NEW THEME
+===================================================== */
+
+:root {
+    --primary: #8B1E1E;
+    --primary-dark: #641414;
+    --secondary: #F4B942;
+    --background: #FFF8F0;
+    --card: #FFFFFF;
+    --text: #292929;
+    --muted: #777777;
+    --border: #EEEEEE;
+    --success: #16803A;
+    --danger: #C62828;
+}
+
+
+/* =====================================================
+   GENERAL
+===================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--text);
+}
+
+button {
+    font-family: inherit;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.header {
+    background: var(--primary);
+    color: white;
+    padding: 22px 18px;
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+}
+
+.logo {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.tagline {
+    margin-top: 5px;
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.table-badge {
+    display: inline-block;
+    margin-top: 14px;
+    background: var(--secondary);
+    color: #222;
+    padding: 7px 16px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    margin: auto;
+    padding: 18px;
+}
+
+.section-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 8px 0 15px;
+}
+
+
+/* =====================================================
+   FOOD CARDS
+===================================================== */
+
+.menu-card {
+    background: var(--card);
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+}
+
+.food-image {
+    width: 100%;
+    height: 210px;
+    object-fit: cover;
+    display: block;
+}
+
+.food-content {
+    padding: 15px;
+}
+
+.food-name {
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.food-description {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+.food-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.price {
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.quantity-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.qty-btn {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.qty-btn:active {
+    transform: scale(0.94);
+}
+
+.qty-number {
+    min-width: 24px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+/* =====================================================
+   ORDER SUMMARY
+===================================================== */
+
+.summary {
+    background: white;
+    border-radius: 18px;
+    padding: 18px;
+    margin-top: 25px;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+}
+
+.summary-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    font-size: 14px;
+}
+
+.total-row {
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.total-price {
+    color: var(--primary);
+}
+
+
+/* =====================================================
+   CUSTOMER NAME
+===================================================== */
+
+.input-group {
+    margin-top: 20px;
+}
+
+.input-label {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 7px;
+    display: block;
+}
+
+.customer-input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #DDD;
+    font-size: 16px;
+    outline: none;
+}
+
+.customer-input:focus {
+    border-color: var(--primary);
+}
+
+
+/* =====================================================
+   PAYMENT
+===================================================== */
+
+.payment-section {
+    margin-top: 25px;
+}
+
+.payment-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.payment-options {
+    display: grid;
+    gap: 10px;
+}
+
+.payment-option {
+    background: white;
+    border: 2px solid #E5E5E5;
+    border-radius: 14px;
+    padding: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.payment-option.selected {
+    border-color: var(--primary);
+    background: #FFF3F3;
+}
+
+.payment-option-title {
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.payment-option-description {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+
+/* =====================================================
+   PAYMENT INFO
+===================================================== */
+
+.payment-info {
+    display: none;
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    margin-top: 15px;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+.payment-info.show {
+    display: block;
+}
+
+.payment-info h3 {
+    margin-top: 0;
+}
+
+.demo-warning {
+    background: #FFF4D6;
+    color: #765600;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    margin-bottom: 15px;
+}
+
+#qrcode {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.paid-btn {
+    width: 100%;
+    border: none;
+    background: var(--success);
+    color: white;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.paid-btn:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+
+/* =====================================================
+   SEND ORDER BUTTON
+===================================================== */
+
+.order-btn {
+    width: 100%;
+    margin-top: 22px;
+    padding: 17px;
+    border: none;
+    border-radius: 14px;
+    background: var(--primary);
+    color: white;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(139,30,30,0.25);
+}
+
+.order-btn:active {
+    transform: scale(0.98);
+}
+
+.order-btn:disabled {
+    background: #999;
+    cursor: default;
+}
+
+
+/* =====================================================
+   MESSAGES
+===================================================== */
+
+.success-message,
+.error-message {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.success-message {
+    background: #E9F8EF;
+    color: var(--success);
+}
+
+.error-message {
+    background: #FDECEC;
+    color: var(--danger);
+}
+
+.message-icon {
+    font-size: 35px;
+    margin-bottom: 8px;
+}
+
+.message-title {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.message-text {
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.footer {
+    text-align: center;
+    padding: 30px 15px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   DESKTOP
+===================================================== */
+
+@media (min-width: 700px) {
+
+    .container {
+        padding-top: 30px;
+    }
+
+    .food-image {
+        height: 240px;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header class="header">
+
+    <div class="logo">
+        🍗 HalinaQR
+    </div>
+
+    <div class="tagline">
+        Scan • Order • Enjoy
+    </div>
+
+    <div class="table-badge">
+        🪑 Table <span id="tableNumber">?</span>
+    </div>
+
+</header>
+
+
+<main class="container">
+
+
+<!-- =====================================================
+     MENU
+===================================================== -->
+
+<div class="section-title">
+    🍽️ Our Menu
+</div>
+
+
+<!-- TERIYAKI -->
+
+<div class="menu-card">
+
+    <img
+        class="food-image"
+        src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=80"
+        alt="Teriyaki Chicken"
+    >
+
+    <div class="food-content">
+
+        <div class="food-name">
+            Teriyaki Chicken
+        </div>
+
+        <div class="food-description">
+            Tender chicken glazed with sweet and savory teriyaki sauce.
+        </div>
+
+        <div class="food-bottom">
+
+            <div class="price">
+                ₱120
+            </div>
+
+            <div class="quantity-box">
+
+                <button
+                    class="qty-btn"
+                    onclick="changeQty('teriyaki', -1)">
+                    −
+                </button>
+
+                <div
+                    class="qty-number"
+                    id="qty-teriyaki">
+                    0
+                </div>
+
+                <button
+                    class="qty-btn"
+                    onclick="changeQty('teriyaki', 1)">
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- YANGNYEOM -->
+
+<div class="menu-card">
+
+    <img
+        class="food-image"
+        src="https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=1000&q=80"
+        alt="Yangnyeom Chicken"
+    >
+
+    <div class="food-content">
+
+        <div class="food-name">
+            Yangnyeom Chicken
+        </div>
+
+        <div class="food-description">
+            Crispy chicken coated in a sweet and spicy Korean sauce.
+        </div>
+
+        <div class="food-bottom">
+
+            <div class="price">
+                ₱120
+            </div>
+
+            <div class="quantity-box">
+
+                <button
+                    class="qty-btn"
+                    onclick="changeQty('yangnyeom', -1)">
+                    −
+                </button>
+
+                <div
+                    class="qty-number"
+                    id="qty-yangnyeom">
+                    0
+                </div>
+
+                <button
+                    class="qty-btn"
+                    onclick="changeQty('yangnyeom', 1)">
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- HONEY GARLIC -->
+
+<div class="menu-card">
+
+    <img
+        class="food-image"
+        src="https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=1000&q=80"
+        alt="Honey Garlic Chicken"
+    >
+
+    <div class="food-content">
+
+        <div class="food-name">
+            Honey Garlic Butter
+        </div>
+
+        <div class="food-description">
+            Juicy chicken tossed in rich honey, garlic and butter sauce.
+        </div>
+
+        <div class="food-bottom">
+
+            <div class="price">
+                ₱120
+            </div>
+
+            <div class="quantity-box">
+
+                <button
+                    class="qty-btn"
+                    onclick="changeQty('honeyGarlic', -1)">
+                    −
+                </button>
+
+                <div
+                    class="qty-number"
+                    id="qty-honeyGarlic">
+                    0
+                </div>
+
+                <button
+                    class="qty-btn"
+                    onclick="changeQty('honeyGarlic', 1)">
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     CUSTOMER INFORMATION
+===================================================== -->
+
+<div class="summary">
+
+    <div class="summary-title">
+        🧾 Your Order
+    </div>
+
+    <div id="orderSummary">
+        <div style="color:#777;font-size:14px;">
+            No items selected yet.
+        </div>
+    </div>
+
+    <div class="total-row">
+
+        <span>
+            Total
+        </span>
+
+        <span
+            class="total-price"
+            id="totalPrice">
+            ₱0
+        </span>
+
+    </div>
+
+</div>
+
+
+<div class="input-group">
+
+    <label class="input-label">
+        Customer Name
+    </label>
+
+    <input
+        id="customerName"
+        class="customer-input"
+        type="text"
+        placeholder="Enter your name"
+    >
+
+</div>
+
+
+<!-- =====================================================
+     PAYMENT
+===================================================== -->
+
+<div class="payment-section">
+
+    <div class="payment-title">
+        💳 Payment Method
+    </div>
+
+
+    <div class="payment-options">
+
+
+        <!-- QR -->
+
+        <div
+            class="payment-option"
+            id="payment-qr"
+            onclick="selectPayment('QR')">
+
+            <div class="payment-option-title">
+                💳 Pay via QR
+            </div>
+
+            <div class="payment-option-description">
+                Scan the QR code to pay.
+            </div>
+
+        </div>
+
+
+        <!-- COUNTER -->
+
+        <div
+            class="payment-option"
+            id="payment-counter"
+            onclick="selectPayment('Counter')">
+
+            <div class="payment-option-title">
+                💵 Pay at Counter
+            </div>
+
+            <div class="payment-option-description">
+                Pay when you reach the counter.
+            </div>
+
+        </div>
+
+
+        <!-- TABLE -->
+
+        <div
+            class="payment-option"
+            id="payment-table"
+            onclick="selectPayment('Table')">
+
+            <div class="payment-option-title">
+                🪑 Pay at Table
+            </div>
+
+            <div class="payment-option-description">
+                Pay directly at your table.
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         QR PAYMENT
+    ================================================== -->
+
+    <div
+        class="payment-info"
+        id="qrPayment">
+
+        <h3>
+            💳 QR Payment
+        </h3>
+
+        <div class="demo-warning">
+            DEMO PAYMENT ONLY — This QR is for testing the
+            ordering system and is not a real GCash/Maya payment.
+        </div>
+
+        <div>
+            Amount to pay:
+        </div>
+
+        <strong
+            style="font-size:28px;color:var(--primary);"
+            id="qrAmount">
+            ₱0
+        </strong>
+
+        <div id="qrcode"></div>
+
+        <button
+            class="paid-btn"
+            onclick="markAsPaid()">
+
+            I've Paid ✓
+
+        </button>
+
+    </div>
+
+
+    <!-- COUNTER -->
+
+    <div
+        class="payment-info"
+        id="counterPayment">
+
+        <h3>
+            💵 Pay at Counter
+        </h3>
+
+        <p>
+            Your order will be sent to the restaurant.
+        </p>
+
+        <p>
+            Please pay at the counter when you arrive.
+        </p>
+
+    </div>
+
+
+    <!-- TABLE -->
+
+    <div
+        class="payment-info"
+        id="tablePayment">
+
+        <h3>
+            🪑 Pay at Table
+        </h3>
+
+        <p>
+            Your order will be sent to the restaurant.
+        </p>
+
+        <p>
+            Please wait for the staff to collect your payment.
+        </p>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     SEND ORDER
+===================================================== -->
+
+<button
+    class="order-btn"
+    id="orderButton"
+    onclick="submitOrder()">
+
+    SEND ORDER
+
+</button>
+
+
+<!-- SUCCESS -->
+
+<div
+    class="success-message"
+    id="successMessage">
+
+    <div class="message-icon">
+        ✅
+    </div>
+
+    <div class="message-title">
+        Order Sent Successfully!
+    </div>
+
+    <div class="message-text">
+        Your order has been received by the restaurant.
+    </div>
+
+</div>
+
+
+<!-- ERROR -->
+
+<div
+    class="error-message"
+    id="errorMessage">
+
+    <div class="message-icon">
+        ⚠️
+    </div>
+
+    <div class="message-title">
+        Something went wrong
+    </div>
+
+    <div
+        class="message-text"
+        id="errorText">
+    </div>
+
+</div>
+
+
+</main>
+
+
+<footer class="footer">
+
+    Powered by <strong>HalinaQR</strong>
+
+</footer>
+
+
+
+<script>
+
+/* =====================================================
+   🔐 SUPABASE SETTINGS
+===================================================== */
+
+const SUPABASE_URL =
+    "https://isqcuycjrbjtmqhzckvb.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
+
+const RESTAURANT_ID =
+    "4a57c402-8fa5-4cd8-a4df-981185f353de";
+
+
+/* =====================================================
+   🪑 TABLE NUMBER
+===================================================== */
+
+const params =
+    new URLSearchParams(window.location.search);
+
+const table =
+    params.get("table") || "?";
+
+document.getElementById("tableNumber").textContent =
+    table;
+
+
+/* =====================================================
+   🍗 MENU DATA
+===================================================== */
+
+const menu = {
+
+    teriyaki: {
+        name: "Teriyaki Chicken",
+        price: 120,
+        qty: 0
+    },
+
+    yangnyeom: {
+        name: "Yangnyeom Chicken",
+        price: 120,
+        qty: 0
+    },
+
+    honeyGarlic: {
+        name: "Honey Garlic Butter",
+        price: 120,
+        qty: 0
+    }
+
+};
+
+
+/* =====================================================
+   💳 PAYMENT STATE
+===================================================== */
+
+let selectedPayment = "";
+
+let paymentStatus = "Pending";
+
+let paymentReference = null;
+
+
+/* =====================================================
+   ➕➖ QUANTITY
+===================================================== */
+
+function changeQty(item, amount) {
+
+    menu[item].qty += amount;
+
+    if (menu[item].qty < 0) {
+        menu[item].qty = 0;
+    }
+
+    document.getElementById(
+        "qty-" + item
+    ).textContent = menu[item].qty;
+
+    updateOrderSummary();
+
+    updateQR();
+
+}
+
+
+/* =====================================================
+   🧾 GET CART
+===================================================== */
+
+function getCart() {
+
+    const cart = [];
+
+    Object.values(menu).forEach(item => {
+
+        if (item.qty > 0) {
+
+            cart.push({
+
+                name: item.name,
+
+                price: item.price,
+
+                quantity: item.qty
+
+            });
+
+        }
+
+    });
+
+    return cart;
+
+}
+
+
+/* =====================================================
+   💰 CALCULATE TOTAL
+===================================================== */
+
+function calculateTotal() {
+
+    let total = 0;
+
+    Object.values(menu).forEach(item => {
+
+        total += item.price * item.qty;
+
+    });
+
+    return total;
+
+}
+
+
+/* =====================================================
+   🧾 UPDATE SUMMARY
+===================================================== */
+
+function updateOrderSummary() {
+
+    const summary =
+        document.getElementById("orderSummary");
+
+    const cart = getCart();
+
+    if (cart.length === 0) {
+
+        summary.innerHTML = `
+            <div style="color:#777;font-size:14px;">
+                No items selected yet.
+            </div>
+        `;
+
+    } else {
+
+        summary.innerHTML = "";
+
+        cart.forEach(item => {
+
+            const subtotal =
+                item.price * item.quantity;
+
+            summary.innerHTML += `
+
+                <div class="summary-item">
+
+                    <span>
+                        ${item.name} × ${item.quantity}
+                    </span>
+
+                    <strong>
+                        ₱${subtotal}
+                    </strong>
+
+                </div>
+
+            `;
+
+        });
+
+    }
+
+    const total = calculateTotal();
+
+    document.getElementById("totalPrice").textContent =
+        "₱" + total;
+
+}
+
+
+/* =====================================================
+   💳 SELECT PAYMENT
+===================================================== */
+
+function selectPayment(method) {
+
+    selectedPayment = method;
+
+    document
+        .querySelectorAll(".payment-option")
+        .forEach(option => {
+
+            option.classList.remove("selected");
+
+        });
+
+
+    if (method === "QR") {
+
+        document
+            .getElementById("payment-qr")
+            .classList.add("selected");
+
+    }
+
+    if (method === "Counter") {
+
+        document
+            .getElementById("payment-counter")
+            .classList.add("selected");
+
+    }
+
+    if (method === "Table") {
+
+        document
+            .getElementById("payment-table")
+            .classList.add("selected");
+
+    }
+
+
+    document
+        .getElementById("qrPayment")
+        .classList.remove("show");
+
+    document
+        .getElementById("counterPayment")
+        .classList.remove("show");
+
+    document
+        .getElementById("tablePayment")
+        .classList.remove("show");
+
+
+    if (method === "QR") {
+
+        document
+            .getElementById("qrPayment")
+            .classList.add("show");
+
+        updateQR();
+
+    }
+
+
+    if (method === "Counter") {
+
+        document
+            .getElementById("counterPayment")
+            .classList.add("show");
+
+    }
+
+
+    if (method === "Table") {
+
+        document
+            .getElementById("tablePayment")
+            .classList.add("show");
+
+    }
+
+}
+
+
+/* =====================================================
+   🔳 DEMO QR
+===================================================== */
+
+function updateQR() {
+
+    const total =
+        calculateTotal();
+
+    document.getElementById("qrAmount").textContent =
+        "₱" + total;
+
+
+    const qrContainer =
+        document.getElementById("qrcode");
+
+    qrContainer.innerHTML = "";
+
+
+    if (total <= 0) {
+        return;
+    }
+
+
+    const demoPaymentData =
+        "HALINAQR" +
+        "|TABLE=" +
+        table +
+        "|AMOUNT=" +
+        total;
+
+
+    new QRCode(qrContainer, {
+
+        text: demoPaymentData,
+
+        width: 210,
+
+        height: 210
+
+    });
+
+}
+
+
+/* =====================================================
+   ✅ MARK DEMO PAYMENT AS PAID
+===================================================== */
+
+function markAsPaid() {
+
+    const total =
+        calculateTotal();
+
+    if (total <= 0) {
+
+        showError(
+            "Please select an item first."
+        );
+
+        return;
+
+    }
+
+
+    paymentStatus = "PAID";
+
+    paymentReference =
+        "DEMO-" +
+        Date.now();
+
+
+    const button =
+        document.querySelector(".paid-btn");
+
+
+    button.textContent =
+        "✓ PAYMENT MARKED AS PAID";
+
+    button.disabled = true;
+
+}
+
+
+/* =====================================================
+   📤 SUBMIT ORDER
+===================================================== */
+
+async function submitOrder() {
+
+    hideMessages();
+
+
+    const cart =
+        getCart();
+
+    const total =
+        calculateTotal();
+
+
+    const customerName =
+        document
+        .getElementById("customerName")
+        .value
+        .trim();
+
+
+    /* CHECK ITEM */
+
+    if (cart.length === 0) {
+
+        showError(
+            "Please select at least one item."
+        );
+
+        return;
+
+    }
+
+
+    /* CHECK NAME */
+
+    if (!customerName) {
+
+        showError(
+            "Please enter your name."
+        );
+
+        document
+            .getElementById("customerName")
+            .focus();
+
+        return;
+
+    }
+
+
+    /* CHECK PAYMENT */
+
+    if (!selectedPayment) {
+
+        showError(
+            "Please select a payment method."
+        );
+
+        return;
+
+    }
+
+
+    /* QR PAYMENT */
+
+    if (
+        selectedPayment === "QR" &&
+        paymentStatus !== "PAID"
+    ) {
+
+        showError(
+            "Please complete the QR payment first."
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        document.getElementById("orderButton");
+
+
+    button.disabled = true;
+
+    button.textContent =
+        "SENDING ORDER...";
+
+
+    /* =================================================
+       ORDER DATA
+    ================================================= */
+
+    const orderData = {
+
+        restaurant_id:
+            RESTAURANT_ID,
+
+        table_number:
+            table,
+
+        customer_name:
+            customerName,
+
+        items:
+            cart,
+
+        total:
+            total,
+
+        status:
+            "new",
+
+        payment_method:
+            selectedPayment,
+
+        payment_status:
+            paymentStatus,
+
+        payment_reference:
+            paymentReference
+
+    };
+
+
+    try {
+
+        const response =
+            await fetch(
+
+                SUPABASE_URL +
+                "/rest/v1/orders",
+
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json",
+
+                        "apikey":
+                            SUPABASE_KEY,
+
+                        "Authorization":
+                            "Bearer " +
+                            SUPABASE_KEY,
+
+                        "Prefer":
+                            "return=minimal"
+
+                    },
+
+                    body:
+                        JSON.stringify(
+                            orderData
+                        )
+
+                }
+
+            );
+
+
+        if (!response.ok) {
+
+            const errorText =
+                await response.text();
+
+            throw new Error(
+                errorText
+            );
+
+        }
+
+
+        /* SUCCESS */
+
+        button.textContent =
+            "ORDER SENT ✓";
+
+
+        document
+            .getElementById("successMessage")
+            .style.display = "block";
+
+
+        document
+            .getElementById("successMessage")
+            .scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        showError(
+            "Unable to send your order. Please try again."
+        );
+
+        button.disabled = false;
+
+        button.textContent =
+            "SEND ORDER";
+
+    }
+
+}
+
+
+/* =====================================================
+   ⚠️ ERROR
+===================================================== */
+
+function showError(message) {
+
+    document
+        .getElementById("errorText")
+        .textContent = message;
+
+    document
+        .getElementById("errorMessage")
+        .style.display = "block";
+
+}
+
+
+function hideMessages() {
+
+    document
+        .getElementById("errorMessage")
+        .style.display = "none";
+
+    document
+        .getElementById("successMessage")
+        .style.display = "none";
+
+}
+
+
+/* =====================================================
+   🚀 INITIALIZE
+===================================================== */
+
+updateOrderSummary();
+
+</script>
+
+</body>
+</html>
