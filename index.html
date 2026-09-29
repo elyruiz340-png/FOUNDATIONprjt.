@@ -195,7 +195,16 @@
 
 <script>
 
+  // SUPABASE CONNECTION
+  const SUPABASE_URL =
+    "https://isqcuycjrbjtmqhzckvb.supabase.co";
+
+  const SUPABASE_KEY =
+    "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
+
+
   let cart = [];
+
 
   function addToCart(name, price, qtyId) {
 
@@ -207,16 +216,21 @@
       return;
     }
 
-    const existing = cart.find(item => item.name === name);
+    const existing =
+      cart.find(item => item.name === name);
 
     if (existing) {
+
       existing.quantity += quantity;
+
     } else {
+
       cart.push({
         name: name,
         price: price,
         quantity: quantity
       });
+
     }
 
     updateCart();
@@ -264,57 +278,117 @@
   }
 
 
-  function sendOrder() {
+  async function sendOrder() {
 
     const table =
       document.getElementById("tableNumber").value;
 
     if (!table) {
+
       alert("Please enter your table number.");
       return;
     }
 
     if (cart.length === 0) {
+
       alert("Please add at least one item.");
       return;
     }
 
-    let message =
-      "🍗 HALINAQR NEW ORDER\n\n";
-
-    message +=
-      "Table: " + table + "\n\n";
 
     let total = 0;
 
     cart.forEach(item => {
 
-      const subtotal =
+      total +=
         item.price * item.quantity;
 
-      total += subtotal;
-
-      message +=
-        item.name +
-        " × " +
-        item.quantity +
-        " = ₱" +
-        subtotal +
-        "\n";
     });
 
-    message +=
-      "\nTOTAL: ₱" + total;
 
-    /*
-      PALITAN NATIN ITO NG ACTUAL MESSENGER LINK
-    */
+    const orderData = {
 
-    const messengerLink =
-      "https://m.me/halinaqr?text=" +
-      encodeURIComponent(message);
+      table_number: table,
 
-    window.location.href = messengerLink;
+      items: cart,
+
+      total: total,
+
+      status: "new"
+
+    };
+
+
+    try {
+
+      const response = await fetch(
+        SUPABASE_URL + "/rest/v1/orders",
+        {
+
+          method: "POST",
+
+          headers: {
+
+            "Content-Type":
+              "application/json",
+
+            "apikey":
+              SUPABASE_KEY,
+
+            "Authorization":
+              "Bearer " + SUPABASE_KEY,
+
+            "Prefer":
+              "return=minimal"
+
+          },
+
+          body:
+            JSON.stringify(orderData)
+
+        }
+      );
+
+
+      if (!response.ok) {
+
+        const errorText =
+          await response.text();
+
+        console.error(errorText);
+
+        alert(
+          "Order failed. Please try again."
+        );
+
+        return;
+      }
+
+
+      alert(
+        "✅ Order sent successfully!"
+      );
+
+
+      cart = [];
+
+      document.getElementById(
+        "tableNumber"
+      ).value = "";
+
+      updateCart();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "Connection error. Please try again."
+      );
+
+    }
+
   }
 
 </script>
