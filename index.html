@@ -840,13 +840,17 @@
 
         if (!response.ok) {
 
-          const errorText =
+  const errorText = await response.text();
 
-            await response.text();
+  alert(
+    "SUPABASE ERROR:\n\n" +
+    "Status: " + response.status +
+    "\n\n" +
+    errorText
+  );
 
-          throw new Error(errorText);
-
-        }
+  return;
+}
 
         alert(
 
