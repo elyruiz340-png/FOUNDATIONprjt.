@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HalinaQR Menu</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -21,74 +22,302 @@
       text-align: center;
     }
 
+    .table-box {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin-top: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
     .item {
       background: white;
-      padding: 16px;
+      padding: 15px;
       margin: 12px 0;
       border-radius: 12px;
     }
 
     .item h2 {
-      margin: 0 0 8px;
+      margin: 0 0 5px;
     }
 
     .price {
       font-weight: bold;
     }
 
-    button {
+    .qty {
+      width: 70px;
+    }
+
+    .add-btn,
+    .order-btn {
       width: 100%;
       padding: 14px;
       border: none;
       border-radius: 10px;
-      background: #1877f2;
       color: white;
       font-size: 16px;
       margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .add-btn {
+      background: #333;
+    }
+
+    .order-btn {
+      background: #1877f2;
+      margin-top: 20px;
+    }
+
+    #cart {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    .cart-item {
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .total {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 12px;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>HalinaQR</h1>
 
-    <div class="item">
-      <h2>Teriyaki Chicken</h2>
-      <p class="price">₱120</p>
-      <button onclick="order('Teriyaki Chicken')">
-        Order Now
-      </button>
-    </div>
+<div class="container">
 
-    <div class="item">
-      <h2>Yangnyeom Chicken</h2>
-      <p class="price">₱120</p>
-      <button onclick="order('Yangnyeom Chicken')">
-        Order Now
-      </button>
-    </div>
+  <h1>🍗 HalinaQR Menu</h1>
 
-    <div class="item">
-      <h2>Honey Garlic Butter</h2>
-      <p class="price">₱120</p>
-      <button onclick="order('Honey Garlic Butter')">
-        Order Now
-      </button>
-    </div>
+  <div class="table-box">
+    <label><strong>Table Number</strong></label>
+    <input
+      type="number"
+      id="tableNumber"
+      placeholder="Example: 5"
+      min="1"
+    >
   </div>
 
-  <script>
-    function order(item) {
-      const message =
-        "Hello! I would like to order: " + item;
+  <div class="item">
+    <h2>Teriyaki Chicken</h2>
+    <p class="price">₱120</p>
 
-      const messenger =
-        "https://m.me/halinaqr?text=" +
-        encodeURIComponent(message);
+    <input
+      class="qty"
+      type="number"
+      id="qty-teriyaki"
+      value="1"
+      min="1"
+    >
 
-      window.location.href = messenger;
+    <button
+      class="add-btn"
+      onclick="addToCart('Teriyaki Chicken', 120, 'qty-teriyaki')"
+    >
+      Add to Order
+    </button>
+  </div>
+
+  <div class="item">
+    <h2>Yangnyeom Chicken</h2>
+    <p class="price">₱120</p>
+
+    <input
+      class="qty"
+      type="number"
+      id="qty-yangnyeom"
+      value="1"
+      min="1"
+    >
+
+    <button
+      class="add-btn"
+      onclick="addToCart('Yangnyeom Chicken', 120, 'qty-yangnyeom')"
+    >
+      Add to Order
+    </button>
+  </div>
+
+  <div class="item">
+    <h2>Honey Garlic Butter</h2>
+    <p class="price">₱120</p>
+
+    <input
+      class="qty"
+      type="number"
+      id="qty-honey"
+      value="1"
+      min="1"
+    >
+
+    <button
+      class="add-btn"
+      onclick="addToCart('Honey Garlic Butter', 120, 'qty-honey')"
+    >
+      Add to Order
+    </button>
+  </div>
+
+  <div id="cart">
+    <h2>Your Order</h2>
+
+    <div id="cartItems">
+      No items yet.
+    </div>
+
+    <div class="total">
+      Total: ₱<span id="total">0</span>
+    </div>
+
+    <button class="order-btn" onclick="sendOrder()">
+      Send Order
+    </button>
+  </div>
+
+</div>
+
+<script>
+
+  let cart = [];
+
+  function addToCart(name, price, qtyId) {
+
+    const quantity =
+      parseInt(document.getElementById(qtyId).value);
+
+    if (!quantity || quantity < 1) {
+      alert("Please enter a valid quantity.");
+      return;
     }
-  </script>
+
+    const existing = cart.find(item => item.name === name);
+
+    if (existing) {
+      existing.quantity += quantity;
+    } else {
+      cart.push({
+        name: name,
+        price: price,
+        quantity: quantity
+      });
+    }
+
+    updateCart();
+
+    alert(name + " added to your order!");
+  }
+
+
+  function updateCart() {
+
+    const cartItems =
+      document.getElementById("cartItems");
+
+    const totalElement =
+      document.getElementById("total");
+
+    if (cart.length === 0) {
+
+      cartItems.innerHTML = "No items yet.";
+      totalElement.innerText = "0";
+
+      return;
+    }
+
+    let html = "";
+    let total = 0;
+
+    cart.forEach(item => {
+
+      const subtotal =
+        item.price * item.quantity;
+
+      total += subtotal;
+
+      html += `
+        <div class="cart-item">
+          ${item.name} × ${item.quantity}
+          — ₱${subtotal}
+        </div>
+      `;
+    });
+
+    cartItems.innerHTML = html;
+    totalElement.innerText = total;
+  }
+
+
+  function sendOrder() {
+
+    const table =
+      document.getElementById("tableNumber").value;
+
+    if (!table) {
+      alert("Please enter your table number.");
+      return;
+    }
+
+    if (cart.length === 0) {
+      alert("Please add at least one item.");
+      return;
+    }
+
+    let message =
+      "🍗 HALINAQR NEW ORDER\n\n";
+
+    message +=
+      "Table: " + table + "\n\n";
+
+    let total = 0;
+
+    cart.forEach(item => {
+
+      const subtotal =
+        item.price * item.quantity;
+
+      total += subtotal;
+
+      message +=
+        item.name +
+        " × " +
+        item.quantity +
+        " = ₱" +
+        subtotal +
+        "\n";
+    });
+
+    message +=
+      "\nTOTAL: ₱" + total;
+
+    /*
+      PALITAN NATIN ITO NG ACTUAL MESSENGER LINK
+    */
+
+    const messengerLink =
+      "https://m.me/halinaqr?text=" +
+      encodeURIComponent(message);
+
+    window.location.href = messengerLink;
+  }
+
+</script>
+
 </body>
 </html>
