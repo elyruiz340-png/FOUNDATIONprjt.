@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>HALINA BISTRO CAFE - Owner Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  color: #222;
+}
+
+.header {
+  background: #111;
+  color: white;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo-area h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.logo-area p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #bbb;
+}
+
+.logout-btn {
+  background: #fff;
+  color: #111;
+  border: none;
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+
+.login-box {
+  max-width: 400px;
+  margin: 70px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+}
+
+.login-box h2 {
+  margin-top: 0;
+}
+
+.input {
+  width: 100%;
+  padding: 13px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 13px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #111;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.message {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #d00;
+}
+
+.dashboard {
+  display: none;
+}
+
+.restaurant-title {
+  margin-bottom: 20px;
+}
+
+.restaurant-title h2 {
+  margin: 0;
+}
+
+.restaurant-title p {
+  color: #777;
+  margin-top: 5px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+}
+
+.card-title {
+  color: #777;
+  font-size: 13px;
+}
+
+.card-value {
+  font-size: 28px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.orders-section {
+  margin-top: 25px;
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+}
+
+.orders-section h3 {
+  margin-top: 0;
+}
+
+.order {
+  border-bottom: 1px solid #eee;
+  padding: 15px 0;
+}
+
+.order:last-child {
+  border-bottom: none;
+}
+
+.order-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.order-number {
+  font-weight: bold;
+}
+
+.status {
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #eee;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.order-details {
+  margin-top: 7px;
+  color: #666;
+  font-size: 14px;
+}
+
+.order-total {
+  margin-top: 7px;
+  font-weight: bold;
+}
+
+.empty {
+  text-align: center;
+  color: #888;
+  padding: 30px 0;
+}
+
+.refresh-btn {
+  background: #111;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.loading {
+  text-align: center;
+  padding: 30px;
+  color: #777;
+}
+
+@media(max-width: 800px) {
+
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+@media(max-width: 500px) {
+
+  .container {
+    padding: 12px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  .card-value {
+    font-size: 23px;
+  }
+
+  .header {
+    padding: 15px;
+  }
+
+  .logo-area h1 {
+    font-size: 17px;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+
+<div class="header">
+
+  <div class="logo-area">
+
+    <h1>HALINA BISTRO CAFE</h1>
+
+    <p>Owner Dashboard</p>
+
+  </div>
+
+  <button
+    class="logout-btn"
+    onclick="logout()">
+    Logout
+  </button>
+
+</div>
+
+
+<!-- LOGIN -->
+
+<div id="loginBox" class="login-box">
+
+  <h2>Owner Login</h2>
+
+  <p>
+    Login to manage your restaurant.
+  </p>
+
+  <input
+    id="email"
+    class="input"
+    type="email"
+    placeholder="Email">
+
+  <input
+    id="password"
+    class="input"
+    type="password"
+    placeholder="Password">
+
+  <button
+    class="login-btn"
+    onclick="login()">
+    Login
+  </button>
+
+  <div
+    id="loginMessage"
+    class="message">
+  </div>
+
+</div>
+
+
+<!-- DASHBOARD -->
+
+<div id="dashboard" class="dashboard">
+
+  <div class="container">
+
+    <div class="restaurant-title">
+
+      <h2 id="restaurantName">
+        HALINA BISTRO CAFE
+      </h2>
+
+      <p>
+        Restaurant Owner Dashboard
+      </p>
+
+    </div>
+
+
+    <!-- SUMMARY CARDS -->
+
+    <div class="cards">
+
+      <div class="card">
+
+        <div class="card-title">
+          Orders Today
+        </div>
+
+        <div
+          id="ordersToday"
+          class="card-value">
+          0
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="card-title">
+          Sales Today
+        </div>
+
+        <div
+          id="salesToday"
+          class="card-value">
+          ₱0
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="card-title">
+          New Orders
+        </div>
+
+        <div
+          id="newOrders"
+          class="card-value">
+          0
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="card-title">
+          Preparing
+        </div>
+
+        <div
+          id="preparingOrders"
+          class="card-value">
+          0
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- RECENT ORDERS -->
+
+    <div class="orders-section">
+
+      <div class="section-header">
+
+        <h3>
+          Recent Orders
+        </h3>
+
+        <button
+          class="refresh-btn"
+          onclick="loadOrders()">
+          Refresh
+        </button>
+
+      </div>
+
+      <div
+        id="ordersList"
+        class="loading">
+
+        Loading orders...
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+  "https://isqcuycjrbjtmqhzckvb.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_PM2N85UZqZfqc-2XQ04IPg_ulOxQkt4";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+let currentRestaurantId = null;
+
+
+/* =========================
+   LOGIN
+========================= */
+
+async function login() {
+
+  const email =
+    document.getElementById("email").value.trim();
+
+  const password =
+    document.getElementById("password").value;
+
+  const message =
+    document.getElementById("loginMessage");
+
+  message.textContent = "";
+
+  if (!email || !password) {
+
+    message.textContent =
+      "Please enter your email and password.";
+
+    return;
+
+  }
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.signInWithPassword({
+
+      email: email,
+      password: password
+
+    });
+
+
+  if (error) {
+
+    message.textContent =
+      error.message;
+
+    return;
+
+  }
+
+
+  await startDashboard();
+
+}
+
+
+/* =========================
+   START DASHBOARD
+========================= */
+
+async function startDashboard() {
+
+  const {
+    data: {
+      user
+    }
+  } =
+    await supabaseClient.auth.getUser();
+
+
+  if (!user) {
+
+    showLogin();
+
+    return;
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+
+      .from("restaurant_users")
+
+      .select(`
+        restaurant_id,
+        role,
+        restaurants (
+          name,
+          slug,
+          currency,
+          timezone
+        )
+      `)
+
+      .eq("user_id", user.id)
+
+      .maybeSingle();
+
+
+  if (error) {
+
+    console.error(error);
+
+    alert(
+      "Unable to load restaurant account."
+    );
+
+    return;
+
+  }
+
+
+  if (!data) {
+
+    alert(
+      "This account is not linked to a restaurant."
+    );
+
+    await logout();
+
+    return;
+
+  }
+
+
+  if (
+    data.role !== "owner" &&
+    data.role !== "staff" &&
+    data.role !== "admin"
+  ) {
+
+    alert(
+      "You do not have dashboard access."
+    );
+
+    await logout();
+
+    return;
+
+  }
+
+
+  currentRestaurantId =
+    data.restaurant_id;
+
+
+  if (
+    data.restaurants &&
+    data.restaurants.name
+  ) {
+
+    document.getElementById(
+      "restaurantName"
+    ).textContent =
+      data.restaurants.name;
+
+  }
+
+
+  document.getElementById(
+    "loginBox"
+  ).style.display = "none";
+
+
+  document.getElementById(
+    "dashboard"
+  ).style.display = "block";
+
+
+  await loadOrders();
+
+}
+
+
+/* =========================
+   LOAD ORDERS
+========================= */
+
+async function loadOrders() {
+
+  if (!currentRestaurantId) {
+
+    return;
+
+  }
+
+
+  const ordersList =
+    document.getElementById(
+      "ordersList"
+    );
+
+  ordersList.innerHTML =
+    "Loading orders...";
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+
+      .from("orders")
+
+      .select("*")
+
+      .eq(
+        "restaurant_id",
+        currentRestaurantId
+      )
+
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      )
+
+      .limit(50);
+
+
+  if (error) {
+
+    console.error(error);
+
+    ordersList.innerHTML =
+      "Unable to load orders.";
+
+    return;
+
+  }
+
+
+  calculateDashboard(data || []);
+
+  renderOrders(data || []);
+
+}
+
+
+/* =========================
+   DASHBOARD NUMBERS
+========================= */
+
+function calculateDashboard(
+  orders
+) {
+
+  const today =
+    new Date();
+
+  const startOfDay =
+    new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+
+
+  const todayOrders =
+    orders.filter(order => {
+
+      if (!order.created_at) {
+
+        return false;
+
+      }
+
+      return new Date(
+        order.created_at
+      ) >= startOfDay;
+
+    });
+
+
+  let sales = 0;
+
+
+  todayOrders.forEach(order => {
+
+    const status =
+      String(
+        order.order_status ||
+        order.status ||
+        ""
+      ).toLowerCase();
+
+
+    if (
+      status !== "cancelled" &&
+      status !== "canceled"
+    ) {
+
+      sales += Number(
+        order.total || 0
+      );
+
+    }
+
+  });
+
+
+  const newOrders =
+    todayOrders.filter(order => {
+
+      const status =
+        String(
+          order.order_status ||
+          order.status ||
+          ""
+        ).toLowerCase();
+
+      return (
+        status === "new" ||
+        status === "pending"
+      );
+
+    });
+
+
+  const preparingOrders =
+    todayOrders.filter(order => {
+
+      const status =
+        String(
+          order.order_status ||
+          order.status ||
+          ""
+        ).toLowerCase();
+
+      return (
+        status === "preparing" ||
+        status === "processing"
+      );
+
+    });
+
+
+  document.getElementById(
+    "ordersToday"
+  ).textContent =
+    todayOrders.length;
+
+
+  document.getElementById(
+    "salesToday"
+  ).textContent =
+    "₱" +
+    sales.toLocaleString(
+      "en-PH",
+      {
+        minimumFractionDigits: 2
+      }
+    );
+
+
+  document.getElementById(
+    "newOrders"
+  ).textContent =
+    newOrders.length;
+
+
+  document.getElementById(
+    "preparingOrders"
+  ).textContent =
+    preparingOrders.length;
+
+}
+
+
+/* =========================
+   DISPLAY ORDERS
+========================= */
+
+function renderOrders(
+  orders
+) {
+
+  const ordersList =
+    document.getElementById(
+      "ordersList"
+    );
+
+
+  if (!orders.length) {
+
+    ordersList.innerHTML =
+      `<div class="empty">
+        No orders yet.
+      </div>`;
+
+    return;
+
+  }
+
+
+  ordersList.innerHTML = "";
+
+
+  orders.forEach(order => {
+
+    const orderNumber =
+      order.order_number ||
+      order.id?.slice(0, 😎 ||
+      "N/A";
+
+
+    const customer =
+      order.customer_name ||
+      "Customer";
+
+
+    const status =
+      order.order_status ||
+      order.status ||
+      "Pending";
+
+
+    const total =
+      Number(
+        order.total || 0
+      );
+
+
+    const table =
+      order.table_number ||
+      order.order_type ||
+      "N/A";
+
+
+    const date =
+      order.created_at
+        ? new Date(
+            order.created_at
+          ).toLocaleString(
+            "en-PH"
+          )
+        : "";
+
+
+    const orderDiv =
+      document.createElement(
+        "div"
+      );
+
+
+    orderDiv.className =
+      "order";
+
+
+    orderDiv.innerHTML = `
+
+      <div class="order-top">
+
+        <div class="order-number">
+
+          Order #${orderNumber}
+
+        </div>
+
+        <div class="status">
+
+          ${status}
+
+        </div>
+
+      </div>
+
+
+      <div class="order-details">
+
+        Customer: ${customer}
+
+        <br>
+
+        Table / Type: ${table}
+
+        <br>
+
+        ${date}
+
+      </div>
+
+
+      <div class="order-total">
+
+        Total:
+        ₱${total.toLocaleString(
+          "en-PH",
+          {
+            minimumFractionDigits: 2
+          }
+        )}
+
+      </div>
+
+    `;
+
+
+    ordersList.appendChild(
+      orderDiv
+    );
+
+  });
+
+}
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+async function logout() {
+
+  await supabaseClient.auth.signOut();
+
+  currentRestaurantId = null;
+
+  showLogin();
+
+}
+
+
+/* =========================
+   SHOW LOGIN
+========================= */
+
+function showLogin() {
+
+  document.getElementById(
+    "loginBox"
+  ).style.display = "block";
+
+
+  document.getElementById(
+    "dashboard"
+  ).style.display = "none";
+
+}
+
+
+/* =========================
+   CHECK SESSION
+========================= */
+
+async function checkSession() {
+
+  const {
+    data: {
+      session
+    }
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  if (session) {
+
+    await startDashboard();
+
+  } else {
+
+    showLogin();
+
+  }
+
+}
+
+
+/* START */
+
+checkSession();
+
+</script>
+
+</body>
+</html>
