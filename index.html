@@ -182,10 +182,6 @@
       transition: .2s;
     }
 
-    .category-menu button:hover {
-      transform: translateY(-2px);
-    }
-
     .category-menu button.active {
       background: #111;
       color: #fff;
@@ -248,10 +244,6 @@
       color: white;
       font-size: 23px;
       cursor: pointer;
-    }
-
-    .quantity-control button:hover {
-      background: #238636;
     }
 
     .quantity-control span {
@@ -395,7 +387,6 @@
     }
 
     @media (max-width: 700px) {
-
       .hero {
         height: 190px;
       }
@@ -429,7 +420,6 @@
 
 <body>
 
-  <!-- HERO -->
   <div class="hero">
     <h1>HALINA BISTRO CAFE</h1>
     <p>Scan • Order • Enjoy</p>
@@ -447,25 +437,24 @@
       <div class="order-type-options">
 
         <button
+          type="button"
           id="dineInButton"
           class="order-type-btn"
-          onclick="selectOrderType('dine_in')"
         >
           <span class="order-type-icon">🍽️</span>
           Dine In
         </button>
 
         <button
+          type="button"
           id="takeoutButton"
           class="order-type-btn"
-          onclick="selectOrderType('takeout')"
         >
           <span class="order-type-icon">🥡</span>
           Takeout
         </button>
 
       </div>
-
     </div>
 
 
@@ -485,8 +474,9 @@
       </div>
 
       <button
+        type="button"
         class="change-type"
-        onclick="changeOrderType()"
+        id="changeTypeFromTable"
       >
         Change order type
       </button>
@@ -510,8 +500,9 @@
       </div>
 
       <button
+        type="button"
         class="change-type"
-        onclick="changeOrderType()"
+        id="changeTypeFromTakeout"
       >
         Change order type
       </button>
@@ -526,121 +517,37 @@
         Menu
       </div>
 
-      <!-- CATEGORY -->
       <div class="category-menu">
 
-        <button
-          data-category="all"
-          class="active"
-          onclick="setCategory('all')"
-        >
-          🍽️
-          <span>All</span>
-        </button>
+        <button type="button" data-category="all" class="active">🍽️ <span>All</span></button>
 
-        <button
-          data-category="all-day-breakfast"
-          onclick="setCategory('all-day-breakfast')"
-        >
-          🍳
-          <span>Breakfast</span>
-        </button>
+        <button type="button" data-category="all-day-breakfast">🍳 <span>Breakfast</span></button>
 
-        <button
-          data-category="a-la-carte"
-          onclick="setCategory('a-la-carte')"
-        >
-          🍗
-          <span>A La Carte</span>
-        </button>
+        <button type="button" data-category="a-la-carte">🍗 <span>A La Carte</span></button>
 
-        <button
-          data-category="pulutan"
-          onclick="setCategory('pulutan')"
-        >
-          🍟
-          <span>Pulutan</span>
-        </button>
+        <button type="button" data-category="pulutan">🍟 <span>Pulutan</span></button>
 
-        <button
-          data-category="pasta"
-          onclick="setCategory('pasta')"
-        >
-          🍝
-          <span>Pasta</span>
-        </button>
+        <button type="button" data-category="pasta">🍝 <span>Pasta</span></button>
 
-        <button
-          data-category="sandwich"
-          onclick="setCategory('sandwich')"
-        >
-          🥪
-          <span>Sandwich</span>
-        </button>
+        <button type="button" data-category="sandwich">🥪 <span>Sandwich</span></button>
 
-        <button
-          data-category="rice"
-          onclick="setCategory('rice')"
-        >
-          🍚
-          <span>Rice</span>
-        </button>
+        <button type="button" data-category="rice">🍚 <span>Rice</span></button>
 
-        <button
-          data-category="beers"
-          onclick="setCategory('beers')"
-        >
-          🍺
-          <span>Beers</span>
-        </button>
+        <button type="button" data-category="beers">🍺 <span>Beers</span></button>
 
-        <button
-          data-category="whiskey"
-          onclick="setCategory('whiskey')"
-        >
-          🥃
-          <span>Whiskey</span>
-        </button>
+        <button type="button" data-category="whiskey">🥃 <span>Whiskey</span></button>
 
-        <button
-          data-category="tequila"
-          onclick="setCategory('tequila')"
-        >
-          🍹
-          <span>Tequila</span>
-        </button>
+        <button type="button" data-category="tequila">🍹 <span>Tequila</span></button>
 
-        <button
-          data-category="soju"
-          onclick="setCategory('soju')"
-        >
-          🍶
-          <span>Soju</span>
-        </button>
+        <button type="button" data-category="soju">🍶 <span>Soju</span></button>
 
-        <button
-          data-category="soda"
-          onclick="setCategory('soda')"
-        >
-          🥤
-          <span>Soda</span>
-        </button>
+        <button type="button" data-category="soda">🥤 <span>Soda</span></button>
 
-        <button
-          data-category="others"
-          onclick="setCategory('others')"
-        >
-          💧
-          <span>Others</span>
-        </button>
+        <button type="button" data-category="others">💧 <span>Others</span></button>
 
       </div>
 
-
-      <div
-        class="menu-grid"
-        id="menuGrid"
-      ></div>
+      <div class="menu-grid" id="menuGrid"></div>
 
     </div>
 
@@ -655,60 +562,49 @@
       <div class="order-box">
 
         <div id="orderItems">
-
           <div class="empty-order">
             No items added yet.
           </div>
-
         </div>
-
 
         <div class="total-row">
           <span>Total</span>
           <span id="totalAmount">₱0</span>
         </div>
 
-
-        <!-- PAYMENT -->
         <div class="payment-title">
           Payment Method
         </div>
 
-
         <div class="payment-options">
 
           <button
+            type="button"
             id="qrPaymentButton"
             class="payment-btn"
-            onclick="selectPayment('QR')"
           >
             💳 Pay via QR
           </button>
 
           <button
+            type="button"
             id="counterPaymentButton"
             class="payment-btn"
-            onclick="selectPayment('Counter')"
           >
             💵 Pay at Counter
           </button>
 
           <button
+            type="button"
             id="tablePaymentButton"
             class="payment-btn"
-            onclick="selectPayment('Table')"
           >
             🪑 Pay at Table
           </button>
 
         </div>
 
-
-        <!-- QR INFO -->
-        <div
-          id="qrInfo"
-          class="payment-info"
-        >
+        <div id="qrInfo" class="payment-info">
 
           <div>
             Scan the QR code below to pay.
@@ -717,49 +613,35 @@
           <div id="qrcode"></div>
 
           <button
+            type="button"
             class="paid-btn"
-            onclick="markAsPaid()"
+            id="paidButton"
           >
             I've Paid
           </button>
 
         </div>
 
-
-        <!-- COUNTER INFO -->
-        <div
-          id="counterInfo"
-          class="payment-info"
-        >
+        <div id="counterInfo" class="payment-info">
           Please pay at the counter.
         </div>
 
-
-        <!-- TABLE INFO -->
-        <div
-          id="tableInfo"
-          class="payment-info"
-        >
+        <div id="tableInfo" class="payment-info">
           Please pay at your table.
         </div>
 
-
-        <!-- SEND ORDER -->
         <button
+          type="button"
           id="sendOrderButton"
           class="send-btn"
-          onclick="sendOrder()"
         >
           SEND ORDER
         </button>
 
-
-        <!-- SUCCESS -->
         <div
           id="successBox"
           class="success-box"
         >
-
           <div class="success-title">
             Order Sent Successfully!
           </div>
@@ -772,1017 +654,592 @@
             id="successOrderNumber"
             style="margin-top:10px;font-weight:bold;"
           ></div>
-
         </div>
 
-
-        <!-- ERROR -->
-        <div
-          id="errorBox"
-          class="error-box"
-        ></div>
+        <div id="errorBox" class="error-box"></div>
 
       </div>
-
     </div>
 
   </div>
 
 
-  <script>
-
-    /* =====================================================
-       SUPABASE
-    ===================================================== */
-
-    const SUPABASE_URL =
-      "https://isqcuycjrbjtmqhzckvb.supabase.co";
-
-    const SUPABASE_KEY =
-      "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
-
-    const RESTAURANT_ID =
-      "5e562ca7-38aa-4894-8265-ddca2f4e61b6";
-
-
-    /* =====================================================
-       TABLE FROM QR URL
-       Example:
-       index.html?table=5
-    ===================================================== */
-
-    const urlParams =
-      new URLSearchParams(window.location.search);
-
-    const table =
-      urlParams.get("table") || "";
-
-    document.getElementById("tableNumber").textContent =
-      table || "?";
-
-
-    /* =====================================================
-       MENU
-    ===================================================== */
-
-    const menu = [
-
-      {
-        id: "tapsilog",
-        name: "TAPSILOG",
-        price: 219,
-        image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
-        category: "all-day-breakfast"
-      },
-
-      {
-        id: "lechon-kawali-silog",
-        name: "LECHON KAWALI SILOG",
-        price: 219,
-        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-        category: "all-day-breakfast"
-      },
-
-      {
-        id: "pork-silog",
-        name: "PORK SILOG",
-        price: 199,
-        image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-        category: "all-day-breakfast"
-      },
-
-      {
-        id: "bang-silog",
-        name: "BANG SILOG",
-        price: 199,
-        image: "https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
-        category: "all-day-breakfast"
-      },
-
-
-      /* A LA CARTE */
-
-      {
-        id: "whole-fried-chicken",
-        name: "Whole Fried Chicken",
-        price: 499,
-        image: "https://images.unsplash.com/photo-1562967916-eb82221df92?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-      {
-        id: "half-fried-chicken",
-        name: "Half Fried Chicken",
-        price: 299,
-        image: "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-      {
-        id: "shanghai",
-        name: "Shanghai",
-        price: 200,
-        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-      {
-        id: "chicken-barbecue",
-        name: "Chicken Barbecue",
-        price: 350,
-        image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-      {
-        id: "lechon-kawali",
-        name: "Lechon Kawali",
-        price: 360,
-        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-      {
-        id: "crispy-bangus",
-        name: "Crispy Bangus",
-        price: 360,
-        image: "https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-      {
-        id: "pork-sinigang",
-        name: "Pork Sinigang",
-        price: 360,
-        image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-      {
-        id: "beef-sinigang",
-        name: "Beef Sinigang",
-        price: 390,
-        image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-      {
-        id: "beef-caldereta",
-        name: "Beef Caldereta",
-        price: 399,
-        image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-      {
-        id: "kare-kare",
-        name: "Kare-Kare",
-        price: 399,
-        image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-        category: "a-la-carte"
-      },
-
-
-      /* PULUTAN */
-
-      {
-        id: "endamame",
-        name: "Endamame",
-        price: 79,
-        image: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "cg-endamame",
-        name: "CG Endamame",
-        price: 99,
-        image: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "classic-fries",
-        name: "Classic Fries",
-        price: 149,
-        image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "fish-fries",
-        name: "Fish & Fries",
-        price: 219,
-        image: "https://images.unsplash.com/photo-1579208030886-b937da0925b5?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "fries-overload",
-        name: "Fries Overload",
-        price: 249,
-        image: "https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "chichabu",
-        name: "Chichabu",
-        price: 249,
-        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "chicken-fingers",
-        name: "Chicken Fingers",
-        price: 259,
-        image: "https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "calamari",
-        name: "Calamari",
-        price: 259,
-        image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "tokwat-baboy",
-        name: "Tokwa't Baboy",
-        price: 279,
-        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "pork-sisig",
-        name: "Pork Sisig",
-        price: 279,
-        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "nachos",
-        name: "Nachos",
-        price: 299,
-        image: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-      {
-        id: "buffalo-wings",
-        name: "Buffalo Wings",
-        price: 299,
-        image: "https://images.unsplash.com/photo-1527477396000-e27163b481c2?auto=format&fit=crop&w=900&q=80",
-        category: "pulutan"
-      },
-
-
-      /* PASTA */
-
-      {
-        id: "kiddie-spaghetti",
-        name: "Kiddie Spaghetti",
-        price: 129,
-        image: "https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=900&q=80",
-        category: "pasta"
-      },
-
-      {
-        id: "creamy-carbonara",
-        name: "Creamy Carbonara",
-        price: 149,
-        image: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=80",
-        category: "pasta"
-      },
-
-      {
-        id: "classic-spaghetti-marinara",
-        name: "Classic Spaghetti Marinara",
-        price: 179,
-        image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=900&q=80",
-        category: "pasta"
-      },
-
-
-      /* SANDWICH */
-
-      {
-        id: "ham-egg-sandwich",
-        name: "Ham & Egg Sandwich",
-        price: 119,
-        image: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=900&q=80",
-        category: "sandwich"
-      },
-
-      {
-        id: "clubhouse-sandwich",
-        name: "Clubhouse Sandwich",
-        price: 199,
-        image: "https://images.unsplash.com/photo-1553909489-cd47e0907980?auto=format&fit=crop&w=900&q=80",
-        category: "sandwich"
-      },
-
-
-      /* RICE */
-
-      {
-        id: "white-rice",
-        name: "White Rice",
-        price: 35,
-        image: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
-        category: "rice"
-      },
-
-      {
-        id: "garlic-rice",
-        name: "Garlic Rice",
-        price: 39,
-        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
-        category: "rice"
-      },
-
-      {
-        id: "white-rice-platter",
-        name: "White Rice Platter",
-        price: 150,
-        image: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
-        category: "rice"
-      },
-
-      {
-        id: "garlic-rice-platter",
-        name: "Garlic Rice Platter",
-        price: 200,
-        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
-        category: "rice"
-      },
-
-
-      /* BEERS */
-
-      {
-        id: "sm-pale-pilsen",
-        name: "SM Pale Pilsen",
-        price: 95,
-        image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
-        category: "beers"
-      },
-
-      {
-        id: "san-mig-light",
-        name: "San Mig Light",
-        price: 99,
-        image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-        category: "beers"
-      },
-
-      {
-        id: "san-mig-apple",
-        name: "San Mig Apple",
-        price: 99,
-        image: "https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=900&q=80",
-        category: "beers"
-      },
-
-      {
-        id: "red-horse-stallion",
-        name: "Red Horse Stallion",
-        price: 99,
-        image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
-        category: "beers"
-      },
-
-      {
-        id: "beer-bucket",
-        name: "Bucket",
-        price: 545,
-        image: "https://images.unsplash.com/photo-1535958636474-b021ee887b13?auto=format&fit=crop&w=900&q=80",
-        category: "beers"
-      },
-
-
-      /* WHISKEY */
-
-      {
-        id: "jameson-45ml",
-        name: "Jameson — 45ml",
-        price: 170,
-        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-        category: "whiskey"
-      },
-
-      {
-        id: "jameson-1l",
-        name: "Jameson — 1L",
-        price: 1999,
-        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-        category: "whiskey"
-      },
-
-      {
-        id: "black-label-45ml",
-        name: "Black Label — 45ml",
-        price: 190,
-        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-        category: "whiskey"
-      },
-
-      {
-        id: "black-label-1l",
-        name: "Black Label — 1L",
-        price: 2599,
-        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-        category: "whiskey"
-      },
-
-      {
-        id: "jack-daniels-45ml",
-        name: "Jack Daniels — 45ml",
-        price: 200,
-        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-        category: "whiskey"
-      },
-
-      {
-        id: "jack-daniels-1l",
-        name: "Jack Daniels — 1L",
-        price: 2699,
-        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-        category: "whiskey"
-      },
-
-
-      /* TEQUILA */
-
-      {
-        id: "jose-cuervo-45ml",
-        name: "Jose Cuervo — 45ml",
-        price: 190,
-        image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-        category: "tequila"
-      },
-
-      {
-        id: "jose-cuervo-1l",
-        name: "Jose Cuervo — 1L",
-        price: 2499,
-        image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-        category: "tequila"
-      },
-
-
-      /* SOJU */
-
-      {
-        id: "jinro-grapefruit",
-        name: "Jinro Grapefruit",
-        price: 220,
-        image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
-        category: "soju"
-      },
-
-      {
-        id: "jinro-green-grape",
-        name: "Jinro Green Grape",
-        price: 220,
-        image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
-        category: "soju"
-      },
-
-      {
-        id: "jinro-strawberry",
-        name: "Jinro Strawberry",
-        price: 220,
-        image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
-        category: "soju"
-      },
-
-
-      /* SODA */
-
-      {
-        id: "coke-320ml",
-        name: "Coke 320ml",
-        price: 65,
-        image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-        category: "soda"
-      },
-
-      {
-        id: "coke-zero-320ml",
-        name: "Coke Zero 320ml",
-        price: 65,
-        image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-        category: "soda"
-      },
-
-      {
-        id: "royal-320ml",
-        name: "Royal 320ml",
-        price: 65,
-        image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-        category: "soda"
-      },
-
-      {
-        id: "sprite-320ml",
-        name: "Sprite 320ml",
-        price: 65,
-        image: "https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
-        category: "soda"
-      },
-
-      {
-        id: "coke-1-5l",
-        name: "Coke 1.5L",
-        price: 160,
-        image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-        category: "soda"
-      },
-
-      {
-        id: "sprite-1-5l",
-        name: "Sprite 1.5L",
-        price: 160,
-        image: "https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
-        category: "soda"
-      },
-
-
-      /* OTHERS */
-
-      {
-        id: "bottled-water",
-        name: "Bottled Water",
-        price: 25,
-        image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=900&q=80",
-        category: "others"
-      },
-
-      {
-        id: "pitcher-iced-tea",
-        name: "Pitcher Iced Tea",
-        price: 150,
-        image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=900&q=80",
-        category: "others"
-      }
-
-    ];
-
-
-    /* =====================================================
-       CART
-    ===================================================== */
-
-    let cart = menu.map(function(item) {
-      return {
-        ...item,
-        qty: 0
-      };
-    });
-
-
-    let activeCategory = "all";
-
-    let orderType = "";
-
-    let selectedPayment = "";
-
-    let paymentStatus = "pending";
-
-    let paymentReference = null;
-
-
-    /* =====================================================
-       ORDER TYPE
-    ===================================================== */
-
-    function selectOrderType(type) {
-
-      orderType = type;
-
-      document
-        .getElementById("dineInButton")
-        .classList.remove("selected");
-
-      document
-        .getElementById("takeoutButton")
-        .classList.remove("selected");
-
-
-      if (type === "dine_in") {
-
-        document
-          .getElementById("dineInButton")
-          .classList.add("selected");
-
-        document
-          .getElementById("tableBox")
-          .style.display = "block";
-
-        document
-          .getElementById("takeoutBox")
-          .style.display = "none";
-
-        document
-          .getElementById("tablePaymentButton")
-          .style.display = "block";
-
-      }
-
-
-      if (type === "takeout") {
-
-        document
-          .getElementById("takeoutButton")
-          .classList.add("selected");
-
-        document
-          .getElementById("tableBox")
-          .style.display = "none";
-
-        document
-          .getElementById("takeoutBox")
-          .style.display = "block";
-
-        document
-          .getElementById("tablePaymentButton")
-          .style.display = "none";
-
-
-        if (selectedPayment === "Table") {
-
-          selectedPayment = "";
-
-          document
-            .getElementById("qrInfo")
-            .classList.remove("show");
-
-          document
-            .getElementById("counterInfo")
-            .classList.remove("show");
-
-          document
-            .getElementById("tableInfo")
-            .classList.remove("show");
-
-          document
-            .getElementById("tablePaymentButton")
-            .classList.remove("selected");
-
-        }
-
-      }
-
-
-      document
-        .getElementById("menuSection")
-        .style.display = "block";
-
-      document
-        .getElementById("orderSection")
-        .style.display = "block";
-
-
-      document
-        .getElementById("menuSection")
-        .scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-
-    }
-
-
-    /* =====================================================
-       CHANGE ORDER TYPE
-    ===================================================== */
-
-    function changeOrderType() {
-
-      orderType = "";
-
-      document
-        .getElementById("tableBox")
-        .style.display = "none";
-
-      document
-        .getElementById("takeoutBox")
-        .style.display = "none";
-
-      document
-        .getElementById("menuSection")
-        .style.display = "none";
-
-      document
-        .getElementById("orderSection")
-        .style.display = "none";
-
-
-      document
-        .getElementById("dineInButton")
-        .classList.remove("selected");
-
-      document
-        .getElementById("takeoutButton")
-        .classList.remove("selected");
-
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      });
-
-    }
-
-
-    /* =====================================================
-       RENDER MENU
-    ===================================================== */
-
-    function renderMenu() {
-
-      const menuGrid =
-        document.getElementById("menuGrid");
-
-      menuGrid.innerHTML = "";
-
-
-      const filteredMenu =
-        activeCategory === "all"
-          ? menu
-          : menu.filter(function(item) {
-              return item.category === activeCategory;
-            });
-
-
-      filteredMenu.forEach(function(item) {
-
-        const cartItem =
-          cart.find(function(c) {
-            return c.id === item.id;
-          });
-
-
-        const qty =
-          cartItem ? cartItem.qty : 0;
-
-
-        menuGrid.innerHTML += `
-
-          <div class="menu-card">
-
-            <img
-              src="${item.image}"
-              alt="${item.name}"
-            >
-
-            <div class="menu-info">
-
-              <div class="menu-name">
-                ${item.name}
-              </div>
-
-              <div class="menu-price">
-                ₱${item.price.toLocaleString()}
-              </div>
-
-              <div class="quantity-control">
-
-                <button
-                  onclick="changeQtyById('${item.id}', -1)"
-                >
-                  −
-                </button>
-
-                <span id="qty-${item.id}">
-                  ${qty}
-                </span>
-
-                <button
-                  onclick="changeQtyById('${item.id}', 1)"
-                >
-                  +
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        `;
-
-      });
-
-    }
-
-
-    /* =====================================================
-       CATEGORY
-    ===================================================== */
-
-    function setCategory(category) {
-
-      activeCategory = category;
-
-
-      document
-        .querySelectorAll(".category-menu button")
-        .forEach(function(button) {
-
-          button.classList.remove("active");
-
-        });
-
-
-      const activeButton =
-        document.querySelector(
-          .category-menu button[data-category="${category}"]
-        );
-
-
-      if (activeButton) {
-        activeButton.classList.add("active");
-      }
-
-
-      renderMenu();
-
-    }
-
-
-    /* =====================================================
-       QUANTITY
-    ===================================================== */
-
-    function changeQtyById(id, change) {
-
-      const item =
-        cart.find(function(c) {
-          return c.id === id;
-        });
-
-
-      if (!item) {
-        return;
-      }
-
-
-      item.qty += change;
-
-
-      if (item.qty < 0) {
-        item.qty = 0;
-      }
-
-
-      const qtyElement =
-        document.getElementById("qty-" + id);
-
-
-      if (qtyElement) {
-        qtyElement.textContent = item.qty;
-      }
-
-
-      updateOrder();
-
-    }
-
-
-    /* =====================================================
-       UPDATE ORDER
-    ===================================================== */
-
-    function updateOrder() {
-
-      const orderItems =
-        document.getElementById("orderItems");
-
-
-      orderItems.innerHTML = "";
-
-
-      let total = 0;
-
-      let hasItems = false;
-
-
-      cart.forEach(function(item) {
-
-        if (item.qty > 0) {
-
-          hasItems = true;
-
-
-          const itemTotal =
-            item.price * item.qty;
-
-
-          total += itemTotal;
-
-
-          const row =
-            document.createElement("div");
-
-
-          row.className = "order-item";
-
-
-          row.innerHTML = `
-
-            <span>
-              ${item.name} × ${item.qty}
-            </span>
-
-            <span>
-              ₱${itemTotal.toLocaleString()}
-            </span>
-
-          `;
-
-
-          orderItems.appendChild(row);
-
-        }
-
-      });
-
-
-      if (!hasItems) {
-
-        orderItems.innerHTML = `
-
-          <div class="empty-order">
-            No items added yet.
-          </div>
-
-        `;
-
-      }
-
-
-      document
-        .getElementById("totalAmount")
-        .textContent =
-          "₱" + total.toLocaleString();
-
-    }
-
-
-    /* =====================================================
-       GET TOTAL
-    ===================================================== */
-
-    function getTotal() {
-
-      let total = 0;
-
-
-      cart.forEach(function(item) {
-
-        total +=
-          item.price * item.qty;
-
-      });
-
-
-      return total;
-
-    }
-
-
-    /* =====================================================
-       PAYMENT
-    ===================================================== */
-
-    function selectPayment(method) {
-
-      selectedPayment = method;
-
-      paymentStatus = "pending";
-
-      paymentReference = null;
-
-
-      document
-        .getElementById("qrPaymentButton")
-        .classList.remove("selected");
-
-      document
-        .getElementById("counterPaymentButton")
-        .classList.remove("selected");
-
-      document
-        .getElementById("tablePaymentButton")
-        .classList.remove("selected");
-
+<script>
+
+const SUPABASE_URL =
+  "https://isqcuycjrbjtmqhzckvb.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
+
+const RESTAURANT_ID =
+  "5e562ca7-38aa-4894-8265-ddca2f4e61b6";
+
+
+/* TABLE */
+
+const urlParams =
+  new URLSearchParams(window.location.search);
+
+const table =
+  urlParams.get("table") || "";
+
+document.getElementById("tableNumber").textContent =
+  table || "?";
+
+
+/* MENU */
+
+const menu = [
+
+  {
+    id:"tapsilog",
+    name:"TAPSILOG",
+    price:219,
+    image:"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
+    category:"all-day-breakfast"
+  },
+
+  {
+    id:"lechon-kawali-silog",
+    name:"LECHON KAWALI SILOG",
+    price:219,
+    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+    category:"all-day-breakfast"
+  },
+
+  {
+    id:"pork-silog",
+    name:"PORK SILOG",
+    price:199,
+    image:"https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
+    category:"all-day-breakfast"
+  },
+
+  {
+    id:"bang-silog",
+    name:"BANG SILOG",
+    price:199,
+    image:"https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
+    category:"all-day-breakfast"
+  },
+
+  {
+    id:"whole-fried-chicken",
+    name:"Whole Fried Chicken",
+    price:499,
+    image:"https://images.unsplash.com/photo-1562967916-eb82221df92?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"half-fried-chicken",
+    name:"Half Fried Chicken",
+    price:299,
+    image:"https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"shanghai",
+    name:"Shanghai",
+    price:200,
+    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"chicken-barbecue",
+    name:"Chicken Barbecue",
+    price:350,
+    image:"https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"lechon-kawali",
+    name:"Lechon Kawali",
+    price:360,
+    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"crispy-bangus",
+    name:"Crispy Bangus",
+    price:360,
+    image:"https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"pork-sinigang",
+    name:"Pork Sinigang",
+    price:360,
+    image:"https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"beef-sinigang",
+    name:"Beef Sinigang",
+    price:390,
+    image:"https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"beef-caldereta",
+    name:"Beef Caldereta",
+    price:399,
+    image:"https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"kare-kare",
+    name:"Kare-Kare",
+    price:399,
+    image:"https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
+    category:"a-la-carte"
+  },
+
+  {
+    id:"endamame",
+    name:"Endamame",
+    price:79,
+    image:"https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"cg-endamame",
+    name:"CG Endamame",
+    price:99,
+    image:"https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"classic-fries",
+    name:"Classic Fries",
+    price:149,
+    image:"https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"fish-fries",
+    name:"Fish & Fries",
+    price:219,
+    image:"https://images.unsplash.com/photo-1579208030886-b937da0925b5?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"fries-overload",
+    name:"Fries Overload",
+    price:249,
+    image:"https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"chichabu",
+    name:"Chichabu",
+    price:249,
+    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"chicken-fingers",
+    name:"Chicken Fingers",
+    price:259,
+    image:"https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"calamari",
+    name:"Calamari",
+    price:259,
+    image:"https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"tokwat-baboy",
+    name:"Tokwa't Baboy",
+    price:279,
+    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"pork-sisig",
+    name:"Pork Sisig",
+    price:279,
+    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"nachos",
+    name:"Nachos",
+    price:299,
+    image:"https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"buffalo-wings",
+    name:"Buffalo Wings",
+    price:299,
+    image:"https://images.unsplash.com/photo-1527477396000-e27163b481c2?auto=format&fit=crop&w=900&q=80",
+    category:"pulutan"
+  },
+
+  {
+    id:"kiddie-spaghetti",
+    name:"Kiddie Spaghetti",
+    price:129,
+    image:"https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=900&q=80",
+    category:"pasta"
+  },
+
+  {
+    id:"creamy-carbonara",
+    name:"Creamy Carbonara",
+    price:149,
+    image:"https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=80",
+    category:"pasta"
+  },
+
+  {
+    id:"classic-spaghetti-marinara",
+    name:"Classic Spaghetti Marinara",
+    price:179,
+    image:"https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=900&q=80",
+    category:"pasta"
+  },
+
+  {
+    id:"ham-egg-sandwich",
+    name:"Ham & Egg Sandwich",
+    price:119,
+    image:"https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=900&q=80",
+    category:"sandwich"
+  },
+
+  {
+    id:"clubhouse-sandwich",
+    name:"Clubhouse Sandwich",
+    price:199,
+    image:"https://images.unsplash.com/photo-1553909489-cd47e0907980?auto=format&fit=crop&w=900&q=80",
+    category:"sandwich"
+  },
+
+  {
+    id:"white-rice",
+    name:"White Rice",
+    price:35,
+    image:"https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
+    category:"rice"
+  },
+
+  {
+    id:"garlic-rice",
+    name:"Garlic Rice",
+    price:39,
+    image:"https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
+    category:"rice"
+  },
+
+  {
+    id:"white-rice-platter",
+    name:"White Rice Platter",
+    price:150,
+    image:"https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
+    category:"rice"
+  },
+
+  {
+    id:"garlic-rice-platter",
+    name:"Garlic Rice Platter",
+    price:200,
+    image:"https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
+    category:"rice"
+  },
+
+  {
+    id:"sm-pale-pilsen",
+    name:"SM Pale Pilsen",
+    price:95,
+    image:"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
+    category:"beers"
+  },
+
+  {
+    id:"san-mig-light",
+    name:"San Mig Light",
+    price:99,
+    image:"https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
+    category:"beers"
+  },
+
+  {
+    id:"san-mig-apple",
+    name:"San Mig Apple",
+    price:99,
+    image:"https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=900&q=80",
+    category:"beers"
+  },
+
+  {
+    id:"red-horse-stallion",
+    name:"Red Horse Stallion",
+    price:99,
+    image:"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
+    category:"beers"
+  },
+
+  {
+    id:"beer-bucket",
+    name:"Bucket",
+    price:545,
+    image:"https://images.unsplash.com/photo-1535958636474-b021ee887b13?auto=format&fit=crop&w=900&q=80",
+    category:"beers"
+  },
+
+  {
+    id:"jameson-45ml",
+    name:"Jameson — 45ml",
+    price:170,
+    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+    category:"whiskey"
+  },
+
+  {
+    id:"jameson-1l",
+    name:"Jameson — 1L",
+    price:1999,
+    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+    category:"whiskey"
+  },
+
+  {
+    id:"black-label-45ml",
+    name:"Black Label — 45ml",
+    price:190,
+    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+    category:"whiskey"
+  },
+
+  {
+    id:"black-label-1l",
+    name:"Black Label — 1L",
+    price:2599,
+    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+    category:"whiskey"
+  },
+
+  {
+    id:"jack-daniels-45ml",
+    name:"Jack Daniels — 45ml",
+    price:200,
+    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+    category:"whiskey"
+  },
+
+  {
+    id:"jack-daniels-1l",
+    name:"Jack Daniels — 1L",
+    price:2699,
+    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+    category:"whiskey"
+  },
+
+  {
+    id:"jose-cuervo-45ml",
+    name:"Jose Cuervo — 45ml",
+    price:190,
+    image:"https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
+    category:"tequila"
+  },
+
+  {
+    id:"jose-cuervo-1l",
+    name:"Jose Cuervo — 1L",
+    price:2499,
+    image:"https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
+    category:"tequila"
+  },
+
+  {
+    id:"jinro-grapefruit",
+    name:"Jinro Grapefruit",
+    price:220,
+    image:"https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
+    category:"soju"
+  },
+
+  {
+    id:"jinro-green-grape",
+    name:"Jinro Green Grape",
+    price:220,
+    image:"https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
+    category:"soju"
+  },
+
+  {
+    id:"jinro-strawberry",
+    name:"Jinro Strawberry",
+    price:220,
+    image:"https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
+    category:"soju"
+  },
+
+  {
+    id:"coke-320ml",
+    name:"Coke 320ml",
+    price:65,
+    image:"https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
+    category:"soda"
+  },
+
+  {
+    id:"coke-zero-320ml",
+    name:"Coke Zero 320ml",
+    price:65,
+    image:"https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
+    category:"soda"
+  },
+
+  {
+    id:"royal-320ml",
+    name:"Royal 320ml",
+    price:65,
+    image:"https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
+    category:"soda"
+  },
+
+  {
+    id:"sprite-320ml",
+    name:"Sprite 320ml",
+    price:65,
+    image:"https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
+    category:"soda"
+  },
+
+  {
+    id:"coke-1-5l",
+    name:"Coke 1.5L",
+    price:160,
+    image:"https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
+    category:"soda"
+  },
+
+  {
+    id:"sprite-1-5l",
+    name:"Sprite 1.5L",
+    price:160,
+    image:"https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
+    category:"soda"
+  },
+
+  {
+    id:"bottled-water",
+    name:"Bottled Water",
+    price:25,
+    image:"https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=900&q=80",
+    category:"others"
+  },
+
+  {
+    id:"pitcher-iced-tea",
+    name:"Pitcher Iced Tea",
+    price:150,
+    image:"https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=900&q=80",
+    category:"others"
+  }
+
+];
+
+
+/* CART */
+
+let cart = menu.map(function(item) {
+  return {
+    ...item,
+    qty: 0
+  };
+});
+
+let activeCategory = "all";
+let orderType = "";
+let selectedPayment = "";
+let paymentStatus = "pending";
+let paymentReference = null;
+
+
+/* ORDER TYPE */
+
+function selectOrderType(type) {
+
+  orderType = type;
+
+  document
+    .getElementById("dineInButton")
+    .classList.remove("selected");
+
+  document
+    .getElementById("takeoutButton")
+    .classList.remove("selected");
+
+
+  if (type === "dine_in") {
+
+    document
+      .getElementById("dineInButton")
+      .classList.add("selected");
+
+    document
+      .getElementById("tableBox")
+      .style.display = "block";
+
+    document
+      .getElementById("takeoutBox")
+      .style.display = "none";
+
+    document
+      .getElementById("tablePaymentButton")
+      .style.display = "block";
+
+  }
+
+
+  if (type === "takeout") {
+
+    document
+      .getElementById("takeoutButton")
+      .classList.add("selected");
+
+    document
+      .getElementById("tableBox")
+      .style.display = "none";
+
+    document
+      .getElementById("takeoutBox")
+      .style.display = "block";
+
+    document
+      .getElementById("tablePaymentButton")
+      .style.display = "none";
+
+    if (selectedPayment === "Table") {
+
+      selectedPayment = "";
 
       document
         .getElementById("qrInfo")
@@ -1796,436 +1253,712 @@
         .getElementById("tableInfo")
         .classList.remove("show");
 
-
-      if (method === "QR") {
-
-        document
-          .getElementById("qrPaymentButton")
-          .classList.add("selected");
-
-        document
-          .getElementById("qrInfo")
-          .classList.add("show");
-
-
-        generateQR();
-
-      }
-
-
-      if (method === "Counter") {
-
-        document
-          .getElementById("counterPaymentButton")
-          .classList.add("selected");
-
-        document
-          .getElementById("counterInfo")
-          .classList.add("show");
-
-      }
-
-
-      if (method === "Table") {
-
-        document
-          .getElementById("tablePaymentButton")
-          .classList.add("selected");
-
-        document
-          .getElementById("tableInfo")
-          .classList.add("show");
-
-      }
-
+      document
+        .getElementById("tablePaymentButton")
+        .classList.remove("selected");
     }
+  }
 
 
-    /* =====================================================
-       DEMO QR
-    ===================================================== */
+  document
+    .getElementById("menuSection")
+    .style.display = "block";
 
-    function generateQR() {
-
-      const qrContainer =
-        document.getElementById("qrcode");
-
-
-      qrContainer.innerHTML = "";
+  document
+    .getElementById("orderSection")
+    .style.display = "block";
 
 
-      const total =
-        getTotal();
+  renderMenu();
+
+  updateOrder();
 
 
-      const qrData =
-        "HALINAQR" +
-        "|TYPE=" +
-        orderType +
-        "|TABLE=" +
-        (
-          orderType === "dine_in"
-            ? table
-            : "TAKEOUT"
-        ) +
-        "|AMOUNT=" +
-        total;
+  setTimeout(function() {
+
+    document
+      .getElementById("menuSection")
+      .scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+  }, 100);
+
+}
 
 
-      if (typeof QRCode !== "undefined") {
+/* CHANGE ORDER TYPE */
 
-        new QRCode(qrContainer, {
+function changeOrderType() {
 
-          text: qrData,
+  orderType = "";
 
-          width: 180,
+  document
+    .getElementById("tableBox")
+    .style.display = "none";
 
-          height: 180
+  document
+    .getElementById("takeoutBox")
+    .style.display = "none";
 
+  document
+    .getElementById("menuSection")
+    .style.display = "none";
+
+  document
+    .getElementById("orderSection")
+    .style.display = "none";
+
+  document
+    .getElementById("dineInButton")
+    .classList.remove("selected");
+
+  document
+    .getElementById("takeoutButton")
+    .classList.remove("selected");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+
+/* MENU */
+
+function renderMenu() {
+
+  const menuGrid =
+    document.getElementById("menuGrid");
+
+  menuGrid.innerHTML = "";
+
+  const filteredMenu =
+    activeCategory === "all"
+      ? menu
+      : menu.filter(function(item) {
+          return item.category === activeCategory;
         });
 
-      }
 
+  filteredMenu.forEach(function(item) {
+
+    const cartItem =
+      cart.find(function(c) {
+        return c.id === item.id;
+      });
+
+    const qty =
+      cartItem ? cartItem.qty : 0;
+
+
+    menuGrid.innerHTML += `
+
+      <div class="menu-card">
+
+        <img
+          src="${item.image}"
+          alt="${item.name}"
+        >
+
+        <div class="menu-info">
+
+          <div class="menu-name">
+            ${item.name}
+          </div>
+
+          <div class="menu-price">
+            ₱${item.price.toLocaleString()}
+          </div>
+
+          <div class="quantity-control">
+
+            <button
+              type="button"
+              onclick="changeQtyById('${item.id}', -1)"
+            >
+              −
+            </button>
+
+            <span id="qty-${item.id}">
+              ${qty}
+            </span>
+
+            <button
+              type="button"
+              onclick="changeQtyById('${item.id}', 1)"
+            >
+              +
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  });
+}
+
+
+/* CATEGORY */
+
+function setCategory(category) {
+
+  activeCategory = category;
+
+  document
+    .querySelectorAll(".category-menu button")
+    .forEach(function(button) {
+      button.classList.remove("active");
+    });
+
+
+  const activeButton =
+    document.querySelector(
+      '.category-menu button[data-category="' +
+      category +
+      '"]'
+    );
+
+
+  if (activeButton) {
+    activeButton.classList.add("active");
+  }
+
+  renderMenu();
+}
+
+
+/* QUANTITY */
+
+function changeQtyById(id, change) {
+
+  const item =
+    cart.find(function(c) {
+      return c.id === id;
+    });
+
+  if (!item) {
+    return;
+  }
+
+  item.qty += change;
+
+  if (item.qty < 0) {
+    item.qty = 0;
+  }
+
+
+  const qtyElement =
+    document.getElementById("qty-" + id);
+
+  if (qtyElement) {
+    qtyElement.textContent = item.qty;
+  }
+
+  updateOrder();
+}
+
+
+/* ORDER */
+
+function updateOrder() {
+
+  const orderItems =
+    document.getElementById("orderItems");
+
+  orderItems.innerHTML = "";
+
+  let total = 0;
+  let hasItems = false;
+
+
+  cart.forEach(function(item) {
+
+    if (item.qty > 0) {
+
+      hasItems = true;
+
+      const itemTotal =
+        item.price * item.qty;
+
+      total += itemTotal;
+
+
+      const row =
+        document.createElement("div");
+
+      row.className = "order-item";
+
+      row.innerHTML = `
+        <span>${item.name} × ${item.qty}</span>
+        <span>₱${itemTotal.toLocaleString()}</span>
+      `;
+
+      orderItems.appendChild(row);
     }
+  });
 
 
-    /* =====================================================
-       DEMO PAID
-    ===================================================== */
+  if (!hasItems) {
 
-    function markAsPaid() {
-
-      paymentStatus = "paid";
-
-
-      paymentReference =
-        "DEMO-" + Date.now();
+    orderItems.innerHTML = `
+      <div class="empty-order">
+        No items added yet.
+      </div>
+    `;
+  }
 
 
-      alert(
-        "Payment marked as paid."
+  document
+    .getElementById("totalAmount")
+    .textContent =
+      "₱" + total.toLocaleString();
+}
+
+
+function getTotal() {
+
+  let total = 0;
+
+  cart.forEach(function(item) {
+    total += item.price * item.qty;
+  });
+
+  return total;
+}
+
+
+/* PAYMENT */
+
+function selectPayment(method) {
+
+  selectedPayment = method;
+
+  paymentStatus = "pending";
+  paymentReference = null;
+
+
+  document
+    .querySelectorAll(".payment-btn")
+    .forEach(function(button) {
+      button.classList.remove("selected");
+    });
+
+
+  document
+    .getElementById("qrInfo")
+    .classList.remove("show");
+
+  document
+    .getElementById("counterInfo")
+    .classList.remove("show");
+
+  document
+    .getElementById("tableInfo")
+    .classList.remove("show");
+
+
+  if (method === "QR") {
+
+    document
+      .getElementById("qrPaymentButton")
+      .classList.add("selected");
+
+    document
+      .getElementById("qrInfo")
+      .classList.add("show");
+
+    generateQR();
+  }
+
+
+  if (method === "Counter") {
+
+    document
+      .getElementById("counterPaymentButton")
+      .classList.add("selected");
+
+    document
+      .getElementById("counterInfo")
+      .classList.add("show");
+  }
+
+
+  if (method === "Table") {
+
+    document
+      .getElementById("tablePaymentButton")
+      .classList.add("selected");
+
+    document
+      .getElementById("tableInfo")
+      .classList.add("show");
+  }
+}
+
+
+/* QR */
+
+function generateQR() {
+
+  const qrContainer =
+    document.getElementById("qrcode");
+
+  qrContainer.innerHTML = "";
+
+  const total = getTotal();
+
+  const qrData =
+    "HALINAQR" +
+    "|TYPE=" +
+    orderType +
+    "|TABLE=" +
+    (
+      orderType === "dine_in"
+        ? table
+        : "TAKEOUT"
+    ) +
+    "|AMOUNT=" +
+    total;
+
+
+  if (typeof QRCode !== "undefined") {
+
+    new QRCode(qrContainer, {
+      text: qrData,
+      width: 180,
+      height: 180
+    });
+
+  }
+}
+
+
+/* PAID */
+
+function markAsPaid() {
+
+  paymentStatus = "paid";
+
+  paymentReference =
+    "DEMO-" + Date.now();
+
+  alert("Payment marked as paid.");
+}
+
+
+/* SEND ORDER */
+
+async function sendOrder() {
+
+  const errorBox =
+    document.getElementById("errorBox");
+
+  const successBox =
+    document.getElementById("successBox");
+
+  const sendButton =
+    document.getElementById("sendOrderButton");
+
+
+  errorBox.classList.remove("show");
+  successBox.classList.remove("show");
+
+
+  if (!orderType) {
+
+    errorBox.textContent =
+      "Please choose Dine In or Takeout.";
+
+    errorBox.classList.add("show");
+
+    return;
+  }
+
+
+  if (
+    orderType === "dine_in" &&
+    !table
+  ) {
+
+    errorBox.textContent =
+      "Table number is missing.";
+
+    errorBox.classList.add("show");
+
+    return;
+  }
+
+
+  const total = getTotal();
+
+
+  if (total <= 0) {
+
+    errorBox.textContent =
+      "Please add at least one item.";
+
+    errorBox.classList.add("show");
+
+    return;
+  }
+
+
+  if (!selectedPayment) {
+
+    errorBox.textContent =
+      "Please select a payment method.";
+
+    errorBox.classList.add("show");
+
+    return;
+  }
+
+
+  if (
+    selectedPayment === "QR" &&
+    paymentStatus !== "paid"
+  ) {
+
+    errorBox.textContent =
+      "Please complete the QR payment first.";
+
+    errorBox.classList.add("show");
+
+    return;
+  }
+
+
+  sendButton.disabled = true;
+  sendButton.textContent = "SENDING...";
+
+
+  let dbPaymentMethod = "cash";
+
+  if (selectedPayment === "QR") {
+    dbPaymentMethod = "online";
+  }
+
+
+  const dbTableNumber =
+    orderType === "dine_in"
+      ? table
+      : "TAKEOUT";
+
+
+  const orderItems =
+    cart
+      .filter(function(item) {
+        return item.qty > 0;
+      })
+      .map(function(item) {
+
+        return {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          qty: item.qty
+        };
+
+      });
+
+
+  const orderData = {
+
+    restaurant_id: RESTAURANT_ID,
+
+    table_number: dbTableNumber,
+
+    order_type: orderType,
+
+    items: orderItems,
+
+    total: total,
+
+    status: "new",
+
+    payment_method: dbPaymentMethod,
+
+    payment_status: paymentStatus,
+
+    payment_reference: paymentReference
+
+  };
+
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL + "/rest/v1/orders",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY,
+            "Prefer": "return=representation"
+          },
+
+          body: JSON.stringify(orderData)
+        }
       );
 
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        data.error_description ||
+        data.hint ||
+        "Order could not be submitted."
+      );
     }
 
 
-    /* =====================================================
-       SEND ORDER
-    ===================================================== */
+    successBox.classList.add("show");
 
-    async function sendOrder() {
 
-      const errorBox =
-        document.getElementById("errorBox");
+    if (
+      data &&
+      data.length > 0 &&
+      data[0].order_number
+    ) {
 
+      document
+        .getElementById("successOrderNumber")
+        .textContent =
+          "Order #" + data[0].order_number;
 
-      const successBox =
-        document.getElementById("successBox");
+    } else {
 
-
-      const sendButton =
-        document.getElementById("sendOrderButton");
-
-
-      errorBox.classList.remove("show");
-
-      successBox.classList.remove("show");
-
-
-      /* ORDER TYPE */
-
-      if (!orderType) {
-
-        errorBox.textContent =
-          "Please choose Dine In or Takeout.";
-
-        errorBox.classList.add("show");
-
-        return;
-
-      }
-
-
-      /* DINE IN TABLE */
-
-      if (
-        orderType === "dine_in" &&
-        !table
-      ) {
-
-        errorBox.textContent =
-          "Table number is missing.";
-
-        errorBox.classList.add("show");
-
-        return;
-
-      }
-
-
-      /* ITEMS */
-
-      const total =
-        getTotal();
-
-
-      if (total <= 0) {
-
-        errorBox.textContent =
-          "Please add at least one item.";
-
-        errorBox.classList.add("show");
-
-        return;
-
-      }
-
-
-      /* PAYMENT */
-
-      if (!selectedPayment) {
-
-        errorBox.textContent =
-          "Please select a payment method.";
-
-        errorBox.classList.add("show");
-
-        return;
-
-      }
-
-
-      /* QR PAYMENT */
-
-      if (
-        selectedPayment === "QR" &&
-        paymentStatus !== "paid"
-      ) {
-
-        errorBox.textContent =
-          "Please complete the QR payment first.";
-
-        errorBox.classList.add("show");
-
-        return;
-
-      }
-
-
-      sendButton.disabled = true;
-
-      sendButton.textContent =
-        "SENDING...";
-
-
-      /* PAYMENT MAPPING */
-
-      let dbPaymentMethod = "cash";
-
-
-      if (selectedPayment === "QR") {
-
-        dbPaymentMethod = "online";
-
-      }
-
-
-      /* TABLE */
-
-      const dbTableNumber =
-        orderType === "dine_in"
-          ? table
-          : "TAKEOUT";
-
-
-      /* ITEMS ONLY */
-
-      const orderItems =
-        cart
-          .filter(function(item) {
-            return item.qty > 0;
-          })
-          .map(function(item) {
-
-            return {
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              qty: item.qty
-            };
-
-          });
-
-
-      /* ORDER DATA */
-
-      const orderData = {
-
-        restaurant_id:
-          RESTAURANT_ID,
-
-        table_number:
-          dbTableNumber,
-
-        order_type:
-          orderType,
-
-        items:
-          orderItems,
-
-        total:
-          total,
-
-        status:
-          "new",
-
-        payment_method:
-          dbPaymentMethod,
-
-        payment_status:
-          paymentStatus,
-
-        payment_reference:
-          paymentReference
-
-      };
-
-
-      try {
-
-        const response =
-          await fetch(
-
-            SUPABASE_URL +
-            "/rest/v1/orders",
-
-            {
-
-              method: "POST",
-
-              headers: {
-
-                "Content-Type":
-                  "application/json",
-
-                "apikey":
-                  SUPABASE_KEY,
-
-                "Authorization":
-                  "Bearer " +
-                  SUPABASE_KEY,
-
-                "Prefer":
-                  "return=representation"
-
-              },
-
-              body:
-                JSON.stringify(orderData)
-
-            }
-
-          );
-
-
-        const data =
-          await response.json();
-
-
-        if (!response.ok) {
-
-          throw new Error(
-
-            data.message ||
-            data.error_description ||
-            data.hint ||
-            "Order could not be submitted."
-
-          );
-
-        }
-
-
-        /* SUCCESS */
-
-        successBox.classList.add("show");
-
-
-        if (
-          data &&
-          data.length > 0 &&
-          data[0].order_number
-        ) {
-
-          document
-            .getElementById(
-              "successOrderNumber"
-            )
-            .textContent =
-              "Order #" +
-              data[0].order_number;
-
-        } else {
-
-          document
-            .getElementById(
-              "successOrderNumber"
-            )
-            .textContent =
-              "Order received successfully.";
-
-        }
-
-
-        sendButton.textContent =
-          "ORDER SENT";
-
-
-        sendButton.disabled = true;
-
-
-        successBox.scrollIntoView({
-
-          behavior: "smooth",
-
-          block: "center"
-
-        });
-
-
-      } catch (error) {
-
-        console.error(error);
-
-
-        errorBox.textContent =
-          "Unable to send order. " +
-          error.message;
-
-
-        errorBox.classList.add("show");
-
-
-        sendButton.disabled = false;
-
-
-        sendButton.textContent =
-          "SEND ORDER";
-
-      }
-
+      document
+        .getElementById("successOrderNumber")
+        .textContent =
+          "Order received successfully.";
     }
 
 
-    /* =====================================================
-       INITIALIZE
-    ===================================================== */
+    sendButton.textContent = "ORDER SENT";
+    sendButton.disabled = true;
 
-    renderMenu();
 
-    updateOrder();
+    successBox.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
 
-  </script>
+
+  } catch (error) {
+
+    console.error(error);
+
+    errorBox.textContent =
+      "Unable to send order. " +
+      error.message;
+
+    errorBox.classList.add("show");
+
+    sendButton.disabled = false;
+    sendButton.textContent = "SEND ORDER";
+  }
+}
+
+
+/* EVENT LISTENERS */
+
+document
+  .getElementById("dineInButton")
+  .addEventListener("click", function() {
+    selectOrderType("dine_in");
+  });
+
+
+document
+  .getElementById("takeoutButton")
+  .addEventListener("click", function() {
+    selectOrderType("takeout");
+  });
+
+
+document
+  .getElementById("changeTypeFromTable")
+  .addEventListener("click", function() {
+    changeOrderType();
+  });
+
+
+document
+  .getElementById("changeTypeFromTakeout")
+  .addEventListener("click", function() {
+    changeOrderType();
+  });
+
+
+document
+  .getElementById("qrPaymentButton")
+  .addEventListener("click", function() {
+    selectPayment("QR");
+  });
+
+
+document
+  .getElementById("counterPaymentButton")
+  .addEventListener("click", function() {
+    selectPayment("Counter");
+  });
+
+
+document
+  .getElementById("tablePaymentButton")
+  .addEventListener("click", function() {
+    selectPayment("Table");
+  });
+
+
+document
+  .getElementById("paidButton")
+  .addEventListener("click", function() {
+    markAsPaid();
+  });
+
+
+document
+  .getElementById("sendOrderButton")
+  .addEventListener("click", function() {
+    sendOrder();
+  });
+
+
+document
+  .querySelectorAll(".category-menu button")
+  .forEach(function(button) {
+
+    button.addEventListener("click", function() {
+
+      setCategory(
+        button.getAttribute("data-category")
+      );
+
+    });
+
+  });
+
+
+/* INITIALIZE */
+
+renderMenu();
+updateOrder();
+
+</script>
 
 </body>
 </html>
