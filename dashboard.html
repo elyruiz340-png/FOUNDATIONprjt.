@@ -1,427 +1,398 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>HALINA BISTRO CAFE - Owner Dashboard</title>
+  <title>HALINA BISTRO CAFE - Owner Dashboard</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<style>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-* {
-  box-sizing: border-box;
-}
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
-  color: #222;
-}
+    .header {
+      background: #111;
+      color: white;
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-.header {
-  background: #111;
-  color: white;
-  padding: 18px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
 
-.logo-area h1 {
-  margin: 0;
-  font-size: 20px;
-}
+    .header p {
+      margin: 4px 0 0;
+      color: #aaa;
+      font-size: 13px;
+    }
 
-.logo-area p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: #bbb;
-}
+    .logout-btn {
+      display: none;
+      border: none;
+      background: white;
+      color: #111;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-.logout-btn {
-  background: #fff;
-  color: #111;
-  border: none;
-  padding: 9px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
+    .login-box {
+      max-width: 400px;
+      margin: 70px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 25px rgba(0,0,0,.08);
+    }
 
-.container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 20px;
-}
+    .login-box h2 {
+      margin-top: 0;
+    }
 
-.login-box {
-  max-width: 400px;
-  margin: 70px auto;
-  background: white;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 5px 25px rgba(0,0,0,0.08);
-}
+    .input {
+      width: 100%;
+      padding: 13px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+    }
 
-.login-box h2 {
-  margin-top: 0;
-}
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #111;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-.input {
-  width: 100%;
-  padding: 13px;
-  margin: 8px 0;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 15px;
-}
+    .login-btn:disabled {
+      opacity: .6;
+    }
 
-.login-btn {
-  width: 100%;
-  padding: 13px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 8px;
-  background: #111;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
+    .message {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #d00;
+      line-height: 1.5;
+    }
 
-.message {
-  margin-top: 12px;
-  font-size: 14px;
-  color: #d00;
-}
+    .success {
+      color: #16803c;
+    }
 
-.dashboard {
-  display: none;
-}
+    .dashboard {
+      display: none;
+    }
 
-.restaurant-title {
-  margin-bottom: 20px;
-}
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px;
+    }
 
-.restaurant-title h2 {
-  margin: 0;
-}
+    .restaurant-title {
+      margin-bottom: 20px;
+    }
 
-.restaurant-title p {
-  color: #777;
-  margin-top: 5px;
-}
+    .restaurant-title h2 {
+      margin: 0;
+    }
 
-.cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
-}
+    .restaurant-title p {
+      color: #777;
+      margin-top: 5px;
+    }
 
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 3px 15px rgba(0,0,0,0.05);
-}
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
 
-.card-title {
-  color: #777;
-  font-size: 13px;
-}
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 3px 15px rgba(0,0,0,.05);
+    }
 
-.card-value {
-  font-size: 28px;
-  font-weight: bold;
-  margin-top: 8px;
-}
+    .card-title {
+      color: #777;
+      font-size: 13px;
+    }
 
-.orders-section {
-  margin-top: 25px;
-  background: white;
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 3px 15px rgba(0,0,0,0.05);
-}
+    .card-value {
+      font-size: 27px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
 
-.orders-section h3 {
-  margin-top: 0;
-}
+    .orders-section {
+      margin-top: 25px;
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 3px 15px rgba(0,0,0,.05);
+    }
 
-.order {
-  border-bottom: 1px solid #eee;
-  padding: 15px 0;
-}
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-.order:last-child {
-  border-bottom: none;
-}
+    .refresh-btn {
+      border: none;
+      background: #111;
+      color: white;
+      padding: 9px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
 
-.order-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-}
+    .order {
+      padding: 15px 0;
+      border-bottom: 1px solid #eee;
+    }
 
-.order-number {
-  font-weight: bold;
-}
+    .order:last-child {
+      border-bottom: none;
+    }
 
-.status {
-  padding: 5px 9px;
-  border-radius: 20px;
-  background: #eee;
-  font-size: 12px;
-  font-weight: bold;
-}
+    .order-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
 
-.order-details {
-  margin-top: 7px;
-  color: #666;
-  font-size: 14px;
-}
+    .order-number {
+      font-weight: bold;
+    }
 
-.order-total {
-  margin-top: 7px;
-  font-weight: bold;
-}
+    .status {
+      background: #eee;
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
 
-.empty {
-  text-align: center;
-  color: #888;
-  padding: 30px 0;
-}
+    .order-details {
+      margin-top: 7px;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.6;
+    }
 
-.refresh-btn {
-  background: #111;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 8px;
-  cursor: pointer;
-}
+    .order-total {
+      margin-top: 7px;
+      font-weight: bold;
+    }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    .empty {
+      text-align: center;
+      padding: 30px 0;
+      color: #888;
+    }
 
-.loading {
-  text-align: center;
-  padding: 30px;
-  color: #777;
-}
+    @media (max-width: 800px) {
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
 
-@media(max-width: 800px) {
+    @media (max-width: 500px) {
+      .container {
+        padding: 12px;
+      }
 
-  .cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
+      .cards {
+        gap: 10px;
+      }
 
-}
+      .card {
+        padding: 15px;
+      }
 
-@media(max-width: 500px) {
-
-  .container {
-    padding: 12px;
-  }
-
-  .cards {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .card {
-    padding: 15px;
-  }
-
-  .card-value {
-    font-size: 23px;
-  }
-
-  .header {
-    padding: 15px;
-  }
-
-  .logo-area h1 {
-    font-size: 17px;
-  }
-
-}
-
-</style>
+      .card-value {
+        font-size: 22px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
+  <div class="header">
 
-<div class="header">
+    <div>
+      <h1>HALINA BISTRO CAFE</h1>
+      <p>Owner Dashboard</p>
+    </div>
 
-  <div class="logo-area">
-
-    <h1>HALINA BISTRO CAFE</h1>
-
-    <p>Owner Dashboard</p>
+    <button
+      id="logoutBtn"
+      class="logout-btn"
+      onclick="logout()">
+      Logout
+    </button>
 
   </div>
 
-  <button
-    class="logout-btn"
-    onclick="logout()">
-    Logout
-  </button>
 
-</div>
+  <!-- LOGIN -->
 
+  <div id="loginBox" class="login-box">
 
-<!-- LOGIN -->
+    <h2>Owner Login</h2>
 
-<div id="loginBox" class="login-box">
+    <p>
+      Login to manage your restaurant.
+    </p>
 
-  <h2>Owner Login</h2>
+    <input
+      id="email"
+      class="input"
+      type="email"
+      autocomplete="email"
+      placeholder="Email">
 
-  <p>
-    Login to manage your restaurant.
-  </p>
+    <input
+      id="password"
+      class="input"
+      type="password"
+      autocomplete="current-password"
+      placeholder="Password">
 
-  <input
-    id="email"
-    class="input"
-    type="email"
-    placeholder="Email">
+    <button
+      id="loginBtn"
+      class="login-btn"
+      onclick="login()">
+      Login
+    </button>
 
-  <input
-    id="password"
-    class="input"
-    type="password"
-    placeholder="Password">
+    <div
+      id="loginMessage"
+      class="message">
+    </div>
 
-  <button
-    class="login-btn"
-    onclick="login()">
-    Login
-  </button>
-
-  <div
-    id="loginMessage"
-    class="message">
   </div>
 
-</div>
+
+  <!-- DASHBOARD -->
+
+  <div id="dashboard" class="dashboard">
+
+    <div class="container">
+
+      <div class="restaurant-title">
+
+        <h2 id="restaurantName">
+          HALINA BISTRO CAFE
+        </h2>
+
+        <p>
+          Restaurant Owner Dashboard
+        </p>
+
+      </div>
 
 
-<!-- DASHBOARD -->
+      <div class="cards">
 
-<div id="dashboard" class="dashboard">
+        <div class="card">
+          <div class="card-title">
+            Orders Today
+          </div>
 
-  <div class="container">
-
-    <div class="restaurant-title">
-
-      <h2 id="restaurantName">
-        HALINA BISTRO CAFE
-      </h2>
-
-      <p>
-        Restaurant Owner Dashboard
-      </p>
-
-    </div>
-
-
-    <!-- SUMMARY CARDS -->
-
-    <div class="cards">
-
-      <div class="card">
-
-        <div class="card-title">
-          Orders Today
+          <div
+            id="ordersToday"
+            class="card-value">
+            0
+          </div>
         </div>
 
-        <div
-          id="ordersToday"
-          class="card-value">
-          0
+
+        <div class="card">
+          <div class="card-title">
+            Sales Today
+          </div>
+
+          <div
+            id="salesToday"
+            class="card-value">
+            ₱0
+          </div>
+        </div>
+
+
+        <div class="card">
+          <div class="card-title">
+            New Orders
+          </div>
+
+          <div
+            id="newOrders"
+            class="card-value">
+            0
+          </div>
+        </div>
+
+
+        <div class="card">
+          <div class="card-title">
+            Preparing
+          </div>
+
+          <div
+            id="preparingOrders"
+            class="card-value">
+            0
+          </div>
         </div>
 
       </div>
 
 
-      <div class="card">
+      <div class="orders-section">
 
-        <div class="card-title">
-          Sales Today
+        <div class="section-header">
+
+          <h3>
+            Recent Orders
+          </h3>
+
+          <button
+            class="refresh-btn"
+            onclick="loadOrders()">
+            Refresh
+          </button>
+
         </div>
 
-        <div
-          id="salesToday"
-          class="card-value">
-          ₱0
+        <div id="ordersList">
+          Loading orders...
         </div>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="card-title">
-          New Orders
-        </div>
-
-        <div
-          id="newOrders"
-          class="card-value">
-          0
-        </div>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="card-title">
-          Preparing
-        </div>
-
-        <div
-          id="preparingOrders"
-          class="card-value">
-          0
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- RECENT ORDERS -->
-
-    <div class="orders-section">
-
-      <div class="section-header">
-
-        <h3>
-          Recent Orders
-        </h3>
-
-        <button
-          class="refresh-btn"
-          onclick="loadOrders()">
-          Refresh
-        </button>
-
-      </div>
-
-      <div
-        id="ordersList"
-        class="loading">
-
-        Loading orders...
 
       </div>
 
@@ -429,601 +400,698 @@ body {
 
   </div>
 
-</div>
 
+  <script>
 
-<script>
+    /* =================================
+       SUPABASE
+    ================================= */
 
-const SUPABASE_URL =
-  "https://isqcuycjrbjtmqhzckvb.supabase.co";
+    const SUPABASE_URL =
+      "https://isqcuycjrbjtmqhzckvb.supabase.co";
 
-const SUPABASE_KEY =
-  "sb_publishable_PM2N85UZqZfqc-2XQ04IPg_ulOxQkt4";
+    const SUPABASE_KEY =
+      "sb_publishable_PM2N85UZqZfqc-2XQ04IPg_ulOxQkt4";
 
-const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
 
 
-let currentRestaurantId = null;
+    let currentRestaurantId = null;
 
 
-/* =========================
-   LOGIN
-========================= */
+    /* =================================
+       LOGIN
+    ================================= */
 
-async function login() {
+    async function login() {
 
-  const email =
-    document.getElementById("email").value.trim();
+      const email =
+        document.getElementById("email")
+          .value
+          .trim();
 
-  const password =
-    document.getElementById("password").value;
+      const password =
+        document.getElementById("password")
+          .value;
 
-  const message =
-    document.getElementById("loginMessage");
+      const message =
+        document.getElementById("loginMessage");
 
-  message.textContent = "";
+      const button =
+        document.getElementById("loginBtn");
 
-  if (!email || !password) {
 
-    message.textContent =
-      "Please enter your email and password.";
+      message.textContent = "";
+      message.className = "message";
 
-    return;
 
-  }
+      if (!email || !password) {
 
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.auth.signInWithPassword({
+        message.textContent =
+          "Please enter your email and password.";
 
-      email: email,
-      password: password
-
-    });
-
-
-  if (error) {
-
-    message.textContent =
-      error.message;
-
-    return;
-
-  }
-
-
-  await startDashboard();
-
-}
-
-
-/* =========================
-   START DASHBOARD
-========================= */
-
-async function startDashboard() {
-
-  const {
-    data: {
-      user
-    }
-  } =
-    await supabaseClient.auth.getUser();
-
-
-  if (!user) {
-
-    showLogin();
-
-    return;
-
-  }
-
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-
-      .from("restaurant_users")
-
-      .select(`
-        restaurant_id,
-        role,
-        restaurants (
-          name,
-          slug,
-          currency,
-          timezone
-        )
-      `)
-
-      .eq("user_id", user.id)
-
-      .maybeSingle();
-
-
-  if (error) {
-
-    console.error(error);
-
-    alert(
-      "Unable to load restaurant account."
-    );
-
-    return;
-
-  }
-
-
-  if (!data) {
-
-    alert(
-      "This account is not linked to a restaurant."
-    );
-
-    await logout();
-
-    return;
-
-  }
-
-
-  if (
-    data.role !== "owner" &&
-    data.role !== "staff" &&
-    data.role !== "admin"
-  ) {
-
-    alert(
-      "You do not have dashboard access."
-    );
-
-    await logout();
-
-    return;
-
-  }
-
-
-  currentRestaurantId =
-    data.restaurant_id;
-
-
-  if (
-    data.restaurants &&
-    data.restaurants.name
-  ) {
-
-    document.getElementById(
-      "restaurantName"
-    ).textContent =
-      data.restaurants.name;
-
-  }
-
-
-  document.getElementById(
-    "loginBox"
-  ).style.display = "none";
-
-
-  document.getElementById(
-    "dashboard"
-  ).style.display = "block";
-
-
-  await loadOrders();
-
-}
-
-
-/* =========================
-   LOAD ORDERS
-========================= */
-
-async function loadOrders() {
-
-  if (!currentRestaurantId) {
-
-    return;
-
-  }
-
-
-  const ordersList =
-    document.getElementById(
-      "ordersList"
-    );
-
-  ordersList.innerHTML =
-    "Loading orders...";
-
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-
-      .from("orders")
-
-      .select("*")
-
-      .eq(
-        "restaurant_id",
-        currentRestaurantId
-      )
-
-      .order(
-        "created_at",
-        {
-          ascending: false
-        }
-      )
-
-      .limit(50);
-
-
-  if (error) {
-
-    console.error(error);
-
-    ordersList.innerHTML =
-      "Unable to load orders.";
-
-    return;
-
-  }
-
-
-  calculateDashboard(data || []);
-
-  renderOrders(data || []);
-
-}
-
-
-/* =========================
-   DASHBOARD NUMBERS
-========================= */
-
-function calculateDashboard(
-  orders
-) {
-
-  const today =
-    new Date();
-
-  const startOfDay =
-    new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-
-
-  const todayOrders =
-    orders.filter(order => {
-
-      if (!order.created_at) {
-
-        return false;
+        return;
 
       }
 
-      return new Date(
-        order.created_at
-      ) >= startOfDay;
 
-    });
+      button.disabled = true;
+      button.textContent = "Logging in...";
 
 
-  let sales = 0;
+      try {
+
+        const result =
+          await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+          });
 
 
-  todayOrders.forEach(order => {
+        if (result.error) {
 
-    const status =
-      String(
-        order.order_status ||
-        order.status ||
-        ""
-      ).toLowerCase();
+          throw result.error;
+
+        }
 
 
-    if (
-      status !== "cancelled" &&
-      status !== "canceled"
+        message.textContent =
+          "Login successful. Loading dashboard...";
+
+        message.className =
+          "message success";
+
+
+        await startDashboard();
+
+
+      } catch (error) {
+
+        console.error(
+          "LOGIN ERROR:",
+          error
+        );
+
+        message.textContent =
+          error.message ||
+          "Login failed.";
+
+
+        button.disabled = false;
+        button.textContent = "Login";
+
+      }
+
+    }
+
+
+    /* =================================
+       START DASHBOARD
+    ================================= */
+
+    async function startDashboard() {
+
+      const {
+        data: {
+          user
+        }
+      } =
+        await supabaseClient.auth.getUser();
+
+
+      if (!user) {
+
+        showLogin();
+
+        return;
+
+      }
+
+
+      console.log(
+        "Logged in user:",
+        user.email
+      );
+
+
+      const result =
+        await supabaseClient
+
+          .from("restaurant_users")
+
+          .select(`
+            restaurant_id,
+            role,
+            restaurants (
+              name,
+              slug,
+              currency,
+              timezone
+            )
+          `)
+
+          .eq(
+            "user_id",
+            user.id
+          )
+
+          .maybeSingle();
+
+
+      if (result.error) {
+
+        console.error(
+          "RESTAURANT USER ERROR:",
+          result.error
+        );
+
+        document.getElementById(
+          "loginMessage"
+        ).textContent =
+          "Login worked, but the restaurant account could not be loaded: " +
+          result.error.message;
+
+        return;
+
+      }
+
+
+      if (!result.data) {
+
+        document.getElementById(
+          "loginMessage"
+        ).textContent =
+          "This account is not linked to a restaurant.";
+
+        await supabaseClient.auth.signOut();
+
+        return;
+
+      }
+
+
+      if (
+        result.data.role !== "owner" &&
+        result.data.role !== "staff" &&
+        result.data.role !== "admin"
+      ) {
+
+        document.getElementById(
+          "loginMessage"
+        ).textContent =
+          "This account does not have dashboard access.";
+
+        return;
+
+      }
+
+
+      currentRestaurantId =
+        result.data.restaurant_id;
+
+
+      if (
+        result.data.restaurants &&
+        result.data.restaurants.name
+      ) {
+
+        document.getElementById(
+          "restaurantName"
+        ).textContent =
+          result.data.restaurants.name;
+
+      }
+
+
+      document.getElementById(
+        "loginBox"
+      ).style.display =
+        "none";
+
+
+      document.getElementById(
+        "dashboard"
+      ).style.display =
+        "block";
+
+
+      document.getElementById(
+        "logoutBtn"
+      ).style.display =
+        "block";
+
+
+      await loadOrders();
+
+    }
+
+
+    /* =================================
+       LOAD ORDERS
+    ================================= */
+
+    async function loadOrders() {
+
+      if (!currentRestaurantId) {
+
+        return;
+
+      }
+
+
+      const ordersList =
+        document.getElementById(
+          "ordersList"
+        );
+
+
+      ordersList.innerHTML =
+        "Loading orders...";
+
+
+      const result =
+        await supabaseClient
+
+          .from("orders")
+
+          .select("*")
+
+          .eq(
+            "restaurant_id",
+            currentRestaurantId
+          )
+
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          )
+
+          .limit(50);
+
+
+      if (result.error) {
+
+        console.error(
+          "ORDERS ERROR:",
+          result.error
+        );
+
+        ordersList.innerHTML =
+          "Orders could not be loaded: " +
+          result.error.message;
+
+        return;
+
+      }
+
+
+      const orders =
+        result.data || [];
+
+
+      calculateDashboard(
+        orders
+      );
+
+      renderOrders(
+        orders
+      );
+
+    }
+
+
+    /* =================================
+       CALCULATE DASHBOARD
+    ================================= */
+
+    function calculateDashboard(
+      orders
     ) {
 
-      sales += Number(
-        order.total || 0
-      );
-
-    }
-
-  });
+      const now =
+        new Date();
 
 
-  const newOrders =
-    todayOrders.filter(order => {
-
-      const status =
-        String(
-          order.order_status ||
-          order.status ||
-          ""
-        ).toLowerCase();
-
-      return (
-        status === "new" ||
-        status === "pending"
-      );
-
-    });
+      const start =
+        new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
 
 
-  const preparingOrders =
-    todayOrders.filter(order => {
+      const todayOrders =
+        orders.filter(
+          function(order) {
 
-      const status =
-        String(
-          order.order_status ||
-          order.status ||
-          ""
-        ).toLowerCase();
+            if (!order.created_at) {
 
-      return (
-        status === "preparing" ||
-        status === "processing"
-      );
+              return false;
 
-    });
+            }
 
+            return (
+              new Date(
+                order.created_at
+              ) >= start
+            );
 
-  document.getElementById(
-    "ordersToday"
-  ).textContent =
-    todayOrders.length;
+          }
+        );
 
 
-  document.getElementById(
-    "salesToday"
-  ).textContent =
-    "₱" +
-    sales.toLocaleString(
-      "en-PH",
-      {
-        minimumFractionDigits: 2
-      }
-    );
+      let sales = 0;
 
 
-  document.getElementById(
-    "newOrders"
-  ).textContent =
-    newOrders.length;
+      todayOrders.forEach(
+        function(order) {
+
+          const status =
+            String(
+              order.order_status ||
+              order.status ||
+              ""
+            ).toLowerCase();
 
 
-  document.getElementById(
-    "preparingOrders"
-  ).textContent =
-    preparingOrders.length;
+          if (
+            status !== "cancelled" &&
+            status !== "canceled"
+          ) {
 
-}
+            sales += Number(
+              order.total || 0
+            );
 
+          }
 
-/* =========================
-   DISPLAY ORDERS
-========================= */
-
-function renderOrders(
-  orders
-) {
-
-  const ordersList =
-    document.getElementById(
-      "ordersList"
-    );
-
-
-  if (!orders.length) {
-
-    ordersList.innerHTML =
-      `<div class="empty">
-        No orders yet.
-      </div>`;
-
-    return;
-
-  }
-
-
-  ordersList.innerHTML = "";
-
-
-  orders.forEach(order => {
-
-    const orderNumber =
-      order.order_number ||
-      order.id?.slice(0, 😎 ||
-      "N/A";
-
-
-    const customer =
-      order.customer_name ||
-      "Customer";
-
-
-    const status =
-      order.order_status ||
-      order.status ||
-      "Pending";
-
-
-    const total =
-      Number(
-        order.total || 0
+        }
       );
 
 
-    const table =
-      order.table_number ||
-      order.order_type ||
-      "N/A";
+      const newOrders =
+        todayOrders.filter(
+          function(order) {
+
+            const status =
+              String(
+                order.order_status ||
+                order.status ||
+                ""
+              ).toLowerCase();
 
 
-    const date =
-      order.created_at
-        ? new Date(
-            order.created_at
-          ).toLocaleString(
-            "en-PH"
-          )
-        : "";
+            return (
+              status === "new" ||
+              status === "pending"
+            );
+
+          }
+        );
 
 
-    const orderDiv =
-      document.createElement(
-        "div"
-      );
+      const preparing =
+        todayOrders.filter(
+          function(order) {
+
+            const status =
+              String(
+                order.order_status ||
+                order.status ||
+                ""
+              ).toLowerCase();
 
 
-    orderDiv.className =
-      "order";
+            return (
+              status === "preparing" ||
+              status === "processing"
+            );
+
+          }
+        );
 
 
-    orderDiv.innerHTML = `
-
-      <div class="order-top">
-
-        <div class="order-number">
-
-          Order #${orderNumber}
-
-        </div>
-
-        <div class="status">
-
-          ${status}
-
-        </div>
-
-      </div>
+      document.getElementById(
+        "ordersToday"
+      ).textContent =
+        todayOrders.length;
 
 
-      <div class="order-details">
-
-        Customer: ${customer}
-
-        <br>
-
-        Table / Type: ${table}
-
-        <br>
-
-        ${date}
-
-      </div>
-
-
-      <div class="order-total">
-
-        Total:
-        ₱${total.toLocaleString(
+      document.getElementById(
+        "salesToday"
+      ).textContent =
+        "₱" +
+        sales.toLocaleString(
           "en-PH",
           {
             minimumFractionDigits: 2
           }
-        )}
-
-      </div>
-
-    `;
+        );
 
 
-    ordersList.appendChild(
-      orderDiv
-    );
-
-  });
-
-}
+      document.getElementById(
+        "newOrders"
+      ).textContent =
+        newOrders.length;
 
 
-/* =========================
-   LOGOUT
-========================= */
+      document.getElementById(
+        "preparingOrders"
+      ).textContent =
+        preparing.length;
 
-async function logout() {
-
-  await supabaseClient.auth.signOut();
-
-  currentRestaurantId = null;
-
-  showLogin();
-
-}
-
-
-/* =========================
-   SHOW LOGIN
-========================= */
-
-function showLogin() {
-
-  document.getElementById(
-    "loginBox"
-  ).style.display = "block";
-
-
-  document.getElementById(
-    "dashboard"
-  ).style.display = "none";
-
-}
-
-
-/* =========================
-   CHECK SESSION
-========================= */
-
-async function checkSession() {
-
-  const {
-    data: {
-      session
     }
-  } =
-    await supabaseClient.auth.getSession();
 
 
-  if (session) {
+    /* =================================
+       RENDER ORDERS
+    ================================= */
 
-    await startDashboard();
+    function renderOrders(
+      orders
+    ) {
 
-  } else {
-
-    showLogin();
-
-  }
-
-}
+      const ordersList =
+        document.getElementById(
+          "ordersList"
+        );
 
 
-/* START */
+      if (!orders.length) {
 
-checkSession();
+        ordersList.innerHTML =
+          `<div class="empty">
+            No orders yet.
+          </div>`;
 
-</script>
+        return;
+
+      }
+
+
+      ordersList.innerHTML = "";
+
+
+      orders.forEach(
+        function(order) {
+
+          const number =
+            order.order_number ||
+            order.id ||
+            "N/A";
+
+
+          const customer =
+            order.customer_name ||
+            "Customer";
+
+
+          const status =
+            order.order_status ||
+            order.status ||
+            "Pending";
+
+
+          const total =
+            Number(
+              order.total || 0
+            );
+
+
+          const table =
+            order.table_number ||
+            order.order_type ||
+            "N/A";
+
+
+          const date =
+            order.created_at
+              ? new Date(
+                  order.created_at
+                ).toLocaleString(
+                  "en-PH"
+                )
+              : "";
+
+
+          const div =
+            document.createElement(
+              "div"
+            );
+
+
+          div.className =
+            "order";
+
+
+          div.innerHTML = `
+
+            <div class="order-top">
+
+              <div class="order-number">
+                Order #${number}
+              </div>
+
+              <div class="status">
+                ${status}
+              </div>
+
+            </div>
+
+            <div class="order-details">
+
+              Customer:
+              ${customer}
+
+              <br>
+
+              Table / Type:
+              ${table}
+
+              <br>
+
+              ${date}
+
+            </div>
+
+            <div class="order-total">
+
+              Total:
+              ₱${total.toLocaleString(
+                "en-PH",
+                {
+                  minimumFractionDigits: 2
+                }
+              )}
+
+            </div>
+
+          `;
+
+
+          ordersList.appendChild(
+            div
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =================================
+       LOGOUT
+    ================================= */
+
+    async function logout() {
+
+      await supabaseClient.auth.signOut();
+
+      currentRestaurantId = null;
+
+      showLogin();
+
+    }
+
+
+    /* =================================
+       SHOW LOGIN
+    ================================= */
+
+    function showLogin() {
+
+      document.getElementById(
+        "loginBox"
+      ).style.display =
+        "block";
+
+
+      document.getElementById(
+        "dashboard"
+      ).style.display =
+        "none";
+
+
+      document.getElementById(
+        "logoutBtn"
+      ).style.display =
+        "none";
+
+    }
+
+
+    /* =================================
+       CHECK EXISTING SESSION
+    ================================= */
+
+    async function checkSession() {
+
+      try {
+
+        const result =
+          await supabaseClient.auth.getSession();
+
+
+        if (
+          result.data &&
+          result.data.session
+        ) {
+
+          await startDashboard();
+
+        } else {
+
+          showLogin();
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "SESSION ERROR:",
+          error
+        );
+
+        showLogin();
+
+      }
+
+    }
+
+
+    /* =================================
+       START
+    ================================= */
+
+    checkSession();
+
+  </script>
 
 </body>
 </html>
