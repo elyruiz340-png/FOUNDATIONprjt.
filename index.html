@@ -51,12 +51,18 @@
       padding: 20px;
     }
 
-    .order-type-box {
+    .order-type-box,
+    .table-box,
+    .takeout-box,
+    .order-box {
       background: white;
       border-radius: 16px;
-      padding: 22px;
+      padding: 20px;
       margin: 20px 0;
       box-shadow: 0 4px 14px rgba(0,0,0,.08);
+    }
+
+    .order-type-box {
       text-align: center;
     }
 
@@ -101,12 +107,7 @@
 
     .table-box,
     .takeout-box {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      margin: 20px 0;
       text-align: center;
-      box-shadow: 0 4px 14px rgba(0,0,0,.08);
     }
 
     .table-label {
@@ -148,6 +149,50 @@
     .section-title {
       font-size: 26px;
       margin: 28px 0 15px;
+    }
+
+    .category-menu {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 10px 0 15px;
+      margin-bottom: 10px;
+      scrollbar-width: none;
+    }
+
+    .category-menu::-webkit-scrollbar {
+      display: none;
+    }
+
+    .category-menu button {
+      min-width: 82px;
+      border: none;
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      box-shadow: 0 3px 10px rgba(0,0,0,.08);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      transition: .2s;
+    }
+
+    .category-menu button:hover {
+      transform: translateY(-2px);
+    }
+
+    .category-menu button.active {
+      background: #111;
+      color: #fff;
+    }
+
+    .category-menu button span {
+      white-space: nowrap;
     }
 
     .menu-grid {
@@ -205,6 +250,10 @@
       cursor: pointer;
     }
 
+    .quantity-control button:hover {
+      background: #238636;
+    }
+
     .quantity-control span {
       font-size: 20px;
       font-weight: bold;
@@ -212,18 +261,11 @@
       text-align: center;
     }
 
-    .order-box {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      margin-top: 20px;
-      box-shadow: 0 4px 14px rgba(0,0,0,.08);
-    }
-
     .order-item {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
+      gap: 15px;
+      padding: 10px 0;
       border-bottom: 1px solid #eee;
     }
 
@@ -353,12 +395,17 @@
     }
 
     @media (max-width: 700px) {
+
       .hero {
         height: 190px;
       }
 
       .hero h1 {
         font-size: 29px;
+      }
+
+      .container {
+        padding: 15px;
       }
 
       .menu-grid {
@@ -372,53 +419,17 @@
       .order-type-options {
         grid-template-columns: 1fr;
       }
-    }.category-menu {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 10px 0 15px;
-  margin-bottom: 10px;
-  scrollbar-width: none;
-}
 
-.category-menu::-webkit-scrollbar {
-  display: none;
-}
-
-.category-menu button {
-  min-width: 82px;
-  border: none;
-  border-radius: 14px;
-  background: #ffffff;
-  padding: 12px 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
-
-.category-menu button:first-child {
-  background: #111;
-  color: #fff;
-}
-
-.category-menu button:hover {
-  transform: translateY(-2px);
-}
-
-.category-menu button span {
-  white-space: nowrap;
-}
+      .menu-card img {
+        height: 210px;
+      }
+    }
   </style>
 </head>
 
 <body>
 
+  <!-- HERO -->
   <div class="hero">
     <h1>HALINA BISTRO CAFE</h1>
     <p>Scan • Order • Enjoy</p>
@@ -457,12 +468,14 @@
 
     </div>
 
+
     <!-- DINE IN -->
     <div
       id="tableBox"
       class="table-box"
       style="display:none;"
     >
+
       <div class="table-label">
         You're ordering from
       </div>
@@ -477,7 +490,9 @@
       >
         Change order type
       </button>
+
     </div>
+
 
     <!-- TAKEOUT -->
     <div
@@ -485,6 +500,7 @@
       class="takeout-box"
       style="display:none;"
     >
+
       <div class="takeout-title">
         🥡 TAKEOUT
       </div>
@@ -499,7 +515,9 @@
       >
         Change order type
       </button>
+
     </div>
+
 
     <!-- MENU -->
     <div id="menuSection">
@@ -507,62 +525,125 @@
       <div class="section-title">
         Menu
       </div>
-<div class="category-menu">
 
-  <button onclick="setCategory('all')">
-    🍽️<span>All</span>
-  </button>
+      <!-- CATEGORY -->
+      <div class="category-menu">
 
-  <button onclick="setCategory('all-day-breakfast')">
-    🍳<span>Breakfast</span>
-  </button>
+        <button
+          data-category="all"
+          class="active"
+          onclick="setCategory('all')"
+        >
+          🍽️
+          <span>All</span>
+        </button>
 
-  <button onclick="setCategory('a-la-carte')">
-    🍗<span>A La Carte</span>
-  </button>
+        <button
+          data-category="all-day-breakfast"
+          onclick="setCategory('all-day-breakfast')"
+        >
+          🍳
+          <span>Breakfast</span>
+        </button>
 
-  <button onclick="setCategory('pulutan')">
-    🍟<span>Pulutan</span>
-  </button>
+        <button
+          data-category="a-la-carte"
+          onclick="setCategory('a-la-carte')"
+        >
+          🍗
+          <span>A La Carte</span>
+        </button>
 
-  <button onclick="setCategory('pasta')">
-    🍝<span>Pasta</span>
-  </button>
+        <button
+          data-category="pulutan"
+          onclick="setCategory('pulutan')"
+        >
+          🍟
+          <span>Pulutan</span>
+        </button>
 
-  <button onclick="setCategory('sandwich')">
-    🥪<span>Sandwich</span>
-  </button>
+        <button
+          data-category="pasta"
+          onclick="setCategory('pasta')"
+        >
+          🍝
+          <span>Pasta</span>
+        </button>
 
-  <button onclick="setCategory('rice')">
-    🍚<span>Rice</span>
-  </button>
+        <button
+          data-category="sandwich"
+          onclick="setCategory('sandwich')"
+        >
+          🥪
+          <span>Sandwich</span>
+        </button>
 
-  <button onclick="setCategory('beers')">
-    🍺<span>Beers</span>
-  </button>
+        <button
+          data-category="rice"
+          onclick="setCategory('rice')"
+        >
+          🍚
+          <span>Rice</span>
+        </button>
 
-  <button onclick="setCategory('whiskey')">
-    🥃<span>Whiskey</span>
-  </button>
+        <button
+          data-category="beers"
+          onclick="setCategory('beers')"
+        >
+          🍺
+          <span>Beers</span>
+        </button>
 
-  <button onclick="setCategory('tequila')">
-    🍹<span>Tequila</span>
-  </button>
+        <button
+          data-category="whiskey"
+          onclick="setCategory('whiskey')"
+        >
+          🥃
+          <span>Whiskey</span>
+        </button>
 
-  <button onclick="setCategory('soju')">
-    🍶<span>Soju</span>
-  </button>
+        <button
+          data-category="tequila"
+          onclick="setCategory('tequila')"
+        >
+          🍹
+          <span>Tequila</span>
+        </button>
 
-  <button onclick="setCategory('soda')">
-    🥤<span>Soda</span>
-  </button>
+        <button
+          data-category="soju"
+          onclick="setCategory('soju')"
+        >
+          🍶
+          <span>Soju</span>
+        </button>
 
-  <button onclick="setCategory('others')">
-    💧<span>Others</span>
-  </button>
+        <button
+          data-category="soda"
+          onclick="setCategory('soda')"
+        >
+          🥤
+          <span>Soda</span>
+        </button>
 
-</div>
-<div class="menu-grid" id="menuGrid"></div>
+        <button
+          data-category="others"
+          onclick="setCategory('others')"
+        >
+          💧
+          <span>Others</span>
+        </button>
+
+      </div>
+
+
+      <div
+        class="menu-grid"
+        id="menuGrid"
+      ></div>
+
+    </div>
+
 
     <!-- ORDER -->
     <div id="orderSection">
@@ -574,20 +655,25 @@
       <div class="order-box">
 
         <div id="orderItems">
+
           <div class="empty-order">
             No items added yet.
           </div>
+
         </div>
+
 
         <div class="total-row">
           <span>Total</span>
           <span id="totalAmount">₱0</span>
         </div>
 
+
         <!-- PAYMENT -->
         <div class="payment-title">
           Payment Method
         </div>
+
 
         <div class="payment-options">
 
@@ -617,11 +703,13 @@
 
         </div>
 
+
         <!-- QR INFO -->
         <div
           id="qrInfo"
           class="payment-info"
         >
+
           <div>
             Scan the QR code below to pay.
           </div>
@@ -634,7 +722,9 @@
           >
             I've Paid
           </button>
+
         </div>
+
 
         <!-- COUNTER INFO -->
         <div
@@ -644,6 +734,7 @@
           Please pay at the counter.
         </div>
 
+
         <!-- TABLE INFO -->
         <div
           id="tableInfo"
@@ -652,6 +743,8 @@
           Please pay at your table.
         </div>
 
+
+        <!-- SEND ORDER -->
         <button
           id="sendOrderButton"
           class="send-btn"
@@ -660,10 +753,13 @@
           SEND ORDER
         </button>
 
+
+        <!-- SUCCESS -->
         <div
           id="successBox"
           class="success-box"
         >
+
           <div class="success-title">
             Order Sent Successfully!
           </div>
@@ -676,8 +772,11 @@
             id="successOrderNumber"
             style="margin-top:10px;font-weight:bold;"
           ></div>
+
         </div>
 
+
+        <!-- ERROR -->
         <div
           id="errorBox"
           class="error-box"
@@ -689,11 +788,12 @@
 
   </div>
 
+
   <script>
 
-    /* =========================
+    /* =====================================================
        SUPABASE
-    ========================= */
+    ===================================================== */
 
     const SUPABASE_URL =
       "https://isqcuycjrbjtmqhzckvb.supabase.co";
@@ -705,9 +805,11 @@
       "5e562ca7-38aa-4894-8265-ddca2f4e61b6";
 
 
-    /* =========================
-       TABLE FROM URL
-    ========================= */
+    /* =====================================================
+       TABLE FROM QR URL
+       Example:
+       index.html?table=5
+    ===================================================== */
 
     const urlParams =
       new URLSearchParams(window.location.search);
@@ -715,483 +817,537 @@
     const table =
       urlParams.get("table") || "";
 
-
     document.getElementById("tableNumber").textContent =
       table || "?";
 
 
-    /* =========================
+    /* =====================================================
        MENU
-    ========================= */
+    ===================================================== */
 
-const menu = [
-{
-  id: "tapsilog",
-  name: "TAPSILOG",
-  price: 219,
-  image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
-  category: "all-day-breakfast"
-},
+    const menu = [
 
-{
-  id: "lechon-kawali-silog",
-  name: "LECHON KAWALI SILOG",
-  price: 219,
-  image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-  category: "all-day-breakfast"
-},
+      {
+        id: "tapsilog",
+        name: "TAPSILOG",
+        price: 219,
+        image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
+        category: "all-day-breakfast"
+      },
 
-{
-  id: "pork-silog",
-  name: "PORK SILOG",
-  price: 199,
-  image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-  category: "all-day-breakfast"
-},
+      {
+        id: "lechon-kawali-silog",
+        name: "LECHON KAWALI SILOG",
+        price: 219,
+        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+        category: "all-day-breakfast"
+      },
 
-{
-  id: "bang-silog",
-  name: "BANG SILOG",
-  price: 199,
-  image: "https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
-  category: "all-day-breakfast"
-},
-{
-  id: "whole-fried-chicken",
-  name: "Whole Fried Chicken",
-  price: 499,
-  image: "https://images.unsplash.com/photo-1562967916-eb82221df92?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
+      {
+        id: "pork-silog",
+        name: "PORK SILOG",
+        price: 199,
+        image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
+        category: "all-day-breakfast"
+      },
 
-{
-  id: "half-fried-chicken",
-  name: "Half Fried Chicken",
-  price: 299,
-  image: "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
+      {
+        id: "bang-silog",
+        name: "BANG SILOG",
+        price: 199,
+        image: "https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
+        category: "all-day-breakfast"
+      },
 
-{
-  id: "shanghai",
-  name: "Shanghai",
-  price: 200,
-  image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
 
-{
-  id: "chicken-barbecue",
-  name: "Chicken Barbecue",
-  price: 350,
-  image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
+      /* A LA CARTE */
 
-{
-  id: "lechon-kawali",
-  name: "Lechon Kawali",
-  price: 360,
-  image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
+      {
+        id: "whole-fried-chicken",
+        name: "Whole Fried Chicken",
+        price: 499,
+        image: "https://images.unsplash.com/photo-1562967916-eb82221df92?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "crispy-bangus",
-  name: "Crispy Bangus",
-  price: 360,
-  image: "https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
+      {
+        id: "half-fried-chicken",
+        name: "Half Fried Chicken",
+        price: 299,
+        image: "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "pork-sinigang",
-  name: "Pork Sinigang",
-  price: 360,
-  image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
+      {
+        id: "shanghai",
+        name: "Shanghai",
+        price: 200,
+        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "beef-sinigang",
-  name: "Beef Sinigang",
-  price: 390,
-  image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
+      {
+        id: "chicken-barbecue",
+        name: "Chicken Barbecue",
+        price: 350,
+        image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "beef-caldereta",
-  name: "Beef Caldereta",
-  price: 399,
-  image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
+      {
+        id: "lechon-kawali",
+        name: "Lechon Kawali",
+        price: 360,
+        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "kare-kare",
-  name: "Kare-Kare",
-  price: 399,
-  image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-  category: "a-la-carte"
-},
-{
-  id: "endamame",
-  name: "Endamame",
-  price: 79,
-  image: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      {
+        id: "crispy-bangus",
+        name: "Crispy Bangus",
+        price: 360,
+        image: "https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "cg-endamame",
-  name: "CG Endamame",
-  price: 99,
-  image: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      {
+        id: "pork-sinigang",
+        name: "Pork Sinigang",
+        price: 360,
+        image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "classic-fries",
-  name: "Classic Fries",
-  price: 149,
-  image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      {
+        id: "beef-sinigang",
+        name: "Beef Sinigang",
+        price: 390,
+        image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "fish-fries",
-  name: "Fish & Fries",
-  price: 219,
-  image: "https://images.unsplash.com/photo-1579208030886-b937da0925b5?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      {
+        id: "beef-caldereta",
+        name: "Beef Caldereta",
+        price: 399,
+        image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "fries-overload",
-  name: "Fries Overload",
-  price: 249,
-  image: "https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      {
+        id: "kare-kare",
+        name: "Kare-Kare",
+        price: 399,
+        image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
+        category: "a-la-carte"
+      },
 
-{
-  id: "chichabu",
-  name: "Chichabu",
-  price: 249,
-  image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
 
-{
-  id: "chicken-fingers",
-  name: "Chicken Fingers",
-  price: 259,
-  image: "https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      /* PULUTAN */
 
-{
-  id: "calamari",
-  name: "Calamari",
-  price: 259,
-  image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      {
+        id: "endamame",
+        name: "Endamame",
+        price: 79,
+        image: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "tokwat-baboy",
-  name: "Tokwa't Baboy",
-  price: 279,
-  image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      {
+        id: "cg-endamame",
+        name: "CG Endamame",
+        price: 99,
+        image: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "pork-sisig",
-  name: "Pork Sisig",
-  price: 279,
-  image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      {
+        id: "classic-fries",
+        name: "Classic Fries",
+        price: 149,
+        image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "nachos",
-  name: "Nachos",
-  price: 299,
-  image: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
+      {
+        id: "fish-fries",
+        name: "Fish & Fries",
+        price: 219,
+        image: "https://images.unsplash.com/photo-1579208030886-b937da0925b5?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "buffalo-wings",
-  name: "Buffalo Wings",
-  price: 299,
-  image: "https://images.unsplash.com/photo-1527477396000-e27163b481c2?auto=format&fit=crop&w=900&q=80",
-  category: "pulutan"
-},
-{
-  id: "kiddie-spaghetti",
-  name: "Kiddie Spaghetti",
-  price: 129,
-  image: "https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=900&q=80",
-  category: "pasta"
-},
+      {
+        id: "fries-overload",
+        name: "Fries Overload",
+        price: 249,
+        image: "https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "creamy-carbonara",
-  name: "Creamy Carbonara",
-  price: 149,
-  image: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=80",
-  category: "pasta"
-},
+      {
+        id: "chichabu",
+        name: "Chichabu",
+        price: 249,
+        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "classic-spaghetti-marinara",
-  name: "Classic Spaghetti Marinara",
-  price: 179,
-  image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=900&q=80",
-  category: "pasta"
-}
-{
-  id: "ham-egg-sandwich",
-  name: "Ham & Egg Sandwich",
-  price: 119,
-  image: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=900&q=80",
-  category: "sandwich"
-},
+      {
+        id: "chicken-fingers",
+        name: "Chicken Fingers",
+        price: 259,
+        image: "https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "clubhouse-sandwich",
-  name: "Clubhouse Sandwich",
-  price: 199,
-  image: "https://images.unsplash.com/photo-1553909489-cd47e0907980?auto=format&fit=crop&w=900&q=80",
-  category: "sandwich"
-},
-{
-  id: "white-rice",
-  name: "White Rice",
-  price: 35,
-  image: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
-  category: "rice"
-},
+      {
+        id: "calamari",
+        name: "Calamari",
+        price: 259,
+        image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "garlic-rice",
-  name: "Garlic Rice",
-  price: 39,
-  image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
-  category: "rice"
-},
+      {
+        id: "tokwat-baboy",
+        name: "Tokwa't Baboy",
+        price: 279,
+        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "white-rice-platter",
-  name: "White Rice Platter",
-  price: 150,
-  image: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
-  category: "rice"
-},
+      {
+        id: "pork-sisig",
+        name: "Pork Sisig",
+        price: 279,
+        image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "garlic-rice-platter",
-  name: "Garlic Rice Platter",
-  price: 200,
-  image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
-  category: "rice"
-},
-{
-  id: "sm-pale-pilsen",
-  name: "SM Pale Pilsen",
-  price: 95,
-  image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
-  category: "beers"
-},
+      {
+        id: "nachos",
+        name: "Nachos",
+        price: 299,
+        image: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "san-mig-light",
-  name: "San Mig Light",
-  price: 99,
-  image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-  category: "beers"
-},
+      {
+        id: "buffalo-wings",
+        name: "Buffalo Wings",
+        price: 299,
+        image: "https://images.unsplash.com/photo-1527477396000-e27163b481c2?auto=format&fit=crop&w=900&q=80",
+        category: "pulutan"
+      },
 
-{
-  id: "san-mig-apple",
-  name: "San Mig Apple",
-  price: 99,
-  image: "https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=900&q=80",
-  category: "beers"
-},
 
-{
-  id: "red-horse-stallion",
-  name: "Red Horse Stallion",
-  price: 99,
-  image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
-  category: "beers"
-},
+      /* PASTA */
 
-{
-  id: "beer-bucket",
-  name: "Bucket",
-  price: 545,
-  image: "https://images.unsplash.com/photo-1535958636474-b021ee887b13?auto=format&fit=crop&w=900&q=80",
-  category: "beers"
-},
-{
-  id: "jameson-45ml",
-  name: "Jameson — 45ml",
-  price: 170,
-  image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-  category: "whiskey"
-},
+      {
+        id: "kiddie-spaghetti",
+        name: "Kiddie Spaghetti",
+        price: 129,
+        image: "https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=900&q=80",
+        category: "pasta"
+      },
 
-{
-  id: "jameson-1l",
-  name: "Jameson — 1L",
-  price: 1999,
-  image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-  category: "whiskey"
-},
+      {
+        id: "creamy-carbonara",
+        name: "Creamy Carbonara",
+        price: 149,
+        image: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=80",
+        category: "pasta"
+      },
 
-{
-  id: "black-label-45ml",
-  name: "Black Label — 45ml",
-  price: 190,
-  image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-  category: "whiskey"
-},
+      {
+        id: "classic-spaghetti-marinara",
+        name: "Classic Spaghetti Marinara",
+        price: 179,
+        image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=900&q=80",
+        category: "pasta"
+      },
 
-{
-  id: "black-label-1l",
-  name: "Black Label — 1L",
-  price: 2599,
-  image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-  category: "whiskey"
-},
 
-{
-  id: "jack-daniels-45ml",
-  name: "Jack Daniels — 45ml",
-  price: 200,
-  image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-  category: "whiskey"
-},
+      /* SANDWICH */
 
-{
-  id: "jack-daniels-1l",
-  name: "Jack Daniels — 1L",
-  price: 2699,
-  image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-  category: "whiskey"
-},
-{
-  id: "jose-cuervo-45ml",
-  name: "Jose Cuervo — 45ml",
-  price: 190,
-  image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-  category: "tequila"
-},
+      {
+        id: "ham-egg-sandwich",
+        name: "Ham & Egg Sandwich",
+        price: 119,
+        image: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=900&q=80",
+        category: "sandwich"
+      },
 
-{
-  id: "jose-cuervo-1l",
-  name: "Jose Cuervo — 1L",
-  price: 2499,
-  image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-  category: "tequila"
-},
-{
-  id: "coke-320ml",
-  name: "Coke 320ml",
-  price: 65,
-  image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-  category: "soda"
-},
+      {
+        id: "clubhouse-sandwich",
+        name: "Clubhouse Sandwich",
+        price: 199,
+        image: "https://images.unsplash.com/photo-1553909489-cd47e0907980?auto=format&fit=crop&w=900&q=80",
+        category: "sandwich"
+      },
 
-{
-  id: "coke-zero-320ml",
-  name: "Coke Zero 320ml",
-  price: 65,
-  image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-  category: "soda"
-},
 
-{
-  id: "royal-320ml",
-  name: "Royal 320ml",
-  price: 65,
-  image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-  category: "soda"
-},
+      /* RICE */
 
-{
-  id: "sprite-320ml",
-  name: "Sprite 320ml",
-  price: 65,
-  image: "https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
-  category: "soda"
-},
+      {
+        id: "white-rice",
+        name: "White Rice",
+        price: 35,
+        image: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
+        category: "rice"
+      },
 
-{
-  id: "coke-1-5l",
-  name: "Coke 1.5L",
-  price: 160,
-  image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-  category: "soda"
-},
+      {
+        id: "garlic-rice",
+        name: "Garlic Rice",
+        price: 39,
+        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
+        category: "rice"
+      },
 
-{
-  id: "sprite-1-5l",
-  name: "Sprite 1.5L",
-  price: 160,
-  image: "https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
-  category: "soda"
-},
-{
-  id: "jinro-grapefruit",
-  name: "Jinro Grapefruit",
-  price: 220,
-  image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
-  category: "soju"
-},
+      {
+        id: "white-rice-platter",
+        name: "White Rice Platter",
+        price: 150,
+        image: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
+        category: "rice"
+      },
 
-{
-  id: "jinro-green-grape",
-  name: "Jinro Green Grape",
-  price: 220,
-  image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
-  category: "soju"
-},
+      {
+        id: "garlic-rice-platter",
+        name: "Garlic Rice Platter",
+        price: 200,
+        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
+        category: "rice"
+      },
 
-{
-  id: "jinro-strawberry",
-  name: "Jinro Strawberry",
-  price: 220,
-  image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
-  category: "soju"
-},
-{
-  id: "bottled-water",
-  name: "Bottled Water",
-  price: 25,
-  image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=900&q=80",
-  category: "others"
-},
 
-{
-  id: "pitcher-iced-tea",
-  name: "Pitcher Iced Tea",
-  price: 150,
-  image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=900&q=80",
-  category: "others"
-}
-];
+      /* BEERS */
 
-let cart = menu.map(item => ({
-  ...item,
-  qty: 0
-}));
+      {
+        id: "sm-pale-pilsen",
+        name: "SM Pale Pilsen",
+        price: 95,
+        image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
+        category: "beers"
+      },
 
+      {
+        id: "san-mig-light",
+        name: "San Mig Light",
+        price: 99,
+        image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
+        category: "beers"
+      },
+
+      {
+        id: "san-mig-apple",
+        name: "San Mig Apple",
+        price: 99,
+        image: "https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=900&q=80",
+        category: "beers"
+      },
+
+      {
+        id: "red-horse-stallion",
+        name: "Red Horse Stallion",
+        price: 99,
+        image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
+        category: "beers"
+      },
+
+      {
+        id: "beer-bucket",
+        name: "Bucket",
+        price: 545,
+        image: "https://images.unsplash.com/photo-1535958636474-b021ee887b13?auto=format&fit=crop&w=900&q=80",
+        category: "beers"
+      },
+
+
+      /* WHISKEY */
+
+      {
+        id: "jameson-45ml",
+        name: "Jameson — 45ml",
+        price: 170,
+        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+        category: "whiskey"
+      },
+
+      {
+        id: "jameson-1l",
+        name: "Jameson — 1L",
+        price: 1999,
+        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+        category: "whiskey"
+      },
+
+      {
+        id: "black-label-45ml",
+        name: "Black Label — 45ml",
+        price: 190,
+        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+        category: "whiskey"
+      },
+
+      {
+        id: "black-label-1l",
+        name: "Black Label — 1L",
+        price: 2599,
+        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+        category: "whiskey"
+      },
+
+      {
+        id: "jack-daniels-45ml",
+        name: "Jack Daniels — 45ml",
+        price: 200,
+        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+        category: "whiskey"
+      },
+
+      {
+        id: "jack-daniels-1l",
+        name: "Jack Daniels — 1L",
+        price: 2699,
+        image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
+        category: "whiskey"
+      },
+
+
+      /* TEQUILA */
+
+      {
+        id: "jose-cuervo-45ml",
+        name: "Jose Cuervo — 45ml",
+        price: 190,
+        image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
+        category: "tequila"
+      },
+
+      {
+        id: "jose-cuervo-1l",
+        name: "Jose Cuervo — 1L",
+        price: 2499,
+        image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
+        category: "tequila"
+      },
+
+
+      /* SOJU */
+
+      {
+        id: "jinro-grapefruit",
+        name: "Jinro Grapefruit",
+        price: 220,
+        image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
+        category: "soju"
+      },
+
+      {
+        id: "jinro-green-grape",
+        name: "Jinro Green Grape",
+        price: 220,
+        image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
+        category: "soju"
+      },
+
+      {
+        id: "jinro-strawberry",
+        name: "Jinro Strawberry",
+        price: 220,
+        image: "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
+        category: "soju"
+      },
+
+
+      /* SODA */
+
+      {
+        id: "coke-320ml",
+        name: "Coke 320ml",
+        price: 65,
+        image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
+        category: "soda"
+      },
+
+      {
+        id: "coke-zero-320ml",
+        name: "Coke Zero 320ml",
+        price: 65,
+        image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
+        category: "soda"
+      },
+
+      {
+        id: "royal-320ml",
+        name: "Royal 320ml",
+        price: 65,
+        image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
+        category: "soda"
+      },
+
+      {
+        id: "sprite-320ml",
+        name: "Sprite 320ml",
+        price: 65,
+        image: "https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
+        category: "soda"
+      },
+
+      {
+        id: "coke-1-5l",
+        name: "Coke 1.5L",
+        price: 160,
+        image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
+        category: "soda"
+      },
+
+      {
+        id: "sprite-1-5l",
+        name: "Sprite 1.5L",
+        price: 160,
+        image: "https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
+        category: "soda"
+      },
+
+
+      /* OTHERS */
+
+      {
+        id: "bottled-water",
+        name: "Bottled Water",
+        price: 25,
+        image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=900&q=80",
+        category: "others"
+      },
+
+      {
+        id: "pitcher-iced-tea",
+        name: "Pitcher Iced Tea",
+        price: 150,
+        image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=900&q=80",
+        category: "others"
+      }
+
+    ];
+
+
+    /* =====================================================
+       CART
+    ===================================================== */
+
+    let cart = menu.map(function(item) {
+      return {
+        ...item,
+        qty: 0
+      };
+    });
+
+
+    let activeCategory = "all";
 
     let orderType = "";
 
@@ -1202,9 +1358,9 @@ let cart = menu.map(item => ({
     let paymentReference = null;
 
 
-    /* =========================
+    /* =====================================================
        ORDER TYPE
-    ========================= */
+    ===================================================== */
 
     function selectOrderType(type) {
 
@@ -1275,6 +1431,10 @@ let cart = menu.map(item => ({
             .getElementById("tableInfo")
             .classList.remove("show");
 
+          document
+            .getElementById("tablePaymentButton")
+            .classList.remove("selected");
+
         }
 
       }
@@ -1298,6 +1458,10 @@ let cart = menu.map(item => ({
 
     }
 
+
+    /* =====================================================
+       CHANGE ORDER TYPE
+    ===================================================== */
 
     function changeOrderType() {
 
@@ -1335,85 +1499,156 @@ let cart = menu.map(item => ({
       });
 
     }
-function renderMenu() {
-let activeCategory = "all";
 
-function renderMenu() {
-  const menuGrid = document.getElementById("menuGrid");
 
-  menuGrid.innerHTML = "";
+    /* =====================================================
+       RENDER MENU
+    ===================================================== */
 
-  const filteredMenu =
-    activeCategory === "all"
-      ? menu
-      : menu.filter(item => item.category === activeCategory);
+    function renderMenu() {
 
-  filteredMenu.forEach(function(item) {
+      const menuGrid =
+        document.getElementById("menuGrid");
 
-    const cartItem = cart.find(c => c.id === item.id);
-    const qty = cartItem ? cartItem.qty : 0;
+      menuGrid.innerHTML = "";
 
-    menuGrid.innerHTML += `
-      <div class="menu-card">
 
-        <img
-          class="food-image"
-          src="${item.image}"
-          alt="${item.name}"
-        >
+      const filteredMenu =
+        activeCategory === "all"
+          ? menu
+          : menu.filter(function(item) {
+              return item.category === activeCategory;
+            });
 
-        <div class="menu-info">
 
-          <div class="menu-name">
-            ${item.name}
+      filteredMenu.forEach(function(item) {
+
+        const cartItem =
+          cart.find(function(c) {
+            return c.id === item.id;
+          });
+
+
+        const qty =
+          cartItem ? cartItem.qty : 0;
+
+
+        menuGrid.innerHTML += `
+
+          <div class="menu-card">
+
+            <img
+              src="${item.image}"
+              alt="${item.name}"
+            >
+
+            <div class="menu-info">
+
+              <div class="menu-name">
+                ${item.name}
+              </div>
+
+              <div class="menu-price">
+                ₱${item.price.toLocaleString()}
+              </div>
+
+              <div class="quantity-control">
+
+                <button
+                  onclick="changeQtyById('${item.id}', -1)"
+                >
+                  −
+                </button>
+
+                <span id="qty-${item.id}">
+                  ${qty}
+                </span>
+
+                <button
+                  onclick="changeQtyById('${item.id}', 1)"
+                >
+                  +
+                </button>
+
+              </div>
+
+            </div>
+
           </div>
 
-          <div class="menu-price">
-            ₱${item.price}
-          </div>
+        `;
 
-          <div class="quantity-control">
+      });
 
-            <button onclick="changeQtyById('${item.id}', -1)">
-              −
-            </button>
+    }
 
-            <span id="qty-${item.id}">
-              ${qty}
-            </span>
 
-            <button onclick="changeQtyById('${item.id}', 1)">
-              +
-            </button>
+    /* =====================================================
+       CATEGORY
+    ===================================================== */
 
-          </div>
+    function setCategory(category) {
 
-        </div>
+      activeCategory = category;
 
-      </div>
-    `;
-  });
 
-}
-function setCategory(category) {
-  activeCategory = category;
-  renderMenu();
-}
-    /* =========================
-       QUANTITY
-    ========================= */
+      document
+        .querySelectorAll(".category-menu button")
+        .forEach(function(button) {
 
-    function changeQty(index, change) {
+          button.classList.remove("active");
 
-      cart[index].qty += change;
+        });
 
-      if (cart[index].qty < 0) {
-        cart[index].qty = 0;
+
+      const activeButton =
+        document.querySelector(
+          .category-menu button[data-category="${category}"]
+        );
+
+
+      if (activeButton) {
+        activeButton.classList.add("active");
       }
 
 
-      document.getElementById("qty" + index).textContent =
-        cart[index].qty;
+      renderMenu();
+
+    }
+
+
+    /* =====================================================
+       QUANTITY
+    ===================================================== */
+
+    function changeQtyById(id, change) {
+
+      const item =
+        cart.find(function(c) {
+          return c.id === id;
+        });
+
+
+      if (!item) {
+        return;
+      }
+
+
+      item.qty += change;
+
+
+      if (item.qty < 0) {
+        item.qty = 0;
+      }
+
+
+      const qtyElement =
+        document.getElementById("qty-" + id);
+
+
+      if (qtyElement) {
+        qtyElement.textContent = item.qty;
+      }
 
 
       updateOrder();
@@ -1421,16 +1656,18 @@ function setCategory(category) {
     }
 
 
-    /* =========================
+    /* =====================================================
        UPDATE ORDER
-    ========================= */
+    ===================================================== */
 
     function updateOrder() {
 
       const orderItems =
         document.getElementById("orderItems");
 
+
       orderItems.innerHTML = "";
+
 
       let total = 0;
 
@@ -1443,8 +1680,10 @@ function setCategory(category) {
 
           hasItems = true;
 
+
           const itemTotal =
             item.price * item.qty;
+
 
           total += itemTotal;
 
@@ -1452,17 +1691,20 @@ function setCategory(category) {
           const row =
             document.createElement("div");
 
+
           row.className = "order-item";
 
 
           row.innerHTML = `
+
             <span>
               ${item.name} × ${item.qty}
             </span>
 
             <span>
-              ₱${itemTotal}
+              ₱${itemTotal.toLocaleString()}
             </span>
+
           `;
 
 
@@ -1476,42 +1718,49 @@ function setCategory(category) {
       if (!hasItems) {
 
         orderItems.innerHTML = `
+
           <div class="empty-order">
             No items added yet.
           </div>
+
         `;
 
       }
 
 
-      document.getElementById("totalAmount").textContent =
-        "₱" + total;
+      document
+        .getElementById("totalAmount")
+        .textContent =
+          "₱" + total.toLocaleString();
 
     }
 
 
-    /* =========================
-       TOTAL
-    ========================= */
+    /* =====================================================
+       GET TOTAL
+    ===================================================== */
 
     function getTotal() {
 
       let total = 0;
 
+
       cart.forEach(function(item) {
 
-        total += item.price * item.qty;
+        total +=
+          item.price * item.qty;
 
       });
+
 
       return total;
 
     }
 
 
-    /* =========================
+    /* =====================================================
        PAYMENT
-    ========================= */
+    ===================================================== */
 
     function selectPayment(method) {
 
@@ -1554,7 +1803,6 @@ function setCategory(category) {
           .getElementById("qrPaymentButton")
           .classList.add("selected");
 
-
         document
           .getElementById("qrInfo")
           .classList.add("show");
@@ -1571,7 +1819,6 @@ function setCategory(category) {
           .getElementById("counterPaymentButton")
           .classList.add("selected");
 
-
         document
           .getElementById("counterInfo")
           .classList.add("show");
@@ -1585,7 +1832,6 @@ function setCategory(category) {
           .getElementById("tablePaymentButton")
           .classList.add("selected");
 
-
         document
           .getElementById("tableInfo")
           .classList.add("show");
@@ -1595,22 +1841,24 @@ function setCategory(category) {
     }
 
 
-    /* =========================
+    /* =====================================================
        DEMO QR
-    ========================= */
+    ===================================================== */
 
     function generateQR() {
 
       const qrContainer =
         document.getElementById("qrcode");
 
+
       qrContainer.innerHTML = "";
 
 
-      const total = getTotal();
+      const total =
+        getTotal();
 
 
-      const demoData =
+      const qrData =
         "HALINAQR" +
         "|TYPE=" +
         orderType +
@@ -1627,9 +1875,13 @@ function setCategory(category) {
       if (typeof QRCode !== "undefined") {
 
         new QRCode(qrContainer, {
-          text: demoData,
+
+          text: qrData,
+
           width: 180,
+
           height: 180
+
         });
 
       }
@@ -1637,34 +1889,39 @@ function setCategory(category) {
     }
 
 
-    /* =========================
+    /* =====================================================
        DEMO PAID
-    ========================= */
+    ===================================================== */
 
     function markAsPaid() {
 
       paymentStatus = "paid";
 
+
       paymentReference =
         "DEMO-" + Date.now();
 
 
-      alert("Payment marked as paid.");
+      alert(
+        "Payment marked as paid."
+      );
 
     }
 
 
-    /* =========================
+    /* =====================================================
        SEND ORDER
-    ========================= */
+    ===================================================== */
 
     async function sendOrder() {
 
       const errorBox =
         document.getElementById("errorBox");
 
+
       const successBox =
         document.getElementById("successBox");
+
 
       const sendButton =
         document.getElementById("sendOrderButton");
@@ -1708,7 +1965,8 @@ function setCategory(category) {
 
       /* ITEMS */
 
-      const total = getTotal();
+      const total =
+        getTotal();
 
 
       if (total <= 0) {
@@ -1737,7 +1995,7 @@ function setCategory(category) {
       }
 
 
-      /* QR MUST BE PAID */
+      /* QR PAYMENT */
 
       if (
         selectedPayment === "QR" &&
@@ -1760,9 +2018,7 @@ function setCategory(category) {
         "SENDING...";
 
 
-      /* =========================
-         PAYMENT MAPPING
-      ========================= */
+      /* PAYMENT MAPPING */
 
       let dbPaymentMethod = "cash";
 
@@ -1774,9 +2030,7 @@ function setCategory(category) {
       }
 
 
-      /* =========================
-         TABLE VALUE
-      ========================= */
+      /* TABLE */
 
       const dbTableNumber =
         orderType === "dine_in"
@@ -1784,15 +2038,26 @@ function setCategory(category) {
           : "TAKEOUT";
 
 
-      /* =========================
-         ORDER DATA
-         
-         IMPORTANT:
-         NO order_number HERE.
-         
-         Supabase automatically
-         generates it.
-      ========================= */
+      /* ITEMS ONLY */
+
+      const orderItems =
+        cart
+          .filter(function(item) {
+            return item.qty > 0;
+          })
+          .map(function(item) {
+
+            return {
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              qty: item.qty
+            };
+
+          });
+
+
+      /* ORDER DATA */
 
       const orderData = {
 
@@ -1806,9 +2071,7 @@ function setCategory(category) {
           orderType,
 
         items:
-          cart.filter(function(item) {
-            return item.qty > 0;
-          }),
+          orderItems,
 
         total:
           total,
@@ -1832,8 +2095,10 @@ function setCategory(category) {
 
         const response =
           await fetch(
+
             SUPABASE_URL +
             "/rest/v1/orders",
+
             {
 
               method: "POST",
@@ -1859,6 +2124,7 @@ function setCategory(category) {
                 JSON.stringify(orderData)
 
             }
+
           );
 
 
@@ -1869,26 +2135,21 @@ function setCategory(category) {
         if (!response.ok) {
 
           throw new Error(
+
             data.message ||
             data.error_description ||
             data.hint ||
             "Order could not be submitted."
+
           );
 
         }
 
 
-        /* =========================
-           SUCCESS
-        ========================= */
+        /* SUCCESS */
 
         successBox.classList.add("show");
 
-
-        /*
-          Supabase should return
-          the generated order_number.
-        */
 
         if (
           data &&
@@ -1897,10 +2158,21 @@ function setCategory(category) {
         ) {
 
           document
-            .getElementById("successOrderNumber")
+            .getElementById(
+              "successOrderNumber"
+            )
             .textContent =
               "Order #" +
               data[0].order_number;
+
+        } else {
+
+          document
+            .getElementById(
+              "successOrderNumber"
+            )
+            .textContent =
+              "Order received successfully.";
 
         }
 
@@ -1908,17 +2180,16 @@ function setCategory(category) {
         sendButton.textContent =
           "ORDER SENT";
 
+
         sendButton.disabled = true;
 
 
-        /*
-          Optional:
-          Scroll to success message
-        */
-
         successBox.scrollIntoView({
+
           behavior: "smooth",
+
           block: "center"
+
         });
 
 
@@ -1937,6 +2208,7 @@ function setCategory(category) {
 
         sendButton.disabled = false;
 
+
         sendButton.textContent =
           "SEND ORDER";
 
@@ -1945,11 +2217,12 @@ function setCategory(category) {
     }
 
 
-    /* =========================
-       INITIAL ORDER
-    ========================= */
+    /* =====================================================
+       INITIALIZE
+    ===================================================== */
 
     renderMenu();
+
     updateOrder();
 
   </script>
