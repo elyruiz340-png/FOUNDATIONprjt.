@@ -833,7 +833,7 @@ function renderMenu() {
             </button>
 
             <span id="qty${index}">
-              ${item.qty}
+              ${cart[index].qty || 0}
             </span>
 
             <button onclick="changeQty(${index}, 1)">
