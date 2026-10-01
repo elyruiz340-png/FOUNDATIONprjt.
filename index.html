@@ -467,115 +467,7 @@
         Menu
       </div>
 
-      <div class="menu-grid">
-
-        <!-- TERIYAKI -->
-        <div class="menu-card">
-
-          <img
-            src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80"
-            alt="Teriyaki Chicken"
-          >
-
-          <div class="menu-info">
-
-            <div class="menu-name">
-              Teriyaki Chicken
-            </div>
-
-            <div class="menu-price">
-              ₱120
-            </div>
-
-            <div class="quantity-control">
-
-              <button onclick="changeQty(0, -1)">
-                −
-              </button>
-
-              <span id="qty0">0</span>
-
-              <button onclick="changeQty(0, 1)">
-                +
-              </button>
-
-            </div>
-
-          </div>
-        </div>
-
-        <!-- YANGNYEOM -->
-        <div class="menu-card">
-
-          <img
-            src="https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=900&q=80"
-            alt="Yangnyeom Chicken"
-          >
-
-          <div class="menu-info">
-
-            <div class="menu-name">
-              Yangnyeom Chicken
-            </div>
-
-            <div class="menu-price">
-              ₱120
-            </div>
-
-            <div class="quantity-control">
-
-              <button onclick="changeQty(1, -1)">
-                −
-              </button>
-
-              <span id="qty1">0</span>
-
-              <button onclick="changeQty(1, 1)">
-                +
-              </button>
-
-            </div>
-
-          </div>
-        </div>
-
-        <!-- HONEY GARLIC -->
-        <div class="menu-card">
-
-          <img
-            src="https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80"
-            alt="Honey Garlic Butter"
-          >
-
-          <div class="menu-info">
-
-            <div class="menu-name">
-              Honey Garlic Butter
-            </div>
-
-            <div class="menu-price">
-              ₱120
-            </div>
-
-            <div class="quantity-control">
-
-              <button onclick="changeQty(2, -1)">
-                −
-              </button>
-
-              <span id="qty2">0</span>
-
-              <button onclick="changeQty(2, 1)">
-                +
-              </button>
-
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-    </div>
+<div class="menu-grid" id="menuGrid"></div>
 
     <!-- ORDER -->
     <div id="orderSection">
@@ -737,45 +629,33 @@
        MENU
     ========================= */
 
-    const menu = [
+const menu = [
+  {
+    id: "teriyaki",
+    name: "Teriyaki Chicken",
+    price: 120,
+    image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80"
+  },
 
-      {
-        name: "Teriyaki Chicken",
-        price: 120
-      },
+  {
+    id: "yangnyeom",
+    name: "Yangnyeom Chicken",
+    price: 120,
+    image: "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=900&q=80"
+  },
 
-      {
-        name: "Yangnyeom Chicken",
-        price: 120
-      },
+  {
+    id: "honeygarlic",
+    name: "Honey Garlic Butter",
+    price: 120,
+    image: "https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80"
+  }
+];
 
-      {
-        name: "Honey Garlic Butter",
-        price: 120
-      }
-
-    ];
-
-
-    let cart = [
-      {
-        name: "Teriyaki Chicken",
-        price: 120,
-        qty: 0
-      },
-
-      {
-        name: "Yangnyeom Chicken",
-        price: 120,
-        qty: 0
-      },
-
-      {
-        name: "Honey Garlic Butter",
-        price: 120,
-        qty: 0
-      }
-    ];
+let cart = menu.map(item => ({
+  ...item,
+  qty: 0
+}));
 
 
     let orderType = "";
@@ -920,7 +800,55 @@
       });
 
     }
+function renderMenu() {
 
+  const menuGrid = document.getElementById("menuGrid");
+
+  menuGrid.innerHTML = "";
+
+  menu.forEach(function(item, index) {
+
+    menuGrid.innerHTML += `
+      <div class="menu-card">
+
+        <img
+          src="${item.image}"
+          alt="${item.name}"
+        >
+
+        <div class="menu-info">
+
+          <div class="menu-name">
+            ${item.name}
+          </div>
+
+          <div class="menu-price">
+            ₱${item.price}
+          </div>
+
+          <div class="quantity-control">
+
+            <button onclick="changeQty(${index}, -1)">
+              −
+            </button>
+
+            <span id="qty${index}">
+              ${item.qty}
+            </span>
+
+            <button onclick="changeQty(${index}, 1)">
+              +
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+    `;
+
+  });
+
+}
 
     /* =========================
        QUANTITY
@@ -1472,6 +1400,7 @@
        INITIAL ORDER
     ========================= */
 
+    renderMenu();
     updateOrder();
 
   </script>
