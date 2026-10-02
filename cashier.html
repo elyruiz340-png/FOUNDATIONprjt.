@@ -138,12 +138,6 @@
       font-weight: bold;
     }
 
-    .message.success {
-      display: block;
-      background: #dff7e5;
-      color: #16803c;
-    }
-
     .message.error {
       display: block;
       background: #ffe0e0;
@@ -168,7 +162,10 @@
 <div class="container">
 
   <div class="top-bar">
-    <h2>Table Management</h2>
+
+    <h2>
+      Table Management
+    </h2>
 
     <button
       class="refresh-btn"
@@ -177,58 +174,84 @@
     >
       🔄 Refresh
     </button>
+
   </div>
 
-  <div id="message" class="message"></div>
 
-  <div id="tablesContainer" class="tables">
+  <div
+    id="message"
+    class="message"
+  ></div>
+
+
+  <div
+    id="tablesContainer"
+    class="tables"
+  >
+
     <div class="loading">
       Loading tables...
     </div>
+
   </div>
 
 </div>
+
 
 <script>
 
   const SUPABASE_URL =
     "https://isqcuycjrbjtmqhzckvb.supabase.co";
 
+
   const SUPABASE_KEY =
     "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
 
 
   const tablesContainer =
-    document.getElementById("tablesContainer");
+    document.getElementById(
+      "tablesContainer"
+    );
+
 
   const messageBox =
-    document.getElementById("message");
+    document.getElementById(
+      "message"
+    );
+
 
   const refreshBtn =
-    document.getElementById("refreshBtn");
+    document.getElementById(
+      "refreshBtn"
+    );
 
 
-  function showMessage(text, type) {
+  function showError(text) {
 
-    messageBox.textContent = text;
+    messageBox.textContent =
+      text;
 
     messageBox.className =
-      "message " + type;
+      "message error";
+
+  }
 
 
-    setTimeout(() => {
+  function clearMessage() {
 
-      messageBox.className =
-        "message";
+    messageBox.textContent =
+      "";
 
-      messageBox.textContent =
-        "";
+    messageBox.className =
+      "message";
 
-    }, 3000);
   }
 
 
   async function loadTables() {
+
+    clearMessage();
+
 
     tablesContainer.innerHTML =
       '<div class="loading">Loading tables...</div>';
@@ -238,17 +261,25 @@
 
       const response =
         await fetch(
+
           SUPABASE_URL +
           "/rest/v1/T%20A%20B%20L%20E%20S?select=*&order=id.asc",
+
           {
             method: "GET",
 
             headers: {
-              "apikey": SUPABASE_KEY,
+
+              "apikey":
+                SUPABASE_KEY,
+
               "Authorization":
                 "Bearer " + SUPABASE_KEY
+
             }
+
           }
+
         );
 
 
@@ -259,10 +290,14 @@
       if (!response.ok) {
 
         throw new Error(
+
           data.message ||
           data.error ||
+          data.hint ||
           "Unable to load tables."
+
         );
+
       }
 
 
@@ -272,6 +307,7 @@
           '<div class="loading">No tables found.</div>';
 
         return;
+
       }
 
 
@@ -282,7 +318,10 @@
       data.forEach(table => {
 
         const card =
-          document.createElement("div");
+          document.createElement(
+            "div"
+          );
+
 
         card.className =
           "table-card";
@@ -297,55 +336,95 @@
         card.innerHTML = `
 
           <div class="table-number">
-            ${escapeHtml(table.table_number)}
+            ${escapeHtml(
+              table.table_number
+            )}
           </div>
 
-          <div class="status ${isOpen ? "open" : "locked"}">
-            ${isOpen ? "🟢 OPEN" : "🔒 LOCKED"}
+
+          <div class="status ${
+            isOpen
+              ? "open"
+              : "locked"
+          }">
+
+            ${
+              isOpen
+                ? "🟢 OPEN"
+                : "🔒 LOCKED"
+            }
+
           </div>
+
 
           <button
+
             type="button"
-            class="action-btn ${isOpen ? "lock-btn" : "unlock-btn"}"
-            data-id="${table.id}"
-            data-status="${isOpen ? "open" : "locked"}"
+
+            class="action-btn ${
+              isOpen
+                ? "lock-btn"
+                : "unlock-btn"
+            }"
+
+            data-id="${
+              table.id
+            }"
+
+            data-status="${
+              isOpen
+                ? "open"
+                : "locked"
+            }"
+
           >
-            ${isOpen ? "🔒 LOCK TABLE" : "🔓 UNLOCK TABLE"}
+
+            ${
+              isOpen
+                ? "🔒 LOCK TABLE"
+                : "🔓 UNLOCK TABLE"
+            }
+
           </button>
 
         `;
 
 
-        tablesContainer.appendChild(card);
+        tablesContainer.appendChild(
+          card
+        );
 
       });
 
 
       document
-        .querySelectorAll(".action-btn")
+        .querySelectorAll(
+          ".action-btn"
+        )
         .forEach(button => {
 
           button.addEventListener(
             "click",
-            () => {
+            function() {
 
               const id =
-                button.dataset.id;
+                this.dataset.id;
+
 
               const currentStatus =
-                button.dataset.status;
+                this.dataset.status;
 
 
               const newStatus =
-                currentStatus === "locked"
-                  ? "open"
-                  : "locked";
+                currentStatus === "open"
+                  ? "locked"
+                  : "open";
 
 
               updateTableStatus(
                 id,
                 newStatus,
-                button
+                this
               );
 
             }
@@ -363,11 +442,12 @@
         '<div class="loading">Unable to load tables.</div>';
 
 
-      showMessage(
-        error.message,
-        "error"
+      showError(
+        error.message
       );
+
     }
+
   }
 
 
@@ -380,27 +460,29 @@
     button.disabled =
       true;
 
+
     button.textContent =
       "Updating...";
 
 
-    try {
+    clearMessage();
 
-      /*
-        IMPORTANT:
-        Use the REAL table name:
-        T A B L E S
-      */
+
+    try {
 
       const response =
         await fetch(
+
           SUPABASE_URL +
           "/rest/v1/T%20A%20B%20L%20E%20S?id=eq." +
           encodeURIComponent(id),
+
           {
+
             method: "PATCH",
 
             headers: {
+
               "Content-Type":
                 "application/json",
 
@@ -408,17 +490,24 @@
                 SUPABASE_KEY,
 
               "Authorization":
-                "Bearer " + SUPABASE_KEY,
+                "Bearer " +
+                SUPABASE_KEY,
 
               "Prefer":
                 "return=representation"
+
             },
 
             body:
               JSON.stringify({
-                status: newStatus
+
+                status:
+                  newStatus
+
               })
+
           }
+
         );
 
 
@@ -429,21 +518,42 @@
       if (!response.ok) {
 
         throw new Error(
+
           data.message ||
           data.error ||
           data.hint ||
           "Unable to update table."
+
         );
+
       }
 
 
-      showMessage(
-        newStatus === "open"
-          ? "Table unlocked successfully."
-          : "Table locked successfully.",
-        "success"
-      );
+      /*
+        IMPORTANT:
+        Supabase must return the
+        row that was actually updated.
+      */
 
+      if (
+        !Array.isArray(data) ||
+        data.length === 0
+      ) {
+
+        throw new Error(
+
+          "The table was not updated. Please check the UPDATE policy in Supabase."
+
+        );
+
+      }
+
+
+      /*
+        Reload the table list.
+        The displayed status will now
+        come directly from Supabase.
+      */
 
       await loadTables();
 
@@ -453,9 +563,8 @@
       console.error(error);
 
 
-      showMessage(
-        error.message,
-        "error"
+      showError(
+        error.message
       );
 
 
@@ -465,9 +574,13 @@
 
       button.textContent =
         newStatus === "open"
+
           ? "🔓 UNLOCK TABLE"
+
           : "🔒 LOCK TABLE";
+
     }
+
   }
 
 
@@ -499,6 +612,7 @@
         /'/g,
         "&#039;"
       );
+
   }
 
 
