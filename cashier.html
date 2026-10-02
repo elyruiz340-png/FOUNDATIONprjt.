@@ -163,9 +163,7 @@
 
   <div class="top-bar">
 
-    <h2>
-      Table Management
-    </h2>
+    <h2>Table Management</h2>
 
     <button
       class="refresh-btn"
@@ -177,59 +175,47 @@
 
   </div>
 
-
   <div
     id="message"
     class="message"
   ></div>
 
-
   <div
     id="tablesContainer"
     class="tables"
   >
-
     <div class="loading">
       Loading tables...
     </div>
-
   </div>
 
 </div>
-
 
 <script>
 
   const SUPABASE_URL =
     "https://isqcuycjrbjtmqhzckvb.supabase.co";
 
-
   const SUPABASE_KEY =
     "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
 
+  const TABLE_ENDPOINT =
+    SUPABASE_URL +
+    "/rest/v1/T%20A%20B%20L%20E%20S";
 
   const tablesContainer =
-    document.getElementById(
-      "tablesContainer"
-    );
-
+    document.getElementById("tablesContainer");
 
   const messageBox =
-    document.getElementById(
-      "message"
-    );
-
+    document.getElementById("message");
 
   const refreshBtn =
-    document.getElementById(
-      "refreshBtn"
-    );
+    document.getElementById("refreshBtn");
 
 
   function showError(text) {
 
-    messageBox.textContent =
-      text;
+    messageBox.textContent = text;
 
     messageBox.className =
       "message error";
@@ -239,8 +225,7 @@
 
   function clearMessage() {
 
-    messageBox.textContent =
-      "";
+    messageBox.textContent = "";
 
     messageBox.className =
       "message";
@@ -252,34 +237,24 @@
 
     clearMessage();
 
-
     tablesContainer.innerHTML =
       '<div class="loading">Loading tables...</div>';
-
 
     try {
 
       const response =
         await fetch(
-
-          SUPABASE_URL +
-          "/rest/v1/T%20A%20B%20L%20E%20S?select=*&order=id.asc",
-
+          TABLE_ENDPOINT +
+          "?select=*&order=id.asc",
           {
             method: "GET",
 
             headers: {
-
-              "apikey":
-                SUPABASE_KEY,
-
+              "apikey": SUPABASE_KEY,
               "Authorization":
                 "Bearer " + SUPABASE_KEY
-
             }
-
           }
-
         );
 
 
@@ -290,12 +265,10 @@
       if (!response.ok) {
 
         throw new Error(
-
           data.message ||
           data.error ||
           data.hint ||
           "Unable to load tables."
-
         );
 
       }
@@ -311,142 +284,125 @@
       }
 
 
-      tablesContainer.innerHTML =
-        "";
+      tablesContainer.innerHTML = "";
 
 
       data.forEach(table => {
 
-        const card =
-          document.createElement(
-            "div"
-          );
-
-
-        card.className =
-          "table-card";
-
-
-        const isOpen =
-          String(table.status)
-            .trim()
-            .toLowerCase() === "open";
-
-
-        card.innerHTML = `
-
-          <div class="table-number">
-            ${escapeHtml(
-              table.table_number
-            )}
-          </div>
-
-
-          <div class="status ${
-            isOpen
-              ? "open"
-              : "locked"
-          }">
-
-            ${
-              isOpen
-                ? "🟢 OPEN"
-                : "🔒 LOCKED"
-            }
-
-          </div>
-
-
-          <button
-
-            type="button"
-
-            class="action-btn ${
-              isOpen
-                ? "lock-btn"
-                : "unlock-btn"
-            }"
-
-            data-id="${
-              table.id
-            }"
-
-            data-status="${
-              isOpen
-                ? "open"
-                : "locked"
-            }"
-
-          >
-
-            ${
-              isOpen
-                ? "🔒 LOCK TABLE"
-                : "🔓 UNLOCK TABLE"
-            }
-
-          </button>
-
-        `;
-
-
-        tablesContainer.appendChild(
-          card
-        );
+        createTableCard(table);
 
       });
-
-
-      document
-        .querySelectorAll(
-          ".action-btn"
-        )
-        .forEach(button => {
-
-          button.addEventListener(
-            "click",
-            function() {
-
-              const id =
-                this.dataset.id;
-
-
-              const currentStatus =
-                this.dataset.status;
-
-
-              const newStatus =
-                currentStatus === "open"
-                  ? "locked"
-                  : "open";
-
-
-              updateTableStatus(
-                id,
-                newStatus,
-                this
-              );
-
-            }
-          );
-
-        });
-
 
     } catch (error) {
 
       console.error(error);
 
-
       tablesContainer.innerHTML =
         '<div class="loading">Unable to load tables.</div>';
 
-
-      showError(
-        error.message
-      );
+      showError(error.message);
 
     }
+
+  }
+
+
+  function createTableCard(table) {
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "table-card";
+
+    card.dataset.id =
+      table.id;
+
+
+    const isOpen =
+      String(table.status)
+        .trim()
+        .toLowerCase() === "open";
+
+
+    card.innerHTML = `
+
+      <div class="table-number">
+        ${escapeHtml(table.table_number)}
+      </div>
+
+      <div class="status ${
+        isOpen ? "open" : "locked"
+      }">
+
+        ${
+          isOpen
+            ? "🟢 OPEN"
+            : "🔒 LOCKED"
+        }
+
+      </div>
+
+      <button
+        type="button"
+        class="action-btn ${
+          isOpen
+            ? "lock-btn"
+            : "unlock-btn"
+        }"
+      >
+
+        ${
+          isOpen
+            ? "🔒 LOCK TABLE"
+            : "🔓 UNLOCK TABLE"
+        }
+
+      </button>
+
+    `;
+
+
+    const button =
+      card.querySelector(".action-btn");
+
+
+    button.addEventListener(
+      "click",
+      function() {
+
+        const currentStatus =
+          isCardOpen(card)
+            ? "open"
+            : "locked";
+
+        const newStatus =
+          currentStatus === "open"
+            ? "locked"
+            : "open";
+
+        updateTableStatus(
+          table.id,
+          newStatus,
+          card,
+          button
+        );
+
+      }
+    );
+
+
+    tablesContainer.appendChild(card);
+
+  }
+
+
+  function isCardOpen(card) {
+
+    const status =
+      card.querySelector(".status");
+
+    return status.classList.contains("open");
 
   }
 
@@ -454,16 +410,14 @@
   async function updateTableStatus(
     id,
     newStatus,
+    card,
     button
   ) {
 
-    button.disabled =
-      true;
-
+    button.disabled = true;
 
     button.textContent =
       "Updating...";
-
 
     clearMessage();
 
@@ -473,8 +427,8 @@
       const response =
         await fetch(
 
-          SUPABASE_URL +
-          "/rest/v1/T%20A%20B%20L%20E%20S?id=eq." +
+          TABLE_ENDPOINT +
+          "?id=eq." +
           encodeURIComponent(id),
 
           {
@@ -500,10 +454,7 @@
 
             body:
               JSON.stringify({
-
-                status:
-                  newStatus
-
+                status: newStatus
               })
 
           }
@@ -518,22 +469,14 @@
       if (!response.ok) {
 
         throw new Error(
-
           data.message ||
           data.error ||
           data.hint ||
           "Unable to update table."
-
         );
 
       }
 
-
-      /*
-        IMPORTANT:
-        Supabase must return the
-        row that was actually updated.
-      */
 
       if (
         !Array.isArray(data) ||
@@ -541,43 +484,88 @@
       ) {
 
         throw new Error(
-
           "The table was not updated. Please check the UPDATE policy in Supabase."
-
         );
 
       }
 
 
       /*
-        Reload the table list.
-        The displayed status will now
-        come directly from Supabase.
-      */
+       * IMPORTANT:
+       * No full page/table refresh here.
+       * We update only this table card.
+       */
 
-      await loadTables();
+
+      const statusElement =
+        card.querySelector(".status");
+
+
+      if (newStatus === "open") {
+
+        statusElement.className =
+          "status open";
+
+        statusElement.textContent =
+          "🟢 OPEN";
+
+
+        button.className =
+          "action-btn lock-btn";
+
+        button.textContent =
+          "🔒 LOCK TABLE";
+
+      } else {
+
+        statusElement.className =
+          "status locked";
+
+        statusElement.textContent =
+          "🔒 LOCKED";
+
+
+        button.className =
+          "action-btn unlock-btn";
+
+        button.textContent =
+          "🔓 UNLOCK TABLE";
+
+      }
+
+
+      button.disabled = false;
 
 
     } catch (error) {
 
       console.error(error);
 
-
-      showError(
-        error.message
-      );
+      showError(error.message);
 
 
-      button.disabled =
-        false;
+      /*
+       * Restore the correct button
+       * if the database update failed.
+       */
+
+      const currentlyOpen =
+        isCardOpen(card);
+
+
+      button.disabled = false;
+
+
+      button.className =
+        currentlyOpen
+          ? "action-btn lock-btn"
+          : "action-btn unlock-btn";
 
 
       button.textContent =
-        newStatus === "open"
-
-          ? "🔓 UNLOCK TABLE"
-
-          : "🔒 LOCK TABLE";
+        currentlyOpen
+          ? "🔒 LOCK TABLE"
+          : "🔓 UNLOCK TABLE";
 
     }
 
@@ -588,30 +576,15 @@
 
     return String(value)
 
-      .replace(
-        /&/g,
-        "&amp;"
-      )
+      .replace(/&/g, "&amp;")
 
-      .replace(
-        /</g,
-        "&lt;"
-      )
+      .replace(/</g, "&lt;")
 
-      .replace(
-        />/g,
-        "&gt;"
-      )
+      .replace(/>/g, "&gt;")
 
-      .replace(
-        /"/g,
-        "&quot;"
-      )
+      .replace(/"/g, "&quot;")
 
-      .replace(
-        /'/g,
-        "&#039;"
-      );
+      .replace(/'/g, "&#039;");
 
   }
 
