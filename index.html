@@ -235,15 +235,27 @@
       gap: 8px;
     }
 
+    /* LIGHT + / - BUTTONS */
     .quantity-control button {
       width: 42px;
       height: 42px;
-      border: none;
+      border: 1px solid #d8d8d8;
       border-radius: 10px;
-      background: #2d2118;
-      color: white;
+      background: #f4f4f4;
+      color: #555;
       font-size: 23px;
+      font-weight: bold;
       cursor: pointer;
+      transition: .2s;
+    }
+
+    .quantity-control button:hover {
+      background: #e9e9e9;
+      color: #333;
+    }
+
+    .quantity-control button:active {
+      transform: scale(.95);
     }
 
     .quantity-control span {
@@ -1183,11 +1195,147 @@ let paymentStatus = "pending";
 let paymentReference = null;
 
 
+/* TABLE STATUS CHECK */
+
+async function checkTableStatus() {
+
+  const errorBox =
+    document.getElementById("errorBox");
+
+  errorBox.classList.remove("show");
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/T%20A%20B%20L%20E%20S?select=table_number,status",
+        {
+          method: "GET",
+
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY
+          }
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        data.error_description ||
+        "Unable to check table status."
+      );
+    }
+
+
+    const requestedTable =
+      String(table)
+        .trim()
+        .toLowerCase();
+
+
+    const foundTable =
+      data.find(function(row) {
+
+        const dbTable =
+          String(row.table_number)
+            .trim()
+            .toLowerCase();
+
+        return (
+          dbTable === requestedTable ||
+          dbTable === "table " + requestedTable
+        );
+
+      });
+
+
+    if (!foundTable) {
+
+      errorBox.textContent =
+        "Table " + table +
+        " is not registered.";
+
+      errorBox.classList.add("show");
+
+      return false;
+    }
+
+
+    if (
+      String(foundTable.status)
+        .trim()
+        .toLowerCase() !== "open"
+    ) {
+
+      errorBox.textContent =
+        "TABLE " + table +
+        " is currently locked. Please ask the cashier to open the table.";
+
+      errorBox.classList.add("show");
+
+      return false;
+    }
+
+
+    return true;
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    errorBox.textContent =
+      "Unable to check table status. " +
+      error.message;
+
+    errorBox.classList.add("show");
+
+    return false;
+  }
+}
+
+
 /* ORDER TYPE */
 
-function selectOrderType(type) {
+async function selectOrderType(type) {
+
+  if (type === "dine_in") {
+
+    if (!table) {
+
+      const errorBox =
+        document.getElementById("errorBox");
+
+      errorBox.textContent =
+        "Table number is missing.";
+
+      errorBox.classList.add("show");
+
+      return;
+    }
+
+
+    const tableIsOpen =
+      await checkTableStatus();
+
+
+    if (!tableIsOpen) {
+      return;
+    }
+
+  }
+
 
   orderType = type;
+
 
   document
     .getElementById("dineInButton")
@@ -1237,6 +1385,7 @@ function selectOrderType(type) {
       .getElementById("tablePaymentButton")
       .style.display = "none";
 
+
     if (selectedPayment === "Table") {
 
       selectedPayment = "";
@@ -1257,6 +1406,7 @@ function selectOrderType(type) {
         .getElementById("tablePaymentButton")
         .classList.remove("selected");
     }
+
   }
 
 
@@ -1334,6 +1484,7 @@ function renderMenu() {
 
   menuGrid.innerHTML = "";
 
+
   const filteredMenu =
     activeCategory === "all"
       ? menu
@@ -1348,6 +1499,7 @@ function renderMenu() {
       cart.find(function(c) {
         return c.id === item.id;
       });
+
 
     const qty =
       cartItem ? cartItem.qty : 0;
@@ -1397,6 +1549,7 @@ function renderMenu() {
         </div>
 
       </div>
+
     `;
   });
 }
@@ -1407,6 +1560,7 @@ function renderMenu() {
 function setCategory(category) {
 
   activeCategory = category;
+
 
   document
     .querySelectorAll(".category-menu button")
@@ -1427,6 +1581,7 @@ function setCategory(category) {
     activeButton.classList.add("active");
   }
 
+
   renderMenu();
 }
 
@@ -1440,11 +1595,14 @@ function changeQtyById(id, change) {
       return c.id === id;
     });
 
+
   if (!item) {
     return;
   }
 
+
   item.qty += change;
+
 
   if (item.qty < 0) {
     item.qty = 0;
@@ -1454,9 +1612,11 @@ function changeQtyById(id, change) {
   const qtyElement =
     document.getElementById("qty-" + id);
 
+
   if (qtyElement) {
     qtyElement.textContent = item.qty;
   }
+
 
   updateOrder();
 }
@@ -1471,6 +1631,7 @@ function updateOrder() {
 
   orderItems.innerHTML = "";
 
+
   let total = 0;
   let hasItems = false;
 
@@ -1481,8 +1642,10 @@ function updateOrder() {
 
       hasItems = true;
 
+
       const itemTotal =
         item.price * item.qty;
+
 
       total += itemTotal;
 
@@ -1490,15 +1653,20 @@ function updateOrder() {
       const row =
         document.createElement("div");
 
+
       row.className = "order-item";
+
 
       row.innerHTML = `
         <span>${item.name} × ${item.qty}</span>
         <span>₱${itemTotal.toLocaleString()}</span>
       `;
 
+
       orderItems.appendChild(row);
+
     }
+
   });
 
 
@@ -1509,6 +1677,7 @@ function updateOrder() {
         No items added yet.
       </div>
     `;
+
   }
 
 
@@ -1523,9 +1692,13 @@ function getTotal() {
 
   let total = 0;
 
+
   cart.forEach(function(item) {
+
     total += item.price * item.qty;
+
   });
+
 
   return total;
 }
@@ -1572,6 +1745,7 @@ function selectPayment(method) {
       .classList.add("show");
 
     generateQR();
+
   }
 
 
@@ -1584,6 +1758,7 @@ function selectPayment(method) {
     document
       .getElementById("counterInfo")
       .classList.add("show");
+
   }
 
 
@@ -1596,7 +1771,9 @@ function selectPayment(method) {
     document
       .getElementById("tableInfo")
       .classList.add("show");
+
   }
+
 }
 
 
@@ -1607,9 +1784,13 @@ function generateQR() {
   const qrContainer =
     document.getElementById("qrcode");
 
+
   qrContainer.innerHTML = "";
 
-  const total = getTotal();
+
+  const total =
+    getTotal();
+
 
   const qrData =
     "HALINAQR" +
@@ -1634,6 +1815,7 @@ function generateQR() {
     });
 
   }
+
 }
 
 
@@ -1643,10 +1825,13 @@ function markAsPaid() {
 
   paymentStatus = "paid";
 
+
   paymentReference =
     "DEMO-" + Date.now();
 
+
   alert("Payment marked as paid.");
+
 }
 
 
@@ -1657,8 +1842,10 @@ async function sendOrder() {
   const errorBox =
     document.getElementById("errorBox");
 
+
   const successBox =
     document.getElementById("successBox");
+
 
   const sendButton =
     document.getElementById("sendOrderButton");
@@ -1693,7 +1880,8 @@ async function sendOrder() {
   }
 
 
-  const total = getTotal();
+  const total =
+    getTotal();
 
 
   if (total <= 0) {
@@ -1732,11 +1920,32 @@ async function sendOrder() {
   }
 
 
+  /*
+    IMPORTANT:
+    Check table status AGAIN immediately
+    before sending the order.
+  */
+
+  if (orderType === "dine_in") {
+
+    const tableIsOpen =
+      await checkTableStatus();
+
+
+    if (!tableIsOpen) {
+
+      return;
+    }
+
+  }
+
+
   sendButton.disabled = true;
   sendButton.textContent = "SENDING...";
 
 
   let dbPaymentMethod = "cash";
+
 
   if (selectedPayment === "QR") {
     dbPaymentMethod = "online";
@@ -1768,23 +1977,32 @@ async function sendOrder() {
 
   const orderData = {
 
-    restaurant_id: RESTAURANT_ID,
+    restaurant_id:
+      RESTAURANT_ID,
 
-    table_number: dbTableNumber,
+    table_number:
+      dbTableNumber,
 
-    order_type: orderType,
+    order_type:
+      orderType,
 
-    items: orderItems,
+    items:
+      orderItems,
 
-    total: total,
+    total:
+      total,
 
-    status: "new",
+    status:
+      "new",
 
-    payment_method: dbPaymentMethod,
+    payment_method:
+      dbPaymentMethod,
 
-    payment_status: paymentStatus,
+    payment_status:
+      paymentStatus,
 
-    payment_reference: paymentReference
+    payment_reference:
+      paymentReference
 
   };
 
@@ -1793,18 +2011,22 @@ async function sendOrder() {
 
     const response =
       await fetch(
-        SUPABASE_URL + "/rest/v1/orders",
+        SUPABASE_URL +
+        "/rest/v1/orders",
         {
           method: "POST",
 
           headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
-            "Authorization": "Bearer " + SUPABASE_KEY,
-            "Prefer": "return=representation"
+            "Authorization":
+              "Bearer " + SUPABASE_KEY,
+            "Prefer":
+              "return=representation"
           },
 
-          body: JSON.stringify(orderData)
+          body:
+            JSON.stringify(orderData)
         }
       );
 
@@ -1821,6 +2043,7 @@ async function sendOrder() {
         data.hint ||
         "Order could not be submitted."
       );
+
     }
 
 
@@ -1836,7 +2059,8 @@ async function sendOrder() {
       document
         .getElementById("successOrderNumber")
         .textContent =
-          "Order #" + data[0].order_number;
+          "Order #" +
+          data[0].order_number;
 
     } else {
 
@@ -1844,11 +2068,16 @@ async function sendOrder() {
         .getElementById("successOrderNumber")
         .textContent =
           "Order received successfully.";
+
     }
 
 
-    sendButton.textContent = "ORDER SENT";
-    sendButton.disabled = true;
+    sendButton.textContent =
+      "ORDER SENT";
+
+
+    sendButton.disabled =
+      true;
 
 
     successBox.scrollIntoView({
@@ -1861,15 +2090,24 @@ async function sendOrder() {
 
     console.error(error);
 
+
     errorBox.textContent =
       "Unable to send order. " +
       error.message;
 
+
     errorBox.classList.add("show");
 
-    sendButton.disabled = false;
-    sendButton.textContent = "SEND ORDER";
+
+    sendButton.disabled =
+      false;
+
+
+    sendButton.textContent =
+      "SEND ORDER";
+
   }
+
 }
 
 
@@ -1877,78 +2115,110 @@ async function sendOrder() {
 
 document
   .getElementById("dineInButton")
-  .addEventListener("click", function() {
-    selectOrderType("dine_in");
-  });
+  .addEventListener(
+    "click",
+    function() {
+      selectOrderType("dine_in");
+    }
+  );
 
 
 document
   .getElementById("takeoutButton")
-  .addEventListener("click", function() {
-    selectOrderType("takeout");
-  });
+  .addEventListener(
+    "click",
+    function() {
+      selectOrderType("takeout");
+    }
+  );
 
 
 document
   .getElementById("changeTypeFromTable")
-  .addEventListener("click", function() {
-    changeOrderType();
-  });
+  .addEventListener(
+    "click",
+    function() {
+      changeOrderType();
+    }
+  );
 
 
 document
   .getElementById("changeTypeFromTakeout")
-  .addEventListener("click", function() {
-    changeOrderType();
-  });
+  .addEventListener(
+    "click",
+    function() {
+      changeOrderType();
+    }
+  );
 
 
 document
   .getElementById("qrPaymentButton")
-  .addEventListener("click", function() {
-    selectPayment("QR");
-  });
+  .addEventListener(
+    "click",
+    function() {
+      selectPayment("QR");
+    }
+  );
 
 
 document
   .getElementById("counterPaymentButton")
-  .addEventListener("click", function() {
-    selectPayment("Counter");
-  });
+  .addEventListener(
+    "click",
+    function() {
+      selectPayment("Counter");
+    }
+  );
 
 
 document
   .getElementById("tablePaymentButton")
-  .addEventListener("click", function() {
-    selectPayment("Table");
-  });
+  .addEventListener(
+    "click",
+    function() {
+      selectPayment("Table");
+    }
+  );
 
 
 document
   .getElementById("paidButton")
-  .addEventListener("click", function() {
-    markAsPaid();
-  });
+  .addEventListener(
+    "click",
+    function() {
+      markAsPaid();
+    }
+  );
 
 
 document
   .getElementById("sendOrderButton")
-  .addEventListener("click", function() {
-    sendOrder();
-  });
+  .addEventListener(
+    "click",
+    function() {
+      sendOrder();
+    }
+  );
 
 
 document
   .querySelectorAll(".category-menu button")
   .forEach(function(button) {
 
-    button.addEventListener("click", function() {
+    button.addEventListener(
+      "click",
+      function() {
 
-      setCategory(
-        button.getAttribute("data-category")
-      );
+        setCategory(
+          button.getAttribute(
+            "data-category"
+          )
+        );
 
-    });
+      }
+    );
 
   });
 
