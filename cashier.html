@@ -1,47 +1,87 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Cashier | HALINA BISTRO CAFE</title>
-
   <style>
     * {
       box-sizing: border-box;
     }
-
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      color: #222;
+      background: #f4eadb;
+      color: #3d2b1f;
     }
-
+    /* =========================
+       HEADER
+    ========================= */
     header {
-      background: #111;
+      background: #6b4428;
       color: white;
       padding: 20px;
       text-align: center;
+      box-shadow: 0 3px 12px rgba(70, 40, 20, 0.18);
     }
-
     header h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 25px;
+      letter-spacing: 0.5px;
     }
-
     header p {
       margin: 6px 0 0;
-      color: #ccc;
+      color: #eadbc8;
       font-size: 14px;
     }
-
-    .container {
-      max-width: 1100px;
-      margin: auto;
-      padding: 20px;
+    /* =========================
+       NAVIGATION
+    ========================= */
+    .navigation {
+      background: #fffaf3;
+      border-bottom: 1px solid #ddcbb5;
+      padding: 12px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      box-shadow: 0 2px 8px rgba(70, 40, 20, 0.08);
     }
-
+    .nav-btn {
+      border: 1px solid #d6bea3;
+      background: #f3e5d2;
+      color: #5a3822;
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+    .nav-btn:hover {
+      background: #ead4b8;
+    }
+    .nav-btn.active {
+      background: #8b5e3c;
+      color: white;
+      border-color: #8b5e3c;
+    }
+    /* =========================
+       CONTAINER
+    ========================= */
+    .container {
+      max-width: 1150px;
+      margin: auto;
+      padding: 22px;
+    }
+    .page-section {
+      display: none;
+    }
+    .page-section.active {
+      display: block;
+    }
+    /* =========================
+       TOP BAR
+    ========================= */
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -50,41 +90,66 @@
       gap: 10px;
       flex-wrap: wrap;
     }
-
     .top-bar h2 {
       margin: 0;
+      color: #4a2f1c;
     }
-
     .refresh-btn {
       border: none;
-      background: #222;
+      background: #6b4428;
       color: white;
       padding: 11px 16px;
-      border-radius: 8px;
+      border-radius: 9px;
       cursor: pointer;
       font-weight: bold;
     }
-
+    .refresh-btn:hover {
+      background: #57351f;
+    }
+    /* =========================
+       MESSAGE
+    ========================= */
+    .message {
+      margin-bottom: 20px;
+      padding: 13px 15px;
+      border-radius: 9px;
+      display: none;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .message.error {
+      display: block;
+      background: #ffe1df;
+      color: #a5221c;
+      border: 1px solid #efb7b3;
+    }
+    .message.success {
+      display: block;
+      background: #e1f4e5;
+      color: #236b34;
+      border: 1px solid #b6dfbd;
+    }
+    /* =========================
+       TABLES
+    ========================= */
     .tables {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 16px;
     }
-
     .table-card {
-      background: white;
-      border-radius: 14px;
+      background: #fffaf3;
+      border-radius: 15px;
       padding: 20px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-      border: 2px solid #ddd;
+      box-shadow: 0 4px 14px rgba(70, 40, 20, 0.10);
+      border: 2px solid #ddcbb5;
     }
-
     .table-number {
       font-size: 22px;
       font-weight: bold;
       margin-bottom: 12px;
+      color: #4a2f1c;
     }
-
     .status {
       display: inline-block;
       padding: 7px 12px;
@@ -93,162 +158,457 @@
       font-weight: bold;
       margin-bottom: 15px;
     }
-
     .locked {
-      background: #eee;
-      color: #555;
+      background: #eee3d6;
+      color: #66584d;
     }
-
     .open {
-      background: #dff7e5;
-      color: #16803c;
+      background: #dff3e4;
+      color: #23733a;
     }
-
     .action-btn {
       width: 100%;
       border: none;
       padding: 12px;
-      border-radius: 8px;
+      border-radius: 9px;
       font-size: 15px;
       font-weight: bold;
       cursor: pointer;
     }
-
     .unlock-btn {
-      background: #16803c;
+      background: #6c8f45;
       color: white;
     }
-
+    .unlock-btn:hover {
+      background: #587738;
+    }
     .lock-btn {
-      background: #222;
+      background: #6b4428;
       color: white;
     }
-
+    .lock-btn:hover {
+      background: #54331f;
+    }
     .action-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
-
-    .message {
-      margin-bottom: 20px;
-      padding: 12px 15px;
-      border-radius: 8px;
-      display: none;
+    /* =========================
+       STOCKS
+    ========================= */
+    .stock-intro {
+      background: #fffaf3;
+      border: 1px solid #ddcbb5;
+      border-radius: 13px;
+      padding: 16px;
+      margin-bottom: 18px;
+      color: #684a35;
+      line-height: 1.5;
+    }
+    .stock-list {
+      display: grid;
+      gap: 12px;
+    }
+    .stock-card {
+      background: #fffaf3;
+      border: 1px solid #ddcbb5;
+      border-radius: 13px;
+      padding: 16px;
+      box-shadow: 0 3px 10px rgba(70, 40, 20, 0.07);
+    }
+    .stock-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .stock-name {
+      font-size: 17px;
+      font-weight: bold;
+      color: #4a2f1c;
+    }
+    .stock-shared {
+      display: inline-block;
+      margin-top: 5px;
+      font-size: 12px;
+      color: #8a6a4d;
+    }
+    .stock-remaining {
+      margin-top: 6px;
       font-size: 14px;
+      color: #66584d;
+    }
+    .stock-status {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 12px;
       font-weight: bold;
     }
-
-    .message.error {
-      display: block;
-      background: #ffe0e0;
-      color: #b00020;
+    .stock-available {
+      background: #dff3e4;
+      color: #23733a;
     }
-
+    .stock-unavailable {
+      background: #ffe0de;
+      color: #a5221c;
+    }
+    .stock-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .stock-input {
+      width: 110px;
+      padding: 11px;
+      border: 1px solid #cdb79f;
+      border-radius: 8px;
+      background: white;
+      font-size: 15px;
+      text-align: center;
+      outline: none;
+    }
+    .stock-input:focus {
+      border-color: #8b5e3c;
+    }
+    .stock-save-btn {
+      border: none;
+      background: #8b5e3c;
+      color: white;
+      padding: 11px 15px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .stock-save-btn:hover {
+      background: #70492f;
+    }
+    .stock-save-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    /* =========================
+       OTHER PAGES
+    ========================= */
+    .coming-soon {
+      background: #fffaf3;
+      border: 1px solid #ddcbb5;
+      border-radius: 15px;
+      padding: 40px 20px;
+      text-align: center;
+      box-shadow: 0 4px 14px rgba(70, 40, 20, 0.08);
+    }
+    .coming-soon .icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    .coming-soon h3 {
+      margin: 5px 0;
+      color: #4a2f1c;
+    }
+    .coming-soon p {
+      color: #766252;
+    }
     .loading {
       text-align: center;
       padding: 30px;
-      color: #666;
+      color: #766252;
+    }
+    /* =========================
+       MOBILE
+    ========================= */
+    @media (max-width: 600px) {
+      header {
+        padding: 17px 12px;
+      }
+      header h1 {
+        font-size: 21px;
+      }
+      .container {
+        padding: 15px;
+      }
+      .top-bar {
+        align-items: stretch;
+      }
+      .top-bar h2 {
+        font-size: 21px;
+      }
+      .refresh-btn {
+        width: 100%;
+      }
+      .stock-info {
+        align-items: stretch;
+      }
+      .stock-controls {
+        width: 100%;
+      }
+      .stock-input {
+        flex: 1;
+        width: auto;
+      }
+      .stock-save-btn {
+        flex: 1;
+      }
     }
   </style>
 </head>
-
 <body>
-
 <header>
   <h1>HALINA BISTRO CAFE</h1>
-  <p>Cashier Table Control</p>
+  <p>Cashier Control Panel</p>
 </header>
-
-<div class="container">
-
-  <div class="top-bar">
-
-    <h2>Table Management</h2>
-
-    <button
-      class="refresh-btn"
-      id="refreshBtn"
-      type="button"
-    >
-      🔄 Refresh
-    </button>
-
-  </div>
-
-  <div
-    id="message"
-    class="message"
-  ></div>
-
-  <div
-    id="tablesContainer"
-    class="tables"
+<!-- =========================
+     NAVIGATION
+========================= -->
+<nav class="navigation">
+  <button
+    type="button"
+    class="nav-btn active"
+    data-section="tablesSection"
   >
-    <div class="loading">
-      Loading tables...
+    🔓 Tables
+  </button>
+  <button
+    type="button"
+    class="nav-btn"
+    data-section="stocksSection"
+  >
+    📦 Stocks
+  </button>
+  <button
+    type="button"
+    class="nav-btn"
+    data-section="ordersSection"
+  >
+    🧾 Orders
+  </button>
+  <button
+    type="button"
+    class="nav-btn"
+    data-section="settingsSection"
+  >
+    ⚙️ Settings
+  </button>
+</nav>
+<div class="container">
+  <!-- =========================
+       GLOBAL MESSAGE
+  ========================= -->
+  <div id="message" class="message"></div>
+  <!-- =========================
+       TABLES SECTION
+  ========================= -->
+  <section
+    id="tablesSection"
+    class="page-section active"
+  >
+    <div class="top-bar">
+      <h2>Table Management</h2>
+      <button
+        class="refresh-btn"
+        id="refreshBtn"
+        type="button"
+      >
+        🔄 Refresh Tables
+      </button>
     </div>
-  </div>
-
+    <div
+      id="tablesContainer"
+      class="tables"
+    >
+      <div class="loading">
+        Loading tables...
+      </div>
+    </div>
+  </section>
+  <!-- =========================
+       STOCKS SECTION
+  ========================= -->
+  <section
+    id="stocksSection"
+    class="page-section"
+  >
+    <div class="top-bar">
+      <h2>Product Stock</h2>
+      <button
+        class="refresh-btn"
+        id="refreshStockBtn"
+        type="button"
+      >
+        🔄 Refresh Stocks
+      </button>
+    </div>
+    <div class="stock-intro">
+      📦 <strong>Stock Management</strong><br>
+      Enter the total available stock for each product.
+      When you save a number, the remaining stock will be
+      reset to that amount.
+      <br><br>
+      Example:
+      If the kitchen has <strong>10 Chicken Wings</strong>,
+      enter <strong>10</strong>.
+      <br><br>
+      🍗 Chicken Wings can use one shared stock for different
+      wing flavors in the future.
+    </div>
+    <div
+      id="stockContainer"
+      class="stock-list"
+    >
+      <div class="loading">
+        Loading product stocks...
+      </div>
+    </div>
+  </section>
+  <!-- =========================
+       ORDERS SECTION
+  ========================= -->
+  <section
+    id="ordersSection"
+    class="page-section"
+  >
+    <div class="top-bar">
+      <h2>Incoming Orders</h2>
+    </div>
+    <div class="coming-soon">
+      <div class="icon">
+        🧾
+      </div>
+      <h3>Order Monitor</h3>
+      <p>
+        Incoming customer orders will appear here.
+      </p>
+      <p>
+        This will be connected to the customer QR ordering
+        system next.
+      </p>
+    </div>
+  </section>
+  <!-- =========================
+       SETTINGS SECTION
+  ========================= -->
+  <section
+    id="settingsSection"
+    class="page-section"
+  >
+    <div class="top-bar">
+      <h2>Settings</h2>
+    </div>
+    <div class="coming-soon">
+      <div class="icon">
+        ⚙️
+      </div>
+      <h3>Cashier Settings</h3>
+      <p>
+        Additional system settings will be added here.
+      </p>
+    </div>
+  </section>
 </div>
-
 <script>
-
+  /* =========================
+     SUPABASE
+  ========================= */
   const SUPABASE_URL =
     "https://isqcuycjrbjtmqhzckvb.supabase.co";
-
   const SUPABASE_KEY =
     "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
-
+  /* =========================
+     TABLE ENDPOINT
+  ========================= */
   const TABLE_ENDPOINT =
     SUPABASE_URL +
     "/rest/v1/T%20A%20B%20L%20E%20S";
-
+  /* =========================
+     STOCK ENDPOINT
+  ========================= */
+  const STOCK_ENDPOINT =
+    SUPABASE_URL +
+    "/rest/v1/PRODUCT_STOCK";
+  /* =========================
+     ELEMENTS
+  ========================= */
   const tablesContainer =
     document.getElementById("tablesContainer");
-
+  const stockContainer =
+    document.getElementById("stockContainer");
   const messageBox =
     document.getElementById("message");
-
   const refreshBtn =
     document.getElementById("refreshBtn");
-
-
+  const refreshStockBtn =
+    document.getElementById("refreshStockBtn");
+  /* =========================
+     MESSAGES
+  ========================= */
   function showError(text) {
-
     messageBox.textContent = text;
-
     messageBox.className =
       "message error";
-
   }
-
-
+  function showSuccess(text) {
+    messageBox.textContent = text;
+    messageBox.className =
+      "message success";
+  }
   function clearMessage() {
-
     messageBox.textContent = "";
-
     messageBox.className =
       "message";
-
   }
-
-
+  /* =========================
+     NAVIGATION
+  ========================= */
+  document.querySelectorAll(".nav-btn")
+    .forEach(function(button) {
+      button.addEventListener(
+        "click",
+        function() {
+          const sectionId =
+            button.dataset.section;
+          document
+            .querySelectorAll(".nav-btn")
+            .forEach(function(btn) {
+              btn.classList.remove("active");
+            });
+          document
+            .querySelectorAll(".page-section")
+            .forEach(function(section) {
+              section.classList.remove("active");
+            });
+          button.classList.add("active");
+          const section =
+            document.getElementById(sectionId);
+          if (section) {
+            section.classList.add("active");
+          }
+          clearMessage();
+          if (sectionId === "tablesSection") {
+            loadTables();
+          }
+          if (sectionId === "stocksSection") {
+            loadStocks();
+          }
+        }
+      );
+    });
+  /* =========================
+     LOAD TABLES
+  ========================= */
   async function loadTables() {
-
     clearMessage();
-
     tablesContainer.innerHTML =
       '<div class="loading">Loading tables...</div>';
-
     try {
-
       const response =
         await fetch(
           TABLE_ENDPOINT +
           "?select=*&order=id.asc",
           {
             method: "GET",
-
             headers: {
               "apikey": SUPABASE_KEY,
               "Authorization":
@@ -256,93 +616,59 @@
             }
           }
         );
-
-
       const data =
         await response.json();
-
-
       if (!response.ok) {
-
         throw new Error(
           data.message ||
           data.error ||
           data.hint ||
           "Unable to load tables."
         );
-
       }
-
-
       if (!data.length) {
-
         tablesContainer.innerHTML =
           '<div class="loading">No tables found.</div>';
-
         return;
-
       }
-
-
       tablesContainer.innerHTML = "";
-
-
-      data.forEach(table => {
-
+      data.forEach(function(table) {
         createTableCard(table);
-
       });
-
     } catch (error) {
-
       console.error(error);
-
       tablesContainer.innerHTML =
         '<div class="loading">Unable to load tables.</div>';
-
       showError(error.message);
-
     }
-
   }
-
-
+  /* =========================
+     CREATE TABLE CARD
+  ========================= */
   function createTableCard(table) {
-
     const card =
       document.createElement("div");
-
     card.className =
       "table-card";
-
     card.dataset.id =
       table.id;
-
-
     const isOpen =
       String(table.status)
         .trim()
         .toLowerCase() === "open";
-
-
     card.innerHTML = `
-
       <div class="table-number">
         ${escapeHtml(table.table_number)}
       </div>
-
       <div class="status ${
         isOpen ? "open" : "locked"
       }">
-
         ${
           isOpen
             ? "🟢 OPEN"
             : "🔒 LOCKED"
         }
-
       </div>
-
       <button
         type="button"
         class="action-btn ${
@@ -351,253 +677,483 @@
             : "unlock-btn"
         }"
       >
-
         ${
           isOpen
             ? "🔒 LOCK TABLE"
             : "🔓 UNLOCK TABLE"
         }
-
       </button>
-
     `;
-
-
     const button =
       card.querySelector(".action-btn");
-
-
     button.addEventListener(
       "click",
       function() {
-
         const currentStatus =
           isCardOpen(card)
             ? "open"
             : "locked";
-
         const newStatus =
           currentStatus === "open"
             ? "locked"
             : "open";
-
         updateTableStatus(
           table.id,
           newStatus,
           card,
           button
         );
-
       }
     );
-
-
     tablesContainer.appendChild(card);
-
   }
-
-
+  /* =========================
+     CHECK CARD STATUS
+  ========================= */
   function isCardOpen(card) {
-
     const status =
       card.querySelector(".status");
-
     return status.classList.contains("open");
-
   }
-
-
+  /* =========================
+     UPDATE TABLE STATUS
+  ========================= */
   async function updateTableStatus(
     id,
     newStatus,
     card,
     button
   ) {
-
     button.disabled = true;
-
     button.textContent =
       "Updating...";
-
     clearMessage();
-
-
     try {
-
       const response =
         await fetch(
-
           TABLE_ENDPOINT +
           "?id=eq." +
           encodeURIComponent(id),
-
           {
-
             method: "PATCH",
-
             headers: {
-
               "Content-Type":
                 "application/json",
-
               "apikey":
                 SUPABASE_KEY,
-
               "Authorization":
                 "Bearer " +
                 SUPABASE_KEY,
-
               "Prefer":
                 "return=representation"
-
             },
-
             body:
               JSON.stringify({
                 status: newStatus
               })
-
           }
-
         );
-
-
       const data =
         await response.json();
-
-
       if (!response.ok) {
-
         throw new Error(
           data.message ||
           data.error ||
           data.hint ||
           "Unable to update table."
         );
-
       }
-
-
       if (
         !Array.isArray(data) ||
         data.length === 0
       ) {
-
         throw new Error(
           "The table was not updated. Please check the UPDATE policy in Supabase."
         );
-
       }
-
-
-      /*
-       * IMPORTANT:
-       * No full page/table refresh here.
-       * We update only this table card.
-       */
-
-
       const statusElement =
         card.querySelector(".status");
-
-
       if (newStatus === "open") {
-
         statusElement.className =
           "status open";
-
         statusElement.textContent =
           "🟢 OPEN";
-
-
         button.className =
           "action-btn lock-btn";
-
         button.textContent =
           "🔒 LOCK TABLE";
-
       } else {
-
         statusElement.className =
           "status locked";
-
         statusElement.textContent =
           "🔒 LOCKED";
-
-
         button.className =
           "action-btn unlock-btn";
-
         button.textContent =
           "🔓 UNLOCK TABLE";
-
       }
-
-
       button.disabled = false;
-
-
     } catch (error) {
-
       console.error(error);
-
       showError(error.message);
-
-
-      /*
-       * Restore the correct button
-       * if the database update failed.
-       */
-
       const currentlyOpen =
         isCardOpen(card);
-
-
       button.disabled = false;
-
-
       button.className =
         currentlyOpen
           ? "action-btn lock-btn"
           : "action-btn unlock-btn";
-
-
       button.textContent =
         currentlyOpen
           ? "🔒 LOCK TABLE"
           : "🔓 UNLOCK TABLE";
-
     }
-
   }
-
-
+  /* =========================
+     LOAD STOCKS
+  ========================= */
+  async function loadStocks() {
+    clearMessage();
+    stockContainer.innerHTML =
+      '<div class="loading">Loading product stocks...</div>';
+    try {
+      const response =
+        await fetch(
+          STOCK_ENDPOINT +
+          "?select=id,product_id,product_name,stock_group,stock_total,stock_remaining&order=id.asc",
+          {
+            method: "GET",
+            headers: {
+              "apikey":
+                SUPABASE_KEY,
+              "Authorization":
+                "Bearer " +
+                SUPABASE_KEY
+            }
+          }
+        );
+      const data =
+        await response.json();
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          data.error ||
+          data.hint ||
+          "Unable to load product stocks."
+        );
+      }
+      if (!data.length) {
+        stockContainer.innerHTML =
+          '<div class="loading">No product stocks found.</div>';
+        return;
+      }
+      /*
+       * Group products by stock_group.
+       *
+       * This is important for shared stock,
+       * especially Chicken Wings.
+       */
+      const groups = {};
+      data.forEach(function(item) {
+        const group =
+          item.stock_group ||
+          item.product_id ||
+          item.product_name;
+        if (!groups[group]) {
+          groups[group] = [];
+        }
+        groups[group].push(item);
+      });
+      stockContainer.innerHTML = "";
+      Object.keys(groups)
+        .forEach(function(group) {
+          createStockCard(
+            group,
+            groups[group]
+          );
+        });
+    } catch (error) {
+      console.error(error);
+      stockContainer.innerHTML =
+        '<div class="loading">Unable to load product stocks.</div>';
+      showError(error.message);
+    }
+  }
+  /* =========================
+     CREATE STOCK CARD
+  ========================= */
+  function createStockCard(
+    stockGroup,
+    items
+  ) {
+    const card =
+      document.createElement("div");
+    card.className =
+      "stock-card";
+    const firstItem =
+      items[0];
+    const total =
+      Number(firstItem.stock_total) || 0;
+    const remaining =
+      Number(firstItem.stock_remaining) || 0;
+    const isShared =
+      items.length > 1 ||
+      stockGroup === "chicken-wings";
+    const isAvailable =
+      remaining > 0;
+    let displayName =
+      firstItem.product_name;
+    if (stockGroup === "chicken-wings") {
+      displayName =
+        "Chicken Wings";
+    }
+    let sharedText = "";
+    if (isShared) {
+      if (items.length > 1) {
+        sharedText =
+          "🔗 Shared stock • " +
+          items.length +
+          " products";
+      } else {
+        sharedText =
+          "🔗 Shared Chicken Wings stock";
+      }
+    }
+    card.innerHTML = `
+      <div class="stock-info">
+        <div>
+          <div class="stock-name">
+            ${escapeHtml(displayName)}
+          </div>
+          ${
+            sharedText
+              ? `
+                <div class="stock-shared">
+                  ${escapeHtml(sharedText)}
+                </div>
+              `
+              : ""
+          }
+          <div class="stock-remaining">
+            Total Stock:
+            <strong>${total}</strong>
+            &nbsp; | &nbsp;
+            Remaining:
+            <strong>${remaining}</strong>
+          </div>
+          <div class="stock-status ${
+            isAvailable
+              ? "stock-available"
+              : "stock-unavailable"
+          }">
+            ${
+              isAvailable
+                ? "🟢 AVAILABLE"
+                : "🔴 UNAVAILABLE"
+            }
+          </div>
+        </div>
+        <div class="stock-controls">
+          <input
+            type="number"
+            min="0"
+            step="1"
+            class="stock-input"
+            value="${total}"
+            aria-label="Stock for ${escapeHtml(displayName)}"
+          >
+          <button
+            type="button"
+            class="stock-save-btn"
+          >
+            💾 SET STOCK
+          </button>
+        </div>
+      </div>
+    `;
+    const input =
+      card.querySelector(".stock-input");
+    const saveButton =
+      card.querySelector(".stock-save-btn");
+    saveButton.addEventListener(
+      "click",
+      function() {
+        saveStock(
+          stockGroup,
+          items,
+          input,
+          saveButton
+        );
+      }
+    );
+    stockContainer.appendChild(card);
+  }
+  /* =========================
+     SAVE STOCK
+  ========================= */
+  async function saveStock(
+    stockGroup,
+    items,
+    input,
+    button
+  ) {
+    const value =
+      Number(input.value);
+    if (
+      !Number.isInteger(value) ||
+      value < 0
+    ) {
+      showError(
+        "Please enter a valid stock number."
+      );
+      return;
+    }
+    button.disabled = true;
+    button.textContent =
+      "Saving...";
+    clearMessage();
+    try {
+      /*
+       * Update every product belonging
+       * to the same stock group.
+       *
+       * This allows Chicken Wings flavors
+       * to share one stock.
+       */
+      for (
+        const item of items
+      ) {
+        const response =
+          await fetch(
+            STOCK_ENDPOINT +
+            "?id=eq." +
+            encodeURIComponent(item.id),
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type":
+                  "application/json",
+                "apikey":
+                  SUPABASE_KEY,
+                "Authorization":
+                  "Bearer " +
+                  SUPABASE_KEY,
+                "Prefer":
+                  "return=representation"
+              },
+              body:
+                JSON.stringify({
+                  stock_total:
+                    value,
+                  stock_remaining:
+                    value
+                })
+            }
+          );
+        const data =
+          await response.json();
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            data.error ||
+            data.hint ||
+            "Unable to save stock."
+          );
+        }
+        if (
+          !Array.isArray(data) ||
+          data.length === 0
+        ) {
+          throw new Error(
+            "Stock was not updated. Please check the UPDATE policy in Supabase."
+          );
+        }
+      }
+      showSuccess(
+        displayStockMessage(
+          items,
+          value
+        )
+      );
+      /*
+       * Reload the stock list so the
+       * displayed remaining quantity is current.
+       */
+      await loadStocks();
+    } catch (error) {
+      console.error(error);
+      showError(error.message);
+      button.disabled = false;
+      button.textContent =
+        "💾 SET STOCK";
+    }
+  }
+  /* =========================
+     STOCK SUCCESS MESSAGE
+  ========================= */
+  function displayStockMessage(
+    items,
+    value
+  ) {
+    const firstItem =
+      items[0];
+    let name =
+      firstItem.product_name;
+    if (
+      firstItem.stock_group ===
+      "chicken-wings"
+    ) {
+      name =
+        "Chicken Wings";
+    }
+    return (
+      name +
+      " stock set to " +
+      value +
+      "."
+    );
+  }
+  /* =========================
+     ESCAPE HTML
+  ========================= */
   function escapeHtml(value) {
-
     return String(value)
-
-      .replace(/&/g, "&amp;")
-
-      .replace(/</g, "&lt;")
-
-      .replace(/>/g, "&gt;")
-
-      .replace(/"/g, "&quot;")
-
-      .replace(/'/g, "&#039;");
-
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
+      );
   }
-
-
+  /* =========================
+     BUTTONS
+  ========================= */
   refreshBtn.addEventListener(
     "click",
     loadTables
   );
-
-
+  refreshStockBtn.addEventListener(
+    "click",
+    loadStocks
+  );
+  /* =========================
+     INITIAL LOAD
+  ========================= */
   loadTables();
-
 </script>
-
 </body>
 </html>
