@@ -1962,6 +1962,12 @@ async function sendOrder() {
     table;
 
 
+  /*
+    Prepare the items for the stock system.
+    product_id uses the existing item.id.
+    quantity uses the existing item.qty.
+  */
+
   const orderItems =
     cart
       .filter(function(item) {
@@ -1971,52 +1977,34 @@ async function sendOrder() {
 
         return {
           id: item.id,
+          product_id: item.id,
           name: item.name,
           price: item.price,
-          qty: item.qty
+          qty: item.qty,
+          quantity: item.qty
         };
 
       });
 
 
-  const orderData = {
-
-    restaurant_id:
-      RESTAURANT_ID,
-
-    table_number:
-      dbTableNumber,
-
-    order_type:
-      orderType,
-
-    items:
-      orderItems,
-
-    total:
-      total,
-
-    status:
-      "new",
-
-    payment_method:
-      dbPaymentMethod,
-
-    payment_status:
-      paymentStatus,
-
-    payment_reference:
-      paymentReference
-
-  };
-
-
   try {
+
+    /*
+      Send the order through the secure
+      Supabase function.
+
+      The database function will:
+
+      1. Check stock
+      2. Create the order
+      3. Deduct stock
+      4. Handle shared Chicken Wings stock
+    */
 
     const response =
       await fetch(
         SUPABASE_URL +
-        "/rest/v1/orders",
+        "/rest/v1/rpc/place_order_with_stock",
         {
           method: "POST",
 
@@ -2024,13 +2012,37 @@ async function sendOrder() {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization":
-              "Bearer " + SUPABASE_KEY,
-            "Prefer":
-              "return=representation"
+              "Bearer " + SUPABASE_KEY
           },
 
           body:
-            JSON.stringify(orderData)
+            JSON.stringify({
+
+              p_restaurant_id:
+                RESTAURANT_ID,
+
+              p_table_number:
+                dbTableNumber,
+
+              p_order_type:
+                orderType,
+
+              p_items:
+                orderItems,
+
+              p_total:
+                total,
+
+              p_payment_method:
+                dbPaymentMethod,
+
+              p_payment_status:
+                paymentStatus,
+
+              p_payment_reference:
+                paymentReference
+
+            })
         }
       );
 
@@ -2051,20 +2063,85 @@ async function sendOrder() {
     }
 
 
-    successBox.classList.add("show");
+    /*
+      Get the order number from the
+      newly created order.
+    */
+
+    let orderNumber = "";
 
 
     if (
       data &&
-      data.length > 0 &&
-      data[0].order_number
+      data.order_id
     ) {
+
+      try {
+
+        const orderResponse =
+          await fetch(
+            SUPABASE_URL +
+            "/rest/v1/orders?id=eq." +
+            encodeURIComponent(
+              data.order_id
+            ) +
+            "&select=order_number",
+            {
+              method: "GET",
+
+              headers: {
+                "apikey":
+                  SUPABASE_KEY,
+
+                "Authorization":
+                  "Bearer " +
+                  SUPABASE_KEY
+              }
+            }
+          );
+
+
+        if (orderResponse.ok) {
+
+          const orderData =
+            await orderResponse.json();
+
+
+          if (
+            Array.isArray(orderData) &&
+            orderData.length > 0 &&
+            orderData[0].order_number
+          ) {
+
+            orderNumber =
+              orderData[0].order_number;
+
+          }
+
+        }
+
+      } catch (orderNumberError) {
+
+        console.error(
+          "Unable to get order number:",
+          orderNumberError
+        );
+
+      }
+
+    }
+
+
+    successBox.classList.add("show");
+
+
+    if (orderNumber) {
 
       document
         .getElementById("successOrderNumber")
         .textContent =
           "Order #" +
-          data[0].order_number;
+          orderNumber;
 
     } else {
 
@@ -2113,7 +2190,6 @@ async function sendOrder() {
   }
 
 }
-
 
 /* EVENT LISTENERS */
 
