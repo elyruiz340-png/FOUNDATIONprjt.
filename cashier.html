@@ -991,28 +991,37 @@
   /* =========================
      SAVE STOCK
   ========================= */
-  async function saveStock(
+ async function saveStock(
     stockGroup,
     items,
     input,
     button
   ) {
+
     const value =
       Number(input.value);
+
     if (
       !Number.isInteger(value) ||
       value < 0
     ) {
+
       showError(
         "Please enter a valid stock number."
       );
+
       return;
     }
+
     button.disabled = true;
+
     button.textContent =
       "Saving...";
+
     clearMessage();
+
     try {
+
       /*
        * Update every product belonging
        * to the same stock group.
@@ -1020,73 +1029,209 @@
        * This allows Chicken Wings flavors
        * to share one stock.
        */
+
       for (
         const item of items
       ) {
+
         const response =
           await fetch(
+
             STOCK_ENDPOINT +
             "?id=eq." +
             encodeURIComponent(item.id),
+
             {
+
               method: "PATCH",
+
               headers: {
+
                 "Content-Type":
                   "application/json",
+
                 "apikey":
                   SUPABASE_KEY,
+
                 "Authorization":
                   "Bearer " +
                   SUPABASE_KEY,
+
                 "Prefer":
                   "return=representation"
+
               },
+
               body:
                 JSON.stringify({
+
                   stock_total:
                     value,
+
                   stock_remaining:
                     value
+
                 })
+
             }
+
           );
+
+
         const data =
           await response.json();
+
+
         if (!response.ok) {
+
           throw new Error(
             data.message ||
             data.error ||
             data.hint ||
             "Unable to save stock."
           );
+
         }
+
+
         if (
           !Array.isArray(data) ||
           data.length === 0
         ) {
+
           throw new Error(
             "Stock was not updated. Please check the UPDATE policy in Supabase."
           );
+
         }
+
       }
+
+
+      /*
+       * Update only the current stock card.
+       * No full stock list refresh.
+       */
+
+      const card =
+        button.closest(".stock-card");
+
+
+      if (card) {
+
+        const remainingText =
+          card.querySelector(
+            ".stock-remaining"
+          );
+
+
+        if (remainingText) {
+
+          remainingText.innerHTML =
+            "Total Stock: <strong>" +
+            value +
+            "</strong>" +
+            " &nbsp; | &nbsp; " +
+            "Remaining: <strong>" +
+            value +
+            "</strong>";
+
+        }
+
+
+        const statusElement =
+          card.querySelector(
+            ".stock-status"
+          );
+
+
+        if (statusElement) {
+
+          if (value > 0) {
+
+            statusElement.className =
+              "stock-status stock-available";
+
+            statusElement.textContent =
+              "🟢 AVAILABLE";
+
+          } else {
+
+            statusElement.className =
+              "stock-status stock-unavailable";
+
+            statusElement.textContent =
+              "🔴 UNAVAILABLE";
+
+          }
+
+        }
+
+      }
+
+
       showSuccess(
         displayStockMessage(
           items,
           value
         )
       );
-      /*
-       * Reload the stock list so the
-       * displayed remaining quantity is current.
-       */
-      await loadStocks();
-    } catch (error) {
-      console.error(error);
-      showError(error.message);
+
+
       button.disabled = false;
+
       button.textContent =
         "💾 SET STOCK";
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      showError(error.message);
+
+      button.disabled = false;
+
+      button.textContent =
+        "💾 SET STOCK";
+
     }
+
+  }
+
+
+  /* =========================
+     STOCK SUCCESS MESSAGE
+  ========================= */
+
+  function displayStockMessage(
+    items,
+    value
+  ) {
+
+    const firstItem =
+      items[0];
+
+    let name =
+      firstItem.product_name;
+
+    if (
+      firstItem.stock_group ===
+      "chicken-wings"
+    ) {
+
+      name =
+        "Chicken Wings";
+
+    }
+
+    return (
+      name +
+      " stock set to " +
+      value +
+      "."
+    );
+
   }
   /* =========================
      STOCK SUCCESS MESSAGE
