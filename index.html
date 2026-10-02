@@ -442,33 +442,35 @@
     <!-- ORDER TYPE -->
     <div class="order-type-box">
 
-      <div class="order-type-title">
-        How would you like your order?
-      </div>
+   <div class="order-type-title">
+  How would you like your order?
+</div>
 
-      <div class="order-type-options">
+<div class="order-type-options">
 
-        <button
-          type="button"
-          id="dineInButton"
-          class="order-type-btn"
-        >
-          <span class="order-type-icon">🍽️</span>
-          Dine In
-        </button>
+  <button
+    type="button"
+    id="dineInButton"
+    class="order-type-btn"
+  >
+    <span class="order-type-icon">🍽️</span>
+    Dine In
+  </button>
 
-        <button
-          type="button"
-          id="takeoutButton"
-          class="order-type-btn"
-        >
-          <span class="order-type-icon">🥡</span>
-          Takeout
-        </button>
+  <button
+    type="button"
+    id="takeoutButton"
+    class="order-type-btn"
+  >
+    <span class="order-type-icon">🥡</span>
+    Takeout
+  </button>
 
-      </div>
-    </div>
+</div>
 
+<div id="tableStatusError" class="error-box"></div>
+
+</div>
 
     <!-- DINE IN -->
     <div
@@ -1200,7 +1202,7 @@ let paymentReference = null;
 async function checkTableStatus() {
 
   const errorBox =
-    document.getElementById("errorBox");
+    document.getElementById("tableStatusError");
 
   errorBox.classList.remove("show");
 
@@ -1251,7 +1253,8 @@ async function checkTableStatus() {
 
         return (
           dbTable === requestedTable ||
-          dbTable === "table " + requestedTable
+          dbTable === "table " + requestedTable ||
+          dbTable === "table" + requestedTable
         );
 
       });
@@ -1307,30 +1310,31 @@ async function checkTableStatus() {
 
 async function selectOrderType(type) {
 
-  if (type === "dine_in") {
+  /*
+   * BOTH DINE IN AND TAKEOUT
+   * MUST CHECK THE TABLE STATUS
+   */
 
-    if (!table) {
+  if (!table) {
 
-      const errorBox =
-        document.getElementById("errorBox");
+    const errorBox =
+      document.getElementById("tableStatusError");
 
-      errorBox.textContent =
-        "Table number is missing.";
+    errorBox.textContent =
+      "Table number is missing.";
 
-      errorBox.classList.add("show");
+    errorBox.classList.add("show");
 
-      return;
-    }
-
-
-    const tableIsOpen =
-      await checkTableStatus();
+    return;
+  }
 
 
-    if (!tableIsOpen) {
-      return;
-    }
+  const tableIsOpen =
+    await checkTableStatus();
 
+
+  if (!tableIsOpen) {
+    return;
   }
 
 
@@ -1842,14 +1846,11 @@ async function sendOrder() {
   const errorBox =
     document.getElementById("errorBox");
 
-
   const successBox =
     document.getElementById("successBox");
 
-
   const sendButton =
     document.getElementById("sendOrderButton");
-
 
   errorBox.classList.remove("show");
   successBox.classList.remove("show");
@@ -1866,10 +1867,12 @@ async function sendOrder() {
   }
 
 
-  if (
-    orderType === "dine_in" &&
-    !table
-  ) {
+  /*
+    BOTH DINE IN AND TAKEOUT
+    MUST HAVE A TABLE NUMBER
+  */
+
+  if (!table) {
 
     errorBox.textContent =
       "Table number is missing.";
@@ -1924,19 +1927,17 @@ async function sendOrder() {
     IMPORTANT:
     Check table status AGAIN immediately
     before sending the order.
+
+    This applies to BOTH DINE IN and TAKEOUT.
   */
 
-  if (orderType === "dine_in") {
-
-    const tableIsOpen =
-      await checkTableStatus();
+  const tableIsOpen =
+    await checkTableStatus();
 
 
-    if (!tableIsOpen) {
+  if (!tableIsOpen) {
 
-      return;
-    }
-
+    return;
   }
 
 
@@ -1952,10 +1953,13 @@ async function sendOrder() {
   }
 
 
+  /*
+    Use the actual table number
+    for BOTH DINE IN and TAKEOUT.
+  */
+
   const dbTableNumber =
-    orderType === "dine_in"
-      ? table
-      : "TAKEOUT";
+    table;
 
 
   const orderItems =
