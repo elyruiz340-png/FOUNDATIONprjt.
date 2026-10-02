@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Cashier | HALINA BISTRO CAFE</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    header {
+      background: #111;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .top-bar h2 {
+      margin: 0;
+    }
+
+    .refresh-btn {
+      border: none;
+      background: #222;
+      color: white;
+      padding: 11px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tables {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .table-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+      border: 2px solid #ddd;
+    }
+
+    .table-number {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .locked {
+      background: #eee;
+      color: #555;
+    }
+
+    .open {
+      background: #dff7e5;
+      color: #16803c;
+    }
+
+    .action-btn {
+      width: 100%;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .unlock-btn {
+      background: #16803c;
+      color: white;
+    }
+
+    .lock-btn {
+      background: #222;
+      color: white;
+    }
+
+    .action-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-bottom: 20px;
+      padding: 12px 15px;
+      border-radius: 8px;
+      display: none;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .message.success {
+      display: block;
+      background: #dff7e5;
+      color: #16803c;
+    }
+
+    .message.error {
+      display: block;
+      background: #ffe0e0;
+      color: #b00020;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>HALINA BISTRO CAFE</h1>
+  <p>Cashier Table Control</p>
+</header>
+
+<div class="container">
+
+  <div class="top-bar">
+    <h2>Table Management</h2>
+    <button class="refresh-btn" id="refreshBtn">
+      🔄 Refresh
+    </button>
+  </div>
+
+  <div id="message" class="message"></div>
+
+  <div id="tablesContainer" class="tables">
+    <div class="loading">Loading tables...</div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = "https://isqcuycjrbjtmqhzckvb.supabase.co";
+
+  const SUPABASE_KEY = "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
+
+  const tablesContainer = document.getElementById("tablesContainer");
+  const messageBox = document.getElementById("message");
+  const refreshBtn = document.getElementById("refreshBtn");
+
+  function showMessage(text, type) {
+    messageBox.textContent = text;
+    messageBox.className = "message " + type;
+
+    setTimeout(() => {
+      messageBox.className = "message";
+      messageBox.textContent = "";
+    }, 3000);
+  }
+
+  async function loadTables() {
+    tablesContainer.innerHTML =
+      '<div class="loading">Loading tables...</div>';
+
+    try {
+      const response = await fetch(
+        SUPABASE_URL +
+        "/rest/v1/tables?select=*&order=id.asc",
+        {
+          method: "GET",
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY
+          }
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Unable to load tables.");
+      }
+
+      if (!data.length) {
+        tablesContainer.innerHTML =
+          '<div class="loading">No tables found.</div>';
+        return;
+      }
+
+      tablesContainer.innerHTML = "";
+
+      data.forEach(table => {
+        const card = document.createElement("div");
+        card.className = "table-card";
+
+        const isOpen = table.status === "open";
+
+        card.innerHTML = `
+          <div class="table-number">
+            ${escapeHtml(table.table_number)}
+          </div>
+
+          <div class="status ${isOpen ? "open" : "locked"}">
+            ${isOpen ? "🟢 OPEN" : "🔒 LOCKED"}
+          </div>
+
+          <button
+            class="action-btn ${isOpen ? "lock-btn" : "unlock-btn"}"
+            data-id="${table.id}"
+            data-status="${isOpen ? "open" : "locked"}"
+          >
+            ${isOpen ? "🔒 LOCK TABLE" : "🔓 UNLOCK TABLE"}
+          </button>
+        `;
+
+        tablesContainer.appendChild(card);
+      });
+
+      document.querySelectorAll(".action-btn").forEach(button => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.id;
+          const currentStatus = button.dataset.status;
+
+          const newStatus =
+            currentStatus === "locked" ? "open" : "locked";
+
+          updateTableStatus(id, newStatus, button);
+        });
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      tablesContainer.innerHTML =
+        '<div class="loading">Unable to load tables.</div>';
+
+      showMessage(error.message, "error");
+    }
+  }
+
+  async function updateTableStatus(id, newStatus, button) {
+
+    button.disabled = true;
+    button.textContent = "Updating...";
+
+    try {
+
+      const response = await fetch(
+        SUPABASE_URL +
+        "/rest/v1/tables?id=eq." +
+        encodeURIComponent(id),
+        {
+          method: "PATCH",
+
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY,
+            "Prefer": "return=representation"
+          },
+
+          body: JSON.stringify({
+            status: newStatus
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          data.error ||
+          "Unable to update table."
+        );
+      }
+
+      showMessage(
+        newStatus === "open"
+          ? "Table unlocked successfully."
+          : "Table locked successfully.",
+        "success"
+      );
+
+      await loadTables();
+
+    } catch (error) {
+
+      console.error(error);
+
+      showMessage(error.message, "error");
+
+      button.disabled = false;
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  refreshBtn.addEventListener("click", loadTables);
+
+  loadTables();
+</script>
+
+</body>
+</html>
