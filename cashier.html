@@ -489,30 +489,42 @@
       </div>
     </div>
   </section>
-  <!-- =========================
-       ORDERS SECTION
-  ========================= -->
-  <section
-    id="ordersSection"
-    class="page-section"
+ <!-- =========================
+     ORDERS SECTION
+========================= -->
+
+<section
+  id="ordersSection"
+  class="page-section"
+
+
+  <div class="top-bar">
+
+    <h2>Incoming Orders</h2>
+
+    <button
+      class="refresh-btn"
+      id="refreshOrdersBtn"
+      type="button"
+    >
+      🔄 Refresh Orders
+    </button>
+
+  </div>
+
+
+  <div
+    id="ordersContainer"
+    class="orders-container"
   >
-    <div class="top-bar">
-      <h2>Incoming Orders</h2>
+
+    <div class="loading">
+      Loading incoming orders...
     </div>
-    <div class="coming-soon">
-      <div class="icon">
-        🧾
-      </div>
-      <h3>Order Monitor</h3>
-      <p>
-        Incoming customer orders will appear here.
-      </p>
-      <p>
-        This will be connected to the customer QR ordering
-        system next.
-      </p>
-    </div>
-  </section>
+
+  </div>
+
+</section>
   <!-- =========================
        SETTINGS SECTION
   ========================= -->
