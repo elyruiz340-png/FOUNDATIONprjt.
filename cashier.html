@@ -927,6 +927,15 @@
   </section>
 </div>
 <script>
+  
+  window.onerror = function(message, source, lineno, colno, error) {
+  alert(
+    "JAVASCRIPT ERROR:\n\n" +
+    message +
+    "\n\nLine: " +
+    lineno
+  );
+};
   /* =========================
      SUPABASE
   ========================= */
@@ -981,16 +990,37 @@
    NAVIGATION
 ========================= */
 
-document.querySelectorAll(".nav-btn")
+/* =========================
+   NAVIGATION
+========================= */
+
+document
+  .querySelectorAll(".nav-btn")
   .forEach(function(button) {
 
     button.addEventListener(
       "click",
-      function() {
+      function(event) {
+
+        event.preventDefault();
 
         const sectionId =
-          button.dataset.section;
+          button.getAttribute(
+            "data-section"
+          );
 
+        if (!sectionId) {
+          console.error(
+            "Navigation button has no data-section:",
+            button
+          );
+          return;
+        }
+
+
+        /* =========================
+           BUTTON ACTIVE STATE
+        ========================= */
 
         document
           .querySelectorAll(".nav-btn")
@@ -1002,6 +1032,14 @@ document.querySelectorAll(".nav-btn")
 
           });
 
+        button.classList.add(
+          "active"
+        );
+
+
+        /* =========================
+           HIDE ALL SECTIONS
+        ========================= */
 
         document
           .querySelectorAll(".page-section")
@@ -1014,28 +1052,47 @@ document.querySelectorAll(".nav-btn")
           });
 
 
-        button.classList.add(
-          "active"
-        );
+        /* =========================
+           SHOW SELECTED SECTION
+        ========================= */
 
-
-        const section =
+        const selectedSection =
           document.getElementById(
             sectionId
           );
 
+        if (!selectedSection) {
 
-        if (section) {
-
-          section.classList.add(
-            "active"
+          console.error(
+            "Section not found:",
+            sectionId
           );
+
+          return;
+        }
+
+        selectedSection.classList.add(
+          "active"
+        );
+
+
+        /* =========================
+           CLEAR MESSAGE
+        ========================= */
+
+        if (
+          typeof clearMessage ===
+          "function"
+        ) {
+
+          clearMessage();
 
         }
 
 
-        clearMessage();
-
+        /* =========================
+           LOAD SECTION DATA
+        ========================= */
 
         if (
           sectionId ===
