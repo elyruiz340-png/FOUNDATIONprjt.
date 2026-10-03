@@ -353,6 +353,32 @@
         flex: 1;
       }
     }
+  /* =========================
+       STOCK CATEGORY HEADINGS
+    ========================= */
+
+    .stock-category-heading {
+      margin-top: 28px;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+
+      background: #f3e4d0;
+
+      border-left: 5px solid #8b5e3c;
+      border-radius: 10px;
+
+      color: #5b3a29;
+
+      font-size: 16px;
+      font-weight: 800;
+
+      letter-spacing: 0.5px;
+    }
+
+    .stock-category-heading:first-child {
+      margin-top: 0;
+    }
+
   </style>
 </head>
 <body>
@@ -823,6 +849,7 @@ async function loadStocks() {
   try {
 
     const response =
+    
       await fetch(
         STOCK_ENDPOINT +
         "?select=id,product_id,product_name,stock_group,stock_total,stock_remaining&order=id.asc",
@@ -1213,25 +1240,115 @@ async function loadStocks() {
         });
 
 
-    stockContainer.innerHTML = "";
+   stockContainer.innerHTML = "";
+
+
+/*
+ * CATEGORY HEADINGS
+ *
+ * Display stocks with clear
+ * menu category sections.
+ */
+
+let currentCategory = "";
+
+
+sortedGroups.forEach(
+  function(groupData) {
+
+    const category =
+      productCategory[
+        groupData.items[0].product_id
+      ] ||
+      "others";
 
 
     /*
-     * Create stock cards in the
-     * sorted menu order.
+     * Add category heading
+     * whenever the category changes.
      */
 
-    sortedGroups.forEach(
-      function(groupData) {
+    if (
+      category !==
+      currentCategory
+    ) {
 
-        createStockCard(
-          groupData.group,
-          groupData.items
+      currentCategory =
+        category;
+
+
+      const categoryHeading =
+        document.createElement(
+          "div"
         );
 
-      }
+
+      categoryHeading.className =
+        "stock-category-heading";
+
+
+      const categoryNames = {
+
+        "all-day-breakfast":
+          "🍳 ALL-DAY BREAKFAST",
+
+        "a-la-carte":
+          "🍽️ A LA CARTE",
+
+        "pulutan":
+          "🍻 PULUTAN",
+
+        "pasta":
+          "🍝 PASTA",
+
+        "sandwich":
+          "🥪 SANDWICH",
+
+        "rice":
+          "🍚 RICE",
+
+        "beers":
+          "🍺 BEERS",
+
+        "whiskey":
+          "🥃 WHISKEY",
+
+        "tequila":
+          "🥃 TEQUILA",
+
+        "soju":
+          "🍶 SOJU",
+
+        "soda":
+          "🥤 SODA",
+
+        "others":
+          "🧃 OTHERS"
+
+      };
+
+
+      categoryHeading.textContent =
+        categoryNames[
+          category
+        ] ||
+        "🧃 OTHERS";
+
+
+      stockContainer.appendChild(
+        categoryHeading
+      );
+
+    }
+
+
+    createStockCard(
+      groupData.group,
+      groupData.items
     );
 
+  }
+);
 
   } catch (error) {
 
