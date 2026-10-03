@@ -592,6 +592,44 @@
   transform: scale(0.98);
 }
     /* =========================
+   ACCEPT ORDER MOVE ANIMATION
+========================= */
+
+.order-card.accept-moving {
+  animation:
+    acceptOrderMove 0.45s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+  position: relative;
+  z-index: 10;
+}
+
+
+@keyframes acceptOrderMove {
+
+  0% {
+    opacity: 1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+  45% {
+    opacity: 0.95;
+    transform:
+      translateY(28px)
+      scale(0.98);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translateY(65px)
+      scale(0.94);
+  }
+
+}
+    /* =========================
    NEW ORDER POP ANIMATION
 ========================= */
 
