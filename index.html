@@ -2609,13 +2609,13 @@ document
 
   });
 
-
 /* INITIALIZE */
 
-renderMenu();
-updateOrder();
+loadProductStocks()
+  .then(function() {
 
-</script>
+    renderMenu();
 
-</body>
-</html>
+    updateOrder();
+
+  });
