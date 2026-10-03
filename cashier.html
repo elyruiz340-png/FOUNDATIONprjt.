@@ -3257,6 +3257,44 @@ if (refreshOrdersBtn) {
   );
 
 }
+  const completedOrdersToggle =
+  document.getElementById("completedOrdersToggle");
+
+const completedOrdersContainer =
+  document.getElementById("completedOrdersContainer");
+
+if (
+  completedOrdersToggle &&
+  completedOrdersContainer
+) {
+
+  completedOrdersToggle.addEventListener(
+    "click",
+    function() {
+
+      const isHidden =
+        completedOrdersContainer.style.display === "none";
+
+      if (isHidden) {
+
+        completedOrdersContainer.style.display = "block";
+
+        completedOrdersToggle.textContent =
+          "📋 Hide Completed Orders";
+
+      } else {
+
+        completedOrdersContainer.style.display = "none";
+
+        completedOrdersToggle.textContent =
+          "📋 View Completed Orders";
+
+      }
+
+    }
+  );
+
+}
   /* =========================
      BUTTONS
   ========================= */
