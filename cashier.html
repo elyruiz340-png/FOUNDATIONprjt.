@@ -597,42 +597,102 @@
     messageBox.className =
       "message";
   }
-  /* =========================
-     NAVIGATION
-  ========================= */
-  document.querySelectorAll(".nav-btn")
-    .forEach(function(button) {
-      button.addEventListener(
-        "click",
-        function() {
-          const sectionId =
-            button.dataset.section;
-          document
-            .querySelectorAll(".nav-btn")
-            .forEach(function(btn) {
-              btn.classList.remove("active");
-            });
-          document
-            .querySelectorAll(".page-section")
-            .forEach(function(section) {
-              section.classList.remove("active");
-            });
-          button.classList.add("active");
-          const section =
-            document.getElementById(sectionId);
-          if (section) {
-            section.classList.add("active");
-          }
-          clearMessage();
-          if (sectionId === "tablesSection") {
-            loadTables();
-          }
-          if (sectionId === "stocksSection") {
-            loadStocks();
-          }
+/* =========================
+   NAVIGATION
+========================= */
+
+document.querySelectorAll(".nav-btn")
+  .forEach(function(button) {
+
+    button.addEventListener(
+      "click",
+      function() {
+
+        const sectionId =
+          button.dataset.section;
+
+
+        document
+          .querySelectorAll(".nav-btn")
+          .forEach(function(btn) {
+
+            btn.classList.remove(
+              "active"
+            );
+
+          });
+
+
+        document
+          .querySelectorAll(".page-section")
+          .forEach(function(section) {
+
+            section.classList.remove(
+              "active"
+            );
+
+          });
+
+
+        button.classList.add(
+          "active"
+        );
+
+
+        const section =
+          document.getElementById(
+            sectionId
+          );
+
+
+        if (section) {
+
+          section.classList.add(
+            "active"
+          );
+
         }
-      );
-    });
+
+
+        clearMessage();
+
+
+        if (
+          sectionId ===
+          "tablesSection"
+        ) {
+
+          loadTables();
+
+        }
+
+
+        if (
+          sectionId ===
+          "stocksSection"
+        ) {
+
+          loadStocks();
+
+        }
+
+
+        if (
+          sectionId ===
+          "ordersSection"
+        ) {
+
+          loadOrders();
+
+          startOrdersRefresh();
+
+        }
+
+      }
+
+    );
+
+  });
   /* =========================
      LOAD TABLES
   ========================= */
