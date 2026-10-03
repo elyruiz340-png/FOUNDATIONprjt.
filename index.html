@@ -427,6 +427,78 @@
         height: 210px;
       }
     }
+    .menu-image-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+
+.menu-image-unavailable {
+  opacity: 0.45;
+  filter: grayscale(20%);
+}
+
+
+.unavailable-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  transform: translate(
+    -50%,
+    -50%
+  );
+
+  background: rgba(
+    120,
+    20,
+    20,
+    0.90
+  );
+
+  color: #ffffff;
+
+  padding: 8px 14px;
+
+  border-radius: 8px;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.4px;
+
+  white-space: nowrap;
+
+  box-shadow:
+    0 3px 8px
+    rgba(0, 0, 0, 0.20);
+}
+
+
+.low-stock-warning {
+  margin-top: 5px;
+
+  margin-bottom: 7px;
+
+  color: #c56a00;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+
+/* =========================
+   DISABLED QUANTITY BUTTON
+========================= */
+
+.quantity-control button:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
   </style>
 </head>
 
@@ -689,7 +761,10 @@ const SUPABASE_KEY =
 const RESTAURANT_ID =
   "5e562ca7-38aa-4894-8265-ddca2f4e61b6";
 
-
+const STOCK_ENDPOINT =
+  SUPABASE_URL +
+  "/rest/v1/PRODUCT_STOCK";
+  
 /* TABLE */
 
 const urlParams =
@@ -1509,14 +1584,64 @@ function renderMenu() {
       cartItem ? cartItem.qty : 0;
 
 
+    const stock =
+      productStocks[item.id];
+
+
+    const remaining =
+      stock
+        ? Number(stock.remaining) || 0
+        : null;
+
+
+    const isOutOfStock =
+      remaining === 0;
+
+
+    const showLowStock =
+      remaining !== null &&
+      remaining > 0 &&
+      remaining <= 3;
+
+
+    const isAtStockLimit =
+      remaining !== null &&
+      remaining > 0 &&
+      qty >= remaining;
+
+
     menuGrid.innerHTML += `
 
-      <div class="menu-card">
+      <div class="menu-card ${
+        isOutOfStock
+          ? "menu-card-unavailable"
+          : ""
+      }">
 
-        <img
-          src="${item.image}"
-          alt="${item.name}"
-        >
+        <div class="menu-image-wrapper">
+
+          <img
+            src="${item.image}"
+            alt="${item.name}"
+            class="${
+              isOutOfStock
+                ? "menu-image-unavailable"
+                : ""
+            }"
+          >
+
+          ${
+            isOutOfStock
+              ? `
+                <div class="unavailable-badge">
+                  🔴 UNAVAILABLE
+                </div>
+              `
+              : ""
+          }
+
+        </div>
+
 
         <div class="menu-info">
 
@@ -1524,26 +1649,52 @@ function renderMenu() {
             ${item.name}
           </div>
 
+
           <div class="menu-price">
             ₱${item.price.toLocaleString()}
           </div>
+
+
+          ${
+            showLowStock
+              ? `
+                <div class="low-stock-warning">
+                  🟠 Only ${remaining} left
+                </div>
+              `
+              : ""
+          }
+
 
           <div class="quantity-control">
 
             <button
               type="button"
               onclick="changeQtyById('${item.id}', -1)"
+              ${
+                qty <= 0
+                  ? "disabled"
+                  : ""
+              }
             >
               −
             </button>
+
 
             <span id="qty-${item.id}">
               ${qty}
             </span>
 
+
             <button
               type="button"
               onclick="changeQtyById('${item.id}', 1)"
+              ${
+                isOutOfStock ||
+                isAtStockLimit
+                  ? "disabled"
+                  : ""
+              }
             >
               +
             </button>
@@ -1557,7 +1708,6 @@ function renderMenu() {
     `;
   });
 }
-
 
 /* CATEGORY */
 
@@ -1586,11 +1736,106 @@ function setCategory(category) {
   }
 
 
-  renderMenu();
+renderMenu();
 }
 
 
-/* QUANTITY */
+/* =========================
+   STOCK
+========================= */
+
+let productStocks = {};
+/* =========================
+   LOAD PRODUCT STOCKS
+========================= */
+
+async function loadProductStocks() {
+
+  try {
+
+    const response =
+      await fetch(
+        STOCK_ENDPOINT +
+        "?select=product_id,stock_group,stock_remaining",
+        {
+          method: "GET",
+
+          headers: {
+            "apikey":
+              SUPABASE_KEY,
+
+            "Authorization":
+              "Bearer " +
+              SUPABASE_KEY
+          }
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        data.error ||
+        data.hint ||
+        "Unable to load product stocks."
+      );
+
+    }
+
+
+    productStocks = {};
+
+
+    data.forEach(function(item) {
+
+      if (!item.product_id) {
+        return;
+      }
+
+
+      productStocks[
+        item.product_id
+      ] = {
+
+        remaining:
+          Number(
+            item.stock_remaining
+          ) || 0,
+
+        stockGroup:
+          item.stock_group ||
+          item.product_id
+
+      };
+
+    });
+
+
+    console.log(
+      "Product stocks loaded:",
+      productStocks
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Stock loading error:",
+      error
+    );
+
+  }
+
+}
+
+/* =========================
+   QUANTITY
+========================= */
 
 function changeQtyById(id, change) {
 
@@ -1605,6 +1850,64 @@ function changeQtyById(id, change) {
   }
 
 
+  /* =========================
+     INCREASE QUANTITY
+  ========================= */
+
+  if (change > 0) {
+
+    const stock =
+      productStocks[id];
+
+
+    if (!stock) {
+
+      alert(
+        "Stock information is still loading. Please try again."
+      );
+
+      return;
+
+    }
+
+
+    const remaining =
+      Number(stock.remaining) || 0;
+
+
+    if (remaining <= 0) {
+
+      alert(
+        item.name +
+        " is currently OUT OF STOCK."
+      );
+
+      return;
+
+    }
+
+
+    if (item.qty >= remaining) {
+
+      alert(
+        "Only " +
+        remaining +
+        " " +
+        item.name +
+        " available."
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  /* =========================
+     CHANGE QUANTITY
+  ========================= */
+
   item.qty += change;
 
 
@@ -1614,18 +1917,22 @@ function changeQtyById(id, change) {
 
 
   const qtyElement =
-    document.getElementById("qty-" + id);
+    document.getElementById(
+      "qty-" + id
+    );
 
 
   if (qtyElement) {
-    qtyElement.textContent = item.qty;
+
+    qtyElement.textContent =
+      item.qty;
+
   }
 
 
   updateOrder();
+
 }
-
-
 /* ORDER */
 
 function updateOrder() {
