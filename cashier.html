@@ -2825,9 +2825,27 @@ async function acceptOrder(
   if (!orderId) {
     return;
   }
-  button.disabled = true;
-  button.textContent =
-    "Accepting...";
+ button.disabled = true;
+button.textContent =
+  "Accepting...";
+
+
+/* =========================
+   ACCEPT ORDER ANIMATION
+========================= */
+
+const orderCard =
+  button.closest(
+    ".order-card"
+  );
+
+if (orderCard) {
+
+  orderCard.classList.add(
+    "accept-moving"
+  );
+
+}
   try {
     const response =
       await fetch(
