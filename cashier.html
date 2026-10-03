@@ -809,76 +809,446 @@
           : "🔓 UNLOCK TABLE";
     }
   }
-  /* =========================
-     LOAD STOCKS
-  ========================= */
-  async function loadStocks() {
-    clearMessage();
-    stockContainer.innerHTML =
-      '<div class="loading">Loading product stocks...</div>';
-    try {
-      const response =
-        await fetch(
-          STOCK_ENDPOINT +
-          "?select=id,product_id,product_name,stock_group,stock_total,stock_remaining&order=id.asc",
-          {
-            method: "GET",
-            headers: {
-              "apikey":
-                SUPABASE_KEY,
-              "Authorization":
-                "Bearer " +
-                SUPABASE_KEY
-            }
+/* =========================
+   LOAD STOCKS
+========================= */
+async function loadStocks() {
+
+  clearMessage();
+
+  stockContainer.innerHTML =
+    '<div class="loading">Loading product stocks...</div>';
+
+
+  try {
+
+    const response =
+      await fetch(
+        STOCK_ENDPOINT +
+        "?select=id,product_id,product_name,stock_group,stock_total,stock_remaining&order=id.asc",
+        {
+          method: "GET",
+
+          headers: {
+            "apikey":
+              SUPABASE_KEY,
+
+            "Authorization":
+              "Bearer " +
+              SUPABASE_KEY
           }
-        );
-      const data =
-        await response.json();
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-          data.error ||
-          data.hint ||
-          "Unable to load product stocks."
-        );
-      }
-      if (!data.length) {
-        stockContainer.innerHTML =
-          '<div class="loading">No product stocks found.</div>';
-        return;
-      }
-      /*
-       * Group products by stock_group.
-       *
-       * This is important for shared stock,
-       * especially Chicken Wings.
-       */
-      const groups = {};
-      data.forEach(function(item) {
-        const group =
-          item.stock_group ||
-          item.product_id ||
-          item.product_name;
-        if (!groups[group]) {
-          groups[group] = [];
         }
-        groups[group].push(item);
-      });
-      stockContainer.innerHTML = "";
-      Object.keys(groups)
-        .forEach(function(group) {
-          createStockCard(
-            group,
-            groups[group]
-          );
-        });
-    } catch (error) {
-      console.error(error);
-      stockContainer.innerHTML =
-        '<div class="loading">Unable to load product stocks.</div>';
-      showError(error.message);
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        data.error ||
+        data.hint ||
+        "Unable to load product stocks."
+      );
+
     }
+
+
+    if (!data.length) {
+
+      stockContainer.innerHTML =
+        '<div class="loading">No product stocks found.</div>';
+
+      return;
+
+    }
+
+
+    /*
+     * MENU CATEGORY ORDER
+     *
+     * This follows the same order
+     * used by the HALINA BISTRO CAFE menu.
+     */
+
+    const categoryOrder = {
+
+      "all-day-breakfast": 1,
+
+      "a-la-carte": 2,
+
+      "pulutan": 3,
+
+      "pasta": 4,
+
+      "sandwich": 5,
+
+      "rice": 6,
+
+      "beers": 7,
+
+      "whiskey": 8,
+
+      "tequila": 9,
+
+      "soju": 10,
+
+      "soda": 11,
+
+      "others": 12
+
+    };
+
+
+    /*
+     * PRODUCT CATEGORY MAP
+     *
+     * PRODUCT_STOCK currently does not
+     * have a category column, so we map
+     * each product ID to its menu category.
+     */
+
+    const productCategory = {
+
+      "tapsilog":
+        "all-day-breakfast",
+
+      "lechon-kawali-silog":
+        "all-day-breakfast",
+
+      "pork-silog":
+        "all-day-breakfast",
+
+      "bang-silog":
+        "all-day-breakfast",
+
+
+      "whole-fried-chicken":
+        "a-la-carte",
+
+      "half-fried-chicken":
+        "a-la-carte",
+
+      "shanghai":
+        "a-la-carte",
+
+      "chicken-barbecue":
+        "a-la-carte",
+
+      "lechon-kawali":
+        "a-la-carte",
+
+      "crispy-bangus":
+        "a-la-carte",
+
+      "pork-sinigang":
+        "a-la-carte",
+
+      "beef-sinigang":
+        "a-la-carte",
+
+      "beef-caldereta":
+        "a-la-carte",
+
+      "kare-kare":
+        "a-la-carte",
+
+
+      "endamame":
+        "pulutan",
+
+      "cg-endamame":
+        "pulutan",
+
+      "classic-fries":
+        "pulutan",
+
+      "fish-fries":
+        "pulutan",
+
+      "fries-overload":
+        "pulutan",
+
+      "chichabu":
+        "pulutan",
+
+      "chicken-fingers":
+        "pulutan",
+
+      "calamari":
+        "pulutan",
+
+      "tokwat-baboy":
+        "pulutan",
+
+      "pork-sisig":
+        "pulutan",
+
+      "nachos":
+        "pulutan",
+
+      "buffalo-wings":
+        "pulutan",
+
+
+      "kiddie-spaghetti":
+        "pasta",
+
+      "creamy-carbonara":
+        "pasta",
+
+      "classic-spaghetti-marinara":
+        "pasta",
+
+
+      "ham-egg-sandwich":
+        "sandwich",
+
+      "clubhouse-sandwich":
+        "sandwich",
+
+
+      "white-rice":
+        "rice",
+
+      "garlic-rice":
+        "rice",
+
+      "white-rice-platter":
+        "rice",
+
+      "garlic-rice-platter":
+        "rice",
+
+
+      "sm-pale-pilsen":
+        "beers",
+
+      "san-mig-light":
+        "beers",
+
+      "san-mig-apple":
+        "beers",
+
+      "red-horse-stallion":
+        "beers",
+
+      "beer-bucket":
+        "beers",
+
+
+      "jameson-45ml":
+        "whiskey",
+
+      "jameson-1l":
+        "whiskey",
+
+      "black-label-45ml":
+        "whiskey",
+
+      "black-label-1l":
+        "whiskey",
+
+      "jack-daniels-45ml":
+        "whiskey",
+
+      "jack-daniels-1l":
+        "whiskey",
+
+
+      "jose-cuervo-45ml":
+        "tequila",
+
+      "jose-cuervo-1l":
+        "tequila",
+
+
+      "jinro-grapefruit":
+        "soju",
+
+      "jinro-green-grape":
+        "soju",
+
+      "jinro-strawberry":
+        "soju",
+
+
+      "coke-320ml":
+        "soda",
+
+      "coke-zero-320ml":
+        "soda",
+
+      "royal-320ml":
+        "soda",
+
+      "sprite-320ml":
+        "soda",
+
+      "coke-1-5l":
+        "soda",
+
+      "sprite-1-5l":
+        "soda",
+
+
+      "bottled-water":
+        "others",
+
+      "pitcher-iced-tea":
+        "others"
+
+    };
+
+
+    /*
+     * Add category information to
+     * every stock item.
+     */
+
+    data.forEach(function(item) {
+
+      item.menuCategory =
+        productCategory[
+          item.product_id
+        ] ||
+        "others";
+
+    });
+
+
+    /*
+     * Group products by stock_group.
+     *
+     * This keeps shared Chicken Wings
+     * working correctly.
+     */
+
+    const groups = {};
+
+
+    data.forEach(function(item) {
+
+      const group =
+        item.stock_group ||
+        item.product_id ||
+        item.product_name;
+
+
+      if (!groups[group]) {
+
+        groups[group] = [];
+
+      }
+
+
+      groups[group].push(item);
+
+    });
+
+
+    /*
+     * Convert grouped stocks into an
+     * array and sort by menu category.
+     */
+
+    const sortedGroups =
+      Object.keys(groups)
+        .map(function(group) {
+
+          return {
+            group: group,
+            items: groups[group]
+          };
+
+        })
+        .sort(function(a, b) {
+
+          const categoryA =
+            productCategory[
+              a.items[0].product_id
+            ] ||
+            "others";
+
+
+          const categoryB =
+            productCategory[
+              b.items[0].product_id
+            ] ||
+            "others";
+
+
+          const orderA =
+            categoryOrder[
+              categoryA
+            ] || 99;
+
+
+          const orderB =
+            categoryOrder[
+              categoryB
+            ] || 99;
+
+
+          if (orderA !== orderB) {
+
+            return orderA - orderB;
+
+          }
+
+
+          /*
+           * Within the same category,
+           * keep the original menu order.
+           */
+
+          return (
+            a.items[0].id -
+            b.items[0].id
+          );
+
+        });
+
+
+    stockContainer.innerHTML = "";
+
+
+    /*
+     * Create stock cards in the
+     * sorted menu order.
+     */
+
+    sortedGroups.forEach(
+      function(groupData) {
+
+        createStockCard(
+          groupData.group,
+          groupData.items
+        );
+
+      }
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    stockContainer.innerHTML =
+      '<div class="loading">Unable to load product stocks.</div>';
+
+
+    showError(
+      error.message
+    );
+
   }
+
+}
  /* =========================
    CREATE STOCK CARD
 ========================= */
