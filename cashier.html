@@ -879,115 +879,197 @@
       showError(error.message);
     }
   }
-  /* =========================
-     CREATE STOCK CARD
-  ========================= */
-  function createStockCard(
-    stockGroup,
-    items
+ /* =========================
+   CREATE STOCK CARD
+========================= */
+function createStockCard(
+  stockGroup,
+  items
+) {
+
+  const card =
+    document.createElement("div");
+
+  card.className =
+    "stock-card";
+
+
+  const firstItem =
+    items[0];
+
+
+  const remaining =
+    Number(
+      firstItem.stock_remaining
+    ) || 0;
+
+
+  const isShared =
+    items.length > 1 ||
+    stockGroup === "chicken-wings";
+
+
+  const isAvailable =
+    remaining > 0;
+
+
+  let displayName =
+    firstItem.product_name;
+
+
+  if (
+    stockGroup ===
+    "chicken-wings"
   ) {
-    const card =
-      document.createElement("div");
-    card.className =
-      "stock-card";
-    const firstItem =
-      items[0];
-    const total =
-      Number(firstItem.stock_total) || 0;
-    const remaining =
-      Number(firstItem.stock_remaining) || 0;
-    const isShared =
-      items.length > 1 ||
-      stockGroup === "chicken-wings";
-    const isAvailable =
-      remaining > 0;
-    let displayName =
-      firstItem.product_name;
-    if (stockGroup === "chicken-wings") {
-      displayName =
-        "Chicken Wings";
-    }
-    let sharedText = "";
-    if (isShared) {
-      if (items.length > 1) {
-        sharedText =
-          "🔗 Shared stock • " +
-          items.length +
-          " products";
-      } else {
-        sharedText =
-          "🔗 Shared Chicken Wings stock";
-      }
-    }
-    card.innerHTML = `
-      <div class="stock-info">
-        <div>
-          <div class="stock-name">
-            ${escapeHtml(displayName)}
-          </div>
-          ${
-            sharedText
-              ? `
-                <div class="stock-shared">
-                  ${escapeHtml(sharedText)}
-                </div>
-              `
-              : ""
-          }
-          <div class="stock-remaining">
-            Total Stock:
-            <strong>${total}</strong>
-            &nbsp; | &nbsp;
-            Remaining:
-            <strong>${remaining}</strong>
-          </div>
-          <div class="stock-status ${
-            isAvailable
-              ? "stock-available"
-              : "stock-unavailable"
-          }">
-            ${
-              isAvailable
-                ? "🟢 AVAILABLE"
-                : "🔴 UNAVAILABLE"
-            }
-          </div>
-        </div>
-        <div class="stock-controls">
-          <input
-            type="number"
-            min="0"
-            step="1"
-            class="stock-input"
-            value="${total}"
-            aria-label="Stock for ${escapeHtml(displayName)}"
-          >
-          <button
-            type="button"
-            class="stock-save-btn"
-          >
-            💾 SET STOCK
-          </button>
-        </div>
-      </div>
-    `;
-    const input =
-      card.querySelector(".stock-input");
-    const saveButton =
-      card.querySelector(".stock-save-btn");
-    saveButton.addEventListener(
-      "click",
-      function() {
-        saveStock(
-          stockGroup,
-          items,
-          input,
-          saveButton
-        );
-      }
-    );
-    stockContainer.appendChild(card);
+
+    displayName =
+      "Chicken Wings";
+
   }
+
+
+  let sharedText = "";
+
+
+  if (isShared) {
+
+    if (items.length > 1) {
+
+      sharedText =
+        "🔗 Shared stock • " +
+        items.length +
+        " products";
+
+    } else {
+
+      sharedText =
+        "🔗 Shared Chicken Wings stock";
+
+    }
+
+  }
+
+
+  card.innerHTML = `
+
+    <div class="stock-info">
+
+      <div>
+
+        <div class="stock-name">
+          ${escapeHtml(displayName)}
+        </div>
+
+
+        ${
+          sharedText
+            ? `
+              <div class="stock-shared">
+                ${escapeHtml(sharedText)}
+              </div>
+            `
+            : ""
+        }
+
+
+        <div class="stock-remaining">
+
+          Remaining:
+          <strong>
+            ${remaining}
+          </strong>
+
+        </div>
+
+
+        <div class="stock-status ${
+          isAvailable
+            ? "stock-available"
+            : "stock-unavailable"
+        }">
+
+          ${
+            isAvailable
+              ? "🟢 AVAILABLE"
+              : "🔴 UNAVAILABLE"
+          }
+
+        </div>
+
+      </div>
+
+
+      <div class="stock-controls">
+
+        <label
+          style="
+            display:block;
+            font-size:12px;
+            margin-bottom:5px;
+            color:#6b4f3a;
+            font-weight:600;
+          "
+        >
+          Update Remaining Stock
+        </label>
+
+
+        <input
+          type="number"
+          min="0"
+          step="1"
+          class="stock-input"
+          value="${remaining}"
+          aria-label="Remaining stock for ${escapeHtml(displayName)}"
+        >
+
+
+        <button
+          type="button"
+          class="stock-save-btn"
+        >
+          💾 UPDATE STOCK
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  const input =
+    card.querySelector(
+      ".stock-input"
+    );
+
+
+  const saveButton =
+    card.querySelector(
+      ".stock-save-btn"
+    );
+
+
+  saveButton.addEventListener(
+    "click",
+    function() {
+
+      saveStock(
+        stockGroup,
+        items,
+        input,
+        saveButton
+      );
+
+    }
+  );
+
+
+  stockContainer.appendChild(
+    card
+  );
+
+}
   /* =========================
      SAVE STOCK
   ========================= */
