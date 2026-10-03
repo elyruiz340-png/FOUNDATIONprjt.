@@ -3591,11 +3591,22 @@ if (refreshOrdersBtn) {
   );
 
 }
-  const completedOrdersToggle =
-  document.getElementById("completedOrdersToggle");
+
+
+/* =========================
+   COMPLETED ORDERS TOGGLE
+========================= */
+
+const completedOrdersToggle =
+  document.getElementById(
+    "completedOrdersToggle"
+  );
 
 const completedOrdersContainer =
-  document.getElementById("completedOrdersContainer");
+  document.getElementById(
+    "completedOrdersContainer"
+  );
+
 
 if (
   completedOrdersToggle &&
@@ -3607,18 +3618,29 @@ if (
     function() {
 
       const isHidden =
-        completedOrdersContainer.style.display === "none";
+        completedOrdersContainer.style.display ===
+        "none";
+
 
       if (isHidden) {
 
-        completedOrdersContainer.style.display = "block";
+        completedOrdersContainer.style.display =
+          "block";
 
         completedOrdersToggle.textContent =
           "📋 Hide Completed Orders";
 
+
+        /* =========================
+           LOAD COMPLETED ORDERS
+        ========================= */
+
+        loadCompletedOrders();
+
       } else {
 
-        completedOrdersContainer.style.display = "none";
+        completedOrdersContainer.style.display =
+          "none";
 
         completedOrdersToggle.textContent =
           "📋 View Completed Orders";
