@@ -634,35 +634,57 @@
       </div>
     </div>
   </section>
-  <!-- =========================
-       STOCKS SECTION
-  ========================= -->
-  <section
-  id="ordersSection"
+ <!-- =========================
+     STOCKS SECTION
+========================= -->
+
+<section
+  id="stocksSection"
   class="page-section"
 
 
   <div class="top-bar">
 
-    <h2>Incoming Orders</h2>
+    <h2>Product Stock</h2>
 
     <button
       class="refresh-btn"
-      id="refreshOrdersBtn"
+      id="refreshStockBtn"
       type="button"
     >
-      🔄 Refresh Orders
+      🔄 Refresh Stocks
     </button>
 
   </div>
 
+  <div class="stock-intro">
+
+    📦 <strong>Stock Management</strong><br>
+
+    Enter the total available stock for each product.
+    When you save a number, the remaining stock will be
+    reset to that amount.
+
+    <br><br>
+
+    Example:
+    If the kitchen has <strong>10 Chicken Wings</strong>,
+    enter <strong>10</strong>.
+
+    <br><br>
+
+    🍗 Chicken Wings can use one shared stock for different
+    wing flavors in the future.
+
+  </div>
+
   <div
-    id="ordersContainer"
-    class="orders-container"
+    id="stockContainer"
+    class="stock-list"
   >
 
     <div class="loading">
-      Loading incoming orders...
+      Loading product stocks...
     </div>
 
   </div>
