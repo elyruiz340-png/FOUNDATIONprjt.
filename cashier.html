@@ -2357,17 +2357,14 @@ function renderOrders(orders) {
         `;
       }
       if (status === "accepted") {
-        actionHtml = `
-          <div class="order-actions">
-            <div class="accepted-message">
-              🟢 ORDER ACCEPTED
-            </div>
-            <div class="next-status-message">
-              Waiting for Kitchen / Dispatcher
-            </div>
-          </div>
-        `;
-      }
+  actionHtml = `
+    <div class="order-actions">
+      <div class="accepted-message">
+        ACCEPTED
+      </div>
+    </div>
+  `;
+}
       card.innerHTML = `
         <div class="order-card-header">
           <div>
