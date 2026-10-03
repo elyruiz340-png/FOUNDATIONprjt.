@@ -591,6 +591,119 @@
 .accept-order-btn:active {
   transform: scale(0.98);
 }
+    /* =========================
+   NEW ORDER POP ANIMATION
+========================= */
+
+.order-card.new-order-pop {
+  animation:
+    newOrderPop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both,
+    newOrderGlow 1.6s ease-in-out 0.55s 3;
+
+  position: relative;
+  z-index: 5;
+}
+
+
+/* =========================
+   POP / EXPAND
+========================= */
+
+@keyframes newOrderPop {
+
+  0% {
+    opacity: 0;
+    transform: scale(0.18);
+    border-radius: 50%;
+  }
+
+  45% {
+    opacity: 1;
+    transform: scale(1.08);
+    border-radius: 28px;
+  }
+
+  75% {
+    transform: scale(0.97);
+    border-radius: 20px;
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    border-radius: 16px;
+  }
+
+}
+
+
+/* =========================
+   WARM GREEN GLOW
+========================= */
+
+@keyframes newOrderGlow {
+
+  0%,
+  100% {
+    box-shadow:
+      0 4px 12px
+      rgba(80, 55, 35, 0.10),
+      0 0 0
+      rgba(91, 180, 83, 0);
+  }
+
+  50% {
+    box-shadow:
+      0 4px 12px
+      rgba(80, 55, 35, 0.10),
+      0 0 14px
+      rgba(91, 180, 83, 0.55),
+      0 0 28px
+      rgba(91, 180, 83, 0.25);
+  }
+
+}
+
+
+/* =========================
+   NEW ORDER GLOW BORDER
+========================= */
+
+.order-card.new-order-pop::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: -1px;
+
+  border-radius: inherit;
+
+  border: 1px solid
+    rgba(91, 180, 83, 0.75);
+
+  pointer-events: none;
+
+  opacity: 0;
+
+  animation:
+    newOrderBorderGlow
+    1.6s ease-in-out
+    0.55s 3;
+}
+
+
+@keyframes newOrderBorderGlow {
+
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
   </style>
 </head>
 <body>
@@ -2159,7 +2272,14 @@ function createStockCard(
 ========================= */
 
 let ordersRefreshTimer = null;
+  
+let knownOrderIds = new Set();
 
+let firstOrdersLoad = true;
+
+/* =========================
+   LOAD ORDERS
+========================= */
 
 /* =========================
    LOAD ORDERS
@@ -2199,10 +2319,8 @@ async function loadOrders() {
         }
       );
 
-
     const data =
       await response.json();
-
 
     if (!response.ok) {
 
@@ -2216,7 +2334,68 @@ async function loadOrders() {
     }
 
 
-    renderOrders(data);
+    /* =========================
+       FIND NEW ORDERS
+    ========================= */
+
+    const newOrderIds =
+      new Set();
+
+    if (!firstOrdersLoad) {
+
+      data.forEach(
+        function(order) {
+
+          const orderId =
+            String(order.id);
+
+          const status =
+            String(
+              order.status ||
+              "new"
+            ).toLowerCase();
+
+          if (
+            !knownOrderIds.has(
+              orderId
+            ) &&
+            status === "new"
+          ) {
+
+            newOrderIds.add(
+              orderId
+            );
+
+          }
+
+        }
+      );
+
+    }
+
+
+    renderOrders(
+      data,
+      newOrderIds
+    );
+
+
+    /* =========================
+       REMEMBER ORDERS
+    ========================= */
+
+    data.forEach(
+      function(order) {
+
+        knownOrderIds.add(
+          String(order.id)
+        );
+
+      }
+    );
+
+
+    firstOrdersLoad = false;
 
 
   } catch (error) {
@@ -2230,7 +2409,9 @@ async function loadOrders() {
       <div class="loading">
         Unable to load incoming orders.
         <br><br>
-        ${escapeHtml(error.message)}
+        ${escapeHtml(
+          error.message
+        )}
       </div>
     `;
 
@@ -2242,57 +2423,112 @@ async function loadOrders() {
 /* =========================
    RENDER ORDERS
 ========================= */
-function renderOrders(orders) {
+
+function renderOrders(
+  orders,
+  newOrderIds
+) {
+
   const ordersContainer =
     document.getElementById(
       "ordersContainer"
     );
+
   if (!ordersContainer) {
     return;
   }
+
+
   if (!orders.length) {
+
     ordersContainer.innerHTML = `
       <div class="loading">
         🧾 No incoming orders yet.
       </div>
     `;
+
     return;
   }
+
+
   ordersContainer.innerHTML = "";
+
+
   orders.forEach(
     function(order) {
+
       const card =
         document.createElement(
           "div"
         );
+
+
+      /* =========================
+         NEW ORDER POP
+      ========================= */
+
+      const orderId =
+        String(order.id);
+
+      const isNewOrder =
+        newOrderIds &&
+        newOrderIds.has(
+          orderId
+        );
+
+
       card.className =
-        "order-card";
+        "order-card" +
+        (
+          isNewOrder
+            ? " new-order-pop"
+            : ""
+        );
+
+
       let items = [];
+
+
       try {
+
         items =
           Array.isArray(order.items)
             ? order.items
             : JSON.parse(
-                order.items || "[]"
+                order.items ||
+                "[]"
               );
+
       } catch (error) {
+
         items = [];
+
       }
+
+
       let itemsHtml = "";
+
+
       items.forEach(
         function(item) {
+
           const quantity =
             Number(
               item.quantity ||
               item.qty ||
               1
             );
+
           const price =
             Number(
-              item.price || 0
+              item.price ||
+              0
             );
+
+
           itemsHtml += `
             <div class="order-item">
+
               <span>
                 ${escapeHtml(
                   item.name ||
@@ -2300,21 +2536,30 @@ function renderOrders(orders) {
                 )}
                 × ${quantity}
               </span>
+
               <strong>
                 ₱${(
                   price * quantity
                 ).toLocaleString()}
               </strong>
+
             </div>
           `;
+
         }
       );
+
+
       const orderNumber =
         order.order_number ||
         "Pending";
+
+
       const tableNumber =
         order.table_number ||
         "—";
+
+
       const orderType =
         String(
           order.order_type ||
@@ -2323,27 +2568,43 @@ function renderOrders(orders) {
         "takeout"
           ? "🥡 TAKEOUT"
           : "🍽️ DINE IN";
+
+
       const paymentMethod =
         order.payment_method ||
         "—";
+
+
       const paymentStatus =
         order.payment_status ||
         "pending";
+
+
       const status =
         String(
           order.status ||
           "new"
         ).toLowerCase();
+
+
       const createdAt =
         order.created_at
           ? new Date(
               order.created_at
             ).toLocaleString()
           : "—";
+
+
       let actionHtml = "";
-      if (status === "new") {
+
+
+      if (
+        status === "new"
+      ) {
+
         actionHtml = `
           <div class="order-actions">
+
             <button
               type="button"
               class="accept-order-btn"
@@ -2353,66 +2614,100 @@ function renderOrders(orders) {
             >
               🟢 ACCEPT ORDER
             </button>
+
           </div>
         `;
+
       }
-      if (status === "accepted") {
-  actionHtml = `
-    <div class="order-actions">
-      <div class="accepted-message">
-        ACCEPTED
-      </div>
-    </div>
-  `;
-}
+
+
+      if (
+        status === "accepted"
+      ) {
+
+        actionHtml = `
+          <div class="order-actions">
+
+            <div class="accepted-message">
+              ACCEPTED
+            </div>
+
+          </div>
+        `;
+
+      }
+
+
       card.innerHTML = `
+
         <div class="order-card-header">
+
           <div>
+
             <div class="order-number">
               ORDER #${escapeHtml(
                 String(orderNumber)
               )}
             </div>
+
             <div class="order-time">
               ${escapeHtml(
                 createdAt
               )}
             </div>
+
           </div>
+
+
           <div class="order-status">
             ${escapeHtml(
               status.toUpperCase()
             )}
           </div>
+
         </div>
+
+
         <div class="order-details">
+
           <div>
             <strong>Table:</strong>
             ${escapeHtml(
               String(tableNumber)
             )}
           </div>
+
+
           <div>
             <strong>Type:</strong>
             ${orderType}
           </div>
+
+
           <div>
             <strong>Payment:</strong>
             ${escapeHtml(
               String(paymentMethod)
             )}
           </div>
+
+
           <div>
             <strong>Payment Status:</strong>
             ${escapeHtml(
               String(paymentStatus)
             ).toUpperCase()}
           </div>
+
         </div>
+
+
         <div class="order-items">
+
           <div class="order-items-title">
             ITEMS
           </div>
+
           ${
             itemsHtml ||
             `
@@ -2421,42 +2716,67 @@ function renderOrders(orders) {
               </div>
             `
           }
+
         </div>
+
+
         <div class="order-total">
+
           <span>
             TOTAL
           </span>
+
           <strong>
             ₱${Number(
-              order.total || 0
+              order.total ||
+              0
             ).toLocaleString()}
           </strong>
+
         </div>
+
+
         ${actionHtml}
+
       `;
+
+
       ordersContainer.appendChild(
         card
       );
+
     }
   );
+
+
+  /* =========================
+     ACCEPT ORDER BUTTONS
+  ========================= */
+
   document
     .querySelectorAll(
       ".accept-order-btn"
     )
     .forEach(
       function(button) {
+
         button.addEventListener(
           "click",
           function() {
+
             acceptOrder(
               button.dataset.orderId,
               button
             );
+
           }
         );
+
       }
     );
+
 }
+
 /* =========================
    ACCEPT ORDER
 ========================= */
