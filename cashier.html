@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -2458,7 +2458,80 @@ function renderOrders(orders) {
       }
     );
 }
-
+/* =========================
+   ACCEPT ORDER
+========================= */
+async function acceptOrder(
+  orderId,
+  button
+) {
+  if (!orderId) {
+    return;
+  }
+  button.disabled = true;
+  button.textContent =
+    "Accepting...";
+  try {
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/orders?id=eq." +
+        encodeURIComponent(
+          orderId
+        ),
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json",
+            "apikey":
+              SUPABASE_KEY,
+            "Authorization":
+              "Bearer " +
+              SUPABASE_KEY,
+            "Prefer":
+              "return=representation"
+          },
+          body:
+            JSON.stringify({
+              status:
+                "accepted"
+            })
+        }
+      );
+    const data =
+      await response.json();
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        data.error ||
+        data.hint ||
+        "Unable to accept order."
+      );
+    }
+    if (
+      !Array.isArray(data) ||
+      data.length === 0
+    ) {
+      throw new Error(
+        "Order was not updated. Please check the UPDATE policy in Supabase."
+      );
+    }
+    await loadOrders();
+  } catch (error) {
+    console.error(
+      "Accept order error:",
+      error
+    );
+    button.disabled = false;
+    button.textContent =
+      "🟢 ACCEPT ORDER";
+    showError(
+      error.message
+    );
+  }
+}
+Sent
 
 /* =========================
    AUTO REFRESH ORDERS
