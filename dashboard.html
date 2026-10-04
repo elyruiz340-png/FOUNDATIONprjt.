@@ -588,7 +588,7 @@
             class="primary-btn"
             onclick="sendPinVerificationCode()"
           >
-            Send Verification Code
+            Continue
           </button>
 
           <button
@@ -1352,78 +1352,23 @@
        SEND VERIFICATION CODE
     ========================================================= */
 
-    async function sendPinVerificationCode() {
+   async function sendPinVerificationCode() {
 
-      const button =
-        document.getElementById(
-          "sendPinCodeBtn"
-        );
+  clearPinMessages();
 
-      button.disabled =
-        true;
+  pinVerificationCompleted = true;
 
-      button.textContent =
-        "Sending...";
+  showPinMessage(
+    1,
+    "Owner account verified. You may set a new Cashier PIN.",
+    "success"
+  );
 
-      clearPinMessages();
+  setTimeout(() => {
+    showPinStep(3);
+  }, 500);
 
-      try {
-
-        /*
-          Supabase Reauthentication sends
-          a verification code to the
-          currently authenticated owner's email.
-        */
-
-        const {
-          error
-        } =
-          await supabaseClient.auth.reauthenticate();
-
-        if (error) {
-
-          throw error;
-
-        }
-
-        showPinMessage(
-          1,
-          "Verification code sent. Check your email.",
-          "success"
-        );
-
-        setTimeout(() => {
-
-          showPinStep(2);
-
-        }, 700);
-
-      } catch (error) {
-
-        console.error(
-          "Reauthentication error:",
-          error
-        );
-
-        showPinMessage(
-          1,
-          error.message ||
-          "Unable to send verification code.",
-          "error"
-        );
-
-      } finally {
-
-        button.disabled =
-          false;
-
-        button.textContent =
-          "Send Verification Code";
-
-      }
-
-    }
-
+}
 
     /* =========================================================
        VERIFY CODE
@@ -1544,129 +1489,96 @@
 
     async function saveCashierPin() {
 
-      if (
-        !pinVerificationCompleted
-      ) {
+  const newPin =
+    document.getElementById(
+      "newCashierPin"
+    ).value.trim();
 
-        showPinMessage(
-          3,
-          "Please verify your email first.",
-          "error"
-        );
+  const confirmPin =
+    document.getElementById(
+      "confirmCashierPin"
+    ).value.trim();
 
-        return;
+  if (!/^[0-9]{6}$/.test(newPin)) {
 
-      }
+    showPinMessage(
+      3,
+      "New PIN must be exactly 6 digits.",
+      "error"
+    );
 
-      const newPin =
-        document.getElementById(
-          "newCashierPin"
-        ).value.trim();
+    return;
+  }
 
-      const confirmPin =
-        document.getElementById(
-          "confirmCashierPin"
-        ).value.trim();
+  if (newPin !== confirmPin) {
 
-      if (
-        !/^[0-9]{6}$/.test(newPin)
-      ) {
+    showPinMessage(
+      3,
+      "PIN confirmation does not match.",
+      "error"
+    );
 
-        showPinMessage(
-          3,
-          "New PIN must be exactly 6 digits.",
-          "error"
-        );
+    return;
+  }
 
-        return;
+  const button =
+    document.getElementById(
+      "saveCashierPinBtn"
+    );
 
-      }
+  button.disabled = true;
+  button.textContent = "Saving...";
 
-      if (
-        newPin !== confirmPin
-      ) {
+  clearPinMessages();
 
-        showPinMessage(
-          3,
-          "PIN confirmation does not match.",
-          "error"
-        );
+  try {
 
-        return;
-
-      }
-
-      const button =
-        document.getElementById(
-          "saveCashierPinBtn"
-        );
-
-      button.disabled =
-        true;
-
-      button.textContent =
-        "Saving...";
-
-      clearPinMessages();
-
-      try {
-
-        const {
-          error
-        } =
-          await supabaseClient.rpc(
-            "set_cashier_pin",
-            {
-              new_pin:
-                newPin
-            }
-          );
-
-        if (error) {
-
-          throw error;
-
+    const {
+      error
+    } =
+      await supabaseClient.rpc(
+        "set_cashier_pin",
+        {
+          new_pin: newPin
         }
+      );
 
-        showPinMessage(
-          3,
-          "Cashier PIN changed successfully.",
-          "success"
-        );
-
-        setTimeout(() => {
-
-          closeCashierPinModal();
-
-        }, 1200);
-
-      } catch (error) {
-
-        console.error(
-          "Save PIN error:",
-          error
-        );
-
-        showPinMessage(
-          3,
-          error.message ||
-          "Unable to save the new Cashier PIN.",
-          "error"
-        );
-
-      } finally {
-
-        button.disabled =
-          false;
-
-        button.textContent =
-          "Save New PIN";
-
-      }
-
+    if (error) {
+      throw error;
     }
 
+    showPinMessage(
+      3,
+      "Cashier PIN changed successfully.",
+      "success"
+    );
 
+    setTimeout(() => {
+      closeCashierPinModal();
+    }, 1200);
+
+  } catch (error) {
+
+    console.error(
+      "Save PIN error:",
+      error
+    );
+
+    showPinMessage(
+      3,
+      error.message ||
+      "Unable to save the new Cashier PIN.",
+      "error"
+    );
+
+  } finally {
+
+    button.disabled = false;
+    button.textContent = "Save New PIN";
+
+  }
+
+}
     /* =========================================================
        LOGOUT
     ========================================================= */
