@@ -215,6 +215,39 @@
       color: #888;
     }
 
+    .pin-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .pin-modal-box {
+      background: white;
+      width: 100%;
+      max-width: 400px;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 35px rgba(0,0,0,.2);
+    }
+
+    .pin-modal-box h2 {
+      margin-top: 0;
+    }
+
+    .pin-close-btn {
+      border: none;
+      background: #eee;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
     @media (max-width: 800px) {
       .cards {
         grid-template-columns: repeat(2, 1fr);
@@ -373,40 +406,45 @@
 
       </div>
 
-<!-- SECURITY & STAFF -->
 
-<div
-  id="securitySection"
-  class="orders-section"
-  style="display:none;"
+      <!-- SECURITY & STAFF -->
+
+      <div
+        id="securitySection"
+        class="orders-section"
+        style="display:none;"
+      >
+
+        <div class="section-header">
+
+          <h3>
+            🔐 Security & Staff
+          </h3>
+
+        </div>
+
+        <p style="color:#777;">
+          Manage cashier security and staff access.
+        </p>
+
+        <button
+          id="changeCashierPinBtn"
+          class="refresh-btn"
+          onclick="openCashierPinSettings()"
+        >
+          Change Cashier PIN
+        </button>
+
+        <div
+          id="cashierPinMessage"
+          class="message"
+        ></div>
+
+      </div>
 
 
-  <div class="section-header">
+      <!-- RECENT ORDERS -->
 
-    <h3>
-      🔐 Security & Staff
-    </h3>
-
-  </div>
-
-  <p style="color:#777;">
-    Manage cashier security and staff access.
-  </p>
-
-  <button
-    id="changeCashierPinBtn"
-    class="refresh-btn"
-    onclick="openCashierPinSettings()"
-  >
-    Change Cashier PIN
-  </button>
-
-  <div
-    id="cashierPinMessage"
-    class="message"
-  ></div>
-
-</div>
       <div class="orders-section">
 
         <div class="section-header">
@@ -434,6 +472,38 @@
   </div>
 
 
+  <!-- CASHIER PIN MODAL -->
+
+  <div
+    id="cashierPinModal"
+    class="pin-modal"
+  >
+
+    <div
+      class="pin-modal-box"
+    >
+
+      <h2>
+        Change Cashier PIN
+      </h2>
+
+      <p style="color:#777;">
+        Email verification will be required before changing the PIN.
+      </p>
+
+      <button
+        type="button"
+        class="pin-close-btn"
+        onclick="closeCashierPinModal()"
+      >
+        Close
+      </button>
+
+    </div>
+
+  </div>
+
+
   <script>
 
     /* =================================
@@ -453,8 +523,8 @@
       );
 
 
-   let currentRestaurantId = null;
-let currentUserRole = null;
+    let currentRestaurantId = null;
+    let currentUserRole = null;
 
 
     /* =================================
@@ -646,9 +716,10 @@ let currentUserRole = null;
 
       currentRestaurantId =
         result.data.restaurant_id;
-      
-        currentUserRole =
+
+      currentUserRole =
         result.data.role;
+
 
       if (
         result.data.restaurants &&
@@ -680,14 +751,25 @@ let currentUserRole = null;
       ).style.display =
         "block";
 
-      const securitySection =
-  document.getElementById("securitySection");
 
-if (currentUserRole === "owner") {
-  securitySection.style.display = "block";
-} else {
-  securitySection.style.display = "none";
-}
+      const securitySection =
+        document.getElementById(
+          "securitySection"
+        );
+
+
+      if (currentUserRole === "owner") {
+
+        securitySection.style.display =
+          "block";
+
+      } else {
+
+        securitySection.style.display =
+          "none";
+
+      }
+
 
       await loadOrders();
 
@@ -1047,22 +1129,37 @@ if (currentUserRole === "owner") {
       );
 
     }
-/* =================================
-   CASHIER PIN SETTINGS
-================================= */
 
-function openCashierPinSettings() {
 
-  const message =
-    document.getElementById(
-      "cashierPinMessage"
-    );
+    /* =================================
+       CASHIER PIN SETTINGS
+    ================================= */
 
-  message.className = "message success";
+    function openCashierPinSettings() {
 
-  message.textContent =
-    "Cashier PIN settings are ready.";
-}
+      const modal =
+        document.getElementById(
+          "cashierPinModal"
+        );
+
+      modal.style.display =
+        "flex";
+
+    }
+
+
+    function closeCashierPinModal() {
+
+      const modal =
+        document.getElementById(
+          "cashierPinModal"
+        );
+
+      modal.style.display =
+        "none";
+
+    }
+
 
     /* =================================
        LOGOUT
@@ -1073,6 +1170,7 @@ function openCashierPinSettings() {
       await supabaseClient.auth.signOut();
 
       currentRestaurantId = null;
+      currentUserRole = null;
 
       showLogin();
 
@@ -1101,6 +1199,20 @@ function openCashierPinSettings() {
         "logoutBtn"
       ).style.display =
         "none";
+
+
+      const securitySection =
+        document.getElementById(
+          "securitySection"
+        );
+
+
+      if (securitySection) {
+
+        securitySection.style.display =
+          "none";
+
+      }
 
     }
 
