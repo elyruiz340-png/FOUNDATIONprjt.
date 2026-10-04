@@ -627,8 +627,8 @@
           type="text"
           inputmode="numeric"
           autocomplete="one-time-code"
-          maxlength="6"
-          placeholder="000000"
+          maxlength="8"
+          placeholder="00000000"
         >
 
         <div class="modal-actions">
@@ -1437,12 +1437,12 @@
         ).value.trim();
 
       if (
-        !/^[0-9]{6}$/.test(code)
+        !/^[0-9]{8}$/.test(code)
       ) {
 
         showPinMessage(
           2,
-          "Please enter the 6-digit verification code.",
+          "Please enter the 8-digit verification code.",
           "error"
         );
 
@@ -1790,7 +1790,7 @@
               )
               .slice(
                 0,
-                6
+                8
               );
 
         }
