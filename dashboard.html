@@ -646,7 +646,9 @@ let currentUserRole = null;
 
       currentRestaurantId =
         result.data.restaurant_id;
-
+      
+        currentUserRole =
+        result.data.role;
 
       if (
         result.data.restaurants &&
@@ -678,6 +680,14 @@ let currentUserRole = null;
       ).style.display =
         "block";
 
+      const securitySection =
+  document.getElementById("securitySection");
+
+if (currentUserRole === "owner") {
+  securitySection.style.display = "block";
+} else {
+  securitySection.style.display = "none";
+}
 
       await loadOrders();
 
@@ -1037,7 +1047,22 @@ let currentUserRole = null;
       );
 
     }
+/* =================================
+   CASHIER PIN SETTINGS
+================================= */
 
+function openCashierPinSettings() {
+
+  const message =
+    document.getElementById(
+      "cashierPinMessage"
+    );
+
+  message.className = "message success";
+
+  message.textContent =
+    "Cashier PIN settings are ready.";
+}
 
     /* =================================
        LOGOUT
