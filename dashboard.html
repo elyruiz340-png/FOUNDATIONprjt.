@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,260 +16,421 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f7f5;
       color: #222;
     }
 
-    .header {
-      background: #111;
+    .topbar {
+      background: #173f2b;
       color: white;
-      padding: 18px 20px;
+      padding: 18px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
     }
 
-    .header h1 {
+    .brand h1 {
       margin: 0;
-      font-size: 20px;
+      font-size: 24px;
+      letter-spacing: 0.5px;
     }
 
-    .header p {
-      margin: 4px 0 0;
-      color: #aaa;
+    .brand p {
+      margin: 5px 0 0;
       font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .user-email {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
     }
 
     .logout-btn {
-      display: none;
-      border: none;
-      background: white;
-      color: #111;
-      padding: 9px 14px;
+      background: #ffffff;
+      color: #173f2b;
+      padding: 10px 16px;
       border-radius: 8px;
       font-weight: bold;
-      cursor: pointer;
     }
 
-    .login-box {
-      max-width: 400px;
-      margin: 70px auto;
-      padding: 30px;
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 5px 25px rgba(0,0,0,.08);
+    .page {
+      max-width: 1250px;
+      margin: 0 auto;
+      padding: 25px;
     }
 
-    .login-box h2 {
-      margin-top: 0;
-    }
-
-    .input {
-      width: 100%;
-      padding: 13px;
-      margin: 8px 0;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-    }
-
-    .login-btn {
-      width: 100%;
-      padding: 13px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #111;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .login-btn:disabled {
-      opacity: .6;
-    }
-
-    .message {
-      margin-top: 15px;
-      font-size: 14px;
-      color: #d00;
-      line-height: 1.5;
-    }
-
-    .success {
-      color: #16803c;
-    }
-
-    .dashboard {
-      display: none;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: auto;
-      padding: 20px;
-    }
-
-    .restaurant-title {
+    .welcome {
       margin-bottom: 20px;
     }
 
-    .restaurant-title h2 {
+    .welcome h2 {
+      margin: 0 0 5px;
+      font-size: 25px;
+    }
+
+    .welcome p {
       margin: 0;
+      color: #666;
     }
 
-    .restaurant-title p {
-      color: #777;
-      margin-top: 5px;
-    }
-
-    .cards {
+    .stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 15px;
+      margin-bottom: 25px;
     }
 
-    .card {
+    .stat-card {
       background: white;
-      padding: 20px;
       border-radius: 14px;
-      box-shadow: 0 3px 15px rgba(0,0,0,.05);
+      padding: 20px;
+      box-shadow: 0 5px 18px rgba(0,0,0,0.06);
+      border: 1px solid #e9ece9;
     }
 
-    .card-title {
-      color: #777;
+    .stat-card .label {
       font-size: 13px;
+      color: #777;
+      margin-bottom: 10px;
     }
 
-    .card-value {
-      font-size: 27px;
+    .stat-card .value {
+      font-size: 28px;
       font-weight: bold;
-      margin-top: 8px;
+      color: #173f2b;
     }
 
-    .orders-section {
-      margin-top: 25px;
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .section {
       background: white;
-      border-radius: 14px;
+      border-radius: 15px;
       padding: 20px;
-      box-shadow: 0 3px 15px rgba(0,0,0,.05);
+      box-shadow: 0 5px 18px rgba(0,0,0,0.05);
+      border: 1px solid #e9ece9;
     }
 
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .section-header h3 {
+      margin: 0;
+      font-size: 19px;
+      color: #173f2b;
     }
 
     .refresh-btn {
-      border: none;
-      background: #111;
+      background: #173f2b;
       color: white;
-      padding: 9px 14px;
+      padding: 10px 15px;
       border-radius: 8px;
-      cursor: pointer;
+      font-weight: bold;
     }
 
-    .order {
-      padding: 15px 0;
+    .refresh-btn:hover {
+      background: #215b3d;
+    }
+
+    .orders-table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 750px;
+    }
+
+    th {
+      background: #f0f4f1;
+      color: #173f2b;
+      text-align: left;
+      padding: 12px;
+      font-size: 13px;
+    }
+
+    td {
+      padding: 12px;
       border-bottom: 1px solid #eee;
+      font-size: 13px;
+      vertical-align: top;
     }
 
-    .order:last-child {
+    tr:last-child td {
       border-bottom: none;
     }
 
-    .order-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .order-number {
-      font-weight: bold;
-    }
-
     .status {
-      background: #eee;
+      display: inline-block;
       padding: 5px 9px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
+      text-transform: uppercase;
     }
 
-    .order-details {
-      margin-top: 7px;
-      color: #666;
-      font-size: 14px;
-      line-height: 1.6;
+    .status-new {
+      background: #fff3cd;
+      color: #856404;
     }
 
-    .order-total {
-      margin-top: 7px;
-      font-weight: bold;
+    .status-preparing {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .status-ready {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-completed {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .status-cancelled {
+      background: #fee2e2;
+      color: #991b1b;
     }
 
     .empty {
+      padding: 30px 10px;
       text-align: center;
-      padding: 30px 0;
-      color: #888;
+      color: #777;
+    }
+
+    .security-section {
+      display: none;
+    }
+
+    .security-card {
+      border: 1px solid #e5ebe6;
+      border-radius: 12px;
+      padding: 18px;
+      background: #fbfdfb;
+    }
+
+    .security-card h4 {
+      margin: 0 0 7px;
+      color: #173f2b;
+      font-size: 17px;
+    }
+
+    .security-card p {
+      margin: 0 0 15px;
+      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .danger-note {
+      margin-top: 12px;
+      padding: 11px 13px;
+      border-radius: 8px;
+      background: #fff8e6;
+      color: #795800;
+      font-size: 12px;
+      line-height: 1.5;
     }
 
     .pin-modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.55);
+      background: rgba(0,0,0,0.55);
       z-index: 9999;
       align-items: center;
       justify-content: center;
       padding: 20px;
     }
 
+    .pin-modal.show {
+      display: flex;
+    }
+
     .pin-modal-box {
-      background: white;
       width: 100%;
-      max-width: 400px;
+      max-width: 440px;
+      background: white;
+      border-radius: 18px;
       padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 10px 35px rgba(0,0,0,.2);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
     }
 
-    .pin-modal-box h2 {
-      margin-top: 0;
+    .pin-step {
+      display: none;
     }
 
-    .pin-close-btn {
-      border: none;
-      background: #eee;
-      padding: 10px 15px;
+    .pin-step.active {
+      display: block;
+    }
+
+    .pin-step h2 {
+      margin: 0 0 8px;
+      color: #173f2b;
+      font-size: 22px;
+    }
+
+    .pin-step p {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .email-display {
+      background: #f0f4f1;
+      padding: 12px;
       border-radius: 8px;
-      cursor: pointer;
+      font-weight: bold;
+      color: #173f2b !important;
+      word-break: break-word;
+    }
+
+    .pin-input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ccd5ce;
+      border-radius: 9px;
+      font-size: 22px;
+      text-align: center;
+      letter-spacing: 7px;
+      outline: none;
+      margin: 8px 0 14px;
+    }
+
+    .pin-input:focus {
+      border-color: #173f2b;
+      box-shadow: 0 0 0 3px rgba(23,63,43,0.1);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .primary-btn {
+      flex: 1;
+      background: #173f2b;
+      color: white;
+      padding: 12px 15px;
+      border-radius: 9px;
       font-weight: bold;
     }
 
-    @media (max-width: 800px) {
-      .cards {
+    .primary-btn:hover {
+      background: #215b3d;
+    }
+
+    .secondary-btn {
+      flex: 1;
+      background: #eef1ee;
+      color: #333;
+      padding: 12px 15px;
+      border-radius: 9px;
+      font-weight: bold;
+    }
+
+    .secondary-btn:hover {
+      background: #e0e5e1;
+    }
+
+    .message {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .message.success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .loading {
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    .login-loading {
+      text-align: center;
+      padding: 50px 20px;
+      color: #666;
+    }
+
+    @media (max-width: 900px) {
+      .stats {
         grid-template-columns: repeat(2, 1fr);
       }
     }
 
-    @media (max-width: 500px) {
-      .container {
-        padding: 12px;
-      }
-
-      .cards {
-        gap: 10px;
-      }
-
-      .card {
+    @media (max-width: 600px) {
+      .page {
         padding: 15px;
       }
 
-      .card-value {
-        font-size: 22px;
+      .topbar {
+        padding: 15px;
+      }
+
+      .brand h1 {
+        font-size: 20px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .stat-card {
+        padding: 15px;
+      }
+
+      .stat-card .value {
+        font-size: 23px;
+      }
+
+      .pin-modal-box {
+        padding: 20px;
       }
     }
   </style>
@@ -276,228 +438,273 @@
 
 <body>
 
-  <div class="header">
-
-    <div>
+  <div class="topbar">
+    <div class="brand">
       <h1>HALINA BISTRO CAFE</h1>
       <p>Owner Dashboard</p>
     </div>
 
-    <button
-      id="logoutBtn"
-      class="logout-btn"
-      onclick="logout()">
-      Logout
-    </button>
-
+    <div class="top-actions">
+      <span class="user-email" id="userEmail">Checking account...</span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
   </div>
 
+  <main class="page">
 
-  <!-- LOGIN -->
-
-  <div id="loginBox" class="login-box">
-
-    <h2>Owner Login</h2>
-
-    <p>
-      Login to manage your restaurant.
-    </p>
-
-    <input
-      id="email"
-      class="input"
-      type="email"
-      autocomplete="email"
-      placeholder="Email">
-
-    <input
-      id="password"
-      class="input"
-      type="password"
-      autocomplete="current-password"
-      placeholder="Password">
-
-    <button
-      id="loginBtn"
-      class="login-btn"
-      onclick="login()">
-      Login
-    </button>
-
-    <div
-      id="loginMessage"
-      class="message">
+    <div id="loadingScreen" class="login-loading">
+      Checking your account...
     </div>
 
-  </div>
+    <div id="dashboardContent" style="display:none;">
 
-
-  <!-- DASHBOARD -->
-
-  <div id="dashboard" class="dashboard">
-
-    <div class="container">
-
-      <div class="restaurant-title">
-
-        <h2 id="restaurantName">
-          HALINA BISTRO CAFE
-        </h2>
-
-        <p>
-          Restaurant Owner Dashboard
-        </p>
-
+      <div class="welcome">
+        <h2>Welcome, Owner</h2>
+        <p>Manage and monitor HALINA BISTRO CAFE.</p>
       </div>
 
+      <div class="stats">
 
-      <div class="cards">
-
-        <div class="card">
-          <div class="card-title">
-            Orders Today
-          </div>
-
-          <div
-            id="ordersToday"
-            class="card-value">
-            0
-          </div>
+        <div class="stat-card">
+          <div class="label">Total Orders</div>
+          <div class="value" id="totalOrders">0</div>
         </div>
 
-
-        <div class="card">
-          <div class="card-title">
-            Sales Today
-          </div>
-
-          <div
-            id="salesToday"
-            class="card-value">
-            ₱0
-          </div>
+        <div class="stat-card">
+          <div class="label">New Orders</div>
+          <div class="value" id="newOrders">0</div>
         </div>
 
-
-        <div class="card">
-          <div class="card-title">
-            New Orders
-          </div>
-
-          <div
-            id="newOrders"
-            class="card-value">
-            0
-          </div>
+        <div class="stat-card">
+          <div class="label">Completed Orders</div>
+          <div class="value" id="completedOrders">0</div>
         </div>
 
-
-        <div class="card">
-          <div class="card-title">
-            Preparing
-          </div>
-
-          <div
-            id="preparingOrders"
-            class="card-value">
-            0
-          </div>
+        <div class="stat-card">
+          <div class="label">Total Sales</div>
+          <div class="value" id="totalSales">₱0.00</div>
         </div>
 
       </div>
 
+      <div class="dashboard-grid">
 
-      <!-- SECURITY & STAFF -->
+        <section class="section">
+          <div class="section-header">
+            <h3>Recent Orders</h3>
+            <button class="refresh-btn" onclick="loadOrders()">Refresh</button>
+          </div>
 
-      <div
-        id="securitySection"
-        class="orders-section"
-        style="display:none;"
-      >
+          <div class="orders-table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Table</th>
+                  <th>Order Type</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
 
-        <div class="section-header">
+              <tbody id="ordersBody">
+                <tr>
+                  <td colspan="7" class="empty">
+                    Loading orders...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-          <h3>
-            🔐 Security & Staff
-          </h3>
+        <section id="securitySection" class="section security-section">
 
-        </div>
+          <div class="section-header">
+            <h3>Security & Staff</h3>
+          </div>
 
-        <p style="color:#777;">
-          Manage cashier security and staff access.
-        </p>
+          <div class="security-card">
 
-        <button
-          id="changeCashierPinBtn"
-          class="refresh-btn"
-          onclick="openCashierPinSettings()"
-        >
-          Change Cashier PIN
-        </button>
+            <h4>Cashier PIN</h4>
 
-        <div
-          id="cashierPinMessage"
-          class="message"
-        ></div>
+            <p>
+              The Cashier Dashboard is protected by a 6-digit PIN.
+              Only the owner can change the Cashier PIN.
+            </p>
 
-      </div>
+            <button
+              id="changeCashierPinBtn"
+              class="refresh-btn"
+              onclick="openCashierPinSettings()"
+            >
+              Change Cashier PIN
+            </button>
 
+            <div class="danger-note">
+              For security, the Cashier PIN is never displayed here.
+              Changing it requires email verification.
+            </div>
 
-      <!-- RECENT ORDERS -->
+          </div>
 
-      <div class="orders-section">
-
-        <div class="section-header">
-
-          <h3>
-            Recent Orders
-          </h3>
-
-          <button
-            class="refresh-btn"
-            onclick="loadOrders()">
-            Refresh
-          </button>
-
-        </div>
-
-        <div id="ordersList">
-          Loading orders...
-        </div>
+        </section>
 
       </div>
 
     </div>
 
-  </div>
+  </main>
 
 
   <!-- CASHIER PIN MODAL -->
 
-  <div
-    id="cashierPinModal"
-    class="pin-modal"
-  >
+  <div id="cashierPinModal" class="pin-modal">
 
-    <div
-      class="pin-modal-box"
-    >
+    <div class="pin-modal-box">
 
-      <h2>
-        Change Cashier PIN
-      </h2>
+      <!-- STEP 1 -->
 
-      <p style="color:#777;">
-        Email verification will be required before changing the PIN.
-      </p>
+      <div id="pinStep1" class="pin-step active">
 
-      <button
-        type="button"
-        class="pin-close-btn"
-        onclick="closeCashierPinModal()"
-      >
-        Close
-      </button>
+        <h2>Change Cashier PIN</h2>
+
+        <p>
+          For security, we'll send a verification code to the owner's email:
+        </p>
+
+        <p class="email-display">
+          <span id="ownerEmailDisplay">
+            Owner email
+          </span>
+        </p>
+
+        <div class="modal-actions">
+
+          <button
+            id="sendPinCodeBtn"
+            class="primary-btn"
+            onclick="sendPinVerificationCode()"
+          >
+            Send Verification Code
+          </button>
+
+          <button
+            class="secondary-btn"
+            onclick="closeCashierPinModal()"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+        <div id="pinStep1Message" class="message"></div>
+
+      </div>
+
+
+      <!-- STEP 2 -->
+
+      <div id="pinStep2" class="pin-step">
+
+        <h2>Verify Email</h2>
+
+        <p>
+          Enter the 6-digit verification code sent to:
+        </p>
+
+        <p class="email-display">
+          <span id="ownerEmailDisplay2">
+            Owner email
+          </span>
+        </p>
+
+        <input
+          id="reauthCode"
+          class="pin-input"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="6"
+          placeholder="000000"
+        >
+
+        <div class="modal-actions">
+
+          <button
+            id="verifyPinCodeBtn"
+            class="primary-btn"
+            onclick="verifyPinVerificationCode()"
+          >
+            Verify Code
+          </button>
+
+          <button
+            class="secondary-btn"
+            onclick="closeCashierPinModal()"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+        <div id="pinStep2Message" class="message"></div>
+
+      </div>
+
+
+      <!-- STEP 3 -->
+
+      <div id="pinStep3" class="pin-step">
+
+        <h2>Set New Cashier PIN</h2>
+
+        <p>
+          Create a new 6-digit PIN for the Cashier Dashboard.
+        </p>
+
+        <input
+          id="newCashierPin"
+          class="pin-input"
+          type="password"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="••••••"
+        >
+
+        <input
+          id="confirmCashierPin"
+          class="pin-input"
+          type="password"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="••••••"
+        >
+
+        <div class="modal-actions">
+
+          <button
+            id="saveCashierPinBtn"
+            class="primary-btn"
+            onclick="saveCashierPin()"
+          >
+            Save New PIN
+          </button>
+
+          <button
+            class="secondary-btn"
+            onclick="closeCashierPinModal()"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+        <div id="pinStep3Message" class="message"></div>
+
+      </div>
 
     </div>
 
@@ -506,9 +713,9 @@
 
   <script>
 
-    /* =================================
+    /* =========================================================
        SUPABASE
-    ================================= */
+    ========================================================= */
 
     const SUPABASE_URL =
       "https://isqcuycjrbjtmqhzckvb.supabase.co";
@@ -523,744 +730,1113 @@
       );
 
 
+    /* =========================================================
+       GLOBAL VARIABLES
+    ========================================================= */
+
     let currentRestaurantId = null;
     let currentUserRole = null;
+    let currentOwnerEmail = null;
+    let pinVerificationCompleted = false;
 
 
-    /* =================================
-       LOGIN
-    ================================= */
+    /* =========================================================
+       CHECK SESSION
+    ========================================================= */
 
-    async function login() {
-
-      const email =
-        document.getElementById("email")
-          .value
-          .trim();
-
-      const password =
-        document.getElementById("password")
-          .value;
-
-      const message =
-        document.getElementById("loginMessage");
-
-      const button =
-        document.getElementById("loginBtn");
-
-
-      message.textContent = "";
-      message.className = "message";
-
-
-      if (!email || !password) {
-
-        message.textContent =
-          "Please enter your email and password.";
-
-        return;
-
-      }
-
-
-      button.disabled = true;
-      button.textContent = "Logging in...";
-
+    async function checkSession() {
 
       try {
 
-        const result =
-          await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-          });
+        const {
+          data: {
+            session
+          },
+          error
+        } = await supabaseClient.auth.getSession();
 
-
-        if (result.error) {
-
-          throw result.error;
-
+        if (error) {
+          throw error;
         }
 
+        if (!session) {
 
-        message.textContent =
-          "Login successful. Loading dashboard...";
+          window.location.href = "index.html";
 
-        message.className =
-          "message success";
+          return;
+        }
 
+        currentOwnerEmail =
+          session.user.email || null;
 
-        await startDashboard();
+        document.getElementById("userEmail").textContent =
+          currentOwnerEmail || "Owner";
 
+        await loadUserProfile(session.user);
+
+        document.getElementById("loadingScreen").style.display =
+          "none";
+
+        document.getElementById("dashboardContent").style.display =
+          "block";
+
+        await loadOrders();
 
       } catch (error) {
 
         console.error(
-          "LOGIN ERROR:",
+          "Session error:",
           error
         );
 
-        message.textContent =
-          error.message ||
-          "Login failed.";
-
-
-        button.disabled = false;
-        button.textContent = "Login";
+        document.getElementById("loadingScreen").innerHTML =
+          "Unable to load dashboard. Please login again.";
 
       }
 
     }
 
 
-    /* =================================
-       START DASHBOARD
-    ================================= */
+    /* =========================================================
+       LOAD USER PROFILE
+    ========================================================= */
 
-    async function startDashboard() {
+    async function loadUserProfile(user) {
 
-      const {
-        data: {
-          user
-        }
-      } =
-        await supabaseClient.auth.getUser();
+      try {
 
+        /*
+          First try restaurant_users.
+          This keeps the dashboard compatible with
+          the restaurant staff structure.
+        */
 
-      if (!user) {
-
-        showLogin();
-
-        return;
-
-      }
-
-
-      console.log(
-        "Logged in user:",
-        user.email
-      );
-
-
-      const result =
-        await supabaseClient
-
+        const {
+          data,
+          error
+        } = await supabaseClient
           .from("restaurant_users")
-
-          .select(`
-            restaurant_id,
-            role,
-            restaurants (
-              name,
-              slug,
-              currency,
-              timezone
-            )
-          `)
-
-          .eq(
-            "user_id",
-            user.id
-          )
-
+          .select("*")
+          .eq("user_id", user.id)
           .maybeSingle();
 
+        if (!error && data) {
 
-      if (result.error) {
+          currentUserRole =
+            data.role || "owner";
+
+          currentRestaurantId =
+            data.restaurant_id || null;
+
+        } else {
+
+          /*
+            Owner fallback.
+            The owner account is allowed to access
+            the Security & Staff section.
+          */
+
+          if (
+            user.email &&
+            user.email.toLowerCase() ===
+            "halinabistrocafe101@gmail.com"
+          ) {
+
+            currentUserRole = "owner";
+
+          }
+
+        }
+
+        if (
+          currentUserRole &&
+          currentUserRole.toLowerCase() === "owner"
+        ) {
+
+          document.getElementById(
+            "securitySection"
+          ).style.display = "block";
+
+        }
+
+      } catch (error) {
 
         console.error(
-          "RESTAURANT USER ERROR:",
-          result.error
+          "Profile error:",
+          error
         );
 
-        document.getElementById(
-          "loginMessage"
-        ).textContent =
-          "Login worked, but the restaurant account could not be loaded: " +
-          result.error.message;
+        /*
+          Owner fallback.
+        */
 
-        return;
+        if (
+          user.email &&
+          user.email.toLowerCase() ===
+          "halinabistrocafe101@gmail.com"
+        ) {
 
-      }
+          currentUserRole = "owner";
 
+          document.getElementById(
+            "securitySection"
+          ).style.display = "block";
 
-      if (!result.data) {
-
-        document.getElementById(
-          "loginMessage"
-        ).textContent =
-          "This account is not linked to a restaurant.";
-
-        await supabaseClient.auth.signOut();
-
-        return;
+        }
 
       }
-
-
-      if (
-        result.data.role !== "owner" &&
-        result.data.role !== "staff" &&
-        result.data.role !== "admin"
-      ) {
-
-        document.getElementById(
-          "loginMessage"
-        ).textContent =
-          "This account does not have dashboard access.";
-
-        return;
-
-      }
-
-
-      currentRestaurantId =
-        result.data.restaurant_id;
-
-      currentUserRole =
-        result.data.role;
-
-
-      if (
-        result.data.restaurants &&
-        result.data.restaurants.name
-      ) {
-
-        document.getElementById(
-          "restaurantName"
-        ).textContent =
-          result.data.restaurants.name;
-
-      }
-
-
-      document.getElementById(
-        "loginBox"
-      ).style.display =
-        "none";
-
-
-      document.getElementById(
-        "dashboard"
-      ).style.display =
-        "block";
-
-
-      document.getElementById(
-        "logoutBtn"
-      ).style.display =
-        "block";
-
-
-      const securitySection =
-        document.getElementById(
-          "securitySection"
-        );
-
-
-      if (currentUserRole === "owner") {
-
-        securitySection.style.display =
-          "block";
-
-      } else {
-
-        securitySection.style.display =
-          "none";
-
-      }
-
-
-      await loadOrders();
 
     }
 
 
-    /* =================================
+    /* =========================================================
        LOAD ORDERS
-    ================================= */
+    ========================================================= */
 
     async function loadOrders() {
 
-      if (!currentRestaurantId) {
+      const ordersBody =
+        document.getElementById("ordersBody");
 
-        return;
+      ordersBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty">
+            Loading orders...
+          </td>
+        </tr>
+      `;
 
-      }
+      try {
 
+        let query =
+          supabaseClient
+            .from("orders")
+            .select("*")
+            .order(
+              "created_at",
+              {
+                ascending: false
+              }
+            )
+            .limit(100);
 
-      const ordersList =
-        document.getElementById(
-          "ordersList"
-        );
+        if (currentRestaurantId) {
 
-
-      ordersList.innerHTML =
-        "Loading orders...";
-
-
-      const result =
-        await supabaseClient
-
-          .from("orders")
-
-          .select("*")
-
-          .eq(
+          query = query.eq(
             "restaurant_id",
             currentRestaurantId
-          )
+          );
 
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          )
+        }
 
-          .limit(50);
+        const {
+          data,
+          error
+        } = await query;
 
+        if (error) {
+          throw error;
+        }
 
-      if (result.error) {
+        const orders =
+          data || [];
+
+        updateOrderStats(orders);
+
+        renderOrders(orders);
+
+      } catch (error) {
 
         console.error(
-          "ORDERS ERROR:",
-          result.error
+          "Orders error:",
+          error
         );
 
-        ordersList.innerHTML =
-          "Orders could not be loaded: " +
-          result.error.message;
-
-        return;
+        ordersBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty">
+              Unable to load orders.
+              <br>
+              <small>${escapeHtml(error.message || "Unknown error")}</small>
+            </td>
+          </tr>
+        `;
 
       }
-
-
-      const orders =
-        result.data || [];
-
-
-      calculateDashboard(
-        orders
-      );
-
-      renderOrders(
-        orders
-      );
 
     }
 
 
-    /* =================================
-       CALCULATE DASHBOARD
-    ================================= */
+    /* =========================================================
+       UPDATE ORDER STATS
+    ========================================================= */
 
-    function calculateDashboard(
-      orders
-    ) {
+    function updateOrderStats(orders) {
 
-      const now =
-        new Date();
+      const total =
+        orders.length;
 
+      const newCount =
+        orders.filter(order =>
+          String(order.status || "")
+            .toLowerCase() === "new"
+        ).length;
 
-      const start =
-        new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate()
-        );
+      const completedCount =
+        orders.filter(order =>
+          String(order.status || "")
+            .toLowerCase() === "completed"
+        ).length;
 
+      let totalSales = 0;
 
-      const todayOrders =
-        orders.filter(
-          function(order) {
+      orders.forEach(order => {
 
-            if (!order.created_at) {
+        const status =
+          String(order.status || "")
+            .toLowerCase();
 
-              return false;
+        if (status !== "cancelled") {
 
-            }
+          const value =
+            Number(order.total || 0);
 
-            return (
-              new Date(
-                order.created_at
-              ) >= start
-            );
+          if (!Number.isNaN(value)) {
 
-          }
-        );
-
-
-      let sales = 0;
-
-
-      todayOrders.forEach(
-        function(order) {
-
-          const status =
-            String(
-              order.order_status ||
-              order.status ||
-              ""
-            ).toLowerCase();
-
-
-          if (
-            status !== "cancelled" &&
-            status !== "canceled"
-          ) {
-
-            sales += Number(
-              order.total || 0
-            );
+            totalSales += value;
 
           }
 
         }
-      );
 
+      });
 
-      const newOrders =
-        todayOrders.filter(
-          function(order) {
+      document.getElementById("totalOrders").textContent =
+        total;
 
-            const status =
-              String(
-                order.order_status ||
-                order.status ||
-                ""
-              ).toLowerCase();
+      document.getElementById("newOrders").textContent =
+        newCount;
 
+      document.getElementById("completedOrders").textContent =
+        completedCount;
 
-            return (
-              status === "new" ||
-              status === "pending"
-            );
-
-          }
-        );
-
-
-      const preparing =
-        todayOrders.filter(
-          function(order) {
-
-            const status =
-              String(
-                order.order_status ||
-                order.status ||
-                ""
-              ).toLowerCase();
-
-
-            return (
-              status === "preparing" ||
-              status === "processing"
-            );
-
-          }
-        );
-
-
-      document.getElementById(
-        "ordersToday"
-      ).textContent =
-        todayOrders.length;
-
-
-      document.getElementById(
-        "salesToday"
-      ).textContent =
+      document.getElementById("totalSales").textContent =
         "₱" +
-        sales.toLocaleString(
+        totalSales.toLocaleString(
           "en-PH",
           {
-            minimumFractionDigits: 2
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
           }
         );
-
-
-      document.getElementById(
-        "newOrders"
-      ).textContent =
-        newOrders.length;
-
-
-      document.getElementById(
-        "preparingOrders"
-      ).textContent =
-        preparing.length;
 
     }
 
 
-    /* =================================
+    /* =========================================================
        RENDER ORDERS
-    ================================= */
+    ========================================================= */
 
-    function renderOrders(
-      orders
-    ) {
+    function renderOrders(orders) {
 
-      const ordersList =
-        document.getElementById(
-          "ordersList"
-        );
-
+      const ordersBody =
+        document.getElementById("ordersBody");
 
       if (!orders.length) {
 
-        ordersList.innerHTML =
-          `<div class="empty">
-            No orders yet.
-          </div>`;
+        ordersBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty">
+              No orders yet.
+            </td>
+          </tr>
+        `;
 
         return;
-
       }
 
-
-      ordersList.innerHTML = "";
-
-
-      orders.forEach(
-        function(order) {
-
-          const number =
-            order.order_number ||
-            order.id ||
-            "N/A";
-
-
-          const customer =
-            order.customer_name ||
-            "Customer";
-
+      ordersBody.innerHTML =
+        orders.map(order => {
 
           const status =
-            order.order_status ||
-            order.status ||
-            "Pending";
+            String(
+              order.status || "new"
+            ).toLowerCase();
 
+          const statusClass =
+            getStatusClass(status);
 
-          const total =
-            Number(
-              order.total || 0
-            );
-
-
-          const table =
-            order.table_number ||
-            order.order_type ||
-            "N/A";
-
-
-          const date =
+          const createdAt =
             order.created_at
               ? new Date(
                   order.created_at
                 ).toLocaleString(
                   "en-PH"
                 )
-              : "";
+              : "-";
 
+          const orderId =
+            order.id || "-";
 
-          const div =
-            document.createElement(
-              "div"
+          const tableNumber =
+            order.table_number ||
+            "-";
+
+          const orderType =
+            order.order_type ||
+            order.orderType ||
+            "-";
+
+          const total =
+            Number(
+              order.total || 0
+            ).toLocaleString(
+              "en-PH",
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              }
             );
 
+          const payment =
+            order.payment_method ||
+            order.payment ||
+            "-";
 
-          div.className =
-            "order";
+          return `
+            <tr>
 
+              <td>
+                ${escapeHtml(
+                  String(orderId)
+                    .substring(0, 12)
+                )}
+              </td>
 
-          div.innerHTML = `
+              <td>
+                ${escapeHtml(
+                  String(tableNumber)
+                )}
+              </td>
 
-            <div class="order-top">
+              <td>
+                ${escapeHtml(
+                  String(orderType)
+                )}
+              </td>
 
-              <div class="order-number">
-                Order #${number}
-              </div>
+              <td>
+                ₱${total}
+              </td>
 
-              <div class="status">
-                ${status}
-              </div>
+              <td>
+                <span class="status ${statusClass}">
+                  ${escapeHtml(status)}
+                </span>
+              </td>
 
-            </div>
+              <td>
+                ${escapeHtml(
+                  String(payment)
+                )}
+              </td>
 
-            <div class="order-details">
+              <td>
+                ${escapeHtml(
+                  createdAt
+                )}
+              </td>
 
-              Customer:
-              ${customer}
-
-              <br>
-
-              Table / Type:
-              ${table}
-
-              <br>
-
-              ${date}
-
-            </div>
-
-            <div class="order-total">
-
-              Total:
-              ₱${total.toLocaleString(
-                "en-PH",
-                {
-                  minimumFractionDigits: 2
-                }
-              )}
-
-            </div>
-
+            </tr>
           `;
 
-
-          ordersList.appendChild(
-            div
-          );
-
-        }
-      );
+        }).join("");
 
     }
 
 
-    /* =================================
-       CASHIER PIN SETTINGS
-    ================================= */
+    /* =========================================================
+       STATUS CLASS
+    ========================================================= */
+
+    function getStatusClass(status) {
+
+      switch (status) {
+
+        case "new":
+          return "status-new";
+
+        case "preparing":
+          return "status-preparing";
+
+        case "ready":
+          return "status-ready";
+
+        case "completed":
+          return "status-completed";
+
+        case "cancelled":
+          return "status-cancelled";
+
+        default:
+          return "status-new";
+
+      }
+
+    }
+
+
+    /* =========================================================
+       CASHIER PIN MODAL
+    ========================================================= */
 
     function openCashierPinSettings() {
 
-      const modal =
-        document.getElementById(
-          "cashierPinModal"
+      if (
+        !currentOwnerEmail
+      ) {
+
+        showPinMessage(
+          1,
+          "Owner email could not be detected.",
+          "error"
         );
 
-      modal.style.display =
-        "flex";
+        return;
+
+      }
+
+      pinVerificationCompleted =
+        false;
+
+      document.getElementById(
+        "ownerEmailDisplay"
+      ).textContent =
+        currentOwnerEmail;
+
+      document.getElementById(
+        "ownerEmailDisplay2"
+      ).textContent =
+        currentOwnerEmail;
+
+      clearPinMessages();
+
+      document.getElementById(
+        "reauthCode"
+      ).value = "";
+
+      document.getElementById(
+        "newCashierPin"
+      ).value = "";
+
+      document.getElementById(
+        "confirmCashierPin"
+      ).value = "";
+
+      showPinStep(1);
+
+      document.getElementById(
+        "cashierPinModal"
+      ).classList.add("show");
 
     }
 
 
     function closeCashierPinModal() {
 
-      const modal =
-        document.getElementById(
-          "cashierPinModal"
-        );
+      document.getElementById(
+        "cashierPinModal"
+      ).classList.remove("show");
 
-      modal.style.display =
-        "none";
+      clearPinMessages();
+
+      pinVerificationCompleted =
+        false;
+
+      document.getElementById(
+        "reauthCode"
+      ).value = "";
+
+      document.getElementById(
+        "newCashierPin"
+      ).value = "";
+
+      document.getElementById(
+        "confirmCashierPin"
+      ).value = "";
+
+      showPinStep(1);
 
     }
 
 
-    /* =================================
-       LOGOUT
-    ================================= */
+    function showPinStep(stepNumber) {
 
-    async function logout() {
+      document
+        .querySelectorAll(".pin-step")
+        .forEach(step => {
 
-      await supabaseClient.auth.signOut();
+          step.classList.remove(
+            "active"
+          );
 
-      currentRestaurantId = null;
-      currentUserRole = null;
+        });
 
-      showLogin();
-
-    }
-
-
-    /* =================================
-       SHOW LOGIN
-    ================================= */
-
-    function showLogin() {
-
-      document.getElementById(
-        "loginBox"
-      ).style.display =
-        "block";
-
-
-      document.getElementById(
-        "dashboard"
-      ).style.display =
-        "none";
-
-
-      document.getElementById(
-        "logoutBtn"
-      ).style.display =
-        "none";
-
-
-      const securitySection =
+      const step =
         document.getElementById(
-          "securitySection"
+          "pinStep" +
+          stepNumber
         );
 
+      if (step) {
 
-      if (securitySection) {
-
-        securitySection.style.display =
-          "none";
+        step.classList.add(
+          "active"
+        );
 
       }
 
     }
 
 
-    /* =================================
-       CHECK EXISTING SESSION
-    ================================= */
+    function clearPinMessages() {
 
-    async function checkSession() {
+      [
+        "pinStep1Message",
+        "pinStep2Message",
+        "pinStep3Message"
+      ].forEach(id => {
+
+        const element =
+          document.getElementById(id);
+
+        element.className =
+          "message";
+
+        element.textContent =
+          "";
+
+      });
+
+    }
+
+
+    function showPinMessage(
+      step,
+      message,
+      type
+    ) {
+
+      const element =
+        document.getElementById(
+          "pinStep" +
+          step +
+          "Message"
+        );
+
+      if (!element) {
+        return;
+      }
+
+      element.textContent =
+        message;
+
+      element.className =
+        "message show " +
+        type;
+
+    }
+
+
+    /* =========================================================
+       SEND VERIFICATION CODE
+    ========================================================= */
+
+    async function sendPinVerificationCode() {
+
+      const button =
+        document.getElementById(
+          "sendPinCodeBtn"
+        );
+
+      button.disabled =
+        true;
+
+      button.textContent =
+        "Sending...";
+
+      clearPinMessages();
 
       try {
 
-        const result =
-          await supabaseClient.auth.getSession();
+        /*
+          Supabase Reauthentication sends
+          a verification code to the
+          currently authenticated owner's email.
+        */
 
+        const {
+          error
+        } =
+          await supabaseClient.auth.reauthenticate();
 
-        if (
-          result.data &&
-          result.data.session
-        ) {
+        if (error) {
 
-          await startDashboard();
-
-        } else {
-
-          showLogin();
+          throw error;
 
         }
+
+        showPinMessage(
+          1,
+          "Verification code sent. Check your email.",
+          "success"
+        );
+
+        setTimeout(() => {
+
+          showPinStep(2);
+
+        }, 700);
 
       } catch (error) {
 
         console.error(
-          "SESSION ERROR:",
+          "Reauthentication error:",
           error
         );
 
-        showLogin();
+        showPinMessage(
+          1,
+          error.message ||
+          "Unable to send verification code.",
+          "error"
+        );
+
+      } finally {
+
+        button.disabled =
+          false;
+
+        button.textContent =
+          "Send Verification Code";
 
       }
 
     }
 
 
-    /* =================================
-       START
-    ================================= */
+    /* =========================================================
+       VERIFY CODE
+    ========================================================= */
+
+    async function verifyPinVerificationCode() {
+
+      const code =
+        document.getElementById(
+          "reauthCode"
+        ).value.trim();
+
+      if (
+        !/^[0-9]{6}$/.test(code)
+      ) {
+
+        showPinMessage(
+          2,
+          "Please enter the 6-digit verification code.",
+          "error"
+        );
+
+        return;
+
+      }
+
+      const button =
+        document.getElementById(
+          "verifyPinCodeBtn"
+        );
+
+      button.disabled =
+        true;
+
+      button.textContent =
+        "Verifying...";
+
+      clearPinMessages();
+
+      try {
+
+        /*
+          This verifies the email OTP.
+
+          Note:
+          Supabase's verifyOtp email flow
+          can affect authentication session
+          behavior depending on the configured
+          Auth flow. We keep the test flow
+          here so we can verify it in the
+          actual project before treating it
+          as final production security.
+        */
+
+        const {
+          error
+        } =
+          await supabaseClient.auth.verifyOtp({
+            email:
+              currentOwnerEmail,
+            token:
+              code,
+            type:
+              "email"
+          });
+
+        if (error) {
+
+          throw error;
+
+        }
+
+        pinVerificationCompleted =
+          true;
+
+        showPinMessage(
+          2,
+          "Email verified successfully.",
+          "success"
+        );
+
+        setTimeout(() => {
+
+          showPinStep(3);
+
+        }, 500);
+
+      } catch (error) {
+
+        console.error(
+          "OTP verification error:",
+          error
+        );
+
+        showPinMessage(
+          2,
+          error.message ||
+          "Invalid or expired verification code.",
+          "error"
+        );
+
+      } finally {
+
+        button.disabled =
+          false;
+
+        button.textContent =
+          "Verify Code";
+
+      }
+
+    }
+
+
+    /* =========================================================
+       SAVE NEW CASHIER PIN
+    ========================================================= */
+
+    async function saveCashierPin() {
+
+      if (
+        !pinVerificationCompleted
+      ) {
+
+        showPinMessage(
+          3,
+          "Please verify your email first.",
+          "error"
+        );
+
+        return;
+
+      }
+
+      const newPin =
+        document.getElementById(
+          "newCashierPin"
+        ).value.trim();
+
+      const confirmPin =
+        document.getElementById(
+          "confirmCashierPin"
+        ).value.trim();
+
+      if (
+        !/^[0-9]{6}$/.test(newPin)
+      ) {
+
+        showPinMessage(
+          3,
+          "New PIN must be exactly 6 digits.",
+          "error"
+        );
+
+        return;
+
+      }
+
+      if (
+        newPin !== confirmPin
+      ) {
+
+        showPinMessage(
+          3,
+          "PIN confirmation does not match.",
+          "error"
+        );
+
+        return;
+
+      }
+
+      const button =
+        document.getElementById(
+          "saveCashierPinBtn"
+        );
+
+      button.disabled =
+        true;
+
+      button.textContent =
+        "Saving...";
+
+      clearPinMessages();
+
+      try {
+
+        const {
+          error
+        } =
+          await supabaseClient.rpc(
+            "set_cashier_pin",
+            {
+              new_pin:
+                newPin
+            }
+          );
+
+        if (error) {
+
+          throw error;
+
+        }
+
+        showPinMessage(
+          3,
+          "Cashier PIN changed successfully.",
+          "success"
+        );
+
+        setTimeout(() => {
+
+          closeCashierPinModal();
+
+        }, 1200);
+
+      } catch (error) {
+
+        console.error(
+          "Save PIN error:",
+          error
+        );
+
+        showPinMessage(
+          3,
+          error.message ||
+          "Unable to save the new Cashier PIN.",
+          "error"
+        );
+
+      } finally {
+
+        button.disabled =
+          false;
+
+        button.textContent =
+          "Save New PIN";
+
+      }
+
+    }
+
+
+    /* =========================================================
+       LOGOUT
+    ========================================================= */
+
+    async function logout() {
+
+      try {
+
+        await supabaseClient.auth.signOut();
+
+      } catch (error) {
+
+        console.error(
+          "Logout error:",
+          error
+        );
+
+      }
+
+      window.location.href =
+        "index.html";
+
+    }
+
+
+    /* =========================================================
+       ESCAPE HTML
+    ========================================================= */
+
+    function escapeHtml(value) {
+
+      return String(value)
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+        .replace(
+          /</g,
+          "&lt;"
+        )
+        .replace(
+          />/g,
+          "&gt;"
+        )
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+        .replace(
+          /'/g,
+          "&#039;"
+        );
+
+    }
+
+
+    /* =========================================================
+       AUTO CHECK SESSION
+    ========================================================= */
 
     checkSession();
+
+
+    /* =========================================================
+       AUTH STATE LISTENER
+    ========================================================= */
+
+    supabaseClient.auth.onAuthStateChange(
+      (event, session) => {
+
+        if (
+          event === "SIGNED_OUT"
+        ) {
+
+          window.location.href =
+            "index.html";
+
+        }
+
+      }
+    );
+
+
+    /* =========================================================
+       CLOSE MODAL WHEN CLICKING OUTSIDE
+    ========================================================= */
+
+    document
+      .getElementById("cashierPinModal")
+      .addEventListener(
+        "click",
+        function(event) {
+
+          if (
+            event.target === this
+          ) {
+
+            closeCashierPinModal();
+
+          }
+
+        }
+      );
+
+
+    /* =========================================================
+       NUMERIC INPUT HELPERS
+    ========================================================= */
+
+    document
+      .getElementById("reauthCode")
+      .addEventListener(
+        "input",
+        function() {
+
+          this.value =
+            this.value
+              .replace(
+                /[^0-9]/g,
+                ""
+              )
+              .slice(
+                0,
+                6
+              );
+
+        }
+      );
+
+
+    document
+      .getElementById("newCashierPin")
+      .addEventListener(
+        "input",
+        function() {
+
+          this.value =
+            this.value
+              .replace(
+                /[^0-9]/g,
+                ""
+              )
+              .slice(
+                0,
+                6
+              );
+
+        }
+      );
+
+
+    document
+      .getElementById("confirmCashierPin")
+      .addEventListener(
+        "input",
+        function() {
+
+          this.value =
+            this.value
+              .replace(
+                /[^0-9]/g,
+                ""
+              )
+              .slice(
+                0,
+                6
+              );
+
+        }
+      );
 
   </script>
 
