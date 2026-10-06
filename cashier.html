@@ -774,13 +774,15 @@
 }
 
 .pos-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
   min-height: 720px;
   width: 100%;
   background: #f5f7f6;
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid #dfe5e1;
+  align-items: stretch;
 }
 
 /* =========================
@@ -789,6 +791,8 @@
 
 .pos-sidebar {
   width: 82px;
+  min-height: 720px;
+  height: 100%;
   flex-shrink: 0;
   background: #18231e;
   display: flex;
@@ -796,6 +800,7 @@
   align-items: center;
   gap: 10px;
   padding: 18px 10px;
+  box-sizing: border-box;
 }
 
 .pos-sidebar-btn {
