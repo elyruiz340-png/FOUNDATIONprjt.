@@ -787,21 +787,19 @@
 #posSection .pos-main {
   min-width: 0;
   width: 100%;
-
   padding: 8px 24px 24px;
   box-sizing: border-box;
-
   margin-top: 0;
 }
 
 #posSection .pos-content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 350px;
-
+  grid-template-columns: minmax(0, 1fr) 380px;
   gap: 20px;
 
   width: 100%;
   min-width: 0;
+  align-items: start;
 }
 /* =========================
    COMPACT SIDEBAR
@@ -929,13 +927,12 @@
   min-width: 0;
   width: 100%;
 
-  padding: 24px;
+  padding: 18px 24px 24px;
 
   box-sizing: border-box;
 
   overflow: hidden;
 }
-
 /* =========================
    TOP BAR
 ========================= */
@@ -952,19 +949,24 @@
 }
 
 .pos-topbar h2 {
-  .pos-brand {
-  margin-top: 3px;
-  color: #527563;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-}
   margin: 0;
 
   font-size: 26px;
 
   color: #18231e;
+}
+
+.pos-brand {
+  margin-top: 3px;
+
+  color: #527563;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 1.2px;
+
+  text-transform: uppercase;
 }
 
 .pos-topbar p {
@@ -1003,61 +1005,115 @@
   box-shadow:
     0 0 0 3px rgba(82,117,99,0.12);
 }
-}/* =========================
+/* =========================
    ORDER TYPES
 ========================= */
 
 .pos-order-types {
   display: flex;
+
   gap: 9px;
+
   margin-bottom: 14px;
+
   flex-wrap: wrap;
 }
 
 .pos-order-type {
+  flex: 1;
+
   min-height: 42px;
-  padding: 0 16px;
+
+  padding: 0 14px;
+
   border: 1px solid #d8e0db;
+
   border-radius: 10px;
+
   background: #ffffff;
+
   color: #34433b;
-  font-weight: 600;
+
+  font-size: 13px;
+  font-weight: 700;
+
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.pos-order-type:hover {
+  background: #f4f7f5;
+
+  border-color: #b9c9bf;
 }
 
 .pos-order-type.active {
   background: #315143;
+
   color: #ffffff;
+
   border-color: #315143;
 }
-
 /* =========================
    CATEGORIES
 ========================= */
 
 .pos-categories {
   display: flex;
-  gap: 8px;
+
+  gap: 7px;
+
   overflow-x: auto;
-  padding-bottom: 10px;
-  margin-bottom: 8px;
+
+  padding-bottom: 8px;
+
+  margin-bottom: 10px;
+
+  scrollbar-width: thin;
 }
 
 .pos-category {
   flex-shrink: 0;
-  padding: 9px 14px;
+
+  padding: 8px 13px;
+
   border: 1px solid #d9e1dc;
+
   border-radius: 20px;
+
   background: #ffffff;
+
   color: #46534c;
+
   font-size: 13px;
   font-weight: 600;
+
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.pos-category:hover {
+  background: #f4f7f5;
+
+  border-color: #b9c9bf;
+
+  color: #315143;
 }
 
 .pos-category.active {
   background: #e4eee8;
+
   border-color: #a9c0b1;
+
   color: #294438;
 }
 
@@ -1067,23 +1123,31 @@
 
 .pos-content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 350px;
+  grid-template-columns: minmax(0, 1fr) 380px;
   gap: 20px;
+
   width: 100%;
   min-width: 0;
-  align-items: start;
-}
 
+  align-items: stretch;
+}
 
 .pos-menu-area {
   min-width: 0;
+
+  max-height: calc(100vh - 190px);
+
   overflow-y: auto;
-  padding-right: 4px;
+
+  padding-right: 6px;
 }
 
 .pos-menu-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(150px, 1fr));
+
+  grid-template-columns:
+    repeat(4, minmax(140px, 1fr));
+
   gap: 14px;
 }
 
@@ -1093,72 +1157,102 @@
 
 .pos-menu-card {
   background: #ffffff;
+
   border: 1px solid #dfe6e1;
   border-radius: 16px;
-  padding: 14px;
-  min-height: 190px;
+
+  padding: 12px;
+
+  min-height: 185px;
+
   display: flex;
   flex-direction: column;
-  transition: 0.2s ease;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .pos-menu-card:hover {
   transform: translateY(-2px);
+
   border-color: #b6c8bd;
+
+  box-shadow:
+    0 6px 16px rgba(49, 81, 67, 0.07);
 }
 
 .pos-menu-image {
-  height: 82px;
+  height: 72px;
+
   border-radius: 12px;
+
   background: #eef2ef;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 38px;
-  margin-bottom: 12px;
+
+  font-size: 34px;
+
+  margin-bottom: 10px;
 }
 
 .pos-menu-card h3 {
   margin: 0;
+
   color: #24332b;
+
   font-size: 15px;
   line-height: 1.3;
 }
 
 .pos-menu-card p {
   margin: 5px 0 10px;
+
   font-size: 15px;
   font-weight: 700;
+
   color: #42624f;
 }
 
 .pos-menu-card button {
   margin-top: auto;
+
   width: 100%;
   min-height: 38px;
+
   border: 0;
   border-radius: 9px;
+
   background: #315143;
   color: #ffffff;
+
   font-weight: 700;
+
   cursor: pointer;
 }
 
 .pos-menu-card button:hover {
   background: #263f33;
 }
-
 /* =========================
-   CART
+   CURRENT ORDER PANEL
 ========================= */
 
 .pos-cart {
   min-width: 0;
+  height: calc(100vh - 190px);
+
   background: #ffffff;
+
   border: 1px solid #dfe6e1;
   border-radius: 16px;
+
   display: flex;
   flex-direction: column;
+
   overflow: hidden;
 }
 
@@ -1315,13 +1409,17 @@
   background: #f7eeee;
   color: #a94d4d;
 }
-/* =========================
+* =========================
    CART ITEMS
 ========================= */
 
 .pos-cart-items {
   flex: 1;
+
+  min-height: 0;
+
   overflow-y: auto;
+
   padding: 14px 18px;
 }
 
@@ -1410,11 +1508,13 @@
 @media (max-width: 1100px) {
 
   .pos-content {
-    grid-template-columns: minmax(0, 1fr) 310px;
+    grid-template-columns:
+      minmax(0, 1fr) 340px;
   }
 
   .pos-menu-grid {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    grid-template-columns:
+      repeat(3, minmax(140px, 1fr));
   }
 
 }
@@ -1794,13 +1894,7 @@
   </div>
 
 
-  <!-- =====================
-       CURRENT ORDER
-  ====================== -->
-
-  <aside class="pos-cart">
-
-    <!-- DINE IN / TAKEOUT -->
+ <!-- DINE IN / TAKEOUT / DELIVERY -->
     <div class="pos-order-types">
 
       <button
@@ -1817,8 +1911,14 @@
         TAKEOUT
       </button>
 
-    </div>
+      <button
+        type="button"
+        class="pos-order-type"
+      >
+        DELIVERY
+      </button>
 
+    </div>
 
     <!-- CURRENT ORDER HEADER -->
     <div class="pos-cart-header">
