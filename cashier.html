@@ -808,9 +808,32 @@ min-height: 720px;
   gap: 10px;
   padding: 18px 10px;
   box-sizing: border-box;
+  position: relative;
 }
 
+/* Moving selected background */
+.pos-sidebar-highlight {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 62px;
+  height: 68px;
+  border-radius: 14px;
+  background: #315143;
+  transform: translate(10px, 18px);
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.2s ease,
+    height 0.2s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Sidebar buttons */
 .pos-sidebar-btn {
+  position: relative;
+  z-index: 1;
+
   width: 62px;
   min-height: 68px;
   border: 0;
@@ -818,29 +841,34 @@ min-height: 720px;
   background: transparent;
   color: #d8e1dc;
   cursor: pointer;
+
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+
+  padding: 0;
+  margin: 0;
+
   font-size: 22px;
-  transition: 0.2s ease;
+
+  transition: color 0.2s ease;
 }
 
+/* Icons only — no words */
 .pos-sidebar-btn span {
-  font-size: 11px;
-  font-weight: 600;
+  display: none;
 }
 
+/* Hover */
 .pos-sidebar-btn:hover {
-  background: #26352e;
-}
-
-.pos-sidebar-btn.active {
-  background: #315143;
   color: #ffffff;
 }
 
+/* Active icon */
+.pos-sidebar-btn.active {
+  background: transparent;
+  color: #ffffff;
+}
 /* =========================
    MAIN POS AREA
 ========================= */
@@ -1314,59 +1342,65 @@ min-height: 720px;
 
   <div class="pos-layout">
 
-    <!-- =====================
-         POS SIDEBAR
-    ====================== -->
-    <aside class="pos-sidebar">
+   <!-- =====================
+     POS SIDEBAR
+====================== -->
+<aside class="pos-sidebar">
 
-      <button
-        type="button"
-        class="pos-sidebar-btn active"
-        data-pos-section="posSection"
-      >
-        🍽️
-        <span>Menu</span>
-      </button>
+  <!-- Moving selected background -->
+  <div class="pos-sidebar-highlight"></div>
 
-      <button
-        type="button"
-        class="pos-sidebar-btn"
-        data-pos-section="tablesSection"
-      >
-        🪑
-        <span>Tables</span>
-      </button>
+  <button
+    type="button"
+    class="pos-sidebar-btn active"
+    data-pos-section="posSection"
+    aria-label="Menu"
+    title="Menu"
+  >
+    🍽️
+  </button>
 
-      <button
-        type="button"
-        class="pos-sidebar-btn"
-        data-pos-section="stocksSection"
-      >
-        📦
-        <span>Stocks</span>
-      </button>
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="tablesSection"
+    aria-label="Tables"
+    title="Tables"
+  >
+    🪑
+  </button>
 
-      <button
-        type="button"
-        class="pos-sidebar-btn"
-        data-pos-section="ordersSection"
-      >
-        🧾
-        <span>Orders</span>
-      </button>
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="stocksSection"
+    aria-label="Stocks"
+    title="Stocks"
+  >
+    📦
+  </button>
 
-      <button
-        type="button"
-        class="pos-sidebar-btn"
-        data-pos-section="settingsSection"
-      >
-        ⚙️
-        <span>Settings</span>
-      </button>
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="ordersSection"
+    aria-label="Orders"
+    title="Orders"
+  >
+    🧾
+  </button>
 
-    </aside>
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="settingsSection"
+    aria-label="Settings"
+    title="Settings"
+  >
+    ⚙️
+  </button>
 
-
+</aside>
     <!-- =====================
          POS MAIN AREA
     ====================== -->
