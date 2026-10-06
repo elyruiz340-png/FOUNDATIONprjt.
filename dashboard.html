@@ -574,11 +574,7 @@
          For security, only the restaurant owner can change the Cashier PIN.
         </p>
 
-        <p class="email-display">
-          <span id="ownerEmailDisplay">
-            Owner email
-          </span>
-        </p>
+        
 
         <div class="modal-actions">
 
@@ -604,55 +600,7 @@
       </div>
 
 
-      <!-- STEP 2 -->
-
-      <div id="pinStep2" class="pin-step">
-
-        <h2>Verify Email</h2>
-
-        <p>
-          Enter the 6-digit verification code sent to:
-        </p>
-
-        <p class="email-display">
-          <span id="ownerEmailDisplay2">
-            Owner email
-          </span>
-        </p>
-
-        <input
-          id="reauthCode"
-          class="pin-input"
-          type="text"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          maxlength="8"
-          placeholder="00000000"
-        >
-
-        <div class="modal-actions">
-
-          <button
-            id="verifyPinCodeBtn"
-            class="primary-btn"
-            onclick="verifyPinVerificationCode()"
-          >
-            Verify Code
-          </button>
-
-          <button
-            class="secondary-btn"
-            onclick="closeCashierPinModal()"
-          >
-            Cancel
-          </button>
-
-        </div>
-
-        <div id="pinStep2Message" class="message"></div>
-
-      </div>
-
+    
 
       <!-- STEP 3 -->
 
@@ -1191,38 +1139,15 @@
 
     function openCashierPinSettings() {
 
-      if (
-        !currentOwnerEmail
-      ) {
-
-        showPinMessage(
-          1,
-          "Owner email could not be detected.",
-          "error"
-        );
-
-        return;
-
-      }
+      
 
       pinVerificationCompleted =
         false;
 
-      document.getElementById(
-        "ownerEmailDisplay"
-      ).textContent =
-        currentOwnerEmail;
-
-      document.getElementById(
-        "ownerEmailDisplay2"
-      ).textContent =
-        currentOwnerEmail;
-
+   
       clearPinMessages();
 
-      document.getElementById(
-        "reauthCode"
-      ).value = "";
+    
 
       document.getElementById(
         "newCashierPin"
@@ -1252,9 +1177,7 @@
       pinVerificationCompleted =
         false;
 
-      document.getElementById(
-        "reauthCode"
-      ).value = "";
+    
 
       document.getElementById(
         "newCashierPin"
@@ -1373,114 +1296,7 @@
        VERIFY CODE
     ========================================================= */
 
-    async function verifyPinVerificationCode() {
-
-      const code =
-        document.getElementById(
-          "reauthCode"
-        ).value.trim();
-
-      if (
-        !/^[0-9]{8}$/.test(code)
-      ) {
-
-        showPinMessage(
-          2,
-          "Please enter the 8-digit verification code.",
-          "error"
-        );
-
-        return;
-
-      }
-
-      const button =
-        document.getElementById(
-          "verifyPinCodeBtn"
-        );
-
-      button.disabled =
-        true;
-
-      button.textContent =
-        "Verifying...";
-
-      clearPinMessages();
-
-      try {
-
-        /*
-          This verifies the email OTP.
-
-          Note:
-          Supabase's verifyOtp email flow
-          can affect authentication session
-          behavior depending on the configured
-          Auth flow. We keep the test flow
-          here so we can verify it in the
-          actual project before treating it
-          as final production security.
-        */
-
-        const {
-          error
-        } =
-          await supabaseClient.auth.verifyOtp({
-            email:
-              currentOwnerEmail,
-            token:
-              code,
-            type:
-              "email"
-          });
-
-        if (error) {
-
-          throw error;
-
-        }
-
-        pinVerificationCompleted =
-          true;
-
-        showPinMessage(
-          2,
-          "Email verified successfully.",
-          "success"
-        );
-
-        setTimeout(() => {
-
-          showPinStep(3);
-
-        }, 500);
-
-      } catch (error) {
-
-        console.error(
-          "OTP verification error:",
-          error
-        );
-
-        showPinMessage(
-          2,
-          error.message ||
-          "Invalid or expired verification code.",
-          "error"
-        );
-
-      } finally {
-
-        button.disabled =
-          false;
-
-        button.textContent =
-          "Verify Code";
-
-      }
-
-    }
-
+   
 
     /* =========================================================
        SAVE NEW CASHIER PIN
@@ -1687,27 +1503,7 @@
        NUMERIC INPUT HELPERS
     ========================================================= */
 
-    document
-      .getElementById("reauthCode")
-      .addEventListener(
-        "input",
-        function() {
-
-          this.value =
-            this.value
-              .replace(
-                /[^0-9]/g,
-                ""
-              )
-              .slice(
-                0,
-                8
-              );
-
-        }
-      );
-
-
+  
     document
       .getElementById("newCashierPin")
       .addEventListener(
