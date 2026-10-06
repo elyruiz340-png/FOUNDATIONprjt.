@@ -873,26 +873,26 @@
      POS TOP BAR
   ========================= */
 
-  .pos-topbar {
-    display: grid;
+ .pos-topbar {
+  display: grid;
 
-    grid-template-columns:
-      minmax(0, 1fr) auto;
+  grid-template-columns:
+    minmax(0, 1fr) auto;
 
-    grid-template-areas:
-      "title brand"
-      "subtitle brand"
-      "search search";
+  grid-template-areas:
+    "title brand"
+    "subtitle brand"
+    "search search";
 
-    align-items: center;
+  align-items: center;
 
-    column-gap: 20px;
-    row-gap: 3px;
+  column-gap: 20px;
+  row-gap: 3px;
 
-    width: 100%;
+  width: 100%;
 
-    margin-bottom: 10px;
-  }
+  margin-bottom: 10px;
+}
 
   .pos-topbar h2 {
     grid-area: title;
@@ -906,24 +906,23 @@
   }
 
   .pos-brand {
-    grid-area: brand;
+  grid-area: brand;
 
-    margin: 0;
+  margin: 0;
 
-    color: #527563;
+  color: #527563;
 
-    font-size: 11px;
-    font-weight: 700;
+  font-size: 11px;
+  font-weight: 700;
 
-    letter-spacing: 1.2px;
+  letter-spacing: 1.2px;
 
-    text-transform: uppercase;
+  text-transform: uppercase;
 
-    white-space: nowrap;
+  white-space: nowrap;
 
-    text-align: right;
-  }
-
+  text-align: right;
+}
   .pos-topbar p {
     grid-area: subtitle;
 
@@ -937,37 +936,51 @@
   }
 
   /* =========================
-     SEARCH
-  ========================= */
+   SEARCH
+========================= */
 
-  .pos-search {
-    grid-area: search;
+.pos-search-wrap {
+  grid-area: search;
+  position: relative;
+  width: 100%;
+}
 
-    width: 100%;
-    height: 38px;
+.pos-search-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #7a857f;
+  pointer-events: none;
+}
 
-    border: 1px solid #d7dfda;
+.pos-search-icon circle,
+.pos-search-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-    border-radius: 20px;
+.pos-search {
+  width: 100%;
+  height: 34px;
+  border: 1px solid #d7dfda;
+  border-radius: 17px;
+  background: #ffffff;
+  padding: 0 14px 0 38px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
 
-    background: #ffffff;
-
-    padding: 0 15px;
-
-    font-size: 14px;
-
-    outline: none;
-
-    box-sizing: border-box;
-  }
-
-  .pos-search:focus {
-    border-color: #527563;
-
-    box-shadow:
-      0 0 0 3px rgba(82,117,99,0.10);
-  }
-
+.pos-search:focus {
+  border-color: #527563;
+  box-shadow: 0 0 0 3px rgba(82,117,99,0.08);
+}
   /* =========================
      ORDER TYPES
   ========================= */
@@ -1923,15 +1936,19 @@
    <!-- =====================
      POS MAIN AREA
 ====================== -->
-<div class="pos-main">
+<div class="pos-search-wrap">
+  <svg class="pos-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="11" cy="11" r="6.5"></circle>
+    <path d="M16 16L21 21"></path>
+  </svg>
 
-  <div class="pos-topbar">
-
-    <div>
-      <h2>Cashier POS</h2>
-      <div class="pos-brand">HALINA BISTRO CAFE</div>
-      <p>Select items to create an order</p>
-    </div>
+  <input
+    type="search"
+    id="posSearch"
+    class="pos-search"
+    placeholder="Search menu items..."
+  >
+</div>
 
     <input
       type="search"
