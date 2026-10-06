@@ -748,7 +748,29 @@
 
 #posSection {
   display: block;
+  width: 100%;
   padding: 0;
+  margin: 0;
+}
+
+#posSection .pos-layout {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
+}
+
+#posSection .pos-main {
+  min-width: 0;
+  width: 100%;
+}
+
+#posSection .pos-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
 }
 
 .pos-layout {
