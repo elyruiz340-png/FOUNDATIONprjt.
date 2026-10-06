@@ -748,21 +748,39 @@
 
 #posSection {
   display: block;
-  width: 100%;
-  max-width: none;
-  margin: 0;
+
+  /* FULL SCREEN */
+  width: 100vw;
+  max-width: 100vw;
+
+  /* Break out of centered parent */
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+
   padding: 0;
   overflow-x: hidden;
 }
 
+/* =========================
+   POS LAYOUT
+========================= */
+
 #posSection .pos-layout {
   display: grid;
   grid-template-columns: 56px minmax(0, 1fr);
+
   width: 100%;
   min-width: 0;
+
   margin: 0;
+  padding: 0;
+
   align-items: stretch;
 }
+
+/* =========================
+   POS CONTENT
+========================= */
 
 #posSection .pos-main {
   min-width: 0;
@@ -772,7 +790,9 @@
 #posSection .pos-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 350px;
+
   gap: 20px;
+
   width: 100%;
   min-width: 0;
 }
@@ -784,8 +804,13 @@
 .pos-layout {
   display: grid;
   grid-template-columns: 56px minmax(0, 1fr);
+
   min-height: 720px;
   width: 100%;
+
+  margin: 0;
+  padding: 0;
+
   align-items: stretch;
 }
 
@@ -793,24 +818,32 @@
   width: 56px;
   min-height: 720px;
   height: 100%;
+
   flex-shrink: 0;
 
+  /* VERY LIGHT GRAY */
   background: #f0f2f0;
 
   display: flex;
   flex-direction: column;
   align-items: center;
+
   gap: 8px;
 
   padding: 14px 4px;
+
   box-sizing: border-box;
 
   position: relative;
 }
 
-/* Moving selected background */
+/* =========================
+   MOVING SELECTED HIGHLIGHT
+========================= */
+
 .pos-sidebar-highlight {
   position: absolute;
+
   left: 0;
   top: 0;
 
@@ -830,10 +863,14 @@
     height 0.2s ease;
 
   pointer-events: none;
+
   z-index: 0;
 }
 
-/* Sidebar buttons */
+/* =========================
+   SIDEBAR BUTTONS
+========================= */
+
 .pos-sidebar-btn {
   position: relative;
   z-index: 1;
@@ -845,6 +882,7 @@
   border-radius: 12px;
 
   background: transparent;
+
   color: #46534c;
 
   cursor: pointer;
@@ -861,17 +899,17 @@
   transition: color 0.2s ease;
 }
 
-/* Icons only */
+/* ICONS ONLY */
 .pos-sidebar-btn span {
   display: none;
 }
 
-/* Hover */
+/* HOVER */
 .pos-sidebar-btn:hover {
   color: #315143;
 }
 
-/* Active icon */
+/* ACTIVE ICON */
 .pos-sidebar-btn.active {
   background: transparent;
   color: #315143;
@@ -884,48 +922,73 @@
 .pos-main {
   min-width: 0;
   width: 100%;
+
   padding: 24px;
+
   box-sizing: border-box;
+
   overflow: hidden;
 }
 
+/* =========================
+   TOP BAR
+========================= */
+
 .pos-topbar {
   display: flex;
+
   align-items: center;
   justify-content: space-between;
+
   gap: 20px;
+
   margin-bottom: 20px;
 }
 
 .pos-topbar h2 {
   margin: 0;
+
   font-size: 26px;
+
   color: #18231e;
 }
 
 .pos-topbar p {
   margin: 5px 0 0;
+
   color: #748078;
+
   font-size: 14px;
 }
 
+/* =========================
+   SEARCH
+========================= */
+
 .pos-search {
   width: min(420px, 45%);
+
   height: 48px;
 
   border: 1px solid #d7dfda;
+
   border-radius: 12px;
 
   background: #ffffff;
 
   padding: 0 16px;
+
   font-size: 15px;
+
   outline: none;
 }
 
 .pos-search:focus {
   border-color: #527563;
-  box-shadow: 0 0 0 3px rgba(82,117,99,0.12);
+
+  box-shadow:
+    0 0 0 3px rgba(82,117,99,0.12);
+}
 }/* =========================
    ORDER TYPES
 ========================= */
