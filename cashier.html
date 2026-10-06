@@ -741,7 +741,7 @@
   50% {
     opacity: 1;
   }
-
+}
   </style>
 </head>
 <body>
@@ -787,6 +787,432 @@
        GLOBAL MESSAGE
   ========================= -->
   <div id="message" class="message"></div>
+  <!-- =========================
+     CASHIER POS SECTION
+========================= -->
+
+<section
+  id="posSection"
+  class="page-sec active"
+
+
+  <div class="pos-layout">
+
+    <!-- =====================
+         POS SIDEBAR
+    ====================== -->
+    <aside class="pos-sidebar">
+
+      <button
+        type="button"
+        class="pos-sidebar-btn active"
+        data-pos-section="posSection"
+      >
+        🍽️
+        <span>Menu</span>
+      </button>
+
+      <button
+        type="button"
+        class="pos-sidebar-btn"
+        data-pos-section="tablesSection"
+      >
+        🪑
+        <span>Tables</span>
+      </button>
+
+      <button
+        type="button"
+        class="pos-sidebar-btn"
+        data-pos-section="stocksSection"
+      >
+        📦
+        <span>Stocks</span>
+      </button>
+
+      <button
+        type="button"
+        class="pos-sidebar-btn"
+        data-pos-section="ordersSection"
+      >
+        🧾
+        <span>Orders</span>
+      </button>
+
+      <button
+        type="button"
+        class="pos-sidebar-btn"
+        data-pos-section="settingsSection"
+      >
+        ⚙️
+        <span>Settings</span>
+      </button>
+
+    </aside>
+
+
+    <!-- =====================
+         POS MAIN AREA
+    ====================== -->
+    <div class="pos-main">
+
+      <div class="pos-topbar">
+
+        <div>
+          <h2>Cashier POS</h2>
+          <p>Select items to create an order</p>
+        </div>
+
+        <input
+          type="search"
+          id="posSearch"
+          class="pos-search"
+          placeholder="Search menu items..."
+        >
+
+      </div>
+
+
+      <!-- =====================
+           ORDER TYPE
+      ====================== -->
+
+      <div class="pos-order-types">
+
+        <button
+          type="button"
+          class="pos-order-type active"
+        >
+          🍽️ Dine In
+        </button>
+
+        <button
+          type="button"
+          class="pos-order-type"
+        >
+          🥡 Takeout
+        </button>
+
+        <button
+          type="button"
+          class="pos-order-type"
+        >
+          🛵 Delivery
+        </button>
+
+        <button
+          type="button"
+          class="pos-order-type"
+        >
+          📋 Bulk Order
+        </button>
+
+      </div>
+
+
+      <!-- =====================
+           CATEGORIES
+      ====================== -->
+
+      <div class="pos-categories">
+
+        <button
+          type="button"
+          class="pos-category active"
+        >
+          All Items
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Breakfast
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          A La Carte
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Pulutan
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Pasta
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Sandwich
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Rice
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Beers
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Whiskey
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Tequila
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Soju
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Soda
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Others
+        </button>
+
+      </div>
+
+
+      <!-- =====================
+           MENU + CART
+      ====================== -->
+
+      <div class="pos-content">
+
+        <!-- MENU -->
+        <div class="pos-menu-area">
+
+          <div
+            id="posMenuGrid"
+            class="pos-menu-grid"
+          >
+
+            <div class="pos-menu-card">
+              <div class="pos-menu-image">🍳</div>
+              <h3>Tapsilog</h3>
+              <p>₱219</p>
+              <button type="button">
+                Add
+              </button>
+            </div>
+
+            <div class="pos-menu-card">
+              <div class="pos-menu-image">🍖</div>
+              <h3>Pork Silog</h3>
+              <p>₱199</p>
+              <button type="button">
+                Add
+              </button>
+            </div>
+
+            <div class="pos-menu-card">
+              <div class="pos-menu-image">🍗</div>
+              <h3>Whole Fried Chicken</h3>
+              <p>₱499</p>
+              <button type="button">
+                Add
+              </button>
+            </div>
+
+            <div class="pos-menu-card">
+              <div class="pos-menu-image">🍖</div>
+              <h3>Lechon Kawali</h3>
+              <p>₱360</p>
+              <button type="button">
+                Add
+              </button>
+            </div>
+
+            <div class="pos-menu-card">
+              <div class="pos-menu-image">🥣</div>
+              <h3>Pork Sinigang</h3>
+              <p>₱360</p>
+              <button type="button">
+                Add
+              </button>
+            </div>
+
+            <div class="pos-menu-card">
+              <div class="pos-menu-image">🥘</div>
+              <h3>Beef Caldereta</h3>
+              <p>₱399</p>
+              <button type="button">
+                Add
+              </button>
+            </div>
+
+            <div class="pos-menu-card">
+              <div class="pos-menu-image">🍢</div>
+              <h3>Endamame</h3>
+              <p>₱79</p>
+              <button type="button">
+                Add
+              </button>
+            </div>
+
+            <div class="pos-menu-card">
+              <div class="pos-menu-image">🍝</div>
+              <h3>Chicken Pasta</h3>
+              <p>₱249</p>
+              <button type="button">
+                Add
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- =====================
+             CART
+        ====================== -->
+
+        <aside class="pos-cart">
+
+          <div class="pos-cart-header">
+
+            <div>
+              <h2>Current Order</h2>
+              <span>New Order</span>
+            </div>
+
+            <strong class="payment-status unpaid">
+              UNPAID
+            </strong>
+
+          </div>
+
+
+          <div class="pos-table-select">
+
+            <label for="posTableNumber">
+              Table
+            </label>
+
+            <select id="posTableNumber">
+
+              <option value="">
+                Select Table
+              </option>
+
+              <option value="1">
+                Table 1
+              </option>
+
+              <option value="2">
+                Table 2
+              </option>
+
+              <option value="3">
+                Table 3
+              </option>
+
+              <option value="4">
+                Table 4
+              </option>
+
+              <option value="5">
+                Table 5
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div
+            id="posCartItems"
+            class="pos-cart-items"
+          >
+
+            <div class="pos-empty-cart">
+              <span>🛒</span>
+              <p>No items added yet</p>
+              <small>Select items from the menu</small>
+            </div>
+
+          </div>
+
+
+          <div class="pos-cart-summary">
+
+            <div>
+              <span>Subtotal</span>
+              <strong>₱0.00</strong>
+            </div>
+
+            <div>
+              <span>VAT</span>
+              <strong>₱0.00</strong>
+            </div>
+
+            <div>
+              <span>Discount</span>
+              <strong>₱0.00</strong>
+            </div>
+
+            <div class="pos-total">
+              <span>Total</span>
+              <strong>₱0.00</strong>
+            </div>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="pos-checkout-btn"
+          >
+            Checkout
+          </button>
+
+        </aside>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
   <!-- =========================
        TABLES SECTION
   ========================= -->
