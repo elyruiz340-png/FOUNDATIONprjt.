@@ -1063,71 +1063,111 @@
 
   border-color: #315143;
 }
-  /* =========================
-     CATEGORIES
-  ========================= */
+ /* =========================
+   CATEGORIES
+========================= */
 
-  .pos-categories {
-    display: flex;
+.pos-categories {
+  position: relative;
 
-    gap: 7px;
+  display: flex;
 
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
+  gap: 7px;
 
-    overflow-x: auto;
-    overflow-y: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 
-    padding-bottom: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
 
-    margin-bottom: 10px;
+  padding-bottom: 6px;
 
-    box-sizing: border-box;
+  margin-bottom: 10px;
 
-    scrollbar-width: thin;
-  }
+  box-sizing: border-box;
 
-  .pos-category {
-    flex-shrink: 0;
+  scrollbar-width: thin;
+}
 
-    padding: 8px 13px;
+.pos-category-highlight {
+  position: absolute;
 
-    border: 1px solid #d9e1dc;
+  left: 0;
+  top: 0;
 
-    border-radius: 20px;
+  z-index: 1;
 
-    background: #ffffff;
+  border: 1px solid #a9c0b1;
 
-    color: #46534c;
+  border-radius: 20px;
 
-    font-size: 13px;
-    font-weight: 600;
+  background: #e4eee8;
 
-    cursor: pointer;
+  pointer-events: none;
 
-    transition:
-      background 0.2s ease,
-      border-color 0.2s ease,
-      color 0.2s ease,
-      transform 0.2s ease;
-  }
+  transition:
+    transform 0.28s ease,
+    width 0.28s ease,
+    height 0.28s ease;
+}
 
-  .pos-category:hover {
-    background: #f4f7f5;
+.pos-category-highlight.animate {
+  transition:
+    transform 0.32s cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    ),
+    width 0.28s ease,
+    height 0.28s ease;
+}
 
-    border-color: #b9c9bf;
+.pos-category {
+  position: relative;
 
-    color: #315143;
-  }
+  z-index: 2;
 
-  .pos-category.active {
-    background: #e4eee8;
+  flex-shrink: 0;
 
-    border-color: #a9c0b1;
+  padding: 8px 13px;
 
-    color: #294438;
-  }
+  border: 1px solid transparent;
+
+  border-radius: 20px;
+
+  background: transparent;
+
+  color: #46534c;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+
+  box-sizing: border-box;
+}
+
+.pos-category:hover {
+  background: transparent;
+
+  border-color: transparent;
+
+  color: #315143;
+}
+
+.pos-category.active {
+  background: transparent;
+
+  border-color: transparent;
+
+  color: #294438;
+}
 
 /* =========================
    MENU + CART
