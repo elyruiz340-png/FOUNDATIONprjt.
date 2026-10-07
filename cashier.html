@@ -4709,6 +4709,477 @@ if (posSearch) {
     }
   );
 
+}/* =========================
+   POS CATEGORY + SEARCH
+========================= */
+
+const posCategories =
+  document.querySelectorAll(".pos-category");
+
+const posSearch =
+  document.getElementById("posSearch");
+
+let selectedPosCategory =
+  "All Items";
+
+
+function updateCategoryHighlight(
+  categoryButton,
+  animate
+) {
+
+  if (!categoryButton) {
+    return;
+  }
+
+  const categoriesContainer =
+    categoryButton.parentElement;
+
+  if (!categoriesContainer) {
+    return;
+  }
+
+  let highlight =
+    categoriesContainer.querySelector(
+      ".pos-category-highlight"
+    );
+
+  if (!highlight) {
+
+    highlight =
+      document.createElement("span");
+
+    highlight.className =
+      "pos-category-highlight";
+
+    categoriesContainer.prepend(
+      highlight
+    );
+  }
+
+  const containerRect =
+    categoriesContainer.getBoundingClientRect();
+
+  const buttonRect =
+    categoryButton.getBoundingClientRect();
+
+  const left =
+    buttonRect.left -
+    containerRect.left +
+    categoriesContainer.scrollLeft;
+
+  const top =
+    buttonRect.top -
+    containerRect.top;
+
+  highlight.style.width =
+    buttonRect.width + "px";
+
+  highlight.style.height =
+    buttonRect.height + "px";
+
+  highlight.style.transform =
+    "translate(" +
+    left +
+    "px, " +
+    top +
+    "px)";
+
+  highlight.classList.toggle(
+    "animate",
+    animate
+  );
+}
+
+
+function getCategoryButton(
+  categoryName
+) {
+
+  let foundButton = null;
+
+  posCategories.forEach(
+    function(button) {
+
+      if (
+        button.textContent.trim() ===
+        categoryName
+      ) {
+
+        foundButton = button;
+
+      }
+
+    }
+  );
+
+  return foundButton;
+}
+
+
+function setActiveCategory(
+  categoryName,
+  animate
+) {
+
+  const categoryButton =
+    getCategoryButton(
+      categoryName
+    );
+
+  if (!categoryButton) {
+    return;
+  }
+
+  posCategories.forEach(
+    function(button) {
+
+      button.classList.remove(
+        "active"
+      );
+
+    }
+  );
+
+  categoryButton.classList.add(
+    "active"
+  );
+
+  updateCategoryHighlight(
+    categoryButton,
+    animate
+  );
+}
+
+
+function getSearchCategories(
+  searchTerm
+) {
+
+  const categories =
+    new Set();
+
+  if (
+    !posMenuGrid ||
+    searchTerm === ""
+  ) {
+
+    return categories;
+
+  }
+
+  const menuCards =
+    posMenuGrid.querySelectorAll(
+      ".pos-menu-card"
+    );
+
+  menuCards.forEach(
+    function(card) {
+
+      const itemName =
+        card.querySelector("h3");
+
+      if (!itemName) {
+        return;
+      }
+
+      const name =
+        itemName.textContent
+          .trim()
+          .toLowerCase();
+
+      if (
+        name.includes(searchTerm)
+      ) {
+
+        const category =
+          card.getAttribute(
+            "data-category"
+          );
+
+        if (category) {
+
+          categories.add(
+            category
+          );
+
+        }
+
+      }
+
+    }
+  );
+
+  return categories;
+}
+
+
+function applyPosFilters() {
+
+  if (!posMenuGrid) {
+    return;
+  }
+
+  const searchTerm =
+    posSearch
+      ? posSearch.value
+          .trim()
+          .toLowerCase()
+      : "";
+
+  const menuCards =
+    posMenuGrid.querySelectorAll(
+      ".pos-menu-card"
+    );
+
+
+  /*
+   * NO SEARCH
+   * Use the manually selected category.
+   */
+
+  if (searchTerm === "") {
+
+    menuCards.forEach(
+      function(card) {
+
+        const cardCategory =
+          card.getAttribute(
+            "data-category"
+          );
+
+        if (
+          selectedPosCategory ===
+          "All Items" ||
+          cardCategory ===
+          selectedPosCategory
+        ) {
+
+          card.style.display = "";
+
+        } else {
+
+          card.style.display =
+            "none";
+
+        }
+
+      }
+    );
+
+    return;
+  }
+
+
+  /*
+   * SEARCH MODE
+   */
+
+  const matchingCategories =
+    getSearchCategories(
+      searchTerm
+    );
+
+
+  /*
+   * ONE CATEGORY
+   * Example:
+   * Tapsilog → Breakfast
+   */
+
+  if (
+    matchingCategories.size === 1
+  ) {
+
+    const matchingCategory =
+      Array.from(
+        matchingCategories
+      )[0];
+
+    selectedPosCategory =
+      matchingCategory;
+
+    setActiveCategory(
+      matchingCategory,
+      true
+    );
+
+
+    menuCards.forEach(
+      function(card) {
+
+        const cardCategory =
+          card.getAttribute(
+            "data-category"
+          );
+
+        const itemName =
+          card.querySelector("h3");
+
+        const name =
+          itemName
+            ? itemName.textContent
+                .trim()
+                .toLowerCase()
+            : "";
+
+        if (
+          cardCategory ===
+            matchingCategory &&
+          name.includes(
+            searchTerm
+          )
+        ) {
+
+          card.style.display = "";
+
+        } else {
+
+          card.style.display =
+            "none";
+
+        }
+
+      }
+    );
+
+    return;
+  }
+
+
+  /*
+   * MULTIPLE CATEGORIES
+   * Example:
+   * Chicken →
+   * Breakfast + Pulutan + Pasta
+   *
+   * Move highlight to All Items.
+   */
+
+  if (
+    matchingCategories.size > 1
+  ) {
+
+    selectedPosCategory =
+      "All Items";
+
+    setActiveCategory(
+      "All Items",
+      true
+    );
+
+
+    menuCards.forEach(
+      function(card) {
+
+        const itemName =
+          card.querySelector("h3");
+
+        const name =
+          itemName
+            ? itemName.textContent
+                .trim()
+                .toLowerCase()
+            : "";
+
+        if (
+          name.includes(
+            searchTerm
+          )
+        ) {
+
+          card.style.display = "";
+
+        } else {
+
+          card.style.display =
+            "none";
+
+        }
+
+      }
+    );
+
+    return;
+  }
+
+
+  /*
+   * NO RESULTS
+   * Keep current highlight.
+   */
+
+  menuCards.forEach(
+    function(card) {
+
+      card.style.display =
+        "none";
+
+    }
+  );
+
+}
+
+
+if (posCategories.length > 0) {
+
+  posCategories.forEach(
+    function(categoryButton) {
+
+      categoryButton.addEventListener(
+        "click",
+        function() {
+
+          selectedPosCategory =
+            categoryButton.textContent
+              .trim();
+
+          setActiveCategory(
+            selectedPosCategory,
+            true
+          );
+
+          applyPosFilters();
+
+        }
+      );
+
+    }
+  );
+
+
+  const activeCategory =
+    document.querySelector(
+      ".pos-category.active"
+    );
+
+  if (activeCategory) {
+
+    selectedPosCategory =
+      activeCategory.textContent
+        .trim();
+
+    updateCategoryHighlight(
+      activeCategory,
+      false
+    );
+
+  }
+
+}
+
+
+if (posSearch) {
+
+  posSearch.addEventListener(
+    "input",
+    function() {
+
+      applyPosFilters();
+
+    }
+  );
+
 }
 /* =========================
    ADD MENU ITEM
