@@ -1145,26 +1145,28 @@
 
  /* =========================
      MENU AREA
-  ========================= */
+========================= */
 
   .pos-menu-area {
     min-width: 0;
+
     width: 100%;
     max-width: 100%;
 
-    max-height: calc(100vh - 20px);
+    height: calc(100vh - 20px);
 
-    overflow-y: auto;
-    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
 
-    padding: 0 6px 0 0;
+    overflow: hidden;
+
+    padding-right: 6px;
 
     box-sizing: border-box;
   }
-
-  /* =========================
+  //* =========================
      MENU GRID
-  ========================= */
+========================= */
 
   .pos-menu-grid {
     display: grid;
@@ -1176,6 +1178,17 @@
 
     width: 100%;
     min-width: 0;
+
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-right: 4px;
+
+    box-sizing: border-box;
   }
 
   /* =========================
