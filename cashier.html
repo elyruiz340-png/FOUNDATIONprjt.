@@ -1962,6 +1962,7 @@
     ⚙️
   </button>
 
+
 </aside>
   <!-- =====================
      POS MAIN AREA
@@ -2591,15 +2592,11 @@
       "message";
   }
 /* =========================
-   NAVIGATION
-========================= */
-
-/* =========================
-   NAVIGATION
+   POS SIDEBAR NAVIGATION
 ========================= */
 
 document
-  .querySelectorAll(".nav-btn")
+  .querySelectorAll(".pos-sidebar-btn")
   .forEach(function(button) {
 
     button.addEventListener(
@@ -2610,24 +2607,28 @@ document
 
         const sectionId =
           button.getAttribute(
-            "data-section"
+            "data-pos-section"
           );
 
         if (!sectionId) {
+
           console.error(
-            "Navigation button has no data-section:",
+            "POS sidebar button has no data-pos-section:",
             button
           );
+
           return;
         }
 
 
         /* =========================
-           BUTTON ACTIVE STATE
+           SIDEBAR ACTIVE STATE
         ========================= */
 
         document
-          .querySelectorAll(".nav-btn")
+          .querySelectorAll(
+            ".pos-sidebar-btn"
+          )
           .forEach(function(btn) {
 
             btn.classList.remove(
@@ -2642,11 +2643,13 @@ document
 
 
         /* =========================
-           HIDE ALL SECTIONS
+           HIDE ALL POS SECTIONS
         ========================= */
 
         document
-          .querySelectorAll(".page-section")
+          .querySelectorAll(
+            "#posSection, .page-section"
+          )
           .forEach(function(section) {
 
             section.classList.remove(
@@ -2668,7 +2671,7 @@ document
         if (!selectedSection) {
 
           console.error(
-            "Section not found:",
+            "POS section not found:",
             sectionId
           );
 
@@ -2684,14 +2687,7 @@ document
            CLEAR MESSAGE
         ========================= */
 
-        if (
-          typeof clearMessage ===
-          "function"
-        ) {
-
-          clearMessage();
-
-        }
+        clearMessage();
 
 
         /* =========================
@@ -2734,53 +2730,7 @@ document
     );
 
   });
-  /* =========================
-     LOAD TABLES
-  ========================= */
-  async function loadTables() {
-    clearMessage();
-    tablesContainer.innerHTML =
-      '<div class="loading">Loading tables...</div>';
-    try {
-      const response =
-        await fetch(
-          TABLE_ENDPOINT +
-          "?select=*&order=id.asc",
-          {
-            method: "GET",
-            headers: {
-              "apikey": SUPABASE_KEY,
-              "Authorization":
-                "Bearer " + SUPABASE_KEY
-            }
-          }
-        );
-      const data =
-        await response.json();
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-          data.error ||
-          data.hint ||
-          "Unable to load tables."
-        );
-      }
-      if (!data.length) {
-        tablesContainer.innerHTML =
-          '<div class="loading">No tables found.</div>';
-        return;
-      }
-      tablesContainer.innerHTML = "";
-      data.forEach(function(table) {
-        createTableCard(table);
-      });
-    } catch (error) {
-      console.error(error);
-      tablesContainer.innerHTML =
-        '<div class="loading">Unable to load tables.</div>';
-      showError(error.message);
-    }
-  }
+ 
   /* =========================
      CREATE TABLE CARD
   ========================= */
