@@ -870,8 +870,8 @@
   }
 
   /* =========================
-     POS TOP BAR
-  ========================= */
+   POS TOP BAR
+========================= */
 
 .pos-topbar {
   display: grid;
@@ -888,23 +888,23 @@
   column-gap: 20px;
   row-gap: 3px;
 
-  width: 100%;
+  width: calc(100% - 400px);
 
   margin-bottom: 10px;
 }
 
-  .pos-topbar h2 {
-    grid-area: title;
+.pos-topbar h2 {
+  grid-area: title;
 
-    margin: 0;
+  margin: 0;
 
-    font-size: 26px;
-    line-height: 1.15;
+  font-size: 26px;
+  line-height: 1.15;
 
-    color: #18231e;
-  }
+  color: #18231e;
+}
 
-  .pos-brand {
+.pos-brand {
   grid-area: brand;
 
   margin: 0;
@@ -922,18 +922,18 @@
 
   text-align: right;
 }
-  .pos-topbar p {
-    grid-area: subtitle;
 
-    margin: 0;
+.pos-topbar p {
+  grid-area: subtitle;
 
-    color: #748078;
+  margin: 0;
 
-    font-size: 14px;
+  color: #748078;
 
-    line-height: 1.3;
-  }
+  font-size: 14px;
 
+  line-height: 1.3;
+}
   /* =========================
    SEARCH
 ========================= */
