@@ -1174,33 +1174,38 @@
 
   box-sizing: border-box;
 }
-  /* =========================
-     MENU GRID
+ /* =========================
+   MENU GRID
 ========================= */
 
-  .pos-menu-grid {
-    display: grid;
+.pos-menu-grid {
+  display: grid;
 
-    grid-template-columns:
-      repeat(4, minmax(140px, 1fr));
+  grid-template-columns:
+    repeat(4, minmax(140px, 1fr));
 
-    gap: 14px;
+  grid-auto-rows: max-content;
 
-    width: 100%;
-    min-width: 0;
+  align-content: start;
 
-    flex: 1;
+  align-items: start;
 
-    min-height: 0;
+  gap: 14px;
 
-    overflow-y: auto;
-    overflow-x: hidden;
+  width: 100%;
+  min-width: 0;
 
-    padding-right: 4px;
+  flex: 1;
 
-    box-sizing: border-box;
-  }
+  min-height: 0;
 
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 4px;
+
+  box-sizing: border-box;
+}
  /* =========================
    MENU CARDS
 ========================= */
