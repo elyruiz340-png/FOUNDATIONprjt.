@@ -4416,309 +4416,6 @@ const posCategories =
 const posSearch =
   document.getElementById("posSearch");
 
-function updateCategoryHighlight(
-  categoryButton,
-  animate
-) {
-
-  if (!categoryButton) {
-    return;
-  }
-
-  const categoriesContainer =
-    categoryButton.parentElement;
-
-  if (!categoriesContainer) {
-    return;
-  }
-
-  let highlight =
-    categoriesContainer.querySelector(
-      ".pos-category-highlight"
-    );
-
-  if (!highlight) {
-
-    highlight =
-      document.createElement("span");
-
-    highlight.className =
-      "pos-category-highlight";
-
-    categoriesContainer.prepend(
-      highlight
-    );
-  }
-
-  const containerRect =
-    categoriesContainer.getBoundingClientRect();
-
-  const buttonRect =
-    categoryButton.getBoundingClientRect();
-
-  const left =
-    buttonRect.left -
-    containerRect.left +
-    categoriesContainer.scrollLeft;
-
-  const top =
-    buttonRect.top -
-    containerRect.top;
-
-  highlight.style.width =
-    buttonRect.width + "px";
-
-  highlight.style.height =
-    buttonRect.height + "px";
-
-  highlight.style.transform =
-    "translate(" +
-    left +
-    "px, " +
-    top +
-    "px)";
-
-  highlight.classList.toggle(
-    "animate",
-    animate
-  );
-}
-
-
-function getCategoryButton(
-  categoryName
-) {
-
-  let foundButton = null;
-
-  posCategories.forEach(
-    function(button) {
-
-      if (
-        button.textContent.trim() ===
-        categoryName
-      ) {
-        foundButton = button;
-      }
-
-    }
-  );
-
-  return foundButton;
-}
-
-
-function applyPosFilters(
-  selectedCategory
-) {
-
-  if (!posMenuGrid) {
-    return;
-  }
-
-  const searchTerm =
-    posSearch
-      ? posSearch.value
-          .trim()
-          .toLowerCase()
-      : "";
-
-  const menuCards =
-    posMenuGrid.querySelectorAll(
-      ".pos-menu-card"
-    );
-
-  const matchingCategories =
-    new Set();
-
-  menuCards.forEach(
-    function(card) {
-
-      const cardCategory =
-        card.getAttribute(
-          "data-category"
-        );
-
-      const itemName =
-        card.querySelector("h3");
-
-      const name =
-        itemName
-          ? itemName.textContent
-              .trim()
-              .toLowerCase()
-          : "";
-
-      const matchesCategory =
-        selectedCategory === "All Items" ||
-        cardCategory === selectedCategory;
-
-      const matchesSearch =
-        searchTerm === "" ||
-        name.includes(searchTerm);
-
-      if (
-        matchesCategory &&
-        matchesSearch
-      ) {
-
-        card.style.display = "";
-
-        if (searchTerm !== "") {
-          matchingCategories.add(
-            cardCategory
-          );
-        }
-
-      } else {
-
-        card.style.display = "none";
-
-      }
-
-    }
-  );
-
-  /*
-   * If search produces results
-   * from exactly one category,
-   * move the highlight there.
-   */
-  if (
-    searchTerm !== "" &&
-    matchingCategories.size === 1
-  ) {
-
-    const matchingCategory =
-      Array.from(
-        matchingCategories
-      )[0];
-
-    const matchingButton =
-      getCategoryButton(
-        matchingCategory
-      );
-
-    if (matchingButton) {
-
-      posCategories.forEach(
-        function(button) {
-          button.classList.remove(
-            "active"
-          );
-        }
-      );
-
-      matchingButton.classList.add(
-        "active"
-      );
-
-      updateCategoryHighlight(
-        matchingButton,
-        true
-      );
-
-    }
-
-  }
-
-}
-
-
-if (posCategories.length > 0) {
-
-  posCategories.forEach(
-    function(categoryButton) {
-
-      categoryButton.addEventListener(
-        "click",
-        function() {
-
-          const selectedCategory =
-            categoryButton.textContent.trim();
-
-          posCategories.forEach(
-            function(button) {
-              button.classList.remove(
-                "active"
-              );
-            }
-          );
-
-          categoryButton.classList.add(
-            "active"
-          );
-
-          updateCategoryHighlight(
-            categoryButton,
-            true
-          );
-
-          applyPosFilters(
-            selectedCategory
-          );
-
-        }
-      );
-
-    }
-  );
-
-
-  const activeCategory =
-    document.querySelector(
-      ".pos-category.active"
-    );
-
-  if (activeCategory) {
-
-    updateCategoryHighlight(
-      activeCategory,
-      false
-    );
-
-    applyPosFilters(
-      activeCategory.textContent.trim()
-    );
-
-  }
-
-}
-
-
-if (posSearch) {
-
-  posSearch.addEventListener(
-    "input",
-    function() {
-
-      let selectedCategory =
-        document.querySelector(
-          ".pos-category.active"
-        );
-
-      selectedCategory =
-        selectedCategory
-          ? selectedCategory.textContent.trim()
-          : "All Items";
-
-      applyPosFilters(
-        selectedCategory
-      );
-
-    }
-  );
-
-}/* =========================
-   POS CATEGORY + SEARCH
-========================= */
-
-const posCategories =
-  document.querySelectorAll(".pos-category");
-
-const posSearch =
-  document.getElementById("posSearch");
-
 let selectedPosCategory =
   "All Items";
 
@@ -5176,6 +4873,62 @@ if (posSearch) {
     function() {
 
       applyPosFilters();
+
+    }
+  );
+
+}
+  /* =========================
+   POS SEARCH
+========================= */
+
+const posSearch =
+  document.getElementById("posSearch");
+
+if (posSearch) {
+
+  posSearch.addEventListener(
+    "input",
+    function() {
+
+      const searchTerm =
+        posSearch.value
+          .trim()
+          .toLowerCase();
+
+      if (!posMenuGrid) {
+        return;
+      }
+
+      const menuCards =
+        posMenuGrid.querySelectorAll(
+          ".pos-menu-card"
+        );
+
+      menuCards.forEach(function(card) {
+
+        const itemName =
+          card.querySelector("h3");
+
+        if (!itemName) {
+          return;
+        }
+
+        const name =
+          itemName.textContent
+            .trim()
+            .toLowerCase();
+
+        if (
+          searchTerm === "" ||
+          name.includes(searchTerm)
+        ) {
+          card.style.display = "";
+        } else {
+          card.style.display = "none";
+        }
+
+      });
 
     }
   );
