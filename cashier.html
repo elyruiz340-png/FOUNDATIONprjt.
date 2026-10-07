@@ -853,21 +853,25 @@
     color: #315143;
   }
 
-  /* =========================
-     MAIN POS AREA
-  ========================= */
+/* =========================
+   MAIN POS AREA
+========================= */
 
-  #posSection .pos-main,
-  .pos-main {
-    min-width: 0;
-    width: 100%;
+#posSection .pos-main,
+.pos-main {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 
-    padding: 10px 24px 24px;
+  padding: 10px 24px 24px;
 
-    box-sizing: border-box;
+  box-sizing: border-box;
 
-    overflow: hidden;
-  }
+  overflow-x: hidden;
+  overflow-y: visible;
+
+  border-top: none;
+}
 
  /* =========================
    POS TOP BAR
