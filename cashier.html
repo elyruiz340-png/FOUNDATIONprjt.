@@ -1332,6 +1332,105 @@
   box-sizing: border-box;
 }
   /* =========================
+   CURRENT ORDER HEADER + TABLE
+========================= */
+
+.pos-cart-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+
+  margin: 0 0 8px;
+
+  box-sizing: border-box;
+}
+
+.pos-cart-header > div {
+  display: flex;
+
+  align-items: baseline;
+
+  justify-content: space-between;
+
+  width: 100%;
+}
+
+.pos-cart-header h2 {
+  margin: 0;
+
+  font-size: 18px;
+  line-height: 1.2;
+
+  color: #18231e;
+}
+
+.pos-cart-header span {
+  margin-left: auto;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  color: #527563;
+}
+
+.payment-status {
+  flex-shrink: 0;
+
+  margin-left: 10px;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.pos-table-select {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+
+  width: 100%;
+
+  margin-bottom: 8px;
+
+  box-sizing: border-box;
+}
+
+.pos-table-select label {
+  font-size: 12px;
+  font-weight: 700;
+
+  color: #46534c;
+}
+
+.pos-table-select select {
+  flex: 1;
+
+  min-width: 0;
+
+  height: 32px;
+
+  padding: 0 8px;
+
+  border: 1px solid #d8e0db;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #34433b;
+
+  font-size: 12px;
+
+  box-sizing: border-box;
+}
+  /* =========================
      TABLE SELECT
   ========================= */
 
