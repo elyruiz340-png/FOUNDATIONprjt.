@@ -1936,26 +1936,20 @@
      POS MAIN AREA
 ====================== -->
 <div class="pos-main">
-
   <!-- =====================
        POS TOP BAR
   ====================== -->
   <div class="pos-topbar">
-
     <div>
       <h2>Cashier POS</h2>
-
       <div class="pos-brand">
         HALINA BISTRO CAFE
       </div>
-
       <p>
         Select items to create an order
       </p>
     </div>
-
     <div class="pos-search-wrap">
-
       <svg
         class="pos-search-icon"
         viewBox="0 0 24 24"
@@ -1966,167 +1960,113 @@
           cy="11"
           r="6.5"
         ></circle>
-
         <path
           d="M16 16L21 21"
         ></path>
       </svg>
-
       <input
         type="search"
         id="posSearch"
         class="pos-search"
         placeholder="Search menu items..."
       >
-
     </div>
-
   </div>
-
-
-  <!-- =====================
-       ORDER TYPE
-  ====================== -->
-  <div class="pos-order-types">
-
-    <button
-      type="button"
-      class="pos-order-type active"
-    >
-      DINE IN
-    </button>
-
-    <button
-      type="button"
-      class="pos-order-type"
-    >
-      TAKEOUT
-    </button>
-
-    <button
-      type="button"
-      class="pos-order-type"
-    >
-      DELIVERY
-    </button>
-
-  </div>
-
-
   <!-- =====================
        CATEGORIES
   ====================== -->
   <div class="pos-categories">
-
     <button
       type="button"
       class="pos-category active"
     >
       All Items
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Breakfast
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       A La Carte
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Pulutan
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Pasta
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Sandwich
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Rice
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Beers
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Whiskey
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Tequila
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Soju
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Soda
     </button>
-
     <button
       type="button"
       class="pos-category"
     >
       Others
     </button>
-
   </div>
-
-
   <!-- =====================
        MENU + CURRENT ORDER
   ====================== -->
   <div class="pos-content">
-
     <!-- =====================
          MENU AREA
     ====================== -->
     <div class="pos-menu-area">
-
       <div
         id="posMenuGrid"
         class="pos-menu-grid"
       >
-
         <div class="pos-menu-card">
           <div class="pos-menu-image">🍳</div>
           <h3>Tapsilog</h3>
@@ -2135,7 +2075,6 @@
             Add
           </button>
         </div>
-
         <div class="pos-menu-card">
           <div class="pos-menu-image">🍖</div>
           <h3>Pork Silog</h3>
@@ -2144,7 +2083,6 @@
             Add
           </button>
         </div>
-
         <div class="pos-menu-card">
           <div class="pos-menu-image">🍗</div>
           <h3>Whole Fried Chicken</h3>
@@ -2153,7 +2091,6 @@
             Add
           </button>
         </div>
-
         <div class="pos-menu-card">
           <div class="pos-menu-image">🍖</div>
           <h3>Lechon Kawali</h3>
@@ -2162,7 +2099,6 @@
             Add
           </button>
         </div>
-
         <div class="pos-menu-card">
           <div class="pos-menu-image">🥣</div>
           <h3>Pork Sinigang</h3>
@@ -2171,7 +2107,6 @@
             Add
           </button>
         </div>
-
         <div class="pos-menu-card">
           <div class="pos-menu-image">🥘</div>
           <h3>Beef Caldereta</h3>
@@ -2180,7 +2115,6 @@
             Add
           </button>
         </div>
-
         <div class="pos-menu-card">
           <div class="pos-menu-image">🍢</div>
           <h3>Endamame</h3>
@@ -2189,7 +2123,6 @@
             Add
           </button>
         </div>
-
         <div class="pos-menu-card">
           <div class="pos-menu-image">🍝</div>
           <h3>Chicken Pasta</h3>
@@ -2198,111 +2131,105 @@
             Add
           </button>
         </div>
-
       </div>
-
     </div>
-
-
     <!-- =====================
          CURRENT ORDER
     ====================== -->
     <aside class="pos-cart">
-
+      <!-- =====================
+           ORDER TYPE
+      ====================== -->
+      <div class="pos-order-types">
+        <button
+          type="button"
+          class="pos-order-type active"
+        >
+          DINE IN
+        </button>
+        <button
+          type="button"
+          class="pos-order-type"
+        >
+          TAKEOUT
+        </button>
+        <button
+          type="button"
+          class="pos-order-type"
+        >
+          DELIVERY
+        </button>
+      </div>
       <!-- CURRENT ORDER HEADER -->
       <div class="pos-cart-header">
-
         <div>
           <h2>Current Order</h2>
           <span>New Order</span>
         </div>
-
         <strong class="payment-status unpaid">
           UNPAID
         </strong>
-
       </div>
-
-
       <!-- TABLE -->
       <div class="pos-table-select">
-
         <label for="posTableNumber">
           Table
         </label>
-
         <select id="posTableNumber">
-
           <option value="">
             Select Table
           </option>
-
           <option value="1">
             Table 1
           </option>
-
           <option value="2">
             Table 2
           </option>
-
           <option value="3">
             Table 3
           </option>
-
           <option value="4">
             Table 4
           </option>
-
           <option value="5">
             Table 5
           </option>
-
         </select>
-
       </div>
-
-
       <!-- CART ITEMS ONLY WILL SCROLL -->
       <div
         id="posCartItems"
         class="pos-cart-items"
       >
-
         <div class="pos-empty-cart">
           <span>🛒</span>
-          <p>No items added yet</p>
-          <small>Select items from the menu</small>
+          <p>
+            No items added yet
+          </p>
+          <small>
+            Select items from the menu
+          </small>
         </div>
-
       </div>
-
-
       <!-- FIXED CART SUMMARY -->
       <div class="pos-cart-summary">
-
         <div>
           <span>Subtotal</span>
           <strong>₱0.00</strong>
         </div>
-
         <div>
           <span>VAT</span>
           <strong>₱0.00</strong>
         </div>
-
         <div>
           <span>Discount</span>
           <strong>₱0.00</strong>
         </div>
-
         <div class="pos-total">
           <span>Total</span>
           <strong>₱0.00</strong>
         </div>
-
       </div>
-
-
       <!-- FIXED CHECKOUT -->
       <button
         type="button"
@@ -2310,11 +2237,8 @@
       >
         Checkout
       </button>
-
     </aside>
-
   </div>
-
 </div>
   <!-- =========================
        TABLES SECTION
