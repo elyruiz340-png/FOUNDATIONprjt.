@@ -1257,81 +1257,84 @@
     background: #263f33;
   }
 
-  /* =========================
-     CURRENT ORDER PANEL
-  ========================= */
+ /* =========================
+   CURRENT ORDER PANEL
+========================= */
 
-  .pos-cart {
-    min-width: 0;
+.pos-cart {
+  min-width: 0;
 
-    height: calc(100vh - 190px);
+  height: calc(100vh - 20px);
+  min-height: calc(100vh - 20px);
 
-    background: #ffffff;
+  background: #ffffff;
 
-    border: 1px solid #dfe6e1;
+  border: 1px solid #dfe6e1;
 
-    border-radius: 16px;
+  border-radius: 16px;
 
-    display: flex;
+  display: flex;
 
-    flex-direction: column;
+  flex-direction: column;
 
-    overflow: hidden;
+  overflow: hidden;
 
-    position: sticky;
+  position: sticky;
 
-    top: 0;
-  }
+  top: 10px;
 
-  .pos-cart-header {
-    padding: 18px;
+  box-sizing: border-box;
+}
 
-    border-bottom: 1px solid #e6ebe8;
+.pos-cart-header {
+  padding: 18px;
 
-    display: flex;
+  border-bottom: 1px solid #e6ebe8;
 
-    justify-content: space-between;
+  display: flex;
 
-    align-items: flex-start;
+  justify-content: space-between;
 
-    gap: 10px;
-  }
+  align-items: flex-start;
 
-  .pos-cart-header h2 {
-    margin: 0;
+  gap: 10px;
+}
 
-    font-size: 18px;
+.pos-cart-header h2 {
+  margin: 0;
 
-    color: #26352e;
-  }
+  font-size: 18px;
 
-  .pos-cart-header span {
-    display: block;
+  color: #26352e;
+}
 
-    margin-top: 4px;
+.pos-cart-header span {
+  display: block;
 
-    font-size: 12px;
+  margin-top: 4px;
 
-    color: #7b8780;
-  }
+  font-size: 12px;
 
-  .payment-status {
-    padding: 6px 9px;
+  color: #7b8780;
+}
 
-    border-radius: 7px;
+.payment-status {
+  padding: 6px 9px;
 
-    font-size: 11px;
+  border-radius: 7px;
 
-    font-weight: 800;
+  font-size: 11px;
 
-    white-space: nowrap;
-  }
+  font-weight: 800;
 
-  .payment-status.unpaid {
-    background: #fbeaea;
+  white-space: nowrap;
+}
 
-    color: #a83232;
-  }
+.payment-status.unpaid {
+  background: #fbeaea;
+
+  color: #a83232;
+}
 
   /* =========================
      TABLE SELECT
