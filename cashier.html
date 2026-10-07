@@ -5694,20 +5694,32 @@ if (
 
 }
   /* =========================
-     BUTTONS
-  ========================= */
+   BUTTONS + INITIAL LOAD
+========================= */
+
+if (
+  refreshBtn &&
+  typeof loadTables === "function"
+) {
+
   refreshBtn.addEventListener(
     "click",
     loadTables
   );
+
+}
+
+if (
+  refreshStockBtn &&
+  typeof loadStocks === "function"
+) {
+
   refreshStockBtn.addEventListener(
     "click",
     loadStocks
   );
-  /* =========================
-     INITIAL LOAD
-  ========================= */
-loadTables();
+
+}
 
 </script>
 </body>
