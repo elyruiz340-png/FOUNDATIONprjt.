@@ -869,7 +869,7 @@
     overflow: hidden;
   }
 
-  /* =========================
+ /* =========================
    POS TOP BAR
 ========================= */
 
@@ -888,9 +888,12 @@
   column-gap: 20px;
   row-gap: 3px;
 
-  width: calc(100% - 400px);
+  width: 100%;
+  max-width: 100%;
 
   margin-bottom: 10px;
+
+  box-sizing: border-box;
 }
 
 .pos-topbar h2 {
@@ -1127,22 +1130,21 @@
     align-items: stretch;
   }
 
-  /* =========================
+ /* =========================
      MENU AREA
   ========================= */
 
   .pos-menu-area {
     min-width: 0;
-
     width: 100%;
     max-width: 100%;
 
-    max-height: calc(100vh - 190px);
+    max-height: calc(100vh - 20px);
 
     overflow-y: auto;
     overflow-x: hidden;
 
-    padding-right: 6px;
+    padding: 0 6px 0 0;
 
     box-sizing: border-box;
   }
