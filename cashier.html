@@ -4477,10 +4477,8 @@ function updateCategoryHighlight(
 
   highlight.style.transform =
     "translate(" +
-    left +
-    "px, " +
-    top +
-    "px)";
+    left + "px, " +
+    top + "px)";
 
   highlight.classList.toggle(
     "animate",
@@ -4873,62 +4871,6 @@ if (posSearch) {
     function() {
 
       applyPosFilters();
-
-    }
-  );
-
-}
-  /* =========================
-   POS SEARCH
-========================= */
-
-const posSearch =
-  document.getElementById("posSearch");
-
-if (posSearch) {
-
-  posSearch.addEventListener(
-    "input",
-    function() {
-
-      const searchTerm =
-        posSearch.value
-          .trim()
-          .toLowerCase();
-
-      if (!posMenuGrid) {
-        return;
-      }
-
-      const menuCards =
-        posMenuGrid.querySelectorAll(
-          ".pos-menu-card"
-        );
-
-      menuCards.forEach(function(card) {
-
-        const itemName =
-          card.querySelector("h3");
-
-        if (!itemName) {
-          return;
-        }
-
-        const name =
-          itemName.textContent
-            .trim()
-            .toLowerCase();
-
-        if (
-          searchTerm === "" ||
-          name.includes(searchTerm)
-        ) {
-          card.style.display = "";
-        } else {
-          card.style.display = "none";
-        }
-
-      });
 
     }
   );
