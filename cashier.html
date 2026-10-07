@@ -1129,24 +1129,29 @@
     color: #294438;
   }
 
-  /* =========================
-     MENU + CART
-  ========================= */
+/* =========================
+   MENU + CART
+========================= */
 
-  #posSection .pos-content,
-  .pos-content {
-    display: grid;
+#posSection .pos-content,
+.pos-content {
+  display: grid;
 
-    grid-template-columns:
-      minmax(0, 1fr) 380px;
+  grid-template-columns:
+    minmax(0, 1fr) 380px;
 
-    gap: 20px;
+  gap: 20px;
 
-    width: 100%;
-    min-width: 0;
+  width: 100%;
+  min-width: 0;
 
-    align-items: stretch;
-  }
+  height: calc(100vh - 160px);
+  min-height: 0;
+
+  align-items: stretch;
+
+  box-sizing: border-box;
+}
 
  /* =========================
      MENU AREA
