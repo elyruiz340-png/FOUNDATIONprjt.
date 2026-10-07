@@ -2611,122 +2611,94 @@ document
           );
 
         if (!sectionId) {
-
           console.error(
             "POS sidebar button has no data-pos-section:",
             button
           );
-
           return;
         }
-
 
         /* =========================
            SIDEBAR ACTIVE STATE
         ========================= */
 
         document
-          .querySelectorAll(
-            ".pos-sidebar-btn"
-          )
+          .querySelectorAll(".pos-sidebar-btn")
           .forEach(function(btn) {
-
-            btn.classList.remove(
-              "active"
-            );
-
+            btn.classList.remove("active");
           });
 
-        button.classList.add(
-          "active"
-        );
-
+        button.classList.add("active");
 
         /* =========================
            HIDE ALL POS SECTIONS
         ========================= */
 
         document
-          .querySelectorAll(
-            "#posSection, .page-section"
-          )
+          .querySelectorAll("#posSection, .page-section")
           .forEach(function(section) {
-
-            section.classList.remove(
-              "active"
-            );
-
+            section.style.display = "none";
+            section.classList.remove("active");
           });
-
 
         /* =========================
            SHOW SELECTED SECTION
         ========================= */
 
         const selectedSection =
-          document.getElementById(
-            sectionId
-          );
+          document.getElementById(sectionId);
 
         if (!selectedSection) {
-
           console.error(
             "POS section not found:",
             sectionId
           );
-
           return;
         }
 
-        selectedSection.classList.add(
-          "active"
-        );
-
+        selectedSection.style.display = "block";
+        selectedSection.classList.add("active");
 
         /* =========================
            CLEAR MESSAGE
         ========================= */
 
-        clearMessage();
-
+        if (typeof clearMessage === "function") {
+          clearMessage();
+        }
 
         /* =========================
            LOAD SECTION DATA
         ========================= */
 
         if (
-          sectionId ===
-          "tablesSection"
+          sectionId === "tablesSection" &&
+          typeof loadTables === "function"
         ) {
-
           loadTables();
-
         }
 
-
         if (
-          sectionId ===
-          "stocksSection"
+          sectionId === "stocksSection" &&
+          typeof loadStocks === "function"
         ) {
-
           loadStocks();
-
         }
 
-
         if (
-          sectionId ===
-          "ordersSection"
+          sectionId === "ordersSection" &&
+          typeof loadOrders === "function"
         ) {
-
           loadOrders();
 
-          startOrdersRefresh();
-
+          if (
+            typeof startOrdersRefresh === "function"
+          ) {
+            startOrdersRefresh();
+          }
         }
 
       }
-
     );
 
   });
