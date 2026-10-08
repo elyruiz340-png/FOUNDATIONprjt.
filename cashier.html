@@ -1839,47 +1839,129 @@
 
 .checkout-modal {
 
-  width: min(900px, 92vw);
+  width: min(820px, 90vw);
 
-  max-height: 88vh;
+  max-height: 84vh;
 
   display: grid;
 
   grid-template-columns:
-    minmax(0, 1.08fr)
-    minmax(0, 0.92fr);
+    minmax(0, 1.05fr)
+    minmax(0, 0.95fr);
 
-  gap: 18px;
+  gap: 22px;
 
   align-items: center;
 
   box-sizing: border-box;
 
-  transform:
-    translateY(14px)
-    scale(0.97);
-
   opacity: 0;
 
+  transform:
+    translateY(18px)
+    scale(0.98);
+
+  transform-origin: center center;
+
   transition:
-    transform 0.34s
+    transform 0.38s
       cubic-bezier(
         0.22,
         1,
         0.36,
         1
       ),
-    opacity 0.25s ease;
+    opacity 0.28s ease;
 }
+
+
+/* =========================
+   CHECKOUT MODAL ACTIVE
+========================= */
 
 .checkout-overlay.active
 .checkout-modal {
 
+  opacity: 1;
+
   transform:
     translateY(0)
     scale(1);
+}
+
+
+/* =========================
+   ORDER SUMMARY ENTRANCE
+========================= */
+
+.checkout-summary-card {
+
+  opacity: 0;
+
+  transform:
+    translateY(16px)
+    scale(0.98);
+
+  transition:
+    opacity 0.34s ease 0.08s,
+    transform 0.42s
+      cubic-bezier(
+        0.22,
+        1,
+        0.36,
+        1
+      ) 0.08s;
+}
+
+
+/* =========================
+   PAYMENT OPTIONS ENTRANCE
+========================= */
+
+.checkout-payment-options {
+
+  opacity: 0;
+
+  transform:
+    translateY(18px)
+    scale(0.98);
+
+  transition:
+    opacity 0.34s ease 0.20s,
+    transform 0.42s
+      cubic-bezier(
+        0.22,
+        1,
+        0.36,
+        1
+      ) 0.20s;
+}
+
+
+/* =========================
+   CHECKOUT CONTENT ACTIVE
+========================= */
+
+.checkout-overlay.active
+.checkout-modal
+.checkout-summary-card {
 
   opacity: 1;
+
+  transform:
+    translateY(0)
+    scale(1);
+}
+
+.checkout-overlay.active
+.checkout-modal
+.checkout-payment-options {
+
+  opacity: 1;
+
+  transform:
+    translateY(0)
+    scale(1);
 }
 /* =========================
    ORDER SUMMARY CARD
