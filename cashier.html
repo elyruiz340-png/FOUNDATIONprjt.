@@ -7856,7 +7856,43 @@ if (
   );
 
 }
+/* =========================
+   CHECKOUT POPUP
+========================= */
 
+const checkoutOverlay =
+  document.getElementById(
+    "checkoutOverlay"
+  );
+
+const posCheckoutButton =
+  document.getElementById(
+    "posCheckoutBtn"
+  );
+
+
+if (
+  checkoutOverlay &&
+  posCheckoutButton
+) {
+
+  posCheckoutButton.addEventListener(
+    "click",
+    function() {
+
+      checkoutOverlay.classList.add(
+        "active"
+      );
+
+      checkoutOverlay.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+
+    }
+  );
+
+}
 </script>
 </body>
 </html>
