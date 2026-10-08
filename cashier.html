@@ -3653,164 +3653,380 @@
 
 </div>
 
-    <!-- =====================
-         CURRENT ORDER
-    ====================== -->
-    <aside class="pos-cart">
+   <!-- =====================
+     CURRENT ORDER
+====================== -->
+<aside class="pos-cart">
 
-      <!-- =====================
-           ORDER TYPE
-      ====================== -->
-      <div class="pos-order-types">
+  <!-- =====================
+       ORDER TYPE
+  ====================== -->
+  <div class="pos-order-types">
 
-        <button
-          type="button"
-          class="pos-order-type active"
-        >
-          DINE IN
-        </button>
+    <button
+      type="button"
+      class="pos-order-type active"
+    >
+      DINE IN
+    </button>
 
-        <button
-          type="button"
-          class="pos-order-type"
-        >
-          TAKEOUT
-        </button>
+    <button
+      type="button"
+      class="pos-order-type"
+    >
+      TAKEOUT
+    </button>
 
-        <button
-          type="button"
-          class="pos-order-type"
-        >
-          DELIVERY
-        </button>
+    <button
+      type="button"
+      class="pos-order-type"
+    >
+      DELIVERY
+    </button>
+
+  </div>
+
+
+  <!-- CURRENT ORDER HEADER -->
+  <div class="pos-cart-header">
+
+    <div>
+      <h2>Current Order</h2>
+
+      <span>
+        New Order
+      </span>
+    </div>
+
+    <strong class="payment-status unpaid">
+      UNPAID
+    </strong>
+
+  </div>
+
+
+  <!-- TABLE -->
+  <div class="pos-table-select">
+
+    <label for="posTableNumber">
+      Table
+    </label>
+
+    <select id="posTableNumber">
+
+      <option value="">
+        Select Table
+      </option>
+
+      <option value="1">
+        Table 1
+      </option>
+
+      <option value="2">
+        Table 2
+      </option>
+
+      <option value="3">
+        Table 3
+      </option>
+
+      <option value="4">
+        Table 4
+      </option>
+
+      <option value="5">
+        Table 5
+      </option>
+
+    </select>
+
+  </div>
+
+
+  <!-- CART ITEMS ONLY WILL SCROLL -->
+  <div
+    id="posCartItems"
+    class="pos-cart-items"
+  >
+
+    <div class="pos-empty-cart">
+
+      <span>🛒</span>
+
+      <p>
+        No items added yet
+      </p>
+
+      <small>
+        Select items from the menu
+      </small>
+
+    </div>
+
+  </div>
+
+
+  <!-- FIXED CART SUMMARY -->
+  <div class="pos-cart-summary">
+
+    <div>
+      <span>Subtotal</span>
+      <strong>₱0.00</strong>
+    </div>
+
+    <div>
+      <span>VAT</span>
+      <strong>₱0.00</strong>
+    </div>
+
+    <div>
+      <span>Discount</span>
+      <strong>₱0.00</strong>
+    </div>
+
+    <div class="pos-total">
+      <span>Total</span>
+      <strong>₱0.00</strong>
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       FIXED CHECKOUT
+  ========================= -->
+
+  <button
+    type="button"
+    class="pos-checkout-btn"
+    id="posCheckoutBtn"
+  >
+    Checkout
+  </button>
+
+</aside>
+
+
+<!-- =========================
+     CHECKOUT POPUP
+========================= -->
+
+<div
+  id="checkoutOverlay"
+  class="checkout-overlay"
+  aria-hidden="true"
+
+
+  <div
+    class="checkout-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="checkoutTitle"
+  >
+
+    <!-- ORDER SUMMARY -->
+
+    <div class="checkout-summary-card">
+
+      <div class="checkout-summary-header">
+
+        <h2 id="checkoutTitle">
+          Order Summary
+        </h2>
 
       </div>
 
 
-      <!-- CURRENT ORDER HEADER -->
-      <div class="pos-cart-header">
-
-        <div>
-          <h2>Current Order</h2>
-
-          <span>
-            New Order
-          </span>
-        </div>
-
-        <strong class="payment-status unpaid">
-          UNPAID
-        </strong>
-
-      </div>
-
-
-      <!-- TABLE -->
-      <div class="pos-table-select">
-
-        <label for="posTableNumber">
-          Table
-        </label>
-
-        <select id="posTableNumber">
-
-          <option value="">
-            Select Table
-          </option>
-
-          <option value="1">
-            Table 1
-          </option>
-
-          <option value="2">
-            Table 2
-          </option>
-
-          <option value="3">
-            Table 3
-          </option>
-
-          <option value="4">
-            Table 4
-          </option>
-
-          <option value="5">
-            Table 5
-          </option>
-
-        </select>
-
-      </div>
-
-
-      <!-- CART ITEMS ONLY WILL SCROLL -->
       <div
-        id="posCartItems"
-        class="pos-cart-items"
+        id="checkoutSummaryItems"
+        class="checkout-summary-items"
       >
-
-        <div class="pos-empty-cart">
-
-          <span>🛒</span>
-
-          <p>
-            No items added yet
-          </p>
-
-          <small>
-            Select items from the menu
-          </small>
-
-        </div>
-
+        <!-- JS WILL LOAD ORDER ITEMS HERE -->
       </div>
 
 
-      <!-- FIXED CART SUMMARY -->
-      <div class="pos-cart-summary">
+      <button
+        type="button"
+        class="checkout-add-more"
+        id="checkoutAddMore"
+      >
+        <span>＋</span>
+        Add More
+      </button>
+
+
+      <div class="checkout-summary-lines">
 
         <div>
           <span>Subtotal</span>
-          <strong>₱0.00</strong>
+
+          <strong id="checkoutSubtotal">
+            ₱0.00
+          </strong>
         </div>
 
         <div>
           <span>VAT</span>
-          <strong>₱0.00</strong>
+
+          <strong id="checkoutVat">
+            ₱0.00
+          </strong>
         </div>
 
         <div>
           <span>Discount</span>
-          <strong>₱0.00</strong>
-        </div>
 
-        <div class="pos-total">
-          <span>Total</span>
-          <strong>₱0.00</strong>
+          <strong id="checkoutDiscount">
+            ₱0.00
+          </strong>
         </div>
 
       </div>
 
- <!-- =========================
-     FIXED CHECKOUT
-========================= -->
 
-<button
-  type="button"
-  class="pos-checkout-btn"
-  id="posCheckoutBtn"
->
-  Checkout
-</button>
+      <div class="checkout-total">
+
+        <span>
+          Total Amount
+        </span>
+
+        <strong id="checkoutTotal">
+          ₱0.00
+        </strong>
+
+      </div>
+
+    </div>
 
 
+    <!-- PAYMENT OPTIONS -->
 
+    <div class="checkout-payment-options">
+
+      <button
+        type="button"
+        class="checkout-payment-card"
+        data-payment-method="gift"
+      >
+        <span class="checkout-payment-icon">
+          🎁
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Gift Card / Voucher
+          </strong>
+
+          <small>
+            Apply voucher
+          </small>
+
+        </span>
+      </button>
+
+
+      <button
+        type="button"
+        class="checkout-payment-card"
+        data-payment-method="discount"
+      >
+        <span class="checkout-payment-icon">
+          %
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Discount
+          </strong>
+
+          <small>
+            Senior / PWD
+          </small>
+
+        </span>
+      </button>
+
+
+      <button
+        type="button"
+        class="checkout-payment-card"
+        data-payment-method="cash"
+      >
+        <span class="checkout-payment-icon">
+          💵
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Cash
+          </strong>
+
+          <small>
+            Pay at counter
+          </small>
+
+        </span>
+      </button>
+
+
+      <button
+        type="button"
+        class="checkout-payment-card"
+        data-payment-method="card"
+      >
+        <span class="checkout-payment-icon">
+          ▣
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Card / QR
+          </strong>
+
+          <small>
+            GCash / Bank / Card
+          </small>
+
+        </span>
+      </button>
+
+
+      <button
+        type="button"
+        class="checkout-payment-card checkout-payment-pending"
+        data-payment-method="pending"
+      >
+        <span class="checkout-payment-icon">
+          ◷
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Pending
+          </strong>
+
+          <small>
+            Payment later
+          </small>
+
+        </span>
+      </button>
+
+    </div>
 
   </div>
+
+</div>
+
+
 </div>
 </div>
 </section>
-        
 <!-- =========================
      TABLES SECTION
 ========================= -->
