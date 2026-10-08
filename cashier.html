@@ -2186,15 +2186,11 @@
 ========================= */
 
 .checkout-payment-options {
-
   min-width: 0;
-
   width: 100%;
 
   display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
   gap: 10px;
 
@@ -2208,22 +2204,31 @@
    PAYMENT CARD SIZE
 ========================= */
 
-.checkout-payment-options
-.checkout-payment-card {
-
+.checkout-payment-options .checkout-payment-card {
   width: 100%;
-
+  height: 82px;
   min-height: 82px;
 
-  height: 82px;
-
-  padding: 13px 14px;
+  padding: 12px 14px;
 
   border-radius: 16px;
 
   box-sizing: border-box;
 
   justify-self: stretch;
+}
+
+
+/* =========================
+   PENDING PAYMENT
+========================= */
+
+.checkout-payment-options .checkout-payment-pending {
+  grid-column: 1 / -1;
+
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
 }
 /* =========================
    PENDING FULL WIDTH
