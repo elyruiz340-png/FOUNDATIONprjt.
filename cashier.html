@@ -1855,23 +1855,21 @@
 
   box-sizing: border-box;
 
+  transform:
+    translateY(14px)
+    scale(0.97);
+
   opacity: 0;
 
-  transform:
-    translateY(18px)
-    scale(0.98);
-
-  transform-origin: center center;
-
   transition:
-    transform 0.38s
+    transform 0.34s
       cubic-bezier(
         0.22,
         1,
         0.36,
         1
       ),
-    opacity 0.28s ease;
+    opacity 0.25s ease;
 }
 
 
@@ -1882,86 +1880,11 @@
 .checkout-overlay.active
 .checkout-modal {
 
-  opacity: 1;
-
   transform:
     translateY(0)
     scale(1);
-}
-
-
-/* =========================
-   ORDER SUMMARY ENTRANCE
-========================= */
-
-.checkout-summary-card {
-
-  opacity: 0;
-
-  transform:
-    translateY(16px)
-    scale(0.98);
-
-  transition:
-    opacity 0.34s ease 0.08s,
-    transform 0.42s
-      cubic-bezier(
-        0.22,
-        1,
-        0.36,
-        1
-      ) 0.08s;
-}
-
-
-/* =========================
-   PAYMENT OPTIONS ENTRANCE
-========================= */
-
-.checkout-payment-options {
-
-  opacity: 0;
-
-  transform:
-    translateY(18px)
-    scale(0.98);
-
-  transition:
-    opacity 0.34s ease 0.20s,
-    transform 0.42s
-      cubic-bezier(
-        0.22,
-        1,
-        0.36,
-        1
-      ) 0.20s;
-}
-
-
-/* =========================
-   CHECKOUT CONTENT ACTIVE
-========================= */
-
-.checkout-overlay.active
-.checkout-modal
-.checkout-summary-card {
 
   opacity: 1;
-
-  transform:
-    translateY(0)
-    scale(1);
-}
-
-.checkout-overlay.active
-.checkout-modal
-.checkout-payment-options {
-
-  opacity: 1;
-
-  transform:
-    translateY(0)
-    scale(1);
 }
 /* =========================
    ORDER SUMMARY CARD
