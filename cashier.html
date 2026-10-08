@@ -1741,8 +1741,8 @@
 
 
 /* =========================
-   CHECKOUT
-========================= */
+    CHECKOUT
+ ========================= */
 
 .pos-checkout-btn {
   margin: 0 18px 10px;
@@ -1762,10 +1762,499 @@
   font-weight: 800;
 
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .pos-checkout-btn:hover {
   background: #263f33;
+}
+
+.pos-checkout-btn:active {
+  transform: scale(0.98);
+}
+
+
+/* =========================
+   CHECKOUT OVERLAY
+========================= */
+
+.checkout-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 28px;
+
+  box-sizing: border-box;
+
+  background:
+    rgba(236, 239, 237, 0.48);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  opacity: 0;
+
+  visibility: hidden;
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.28s ease,
+    visibility 0.28s ease;
+}
+
+.checkout-overlay.active {
+  opacity: 1;
+
+  visibility: visible;
+
+  pointer-events: auto;
+}
+
+
+/* =========================
+   CHECKOUT MODAL
+========================= */
+
+.checkout-modal {
+  width: min(920px, 100%);
+
+  max-height: 88vh;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.25fr)
+    minmax(260px, 0.75fr);
+
+  gap: 18px;
+
+  align-items: stretch;
+
+  box-sizing: border-box;
+
+  transform:
+    translateY(12px)
+    scale(0.97);
+
+  opacity: 0;
+
+  transition:
+    transform 0.32s
+      cubic-bezier(
+        0.22,
+        1,
+        0.36,
+        1
+      ),
+    opacity 0.25s ease;
+}
+
+.checkout-overlay.active
+.checkout-modal {
+  transform:
+    translateY(0)
+    scale(1);
+
+  opacity: 1;
+}
+
+
+/* =========================
+   ORDER SUMMARY
+========================= */
+
+.checkout-summary-card {
+  min-width: 0;
+
+  min-height: 460px;
+
+  padding: 24px;
+
+  background: #ffffff;
+
+  border:
+    1px solid #e1e8e3;
+
+  border-radius: 22px;
+
+  box-shadow:
+    0 20px 55px
+    rgba(36, 51, 43, 0.14);
+
+  display: flex;
+
+  flex-direction: column;
+
+  box-sizing: border-box;
+}
+
+.checkout-summary-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 18px;
+}
+
+.checkout-summary-header h2 {
+  margin: 0;
+
+  color: #1f3027;
+
+  font-size: 24px;
+
+  line-height: 1.2;
+}
+
+.checkout-summary-items {
+  flex: 1;
+
+  min-height: 120px;
+
+  overflow-y: auto;
+
+  padding-right: 4px;
+
+  box-sizing: border-box;
+}
+
+.checkout-summary-item {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 12px 0;
+
+  border-bottom:
+    1px solid #edf1ee;
+}
+
+.checkout-summary-item:last-child {
+  border-bottom: 0;
+}
+
+.checkout-summary-item-info {
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.checkout-summary-item-name {
+  color: #26372e;
+
+  font-size: 14px;
+
+  font-weight: 700;
+}
+
+.checkout-summary-item-qty {
+  color: #7a8780;
+
+  font-size: 12px;
+}
+
+.checkout-summary-item-price {
+  flex-shrink: 0;
+
+  color: #315143;
+
+  font-size: 14px;
+
+  font-weight: 800;
+}
+
+
+/* =========================
+   ADD MORE
+========================= */
+
+.checkout-add-more {
+  width: 100%;
+
+  min-height: 38px;
+
+  margin-top: 8px;
+
+  border:
+    1px dashed #b8c8bf;
+
+  border-radius: 10px;
+
+  background: #f8faf8;
+
+  color: #315143;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.checkout-add-more:hover {
+  background: #eef4f0;
+
+  border-color: #9db4a5;
+}
+
+
+/* =========================
+   SUMMARY LINES
+========================= */
+
+.checkout-summary-lines {
+  margin-top: 18px;
+
+  padding-top: 14px;
+
+  border-top:
+    1px solid #e6ebe8;
+}
+
+.checkout-summary-lines > div {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+
+  color: #6d7972;
+
+  font-size: 13px;
+}
+
+.checkout-summary-lines strong {
+  color: #34463c;
+
+  font-weight: 700;
+}
+
+
+/* =========================
+   TOTAL
+========================= */
+
+.checkout-total {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-top: 8px;
+
+  padding-top: 14px;
+
+  border-top:
+    1px solid #e1e7e3;
+}
+
+.checkout-total span {
+  color: #25362d;
+
+  font-size: 15px;
+
+  font-weight: 800;
+}
+
+.checkout-total strong {
+  color: #315143;
+
+  font-size: 25px;
+
+  font-weight: 900;
+}
+
+
+/* =========================
+   PAYMENT OPTIONS
+========================= */
+
+.checkout-payment-options {
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+
+  box-sizing: border-box;
+}
+
+.checkout-payment-card {
+  width: 100%;
+
+  min-height: 78px;
+
+  padding: 13px 15px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  border:
+    1px solid #e0e7e2;
+
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  color: #315143;
+
+  box-shadow:
+    0 8px 24px
+    rgba(36, 51, 43, 0.08);
+
+  text-align: left;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.checkout-payment-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #b8c9be;
+
+  background: #fbfdfb;
+
+  box-shadow:
+    0 12px 28px
+    rgba(36, 51, 43, 0.11);
+}
+
+.checkout-payment-card:active {
+  transform: scale(0.985);
+}
+
+.checkout-payment-icon {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: #edf4ef;
+
+  color: #315143;
+
+  font-size: 18px;
+
+  font-weight: 800;
+}
+
+.checkout-payment-text {
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.checkout-payment-text strong {
+  color: #26372e;
+
+  font-size: 13px;
+
+  line-height: 1.25;
+}
+
+.checkout-payment-text small {
+  color: #829088;
+
+  font-size: 11px;
+
+  line-height: 1.25;
+}
+
+
+/* =========================
+   PENDING
+========================= */
+
+.checkout-payment-pending {
+  border-color: #d9e2dc;
+}
+
+.checkout-payment-pending
+.checkout-payment-icon {
+  background: #f1f4f2;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 760px) {
+
+  .checkout-overlay {
+    padding: 16px;
+  }
+
+  .checkout-modal {
+    grid-template-columns: 1fr;
+
+    max-height: 92vh;
+
+    overflow-y: auto;
+  }
+
+  .checkout-summary-card {
+    min-height: 400px;
+  }
+
+  .checkout-payment-options {
+    padding-bottom: 4px;
+  }
+
 }
   /* =========================
      TABLET
@@ -2840,14 +3329,259 @@
 
       </div>
 
- <!-- FIXED CHECKOUT -->
+ <!-- =========================
+     FIXED CHECKOUT
+========================= -->
+
+<button
+  type="button"
+  class="pos-checkout-btn"
+  id="posCheckoutBtn"
+
+  Checkout
+</button>
+
+
+<!-- =========================
+     CHECKOUT POPUP
+========================= -->
+
+<div
+  id="checkoutOverlay"
+  class="checkout-overlay"
+  aria-hidden="true"
+
+
+  <div
+    class="checkout-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="checkoutTitle"
+  >
+
+    <!-- =====================
+         ORDER SUMMARY
+    ====================== -->
+
+    <div class="checkout-summary-card">
+
+      <div class="checkout-summary-header">
+
+        <h2 id="checkoutTitle">
+          Order Summary
+        </h2>
+
+      </div>
+
+
+      <div
+        id="checkoutSummaryItems"
+        class="checkout-summary-items"
+      >
+
+        <!-- JS WILL LOAD ORDER ITEMS HERE -->
+
+      </div>
+
+
       <button
         type="button"
-        class="pos-checkout-btn"
+        class="checkout-add-more"
+        id="checkoutAddMore"
       >
-        Checkout
+        <span>＋</span>
+        Add More
       </button>
 
+
+      <div class="checkout-summary-lines">
+
+        <div>
+          <span>Subtotal</span>
+          <strong id="checkoutSubtotal">
+            ₱0.00
+          </strong>
+        </div>
+
+        <div>
+          <span>VAT</span>
+          <strong id="checkoutVat">
+            ₱0.00
+          </strong>
+        </div>
+
+        <div>
+          <span>Discount</span>
+          <strong id="checkoutDiscount">
+            ₱0.00
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="checkout-total">
+
+        <span>
+          Total Amount
+        </span>
+
+        <strong id="checkoutTotal">
+          ₱0.00
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================
+         PAYMENT OPTIONS
+    ====================== -->
+
+    <div class="checkout-payment-options">
+
+
+      <!-- GIFT CARD / VOUCHER -->
+
+      <button
+        type="button"
+        class="checkout-payment-card"
+        data-payment-method="gift"
+      >
+
+        <span class="checkout-payment-icon">
+          🎁
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Gift Card / Voucher
+          </strong>
+
+          <small>
+            Apply voucher
+          </small>
+
+        </span>
+
+      </button>
+
+
+      <!-- DISCOUNT -->
+
+      <button
+        type="button"
+        class="checkout-payment-card"
+        data-payment-method="discount"
+      >
+
+        <span class="checkout-payment-icon">
+          %
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Discount
+          </strong>
+
+          <small>
+            Senior / PWD
+          </small>
+
+        </span>
+
+      </button>
+
+
+      <!-- CASH -->
+
+      <button
+        type="button"
+        class="checkout-payment-card"
+        data-payment-method="cash"
+      >
+
+        <span class="checkout-payment-icon">
+          💵
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Cash
+          </strong>
+
+          <small>
+            Pay at counter
+          </small>
+
+        </span>
+
+      </button>
+
+
+      <!-- CARD / QR -->
+
+      <button
+        type="button"
+        class="checkout-payment-card"
+        data-payment-method="card"
+      >
+
+        <span class="checkout-payment-icon">
+          ▣
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Card / QR
+          </strong>
+
+          <small>
+            GCash / Bank / Card
+          </small>
+
+        </span>
+
+      </button>
+
+
+      <!-- PENDING -->
+
+      <button
+        type="button"
+        class="checkout-payment-card checkout-payment-pending"
+        data-payment-method="pending"
+      >
+
+        <span class="checkout-payment-icon">
+          ◷
+        </span>
+
+        <span class="checkout-payment-text">
+
+          <strong>
+            Pending
+          </strong>
+
+          <small>
+            Payment later
+          </small>
+
+        </span>
+
+      </button>
+
+
+    </div>
+
+  </div>
+
+</div>
     </aside>
 
   </div>
