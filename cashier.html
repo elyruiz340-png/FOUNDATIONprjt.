@@ -1839,10 +1839,11 @@
 
 .checkout-modal {
   width: min(846px, 90vw);
+  max-width: 90vw;
   max-height: 84vh;
 
   display: grid;
-  grid-template-columns: 430px 402px;
+  grid-template-columns: minmax(0, 430px) minmax(0, 360px);
   gap: 14px;
 
   align-items: center;
