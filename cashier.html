@@ -7559,6 +7559,160 @@ const posCheckoutButton =
     "posCheckoutBtn"
   );
 
+const checkoutSummaryItems =
+  document.getElementById(
+    "checkoutSummaryItems"
+  );
+
+const checkoutSubtotal =
+  document.getElementById(
+    "checkoutSubtotal"
+  );
+
+const checkoutVat =
+  document.getElementById(
+    "checkoutVat"
+  );
+
+const checkoutDiscount =
+  document.getElementById(
+    "checkoutDiscount"
+  );
+
+const checkoutTotal =
+  document.getElementById(
+    "checkoutTotal"
+  );
+
+const checkoutAddMore =
+  document.getElementById(
+    "checkoutAddMore"
+  );
+
+
+function formatCheckoutMoney(amount) {
+
+  return "₱" + amount.toLocaleString(
+    undefined,
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }
+  );
+
+}
+
+
+function renderCheckoutSummary() {
+
+  if (!checkoutSummaryItems) {
+    return;
+  }
+
+  if (!posCart || posCart.length === 0) {
+
+    checkoutSummaryItems.innerHTML = `
+      <div class="pos-empty-cart">
+        <p>No items added yet</p>
+        <small>Select items from the menu</small>
+      </div>
+    `;
+
+  } else {
+
+    checkoutSummaryItems.innerHTML = "";
+
+    posCart.forEach(function(item) {
+
+      const itemRow =
+        document.createElement("div");
+
+      itemRow.className =
+        "checkout-summary-item";
+
+      const itemInfo =
+        document.createElement("div");
+
+      itemInfo.className =
+        "checkout-summary-item-info";
+
+      const itemName =
+        document.createElement("span");
+
+      itemName.className =
+        "checkout-summary-item-name";
+
+      itemName.textContent =
+        item.name;
+
+      const itemQty =
+        document.createElement("span");
+
+      itemQty.className =
+        "checkout-summary-item-qty";
+
+      itemQty.textContent =
+        "Qty: " + item.quantity;
+
+      itemInfo.appendChild(itemName);
+      itemInfo.appendChild(itemQty);
+
+      const itemPrice =
+        document.createElement("strong");
+
+      itemPrice.className =
+        "checkout-summary-item-price";
+
+      itemPrice.textContent =
+        formatCheckoutMoney(
+          item.price * item.quantity
+        );
+
+      itemRow.appendChild(itemInfo);
+      itemRow.appendChild(itemPrice);
+
+      checkoutSummaryItems.appendChild(
+        itemRow
+      );
+
+    });
+
+  }
+
+  const subtotal =
+    posCart.reduce(function(total, item) {
+
+      return total +
+        item.price * item.quantity;
+
+    }, 0);
+
+  const vat = 0;
+  const discount = 0;
+  const total = subtotal + vat - discount;
+
+  if (checkoutSubtotal) {
+    checkoutSubtotal.textContent =
+      formatCheckoutMoney(subtotal);
+  }
+
+  if (checkoutVat) {
+    checkoutVat.textContent =
+      formatCheckoutMoney(vat);
+  }
+
+  if (checkoutDiscount) {
+    checkoutDiscount.textContent =
+      formatCheckoutMoney(discount);
+  }
+
+  if (checkoutTotal) {
+    checkoutTotal.textContent =
+      formatCheckoutMoney(total);
+  }
+
+}
+
 
 if (
   checkoutOverlay &&
@@ -7569,6 +7723,8 @@ if (
     "click",
     function() {
 
+      renderCheckoutSummary();
+
       checkoutOverlay.classList.add(
         "active"
       );
@@ -7576,6 +7732,27 @@ if (
       checkoutOverlay.setAttribute(
         "aria-hidden",
         "false"
+      );
+
+    }
+  );
+
+}
+
+
+if (checkoutAddMore && checkoutOverlay) {
+
+  checkoutAddMore.addEventListener(
+    "click",
+    function() {
+
+      checkoutOverlay.classList.remove(
+        "active"
+      );
+
+      checkoutOverlay.setAttribute(
+        "aria-hidden",
+        "true"
       );
 
     }
