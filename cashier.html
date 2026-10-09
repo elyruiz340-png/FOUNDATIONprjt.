@@ -2361,6 +2361,417 @@ Sent
   color: #78857d;
   cursor: not-allowed;
 }
+  /* =========================
+   PAYMENT SUCCESSFUL OVERLAY
+========================= */
+
+.payment-success-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+  box-sizing: border-box;
+
+  background: rgba(17, 27, 22, 0.58);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.payment-success-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.payment-success-overlay[hidden] {
+  display: none !important;
+}
+
+/* =========================
+   PAYMENT SUCCESSFUL MODAL
+========================= */
+
+.payment-success-modal {
+  width: min(1000px, 94vw);
+  max-height: 88vh;
+  overflow: auto;
+
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: stretch;
+  gap: 20px;
+
+  padding: 22px;
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 26px;
+
+  background: rgba(247, 251, 248, 0.94);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.25);
+
+  transform: translateY(16px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.payment-success-overlay.active .payment-success-modal {
+  transform: translateY(0) scale(1);
+}
+
+/* =========================
+   SUCCESS PANEL
+========================= */
+
+.payment-success-panel {
+  min-width: 0;
+  padding: 26px 22px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 22px;
+
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12px 36px rgba(49, 81, 67, 0.09);
+  backdrop-filter: blur(18px);
+}
+
+.payment-success-check {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 18px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(81, 158, 111, 0.3);
+  border-radius: 50%;
+
+  background: rgba(220, 245, 228, 0.85);
+  box-shadow: 0 0 28px rgba(81, 177, 115, 0.22);
+
+  color: #287849;
+  font-size: 42px;
+  font-weight: 800;
+}
+
+.payment-success-panel h2 {
+  margin: 0;
+  color: #203b2c;
+  font-size: clamp(22px, 2.5vw, 30px);
+  font-weight: 850;
+}
+
+.payment-success-message {
+  margin: 10px 0 22px;
+  color: #718077;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.payment-success-details {
+  width: 100%;
+  display: grid;
+  gap: 12px;
+  text-align: left;
+}
+
+.payment-success-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(210, 224, 215, 0.8);
+
+  font-size: 12px;
+}
+
+.payment-success-detail span {
+  color: #738077;
+}
+
+.payment-success-detail strong {
+  color: #294a36;
+  font-size: 14px;
+  text-align: right;
+}
+
+/* =========================
+   SUCCESS ACTION BUTTONS
+========================= */
+
+.payment-success-actions {
+  width: 100%;
+  margin-top: 24px;
+  display: grid;
+  gap: 10px;
+}
+
+.payment-success-actions[hidden] {
+  display: none !important;
+}
+
+.payment-success-actions button {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+
+  border: 1px solid #315143;
+  border-radius: 11px;
+
+  background: #315143;
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.payment-success-actions button:hover {
+  background: #254232;
+}
+
+.payment-success-actions button:active {
+  transform: scale(0.98);
+}
+
+#newOrderBtn,
+#printReceiptBtn {
+  border-color: #d7e3da;
+  background: rgba(255, 255, 255, 0.85);
+  color: #315143;
+}
+
+#newOrderBtn:hover,
+#printReceiptBtn:hover {
+  background: #edf4ef;
+}
+
+/* =========================
+   RECEIPT / PRINTER AREA
+========================= */
+
+.payment-success-receipt-area {
+  min-width: 0;
+  min-height: 390px;
+  padding: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+  border-radius: 22px;
+
+  background:
+    radial-gradient(
+      circle at 50% 35%,
+      rgba(220, 241, 226, 0.9),
+      rgba(238, 245, 240, 0.5) 55%,
+      rgba(255, 255, 255, 0.35)
+    );
+}
+
+.receipt-printer {
+  position: relative;
+  width: min(100%, 330px);
+  padding-top: 48px;
+}
+
+.receipt-printer-top {
+  position: absolute;
+  top: 0;
+  left: 8%;
+  width: 84%;
+  height: 72px;
+
+  border: 1px solid #cbd6ce;
+  border-radius: 16px 16px 8px 8px;
+
+  background: linear-gradient(145deg, #fdfefd, #dce5df);
+  box-shadow: 0 12px 25px rgba(39, 65, 49, 0.12);
+}
+
+.receipt-printer-slot {
+  position: absolute;
+  top: 57px;
+  left: 18%;
+  z-index: 2;
+  width: 64%;
+  height: 8px;
+
+  border-radius: 5px;
+  background: #293a30;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.success-receipt {
+  position: relative;
+  z-index: 1;
+
+  width: 66%;
+  min-height: 240px;
+  margin: 0 auto -2px;
+  padding: 18px 12px 16px;
+
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+
+  background: #fffefb;
+  color: #35443a;
+
+  border: 1px solid #e4e5df;
+  box-shadow: 0 6px 18px rgba(30, 48, 36, 0.1);
+
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  text-align: center;
+}
+
+.success-receipt-header {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.success-receipt p {
+  margin: 8px 0;
+}
+
+.success-receipt-divider {
+  margin: 10px 0;
+  border-top: 1px dashed #9da79f;
+}
+
+.success-receipt-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+  text-align: left;
+}
+
+.success-receipt-item span {
+  min-width: 0;
+}
+
+.success-receipt-item strong {
+  flex-shrink: 0;
+}
+
+.success-receipt-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  text-align: left;
+}
+
+.success-receipt-footer {
+  padding-top: 8px;
+  font-size: 9px;
+}
+
+.receipt-printer-body {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  height: 130px;
+  margin-top: -2px;
+
+  border: 1px solid #c9d5cd;
+  border-radius: 12px 12px 22px 22px;
+
+  background: linear-gradient(145deg, #f5f8f5, #d4dfd7);
+  box-shadow: 0 18px 35px rgba(39, 65, 49, 0.16);
+}
+
+.receipt-printer-display {
+  position: absolute;
+  top: 24px;
+  left: 22px;
+
+  width: 48px;
+  height: 15px;
+
+  border: 1px solid #aab9ae;
+  border-radius: 4px;
+  background: #263b2e;
+}
+
+.receipt-printer-button {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+
+  width: 15px;
+  height: 15px;
+
+  border: 2px solid #a4b5a8;
+  border-radius: 50%;
+  background: #f8fbf8;
+}
+
+/* =========================
+   SUCCESS POPUP RESPONSIVE
+========================= */
+
+@media (max-width: 720px) {
+  .payment-success-overlay {
+    padding: 12px;
+  }
+
+  .payment-success-modal {
+    width: 100%;
+    max-height: 92vh;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .payment-success-panel {
+    padding: 22px 16px;
+  }
+
+  .payment-success-check {
+    width: 60px;
+    height: 60px;
+    font-size: 34px;
+  }
+
+  .payment-success-receipt-area {
+    min-height: 320px;
+  }
+
+  .receipt-printer {
+    max-width: 270px;
+  }
+}
 
 /* =========================
    PENDING PAYMENT
