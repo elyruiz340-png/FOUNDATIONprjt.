@@ -3482,13 +3482,13 @@
   opacity: 0 !important;
   pointer-events: none !important;
 }
-  /* =========================
+ /* =========================
    PAYMENT SUCCESSFUL
-   REMOVE OUTER SUMMARY CARD
+   REMOVE OLD WHITE BOX
 ========================= */
-
 .checkout-modal.payment-success-mode .checkout-summary-card {
   padding: 0 !important;
+  margin: 0 !important;
   border: none !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -3497,9 +3497,10 @@
   -webkit-backdrop-filter: none !important;
   overflow: visible !important;
 }
-
+/* Keep only the Payment Successful glass panel */
 .checkout-modal.payment-success-mode #paymentSuccessPanel {
   width: 100%;
+  min-width: 0;
   margin: 0;
   padding: 24px !important;
   box-sizing: border-box;
