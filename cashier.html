@@ -4020,6 +4020,119 @@ Sent
     </div>
   </section>
 </div>
+  <!-- =========================
+     PAYMENT SUCCESSFUL POPUP
+========================= -->
+
+<div
+  id="paymentSuccessOverlay"
+  class="payment-success-overlay"
+  aria-hidden="true"
+  hidden
+
+  <div
+    class="payment-success-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="paymentSuccessTitle"
+  >
+
+    <!-- LEFT: SUCCESS PANEL -->
+    <div class="payment-success-panel">
+
+      <div class="payment-success-check">✓</div>
+
+      <h2 id="paymentSuccessTitle">
+        Payment Successful!
+      </h2>
+
+      <p class="payment-success-message">
+        Payment has been verified successfully.
+      </p>
+
+      <div class="payment-success-details">
+
+        <div class="payment-success-detail">
+          <span>Total Paid</span>
+          <strong id="successTotalPaid">₱0.00</strong>
+        </div>
+
+        <div class="payment-success-detail">
+          <span>Amount Received</span>
+          <strong id="successAmountReceived">₱0.00</strong>
+        </div>
+
+        <div class="payment-success-detail">
+          <span>Change</span>
+          <strong id="successChange">₱0.00</strong>
+        </div>
+
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div
+        id="paymentSuccessActions"
+        class="payment-success-actions"
+        hidden
+      >
+        <button type="button" id="acceptOrderBtn">
+          Accept Order
+        </button>
+
+        <button type="button" id="newOrderBtn">
+          New Order
+        </button>
+
+        <button type="button" id="printReceiptBtn">
+          Print Receipt
+        </button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: PRINTER AND RECEIPT ANIMATION -->
+    <div class="payment-success-receipt-area">
+
+      <div class="receipt-printer">
+        <div class="receipt-printer-top"></div>
+        <div class="receipt-printer-slot"></div>
+
+        <div
+          id="successReceipt"
+          class="success-receipt"
+        >
+          <div class="success-receipt-header">
+            HALINA BISTRO CAFE
+          </div>
+
+          <p>PAYMENT RECEIPT</p>
+          <div class="success-receipt-divider"></div>
+
+          <div id="successReceiptItems">
+            <!-- Receipt items will be added by JavaScript -->
+          </div>
+
+          <div class="success-receipt-divider"></div>
+
+          <div class="success-receipt-total">
+            TOTAL: <strong id="successReceiptTotal">₱0.00</strong>
+          </div>
+
+          <p class="success-receipt-footer">
+            Thank you for dining with us!
+          </p>
+        </div>
+
+        <div class="receipt-printer-body">
+          <div class="receipt-printer-display"></div>
+          <div class="receipt-printer-button"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
 <script>
   
   window.onerror = function(message, source, lineno, colno, error) {
@@ -7964,10 +8077,103 @@ if (checkoutConfirmCash) {
       return;
     }
 
+    const successOverlay =
+      document.getElementById("paymentSuccessOverlay");
+
+    const successTotalPaid =
+      document.getElementById("successTotalPaid");
+
+    const successAmountReceived =
+      document.getElementById("successAmountReceived");
+
+    const successChange =
+      document.getElementById("successChange");
+
+    const successReceiptItems =
+      document.getElementById("successReceiptItems");
+
+    const successReceiptTotal =
+      document.getElementById("successReceiptTotal");
+
+    const successActions =
+      document.getElementById("paymentSuccessActions");
+
+    if (!successOverlay) {
+      console.error("Payment Successful popup was not found.");
+      return;
+    }
+
+    const total = getCheckoutTotal();
+    const received = Number(checkoutCashReceived.value);
+    const change = received - total;
+
+    if (
+      total <= 0 ||
+      !Number.isFinite(received) ||
+      received < total
+    ) {
+      updateCheckoutCashValues();
+      return;
+    }
+
+    if (successTotalPaid) {
+      successTotalPaid.textContent =
+        formatCheckoutMoney(total);
+    }
+
+    if (successAmountReceived) {
+      successAmountReceived.textContent =
+        formatCheckoutMoney(received);
+    }
+
+    if (successChange) {
+      successChange.textContent =
+        formatCheckoutMoney(change);
+    }
+
+    if (successReceiptTotal) {
+      successReceiptTotal.textContent =
+        formatCheckoutMoney(total);
+    }
+
+    if (successReceiptItems) {
+      successReceiptItems.innerHTML = "";
+
+      posCart.forEach(function(item) {
+        const receiptItem = document.createElement("div");
+        receiptItem.className = "success-receipt-item";
+
+        const itemName = document.createElement("span");
+        itemName.textContent =
+          item.name + " × " + item.quantity;
+
+        const itemPrice = document.createElement("strong");
+        itemPrice.textContent = formatCheckoutMoney(
+          Number(item.price) * Number(item.quantity)
+        );
+
+        receiptItem.appendChild(itemName);
+        receiptItem.appendChild(itemPrice);
+
+        successReceiptItems.appendChild(receiptItem);
+      });
+    }
+
+    if (successActions) {
+      successActions.hidden = false;
+    }
+
+    successOverlay.hidden = false;
+    successOverlay.setAttribute("aria-hidden", "false");
+    successOverlay.classList.add("active");
+
+    if (checkoutOverlay) {
+      checkoutOverlay.classList.remove("active");
+      checkoutOverlay.setAttribute("aria-hidden", "true");
+    }
+
     if (checkoutCashMessage) {
-      checkoutCashMessage.style.color = "#315143";
-      checkoutCashMessage.textContent =
-        "Cash amount verified. Payment recording is not connected yet.";
+      checkoutCashMessage.textContent = "";
     }
   });
 }
