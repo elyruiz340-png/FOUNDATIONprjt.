@@ -2574,33 +2574,43 @@ Sent
 
 /* =========================
    RECEIPT / PRINTER AREA
+   CHECKOUT OVERLAP FIX
 ========================= */
 
 .payment-success-receipt-area {
+  display: none;
+  width: 100%;
   min-width: 0;
-  min-height: 390px;
-  padding: 18px;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  margin: 0;
 
-  display: flex;
   align-items: center;
   justify-content: center;
 
-  overflow: hidden;
-  border-radius: 22px;
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 
-  background:
-    radial-gradient(
-      circle at 50% 35%,
-      rgba(220, 241, 226, 0.9),
-      rgba(238, 245, 240, 0.5) 55%,
-      rgba(255, 255, 255, 0.35)
-    );
+/* Show printer only after JavaScript removes hidden */
+
+.payment-success-receipt-area:not([hidden]) {
+  display: flex;
+  min-height: 320px;
 }
 
 .receipt-printer {
   position: relative;
-  width: min(100%, 330px);
+  width: min(100%, 300px);
   padding-top: 48px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .receipt-printer-top {
@@ -2609,6 +2619,7 @@ Sent
   left: 8%;
   width: 84%;
   height: 72px;
+  box-sizing: border-box;
 
   border: 1px solid #cbd6ce;
   border-radius: 16px 16px 8px 8px;
@@ -2707,6 +2718,7 @@ Sent
 
   border: 1px solid #c9d5cd;
   border-radius: 12px 12px 22px 22px;
+  box-sizing: border-box;
 
   background: linear-gradient(145deg, #f5f8f5, #d4dfd7);
   box-shadow: 0 18px 35px rgba(39, 65, 49, 0.16);
@@ -2736,6 +2748,16 @@ Sent
   border: 2px solid #a4b5a8;
   border-radius: 50%;
   background: #f8fbf8;
+}
+
+@media (max-width: 760px) {
+  .payment-success-receipt-area:not([hidden]) {
+    min-height: 290px;
+  }
+
+  .receipt-printer {
+    width: min(100%, 260px);
+  }
 }
 
 /* =========================
