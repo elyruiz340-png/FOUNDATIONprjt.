@@ -3454,6 +3454,36 @@ Sent
   opacity: 0 !important;
   pointer-events: none !important;
 }
+  /* =========================
+   PAYMENT SUCCESSFUL
+   REMOVE OUTER SUMMARY CARD
+========================= */
+
+.checkout-modal.payment-success-mode .checkout-summary-card {
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+.checkout-modal.payment-success-mode #paymentSuccessPanel {
+  width: 100%;
+  margin: 0;
+  padding: 24px !important;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 22px;
+  background: rgba(248, 252, 249, 0.72);
+  box-shadow:
+    0 18px 45px rgba(25, 54, 39, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
 </style>
 </head>
 <body>
