@@ -2399,179 +2399,289 @@ Sent
 }
 /* =========================
    PAYMENT SUCCESSFUL MODAL
-   ORDER SUMMARY SIZE
+   HALINA GLASS DESIGN
 ========================= */
 
-.payment-success-modal {
-  width: 430px;
-  max-width: 100%;
-  height: 100%;
-  max-height: 72vh;
-  min-height: 390px;
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  display: block;
-
-  padding: 0;
+.checkout-modal.payment-success-mode {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
+  align-items: stretch;
+  gap: 24px;
+  width: min(900px, 92vw);
+  max-width: 92vw;
+  max-height: 88vh;
+  padding: 22px;
   box-sizing: border-box;
-
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  border-radius: 10px;
-
-  background: rgba(245, 250, 247, 0.78);
-  box-shadow: 0 12px 32px rgba(31, 51, 42, 0.12);
-
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-
-  transform: none;
-  transition: none;
+  overflow-y: auto;
 }
 
-.payment-success-overlay.active .payment-success-modal {
-  transform: none;
+.checkout-modal.payment-success-mode .checkout-summary-card {
+  position: relative;
+  left: auto;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 520px;
+  padding: 28px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 24px;
+  background: rgba(248, 252, 249, 0.68);
+  box-shadow:
+    0 20px 60px rgba(25, 54, 39, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Hide normal summary after successful payment */
+
+#checkoutSummaryView[hidden],
+#paymentSuccessPanel[hidden],
+#paymentSuccessReceiptArea[hidden],
+#paymentSuccessActions[hidden] {
+  display: none !important;
 }
 
 /* =========================
    SUCCESS PANEL
 ========================= */
 
-.payment-success-panel {
+#paymentSuccessPanel {
+  width: 100%;
   min-width: 0;
-  padding: 26px 22px;
-
+  margin: auto;
+  padding: 8px 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   text-align: center;
-
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 22px;
-
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 12px 36px rgba(49, 81, 67, 0.09);
-  backdrop-filter: blur(18px);
+  color: #173f2b;
+  animation: halinaSuccessIn 0.45s ease both;
 }
 
-.payment-success-check {
-  width: 76px;
-  height: 76px;
-  margin-bottom: 18px;
-
-  display: grid;
-  place-items: center;
-
-  border: 1px solid rgba(81, 158, 111, 0.3);
+#paymentSuccessPanel .payment-success-check {
+  width: 94px;
+  height: 94px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 50%;
+  background: linear-gradient(145deg, #64d98a, #168849);
+  color: #ffffff;
+  font-size: 54px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow:
+    0 0 0 8px rgba(58, 190, 105, 0.10),
+    0 0 32px rgba(47, 201, 102, 0.42),
+    inset 0 2px 5px rgba(255, 255, 255, 0.35);
+}
 
-  background: rgba(220, 245, 228, 0.85);
-  box-shadow: 0 0 28px rgba(81, 177, 115, 0.22);
-
-  color: #287849;
-  font-size: 42px;
+#paymentSuccessPanel h2 {
+  margin: 0 0 10px;
+  color: #123c28;
+  font-size: clamp(25px, 3vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.7px;
   font-weight: 800;
 }
 
-.payment-success-panel h2 {
-  margin: 0;
-  color: #203b2c;
-  font-size: clamp(22px, 2.5vw, 30px);
-  font-weight: 850;
-}
-
-.payment-success-message {
-  margin: 10px 0 22px;
-  color: #718077;
-  font-size: 13px;
+#paymentSuccessPanel .payment-success-message {
+  margin: 0 0 24px;
+  color: #425f4d;
+  font-size: 15px;
   line-height: 1.5;
 }
 
-.payment-success-details {
+/* Amount details card */
+
+#paymentSuccessPanel .payment-success-details {
   width: 100%;
-  display: grid;
-  gap: 12px;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow:
+    0 8px 24px rgba(30, 62, 43, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   text-align: left;
 }
 
-.payment-success-detail {
+#paymentSuccessPanel .payment-success-detail {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(210, 224, 215, 0.8);
-
-  font-size: 12px;
-}
-
-.payment-success-detail span {
-  color: #738077;
-}
-
-.payment-success-detail strong {
-  color: #294a36;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(45, 86, 59, 0.12);
+  color: #5c7063;
   font-size: 14px;
+}
+
+#paymentSuccessPanel .payment-success-detail:first-child {
+  flex-wrap: wrap;
+  padding-top: 0;
+  padding-bottom: 18px;
+}
+
+#paymentSuccessPanel .payment-success-detail:first-child strong {
+  width: 100%;
+  color: #14643a;
+  font-size: clamp(30px, 3.5vw, 43px);
+  line-height: 1.15;
+  letter-spacing: -1px;
+  white-space: normal;
+}
+
+#paymentSuccessPanel .payment-success-detail:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+#paymentSuccessPanel .payment-success-detail strong {
+  color: #203d2b;
+  font-size: 15px;
+  font-weight: 750;
   text-align: right;
+  white-space: nowrap;
 }
 
 /* =========================
    SUCCESS ACTION BUTTONS
 ========================= */
 
-.payment-success-actions {
+#paymentSuccessPanel .payment-success-actions {
   width: 100%;
-  margin-top: 24px;
+  margin-top: 20px;
   display: grid;
-  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-.payment-success-actions[hidden] {
-  display: none !important;
-}
-
-.payment-success-actions button {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 14px;
-
-  border: 1px solid #315143;
-  border-radius: 11px;
-
-  background: #315143;
-  color: #fff;
-
-  font-size: 13px;
-  font-weight: 750;
+#paymentSuccessPanel .payment-success-actions button {
+  min-width: 0;
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #183b29;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-
+  box-shadow: 0 5px 16px rgba(28, 62, 41, 0.08);
   transition:
     transform 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.payment-success-actions button:hover {
-  background: #254232;
+#paymentSuccessPanel .payment-success-actions button:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 20px rgba(28, 62, 41, 0.12);
 }
 
-.payment-success-actions button:active {
+#paymentSuccessPanel .payment-success-actions button:active {
   transform: scale(0.98);
 }
 
-#newOrderBtn,
-#printReceiptBtn {
-  border-color: #d7e3da;
-  background: rgba(255, 255, 255, 0.85);
-  color: #315143;
+#paymentSuccessPanel .payment-success-actions button:first-child {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #24854c, #126638);
+  color: #ffffff;
+  border-color: rgba(26, 117, 62, 0.5);
 }
 
-#newOrderBtn:hover,
-#printReceiptBtn:hover {
-  background: #edf4ef;
+#paymentSuccessPanel .payment-success-actions button:first-child:hover {
+  background: linear-gradient(135deg, #2b9959, #0e572e);
 }
 
+#paymentSuccessPanel .payment-success-actions button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Keep printer hidden for this design stage */
+
+.checkout-modal.payment-success-mode .payment-success-receipt-area,
+#paymentSuccessReceiptArea[hidden] {
+  display: none !important;
+}
+
+/* Right column stays empty until receipt is implemented */
+
+.checkout-modal.payment-success-mode .checkout-payment-options {
+  position: relative;
+  left: auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 520px;
+  height: 100%;
+  box-sizing: border-box;
+  display: block;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Success transition */
+
+@keyframes halinaSuccessIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive layout */
+
+@media (max-width: 760px) {
+  .checkout-modal.payment-success-mode {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    width: 94vw;
+    max-width: 94vw;
+    max-height: 90vh;
+    padding: 12px;
+  }
+
+  .checkout-modal.payment-success-mode .checkout-summary-card {
+    min-height: 0;
+    padding: 22px 18px;
+  }
+
+  .checkout-modal.payment-success-mode .checkout-payment-options {
+    display: none;
+  }
+
+  #paymentSuccessPanel .payment-success-check {
+    width: 76px;
+    height: 76px;
+    font-size: 44px;
+  }
+
+  #paymentSuccessPanel .payment-success-details {
+    padding: 16px;
+  }
+}
 /* =========================
    RECEIPT / PRINTER AREA
    CHECKOUT OVERLAP FIX
