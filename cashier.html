@@ -2210,10 +2210,50 @@ Sent
   box-sizing: border-box;
 }
 
-.checkout-payment-methods[hidden] {
+/* =========================
+   CASH PAYMENT TRANSITION
+========================= */
+
+.checkout-payment-options {
+  position: relative;
+}
+
+.checkout-payment-methods {
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: center;
+  transition:
+    opacity 0.28s ease,
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.checkout-payment-methods.cash-payment-methods-faded {
+  opacity: 0;
+  transform: scale(0.96);
+  pointer-events: none;
+}
+
+.checkout-payment-methods.cash-payment-methods-hidden {
   display: none;
 }
 
+.checkout-cash-panel {
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: top center;
+  transition:
+    opacity 0.3s ease,
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.checkout-cash-panel.cash-panel-hidden {
+  display: none;
+}
+
+.checkout-cash-panel.cash-panel-expanded {
+  opacity: 1;
+  transform: scale(1);
+}
 .checkout-cash-panel {
   width: 360px;
   max-width: 100%;
@@ -7818,17 +7858,21 @@ function updateCheckoutCashValues() {
 
 
 function showCheckoutPaymentOptions() {
-  if (checkoutPaymentOptions) {
-    checkoutPaymentOptions.classList.remove("cash-payment-expanded");
+  if (!checkoutPaymentOptions || !checkoutPaymentMethods || !checkoutCashPanel) {
+    return;
   }
 
-  if (checkoutPaymentMethods) {
-    checkoutPaymentMethods.hidden = false;
-  }
+  checkoutPaymentOptions.classList.remove("cash-payment-expanded");
+  checkoutPaymentMethods.classList.remove("cash-payment-methods-hidden");
+  checkoutCashPanel.classList.remove("cash-panel-expanded");
 
-  if (checkoutCashPanel) {
-    checkoutCashPanel.hidden = true;
-  }
+  checkoutPaymentMethods.hidden = false;
+  checkoutCashPanel.hidden = false;
+
+  requestAnimationFrame(function() {
+    checkoutPaymentMethods.classList.remove("cash-payment-methods-faded");
+    checkoutCashPanel.classList.add("cash-panel-hidden");
+  });
 
   if (checkoutCashReceived) {
     checkoutCashReceived.value = "";
@@ -7844,7 +7888,15 @@ function showCheckoutCashPanel() {
   }
 
   checkoutPaymentOptions.classList.add("cash-payment-expanded");
-  checkoutPaymentMethods.hidden = true;
+  checkoutPaymentMethods.classList.add("cash-payment-methods-faded");
+  checkoutCashPanel.classList.remove("cash-panel-hidden");
+
+  requestAnimationFrame(function() {
+    checkoutPaymentMethods.classList.add("cash-payment-methods-hidden");
+    checkoutCashPanel.classList.add("cash-panel-expanded");
+  });
+
+  checkoutPaymentMethods.hidden = false;
   checkoutCashPanel.hidden = false;
 
   updateCheckoutCashValues();
@@ -7853,7 +7905,6 @@ function showCheckoutCashPanel() {
     checkoutCashReceived.focus();
   }
 }
-
 
 if (checkoutOverlay && posCheckoutButton) {
   posCheckoutButton.addEventListener("click", function() {
