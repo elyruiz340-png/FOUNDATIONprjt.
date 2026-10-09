@@ -2204,7 +2204,124 @@
 
   justify-self: stretch;
 }
+/* =========================
+   CASH PAYMENT PANEL
+========================= */
 
+.checkout-payment-methods {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 170px 170px;
+  gap: 10px;
+  align-content: start;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.checkout-cash-panel {
+  width: 100%;
+  min-width: 0;
+  min-height: 390px;
+  padding: 22px;
+  border: 1px solid rgba(220, 228, 223, 0.95);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 30px rgba(31, 51, 42, 0.10);
+  box-sizing: border-box;
+}
+
+.checkout-cash-panel[hidden] {
+  display: none;
+}
+
+.checkout-cash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.checkout-cash-header h2 {
+  margin: 0;
+  color: #1e2d25;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+#checkoutCashBack {
+  padding: 8px 10px;
+  border: 1px solid #dbe5de;
+  border-radius: 9px;
+  background: #f6f9f7;
+  color: #315143;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout-cash-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.checkout-cash-field label {
+  color: #68776e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.checkout-cash-field strong {
+  color: #26372e;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+#checkoutCashReceived {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #d7e1da;
+  border-radius: 10px;
+  background: #fff;
+  color: #26372e;
+  font: inherit;
+  box-sizing: border-box;
+  outline: none;
+}
+
+#checkoutCashReceived:focus {
+  border-color: #759985;
+  box-shadow: 0 0 0 3px rgba(117, 153, 133, 0.14);
+}
+
+#checkoutCashMessage {
+  min-height: 18px;
+  margin: 0 0 12px;
+  color: #a33b3b;
+  font-size: 12px;
+}
+
+#checkoutConfirmCash {
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  border-radius: 10px;
+  background: #315143;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#checkoutConfirmCash:disabled {
+  background: #d9e1dc;
+  color: #78857d;
+  cursor: not-allowed;
+}
 
 /* =========================
    PENDING PAYMENT
@@ -3592,125 +3709,101 @@
     </div>
 
 
-    <!-- PAYMENT OPTIONS -->
+ <!-- PAYMENT OPTIONS -->
 
-    <div class="checkout-payment-options">
+<div class="checkout-payment-options">
 
-      <button
-        type="button"
-        class="checkout-payment-card"
-        data-payment-method="gift"
-      >
-        <span class="checkout-payment-icon">
-          🎁
-        </span>
+  <div
+    class="checkout-payment-methods"
+    id="checkoutPaymentMethods"
+  >
 
-        <span class="checkout-payment-text">
+    <button type="button" class="checkout-payment-card" data-payment-method="gift">
+      <span class="checkout-payment-icon">🎁</span>
+      <span class="checkout-payment-text">
+        <strong>Gift Card / Voucher</strong>
+        <small>Apply voucher</small>
+      </span>
+    </button>
 
-          <strong>
-            Gift Card / Voucher
-          </strong>
+    <button type="button" class="checkout-payment-card" data-payment-method="discount">
+      <span class="checkout-payment-icon">%</span>
+      <span class="checkout-payment-text">
+        <strong>Discount</strong>
+        <small>Senior / PWD</small>
+      </span>
+    </button>
 
-          <small>
-            Apply voucher
-          </small>
+    <button type="button" class="checkout-payment-card" data-payment-method="cash">
+      <span class="checkout-payment-icon">💵</span>
+      <span class="checkout-payment-text">
+        <strong>Cash</strong>
+        <small>Pay at counter</small>
+      </span>
+    </button>
 
-        </span>
+    <button type="button" class="checkout-payment-card" data-payment-method="card">
+      <span class="checkout-payment-icon">▣</span>
+      <span class="checkout-payment-text">
+        <strong>Card / QR</strong>
+        <small>GCash / Bank / Card</small>
+      </span>
+    </button>
+
+    <button type="button" class="checkout-payment-card checkout-payment-pending" data-payment-method="pending">
+      <span class="checkout-payment-icon">◷</span>
+      <span class="checkout-payment-text">
+        <strong>Pending</strong>
+        <small>Payment later</small>
+      </span>
+    </button>
+
+  </div>
+
+  <div
+    class="checkout-cash-panel"
+    id="checkoutCashPanel"
+    hidden
+  >
+
+    <div class="checkout-cash-header">
+      <button type="button" id="checkoutCashBack">
+        ← Back
       </button>
-
-
-      <button
-        type="button"
-        class="checkout-payment-card"
-        data-payment-method="discount"
-      >
-        <span class="checkout-payment-icon">
-          %
-        </span>
-
-        <span class="checkout-payment-text">
-
-          <strong>
-            Discount
-          </strong>
-
-          <small>
-            Senior / PWD
-          </small>
-
-        </span>
-      </button>
-
-
-      <button
-        type="button"
-        class="checkout-payment-card"
-        data-payment-method="cash"
-      >
-        <span class="checkout-payment-icon">
-          💵
-        </span>
-
-        <span class="checkout-payment-text">
-
-          <strong>
-            Cash
-          </strong>
-
-          <small>
-            Pay at counter
-          </small>
-
-        </span>
-      </button>
-
-
-      <button
-        type="button"
-        class="checkout-payment-card"
-        data-payment-method="card"
-      >
-        <span class="checkout-payment-icon">
-          ▣
-        </span>
-
-        <span class="checkout-payment-text">
-
-          <strong>
-            Card / QR
-          </strong>
-
-          <small>
-            GCash / Bank / Card
-          </small>
-
-        </span>
-      </button>
-
-
-      <button
-        type="button"
-        class="checkout-payment-card checkout-payment-pending"
-        data-payment-method="pending"
-      >
-        <span class="checkout-payment-icon">
-          ◷
-        </span>
-
-        <span class="checkout-payment-text">
-
-          <strong>
-            Pending
-          </strong>
-
-          <small>
-            Payment later
-          </small>
-
-        </span>
-      </button>
-
+      <h2>Cash Payment</h2>
     </div>
+
+    <div class="checkout-cash-field">
+      <label for="checkoutCashAmountDue">Amount Due</label>
+      <strong id="checkoutCashAmountDue">₱0.00</strong>
+    </div>
+
+    <div class="checkout-cash-field">
+      <label for="checkoutCashReceived">Cash Received</label>
+      <input
+        id="checkoutCashReceived"
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        placeholder="Enter amount"
+      />
+    </div>
+
+    <div class="checkout-cash-field">
+      <label>Change</label>
+      <strong id="checkoutCashChange">₱0.00</strong>
+    </div>
+
+    <p id="checkoutCashMessage" role="status" aria-live="polite"></p>
+
+    <button type="button" id="checkoutConfirmCash" disabled>
+      Confirm Payment
+    </button>
+
+  </div>
+
+</div>
 
   </div>
 
@@ -7550,214 +7643,283 @@ if (
 ========================= */
 
 const checkoutOverlay =
-  document.getElementById(
-    "checkoutOverlay"
-  );
+  document.getElementById("checkoutOverlay");
 
 const posCheckoutButton =
-  document.getElementById(
-    "posCheckoutBtn"
-  );
+  document.getElementById("posCheckoutBtn");
 
 const checkoutSummaryItems =
-  document.getElementById(
-    "checkoutSummaryItems"
-  );
+  document.getElementById("checkoutSummaryItems");
 
 const checkoutSubtotal =
-  document.getElementById(
-    "checkoutSubtotal"
-  );
+  document.getElementById("checkoutSubtotal");
 
 const checkoutVat =
-  document.getElementById(
-    "checkoutVat"
-  );
+  document.getElementById("checkoutVat");
 
 const checkoutDiscount =
-  document.getElementById(
-    "checkoutDiscount"
-  );
+  document.getElementById("checkoutDiscount");
 
 const checkoutTotal =
-  document.getElementById(
-    "checkoutTotal"
-  );
+  document.getElementById("checkoutTotal");
 
 const checkoutAddMore =
-  document.getElementById(
-    "checkoutAddMore"
-  );
+  document.getElementById("checkoutAddMore");
+
+const checkoutPaymentOptions =
+  document.querySelector(".checkout-payment-options");
+
+const checkoutPaymentMethods =
+  document.getElementById("checkoutPaymentMethods");
+
+const checkoutCashPanel =
+  document.getElementById("checkoutCashPanel");
+
+const checkoutCashBack =
+  document.getElementById("checkoutCashBack");
+
+const checkoutCashReceived =
+  document.getElementById("checkoutCashReceived");
+
+const checkoutCashAmountDue =
+  document.getElementById("checkoutCashAmountDue");
+
+const checkoutCashChange =
+  document.getElementById("checkoutCashChange");
+
+const checkoutCashMessage =
+  document.getElementById("checkoutCashMessage");
+
+const checkoutConfirmCash =
+  document.getElementById("checkoutConfirmCash");
 
 
 function formatCheckoutMoney(amount) {
+  return "₱" + amount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
 
-  return "₱" + amount.toLocaleString(
-    undefined,
-    {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }
-  );
 
+function getCheckoutTotal() {
+  if (!posCart || posCart.length === 0) {
+    return 0;
+  }
+
+  return posCart.reduce(function(total, item) {
+    return total + Number(item.price) * Number(item.quantity);
+  }, 0);
 }
 
 
 function renderCheckoutSummary() {
-
   if (!checkoutSummaryItems) {
     return;
   }
 
   if (!posCart || posCart.length === 0) {
-
     checkoutSummaryItems.innerHTML = `
       <div class="pos-empty-cart">
         <p>No items added yet</p>
         <small>Select items from the menu</small>
       </div>
     `;
-
   } else {
-
     checkoutSummaryItems.innerHTML = "";
 
     posCart.forEach(function(item) {
+      const itemRow = document.createElement("div");
+      itemRow.className = "checkout-summary-item";
 
-      const itemRow =
-        document.createElement("div");
+      const itemInfo = document.createElement("div");
+      itemInfo.className = "checkout-summary-item-info";
 
-      itemRow.className =
-        "checkout-summary-item";
+      const itemName = document.createElement("span");
+      itemName.className = "checkout-summary-item-name";
+      itemName.textContent = item.name;
 
-      const itemInfo =
-        document.createElement("div");
-
-      itemInfo.className =
-        "checkout-summary-item-info";
-
-      const itemName =
-        document.createElement("span");
-
-      itemName.className =
-        "checkout-summary-item-name";
-
-      itemName.textContent =
-        item.name;
-
-      const itemQty =
-        document.createElement("span");
-
-      itemQty.className =
-        "checkout-summary-item-qty";
-
-      itemQty.textContent =
-        "Qty: " + item.quantity;
+      const itemQty = document.createElement("span");
+      itemQty.className = "checkout-summary-item-qty";
+      itemQty.textContent = "Qty: " + item.quantity;
 
       itemInfo.appendChild(itemName);
       itemInfo.appendChild(itemQty);
 
-      const itemPrice =
-        document.createElement("strong");
-
-      itemPrice.className =
-        "checkout-summary-item-price";
-
-      itemPrice.textContent =
-        formatCheckoutMoney(
-          item.price * item.quantity
-        );
+      const itemPrice = document.createElement("strong");
+      itemPrice.className = "checkout-summary-item-price";
+      itemPrice.textContent = formatCheckoutMoney(
+        Number(item.price) * Number(item.quantity)
+      );
 
       itemRow.appendChild(itemInfo);
       itemRow.appendChild(itemPrice);
 
-      checkoutSummaryItems.appendChild(
-        itemRow
-      );
-
+      checkoutSummaryItems.appendChild(itemRow);
     });
-
   }
 
-  const subtotal =
-    posCart.reduce(function(total, item) {
-
-      return total +
-        item.price * item.quantity;
-
-    }, 0);
-
+  const subtotal = getCheckoutTotal();
   const vat = 0;
   const discount = 0;
   const total = subtotal + vat - discount;
 
   if (checkoutSubtotal) {
-    checkoutSubtotal.textContent =
-      formatCheckoutMoney(subtotal);
+    checkoutSubtotal.textContent = formatCheckoutMoney(subtotal);
   }
 
   if (checkoutVat) {
-    checkoutVat.textContent =
-      formatCheckoutMoney(vat);
+    checkoutVat.textContent = formatCheckoutMoney(vat);
   }
 
   if (checkoutDiscount) {
-    checkoutDiscount.textContent =
-      formatCheckoutMoney(discount);
+    checkoutDiscount.textContent = formatCheckoutMoney(discount);
   }
 
   if (checkoutTotal) {
-    checkoutTotal.textContent =
-      formatCheckoutMoney(total);
+    checkoutTotal.textContent = formatCheckoutMoney(total);
   }
 
+  updateCheckoutCashValues();
 }
 
 
-if (
-  checkoutOverlay &&
-  posCheckoutButton
-) {
-
-  posCheckoutButton.addEventListener(
-    "click",
-    function() {
-
-      renderCheckoutSummary();
-
-      checkoutOverlay.classList.add(
-        "active"
-      );
-
-      checkoutOverlay.setAttribute(
-        "aria-hidden",
-        "false"
-      );
-
-    }
+function updateCheckoutCashValues() {
+  const total = getCheckoutTotal();
+  const received = Number(
+    checkoutCashReceived ? checkoutCashReceived.value : 0
   );
 
+  if (checkoutCashAmountDue) {
+    checkoutCashAmountDue.textContent = formatCheckoutMoney(total);
+  }
+
+  if (checkoutCashChange) {
+    checkoutCashChange.textContent = formatCheckoutMoney(
+      Math.max(0, received - total)
+    );
+  }
+
+  if (checkoutCashMessage) {
+    if (checkoutCashReceived && checkoutCashReceived.value !== "" && received < total) {
+      checkoutCashMessage.textContent = "Insufficient cash received.";
+    } else {
+      checkoutCashMessage.textContent = "";
+    }
+  }
+
+  if (checkoutConfirmCash) {
+    checkoutConfirmCash.disabled =
+      total <= 0 ||
+      !checkoutCashReceived ||
+      checkoutCashReceived.value.trim() === "" ||
+      received < total;
+  }
+}
+
+
+function showCheckoutPaymentOptions() {
+  if (checkoutPaymentOptions) {
+    checkoutPaymentOptions.classList.remove("cash-payment-expanded");
+  }
+
+  if (checkoutPaymentMethods) {
+    checkoutPaymentMethods.hidden = false;
+  }
+
+  if (checkoutCashPanel) {
+    checkoutCashPanel.hidden = true;
+  }
+
+  if (checkoutCashReceived) {
+    checkoutCashReceived.value = "";
+  }
+
+  updateCheckoutCashValues();
+}
+
+
+function showCheckoutCashPanel() {
+  if (!checkoutPaymentOptions || !checkoutPaymentMethods || !checkoutCashPanel) {
+    return;
+  }
+
+  checkoutPaymentOptions.classList.add("cash-payment-expanded");
+  checkoutPaymentMethods.hidden = true;
+  checkoutCashPanel.hidden = false;
+
+  updateCheckoutCashValues();
+
+  if (checkoutCashReceived) {
+    checkoutCashReceived.focus();
+  }
+}
+
+
+if (checkoutOverlay && posCheckoutButton) {
+  posCheckoutButton.addEventListener("click", function() {
+    renderCheckoutSummary();
+    showCheckoutPaymentOptions();
+
+    checkoutOverlay.classList.add("active");
+    checkoutOverlay.setAttribute("aria-hidden", "false");
+  });
 }
 
 
 if (checkoutAddMore && checkoutOverlay) {
+  checkoutAddMore.addEventListener("click", function() {
+    checkoutOverlay.classList.remove("active");
+    checkoutOverlay.setAttribute("aria-hidden", "true");
 
-  checkoutAddMore.addEventListener(
-    "click",
-    function() {
+    showCheckoutPaymentOptions();
+  });
+}
 
-      checkoutOverlay.classList.remove(
-        "active"
-      );
 
-      checkoutOverlay.setAttribute(
-        "aria-hidden",
-        "true"
-      );
+if (checkoutPaymentMethods) {
+  checkoutPaymentMethods.addEventListener("click", function(event) {
+    const paymentCard = event.target.closest("[data-payment-method]");
 
+    if (!paymentCard) {
+      return;
     }
-  );
 
+    if (paymentCard.dataset.paymentMethod === "cash") {
+      showCheckoutCashPanel();
+    }
+  });
+}
+
+
+if (checkoutCashBack) {
+  checkoutCashBack.addEventListener("click", function() {
+    showCheckoutPaymentOptions();
+  });
+}
+
+
+if (checkoutCashReceived) {
+  checkoutCashReceived.addEventListener("input", function() {
+    updateCheckoutCashValues();
+  });
+}
+
+
+if (checkoutConfirmCash) {
+  checkoutConfirmCash.addEventListener("click", function() {
+    updateCheckoutCashValues();
+
+    if (checkoutConfirmCash.disabled) {
+      return;
+    }
+
+    if (checkoutCashMessage) {
+      checkoutCashMessage.style.color = "#315143";
+      checkoutCashMessage.textContent =
+        "Cash amount verified. Payment recording is not connected yet.";
+    }
+  });
 }
 </script>
 </body>
