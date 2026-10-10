@@ -3484,26 +3484,27 @@
 }
  /* =========================
    PAYMENT SUCCESSFUL
-   REMOVE OLD WHITE BOX
+   REMOVE OUTER WHITE BORDER
 ========================= */
-.checkout-modal.payment-success-mode .checkout-summary-card {
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  border-radius: 0 !important;
+
+.checkout-modal.payment-success-mode {
   background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.checkout-modal.payment-success-mode .checkout-summary-card {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  overflow: visible !important;
 }
-/* Keep only the Payment Successful glass panel */
+
+/* Keep the Payment Successful panel's own border */
 .checkout-modal.payment-success-mode #paymentSuccessPanel {
-  width: 100%;
-  min-width: 0;
-  margin: 0;
-  padding: 24px !important;
-  box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, 0.82);
   border-radius: 22px;
   background: rgba(248, 252, 249, 0.72);
