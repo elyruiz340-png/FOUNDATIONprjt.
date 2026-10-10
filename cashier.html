@@ -2813,8 +2813,7 @@
 }
 /* =========================
    RECEIPT AREA
-   HIGHER RECEIPT POSITION
-   SMOOTH PRINT ANIMATION
+   DOWNWARD REVEAL + EXIT
 ========================= */
 
 .payment-success-receipt-area {
@@ -2844,7 +2843,7 @@
   align-items: flex-start;
 }
 
-/* Remove the large printer illustration */
+/* Hide the printer illustration */
 .receipt-printer {
   position: relative;
   width: min(100%, 300px);
@@ -2881,29 +2880,27 @@
   font-family: "Courier New", monospace;
   font-size: 11px;
   text-align: center;
-  transform-origin: bottom center;
+  transform-origin: top center;
 }
 
-/* Receipt reveals upward from its bottom edge */
+/* Entrance: reveal the stationary paper from top to bottom */
 .success-receipt.receipt-print-animation {
   animation: halinaReceiptPrint 1.1s ease-out both;
 }
 
 @keyframes halinaReceiptPrint {
-  0% {
-    opacity: 0;
-    clip-path: inset(100% 0 0 0);
-    transform: translateY(5px);
+  from {
+    opacity: 1;
+    clip-path: inset(0 0 100% 0);
   }
 
-  100% {
+  to {
     opacity: 1;
     clip-path: inset(0 0 0 0);
-    transform: translateY(0);
   }
 }
 
-/* Exit animation: short pause, then paper falls */
+/* Exit: brief hold, then fall downward */
 .success-receipt.receipt-exit-animation {
   animation: halinaReceiptExit 0.8s ease-in both;
 }
