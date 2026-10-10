@@ -1873,60 +1873,72 @@
 ========================= */
 
 .checkout-modal.payment-success-mode {
-  width: min(846px, 90vw);
-  max-width: 90vw;
-  max-height: 88vh;
+  display: grid;
+  grid-template-columns: minmax(0, 430px) 250px;
+  gap: 18px;
 
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0;
+  width: min(716px, 94vw);
+  max-width: 94vw;
+  max-height: none;
 
-  align-items: stretch;
+  align-items: start;
   justify-content: center;
-
-  overflow-y: auto;
-  overflow-x: hidden;
 
   padding: 0;
   border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  overflow: visible;
 }
 
-/* Remove the normal summary card shell in success mode */
-
+/* Remove the white summary-card background */
 .checkout-modal.payment-success-mode .checkout-summary-card {
+  position: relative;
+  left: 0;
+
   width: 100%;
+  max-width: 430px;
   min-width: 0;
+
   height: auto;
   min-height: 0;
   max-height: none;
 
-  padding: 0;
   margin: 0;
+  padding: 0;
 
   border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-
   overflow: visible;
 }
 
-/* Keep the success panel itself as the only visible card */
-
+/* Payment Successful stays in the left column */
 .checkout-modal.payment-success-mode #paymentSuccessPanel {
+  position: relative;
   width: 100%;
   box-sizing: border-box;
+  padding: 22px 24px;
+
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 22px;
+
+  background: rgba(248, 252, 249, 0.72);
+
+  box-shadow:
+    0 18px 45px rgba(25, 54, 39, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
-/* Hide the normal payment choices in success mode */
-
+/* Hide normal payment choices */
 .checkout-modal.payment-success-mode .checkout-payment-options {
-  display: none !important;
+  display: none;
 }
-
-
 /* =========================
    ORDER SUMMARY CARD
 ========================= */
@@ -2813,7 +2825,7 @@
 }
 /* =========================
    RECEIPT AREA
-   DOWNWARD REVEAL + EXIT
+   DOWNWARD PRINT + AUTO EXIT
 ========================= */
 
 .payment-success-receipt-area {
@@ -2843,7 +2855,7 @@
   align-items: flex-start;
 }
 
-/* Hide the printer illustration */
+/* Minimal printer: only a thin black slot */
 .receipt-printer {
   position: relative;
   width: min(100%, 300px);
@@ -2853,12 +2865,27 @@
   background: transparent;
 }
 
+/* Hide printer illustration parts */
 .receipt-printer-top,
-.receipt-printer-slot,
 .receipt-printer-body,
 .receipt-printer-display,
 .receipt-printer-button {
   display: none !important;
+}
+
+/* Keep the slot visible as a thin black line */
+.receipt-printer-slot {
+  display: block !important;
+  position: relative;
+  z-index: 3;
+  width: 76px;
+  height: 2px;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: #20251f;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 /* Receipt paper */
@@ -2883,45 +2910,59 @@
   transform-origin: top center;
 }
 
-/* Entrance: reveal the stationary paper from top to bottom */
+/* =========================
+   RECEIPT PRINT SEQUENCE
+   PRINT → HOLD → AUTO EXIT
+========================= */
+
 .success-receipt.receipt-print-animation {
-  animation: halinaReceiptPrint 1.1s ease-out both;
+  animation: halinaReceiptSequence 3.8s ease-in-out both;
 }
 
-@keyframes halinaReceiptPrint {
-  from {
-    opacity: 1;
-    clip-path: inset(0 0 100% 0);
-  }
-
-  to {
-    opacity: 1;
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-/* Exit: brief hold, then fall downward */
-.success-receipt.receipt-exit-animation {
-  animation: halinaReceiptExit 0.8s ease-in both;
-}
-
-@keyframes halinaReceiptExit {
+@keyframes halinaReceiptSequence {
+  /* Start hidden above the slot */
   0% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(-100%);
+    clip-path: inset(100% 0 0 0);
   }
 
-  22% {
+  /* Reveal the lower part of the paper first */
+  15% {
+    opacity: 1;
+    transform: translateY(-65%);
+    clip-path: inset(65% 0 0 0);
+  }
+
+  /* Continue revealing upward toward the heading */
+  45% {
+    opacity: 1;
+    transform: translateY(-10%);
+    clip-path: inset(10% 0 0 0);
+  }
+
+  /* Entire receipt is visible */
+  60% {
     opacity: 1;
     transform: translateY(0);
+    clip-path: inset(0 0 0 0);
   }
 
+  /* Brief pause */
+  78% {
+    opacity: 1;
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0);
+  }
+
+  /* Receipt falls and disappears */
   100% {
     opacity: 0;
     transform: translateY(110vh);
+    clip-path: inset(0 0 0 0);
   }
 }
-
+/* Receipt content styling */
 .success-receipt-header {
   margin-bottom: 10px;
   font-size: 12px;
@@ -2967,6 +3008,7 @@
   font-size: 9px;
 }
 
+/* Responsive receipt */
 @media (max-width: 760px) {
   .payment-success-receipt-area {
     max-height: calc(85vh - 20px);
@@ -2980,6 +3022,7 @@
     width: min(100%, 240px);
   }
 }
+
 /* =========================
    SUCCESS POPUP RESPONSIVE
 ========================= */
@@ -3016,7 +3059,6 @@
     max-width: 270px;
   }
 }
-
 /* =========================
    PENDING PAYMENT
 ========================= */
