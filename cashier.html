@@ -2884,12 +2884,19 @@
 }
 
 @keyframes halinaReceiptPrint {
-  from {
+  0% {
     opacity: 0;
     clip-path: inset(0 0 100% 0);
-    transform: translateY(-8px);
+    transform: translateY(-5px);
   }
-  to {
+
+  12% {
+    opacity: 1;
+    clip-path: inset(0 0 88% 0);
+    transform: translateY(-3px);
+  }
+
+  100% {
     opacity: 1;
     clip-path: inset(0 0 0 0);
     transform: translateY(0);
