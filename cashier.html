@@ -2949,35 +2949,14 @@
     clip-path: inset(100% 0 0 0);
   }
 
-  /* Reveal the lower part of the paper first */
-  15% {
-    opacity: 1;
-    transform: translateY(-65%);
-    clip-path: inset(65% 0 0 0);
-  }
-
-  /* Continue revealing upward toward the heading */
-  45% {
-    opacity: 1;
-    transform: translateY(-10%);
-    clip-path: inset(10% 0 0 0);
-  }
-
-  /* Entire receipt is visible */
-  60% {
+  /* Continuous reveal until 95% */
+  95% {
     opacity: 1;
     transform: translateY(0);
     clip-path: inset(0 0 0 0);
   }
 
-  /* Brief pause */
-  78% {
-    opacity: 1;
-    transform: translateY(0);
-    clip-path: inset(0 0 0 0);
-  }
-
-  /* Receipt falls and disappears */
+  /* Fall away */
   100% {
     opacity: 0;
     transform: translateY(110vh);
