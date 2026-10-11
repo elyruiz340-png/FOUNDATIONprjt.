@@ -9160,41 +9160,44 @@ if (checkoutConfirmCash) {
 ========================= */
 
 function showSuccessReceipt() {
-  if (!paymentSuccessReceiptArea) {
-    console.error("Receipt area is missing from checkout HTML.");
+  const receiptArea = document.getElementById(
+    "paymentSuccessReceiptArea"
+  );
+
+  if (!receiptArea) {
+    console.error("Receipt area is missing.");
     return;
   }
 
-  paymentSuccessReceiptArea.hidden = false;
+  receiptArea.hidden = false;
 
   if (checkoutModal) {
     checkoutModal.classList.add("payment-success-mode");
     checkoutModal.classList.add("receipt-visible");
   }
 
-  const successReceipt =
-    document.getElementById("successReceipt");
+  const receipt = receiptArea.querySelector(".success-receipt");
 
-  if (successReceipt) {
-    successReceipt.classList.remove("receipt-print-animation");
-
-    requestAnimationFrame(function() {
-      successReceipt.classList.add("receipt-print-animation");
-    });
+  if (!receipt) {
+    console.error("Receipt element is missing.");
+    return;
   }
+
+  // Restart the animation on every click.
+  receipt.classList.remove("receipt-print-animation");
+
+  void receipt.offsetWidth;
+
+  receipt.classList.add("receipt-print-animation");
 }
 
-
-if (printReceiptBtn) {
-  printReceiptBtn.addEventListener("click", function() {
+// Attach the handler to every Print Receipt button.
+document.querySelectorAll("#printReceiptBtn").forEach(function(button) {
+  button.addEventListener("click", function(event) {
+    event.preventDefault();
     showSuccessReceipt();
-
-    // Visual receipt animation only.
-    // Actual printer integration will be added separately.
   });
-}
-
-
+});
 /* =========================
    ACCEPT ORDER
    DISPATCHER INTEGRATION NEXT
