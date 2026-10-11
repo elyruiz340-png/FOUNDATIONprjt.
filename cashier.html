@@ -9209,19 +9209,12 @@ if (acceptOrderBtn) {
       return;
     }
 
-    // Prevent accidental repeated clicks while the
-    // order-accept workflow is being connected.
     acceptOrderBtn.disabled = true;
-    acceptOrderBtn.textContent = "Order Ready to Accept";
+    acceptOrderBtn.textContent = "Accepted";
 
     showSuccessReceipt();
-
-    console.info(
-      "Payment verified. Connect this button to the existing Dispatcher order workflow next."
-    );
   });
 }
-
 
 /* =========================
    NEW ORDER / RESET CHECKOUT
