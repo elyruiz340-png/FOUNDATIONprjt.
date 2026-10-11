@@ -9209,14 +9209,18 @@ if (acceptOrderBtn) {
       return;
     }
 
+    // Allow Accept Order to trigger only once.
     acceptOrderBtn.disabled = true;
     acceptOrderBtn.textContent = "Accepted";
 
+    // Keep the existing receipt animation.
     showSuccessReceipt();
+
+    console.info(
+      "Payment verified. Connect this button to the existing Dispatcher order workflow next."
     );
   });
 }
-
 /* =========================
    NEW ORDER / RESET CHECKOUT
 ========================= */
