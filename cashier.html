@@ -4414,7 +4414,7 @@
   id="checkoutOverlay"
   class="checkout-overlay"
   aria-hidden="true"
-
+>
   <div
     class="checkout-modal"
     role="dialog"
@@ -9224,26 +9224,68 @@ if (acceptOrderBtn) {
    NEW ORDER / RESET CHECKOUT
 ========================= */
 
-if (newOrderBtn) {
-  newOrderBtn.addEventListener("click", function() {
+document.querySelectorAll("#newOrderBtn").forEach(function(button) {
+  button.addEventListener("click", function() {
+
+    // Clear the previous cart for the next order.
+    // This does not delete previously saved orders.
+    posCart.length = 0;
+
+    // Reset cash input.
     if (checkoutCashReceived) {
       checkoutCashReceived.value = "";
+    }
+
+    if (checkoutCashMessage) {
+      checkoutCashMessage.textContent = "";
+    }
+
+    // Reset payment-success and receipt state.
+    if (paymentSuccessPanel) {
+      paymentSuccessPanel.hidden = true;
+    }
+
+    if (checkoutSummaryView) {
+      checkoutSummaryView.hidden = false;
+    }
+
+    if (paymentSuccessActions) {
+      paymentSuccessActions.hidden = true;
+    }
+
+    if (paymentSuccessReceiptArea) {
+      paymentSuccessReceiptArea.hidden = true;
+    }
+
+    if (checkoutModal) {
+      checkoutModal.classList.remove(
+        "payment-success-mode",
+        "receipt-visible"
+      );
+    }
+
+    // Reset the Accept Order button.
+    if (acceptOrderBtn) {
+      acceptOrderBtn.disabled = false;
+      acceptOrderBtn.textContent = "Accept Order";
+    }
+
+    // Refresh both cart and checkout displays.
+    if (typeof renderPosCart === "function") {
+      renderPosCart();
     }
 
     showCheckoutPaymentOptions();
     renderCheckoutSummary();
 
+    // Close checkout so a fresh order can begin.
     if (checkoutOverlay) {
       checkoutOverlay.classList.remove("active");
       checkoutOverlay.setAttribute("aria-hidden", "true");
     }
 
-    if (acceptOrderBtn) {
-      acceptOrderBtn.disabled = false;
-      acceptOrderBtn.textContent = "Accept Order";
-    }
   });
-}
+});
 </script>
 </body>
 </html>
