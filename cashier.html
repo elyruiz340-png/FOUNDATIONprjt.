@@ -9209,11 +9209,11 @@ if (acceptOrderBtn) {
       return;
     }
 
-    // Prevent accidental repeated clicks while the
-    // order-accept workflow is being connected.
+    // Allow Accept Order to trigger only once.
     acceptOrderBtn.disabled = true;
-    acceptOrderBtn.textContent = "Order Ready to Accept";
+    acceptOrderBtn.textContent = "Accepted";
 
+    // Keep the existing receipt animation.
     showSuccessReceipt();
 
     console.info(
@@ -9221,8 +9221,6 @@ if (acceptOrderBtn) {
     );
   });
 }
-
-
 /* =========================
    NEW ORDER / RESET CHECKOUT
 ========================= */
