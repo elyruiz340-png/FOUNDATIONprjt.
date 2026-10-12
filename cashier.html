@@ -9196,11 +9196,11 @@ if (checkoutPaymentMethods) {
       }
     }
 
-    // Only verified Card/QR payments may use the existing success actions.
-    if (paymentSuccessActions) {
-      paymentSuccessActions.hidden = method !== "card";
-    }
-
+    // Show action buttons for both verified and pending payments.
+// Accept Order does not automatically mean payment is confirmed.
+if (paymentSuccessActions) {
+  paymentSuccessActions.hidden = false;
+}
     if (paymentSuccessReceiptArea) {
       paymentSuccessReceiptArea.hidden = true;
     }
