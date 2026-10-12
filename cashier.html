@@ -2824,50 +2824,53 @@
   }
 }
 /* =========================
-   RECEIPT AREA
-   DOWNWARD PRINT + AUTO EXIT
+RECEIPT AREA
+DOWNWARD PRINT + AUTO EXIT
 ========================= */
 
 .payment-success-receipt-area {
-  display: none;
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-  max-height: calc(90vh - 24px);
-  height: auto;
-  padding: 0;
-  margin: 0;
-  align-items: flex-start;
-  justify-content: center;
-  overflow-x: hidden;
-  overflow-y: none;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  scrollbar-width: thin;
+display: none;
+width: 100%;
+min-width: 0;
+min-height: 0;
+max-height: calc(90vh - 24px);
+height: auto;
+padding: 0;
+margin: 0;
+align-items: flex-start;
+justify-content: center;
+overflow: hidden;
+border: none;
+border-radius: 0;
+background: transparent;
+box-shadow: none;
+scrollbar-width: none;
+}
+
+.payment-success-receipt-area::-webkit-scrollbar {
+display: none;
 }
 
 .payment-success-receipt-area:not([hidden]) {
-  display: flex;
-  min-height: 0;
-  padding: 0 0 12px;
-  align-items: flex-start;
+display: flex;
+min-height: 0;
+padding: 0 0 12px;
+align-items: flex-start;
 }
 
 /* Minimal printer: wider idle black slot */
 .receipt-printer {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+position: relative;
+display: flex;
+flex-direction: column;
+align-items: center;
 
-  width: min(100%, 300px);
-  padding: 0;
-  margin: 0 auto;
+width: min(100%, 300px);
+padding: 0;
+margin: 0 auto;
 
-  box-sizing: border-box;
-  background: transparent;
+box-sizing: border-box;
+background: transparent;
 }
 
 /* Hide printer illustration parts */
@@ -2875,62 +2878,62 @@
 .receipt-printer-body,
 .receipt-printer-display,
 .receipt-printer-button {
-  display: none !important;
+display: none !important;
 }
 
 /* Idle printer slot — aligned with receipt paper */
 .receipt-printer-slot {
-  display: block !important;
-  position: relative;
-  z-index: 3;
+display: block !important;
+position: relative;
+z-index: 3;
 
-  width: 150px;
-  height: 3px;
+width: 150px;
+height: 3px;
 
-  margin: 0 auto -1px;
-  padding: 0;
+margin: 0 auto -1px;
+padding: 0;
 
-  flex: 0 0 auto;
+flex: 0 0 auto;
 
-  border: 0;
-  border-radius: 2px;
-  background: #20251f;
+border: 0;
+border-radius: 2px;
+background: #20251f;
 
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 /* Receipt paper — natural length and proportions */
 .success-receipt {
-  position: relative;
-  z-index: 1;
+position: relative;
+z-index: 1;
 
-  width: min(100%, 250px);
-  min-width: 0;
-  min-height: 0;
-  height: auto;
-  max-height: none;
+width: min(100%, 250px);
+min-width: 0;
+min-height: 0;
+height: auto;
+max-height: none;
 
-  margin: 0 auto;
-  padding: 24px 16px 20px;
+margin: 0 auto;
+padding: 24px 16px 20px;
 
-  box-sizing: border-box;
-  overflow: visible;
-  overflow-wrap: anywhere;
+box-sizing: border-box;
+overflow: visible;
+overflow-wrap: anywhere;
 
-  background: #fffefb;
-  color: #35443a;
+background: #fffefb;
+color: #35443a;
 
-  border: 1px solid #e4e5df;
-  border-radius: 2px;
+border: 1px solid #e4e5df;
+border-radius: 2px;
 
-  box-shadow: 0 8px 22px rgba(30, 48, 36, 0.10);
+box-shadow: 0 8px 22px rgba(30, 48, 36, 0.10);
 
-  font-family: "Courier New", monospace;
-  font-size: 11px;
-  line-height: 1.45;
-  text-align: center;
+font-family: “Courier New”, monospace;
+font-size: 11px;
+line-height: 1.45;
+text-align: center;
 
-  transform-origin: top center;
+transform-origin: top center;
 }
 /* =========================
    RECEIPT PRINT SEQUENCE
