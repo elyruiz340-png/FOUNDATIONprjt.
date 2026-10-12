@@ -2402,6 +2402,17 @@
   cursor: not-allowed;
 }
   /* =========================
+   CHECKOUT HIDDEN STATE FIX
+========================= */
+
+.checkout-payment-methods[hidden],
+.checkout-cash-panel[hidden],
+#paymentSuccessPanel[hidden],
+#paymentSuccessActions[hidden],
+#paymentSuccessReceiptArea[hidden] {
+  display: none !important;
+}
+  /* =========================
    PAYMENT SUCCESSFUL OVERLAY
    INLINE CHECKOUT MODE
 ========================= */
