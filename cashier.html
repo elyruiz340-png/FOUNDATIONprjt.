@@ -2755,22 +2755,25 @@
   transform: none;
 }
 
-/* Keep printer hidden for this design stage */
+/* =========================
+   PAYMENT OPTIONS / RECEIPT VISIBILITY
+========================= */
 
-.checkout-modal.payment-success-mode .payment-success-receipt-area,
-#paymentSuccessReceiptArea[hidden] {
+/* Hide the right-side payment area while showing payment status. */
+.checkout-modal.payment-success-mode:not(.receipt-visible)
+.checkout-payment-options {
   display: none !important;
 }
 
-/* Right column stays empty until receipt is implemented */
-
-.checkout-modal.payment-success-mode .checkout-payment-options {
+/* Restore the right-side area only when the receipt is requested. */
+.checkout-modal.payment-success-mode.receipt-visible
+.checkout-payment-options {
   position: relative;
   left: auto;
   width: 100%;
   min-width: 0;
-  min-height: 520px;
-  height: 100%;
+  min-height: 0;
+  height: auto;
   box-sizing: border-box;
   display: block;
   border: none;
@@ -2779,6 +2782,21 @@
   box-shadow: none;
 }
 
+/* Hide the receipt only while its hidden attribute is present. */
+#paymentSuccessReceiptArea[hidden] {
+  display: none !important;
+}
+
+/* Show the receipt area when Print Receipt requests it. */
+#paymentSuccessReceiptArea:not([hidden]) {
+  display: flex;
+  min-height: 0;
+  height: auto;
+  padding: 0 0 12px;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+}
 /* Success transition */
 
 @keyframes halinaSuccessIn {
