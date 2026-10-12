@@ -8993,28 +8993,136 @@ if (checkoutAddMore && checkoutOverlay) {
 
 if (checkoutPaymentMethods) {
   checkoutPaymentMethods.addEventListener("click", function(event) {
-    const paymentCard =
-      event.target.closest("[data-payment-method]");
+    const paymentCard = event.target.closest("[data-payment-method]");
 
     if (!paymentCard) {
       return;
     }
 
-    if (paymentCard.dataset.paymentMethod === "cash") {
+    const method = paymentCard.dataset.paymentMethod;
+
+    // Keep the existing Cash workflow unchanged.
+    if (method === "cash") {
       showCheckoutCashPanel();
       return;
     }
 
-    if (
-      paymentCard.dataset.paymentMethod === "gift" ||
-      paymentCard.dataset.paymentMethod === "discount" ||
-      paymentCard.dataset.paymentMethod === "card" ||
-      paymentCard.dataset.paymentMethod === "pending"
-    ) {
-      console.info(
-        "Payment method workflow is not connected yet:",
-        paymentCard.dataset.paymentMethod
+    // Gift Card and Discount will be connected separately.
+    if (method === "gift" || method === "discount") {
+      console.info("Payment method not connected yet:", method);
+      return;
+    }
+
+    if (method !== "card" && method !== "pending") {
+      return;
+    }
+
+    const total = getCheckoutTotal();
+
+    if (total <= 0) {
+      console.warn("Cannot continue with an empty order.");
+      return;
+    }
+
+    if (!paymentSuccessPanel || !checkoutSummaryView) {
+      console.error("Payment success panel is missing.");
+      return;
+    }
+
+    const heading = paymentSuccessPanel.querySelector("h2");
+    const message = paymentSuccessPanel.querySelector(
+      ".payment-success-message"
+    );
+    const changeRow = successChange
+      ? successChange.closest(".payment-success-detail")
+      : null;
+    const details = paymentSuccessPanel.querySelector(
+      ".payment-success-details"
+    );
+
+    // Prepare the existing payment screen.
+    if (heading) {
+      heading.textContent =
+        method === "card" ? "Payment Successful!" : "Pending Payment";
+    }
+
+    if (message) {
+      message.textContent =
+        method === "card"
+          ? "Payment has been verified successfully."
+          : "Payment has not been confirmed. Please verify the payment before accepting this order.";
+    }
+
+    if (successTotalPaid) {
+      successTotalPaid.textContent = formatCheckoutMoney(total);
+    }
+
+    if (successAmountReceived) {
+      successAmountReceived.textContent =
+        method === "card" ? formatCheckoutMoney(total) : "—";
+    }
+
+    if (successChange) {
+      successChange.textContent = "—";
+    }
+
+    if (changeRow) {
+      changeRow.hidden = method !== "cash";
+    }
+
+    // Show a success check for verified payment, and a clock for pending.
+    const check = paymentSuccessPanel.querySelector(
+      ".payment-success-check"
+    );
+
+    if (check) {
+      check.textContent = method === "card" ? "✓" : "◷";
+      check.setAttribute(
+        "aria-label",
+        method === "card" ? "Payment verified" : "Payment pending"
       );
+    }
+
+    if (details) {
+      const firstLabel = details.querySelector(
+        ".payment-success-detail span"
+      );
+
+      if (firstLabel) {
+        firstLabel.textContent =
+          method === "card" ? "Total Paid" : "Total Amount";
+      }
+    }
+
+    // Only verified Card/QR payments may use the existing success actions.
+    if (paymentSuccessActions) {
+      paymentSuccessActions.hidden = method !== "card";
+    }
+
+    if (paymentSuccessReceiptArea) {
+      paymentSuccessReceiptArea.hidden = true;
+    }
+
+    renderSuccessReceipt(total);
+
+    checkoutSummaryView.hidden = true;
+    paymentSuccessPanel.hidden = false;
+
+    if (checkoutPaymentOptions) {
+      checkoutPaymentOptions.hidden = true;
+    }
+
+    if (checkoutPaymentMethods) {
+      checkoutPaymentMethods.hidden = true;
+    }
+
+    if (checkoutCashPanel) {
+      checkoutCashPanel.hidden = true;
+    }
+
+    if (checkoutModal) {
+      checkoutModal.classList.add("payment-success-mode");
+      checkoutModal.classList.remove("receipt-visible");
     }
   });
 }
