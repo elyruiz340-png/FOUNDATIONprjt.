@@ -8988,38 +8988,117 @@ if (checkoutAddMore && checkoutOverlay) {
 
 
 /* =========================
-   SELECT PAYMENT METHOD
+SELECT PAYMENT METHOD
 ========================= */
 
 if (checkoutPaymentMethods) {
-  checkoutPaymentMethods.addEventListener("click", function(event) {
-    const paymentCard =
-      event.target.closest("[data-payment-method]");
+checkoutPaymentMethods.addEventListener(“click”, function(event) {
+const paymentCard =
+event.target.closest(”[data-payment-method]”);
 
-    if (!paymentCard) {
-      return;
-    }
-
-    if (paymentCard.dataset.paymentMethod === "cash") {
-      showCheckoutCashPanel();
-      return;
-    }
-
-    if (
-      paymentCard.dataset.paymentMethod === "gift" ||
-      paymentCard.dataset.paymentMethod === "discount" ||
-      paymentCard.dataset.paymentMethod === "card" ||
-      paymentCard.dataset.paymentMethod === "pending"
-    ) {
-      console.info(
-        "Payment method workflow is not connected yet:",
-        paymentCard.dataset.paymentMethod
-      );
-    }
-  });
+if (!paymentCard) {
+  return;
+}
+const method = paymentCard.dataset.paymentMethod;
+/* KEEP EXISTING CASH WORKFLOW */
+if (method === "cash") {
+  const heading =
+    paymentSuccessPanel
+      ? paymentSuccessPanel.querySelector("h2")
+      : null;
+  const message =
+    paymentSuccessPanel
+      ? paymentSuccessPanel.querySelector(
+          ".payment-success-message"
+        )
+      : null;
+  if (heading) {
+    heading.textContent = "Payment Successful!";
+  }
+  if (message) {
+    message.textContent =
+      "Payment has been verified successfully.";
+  }
+  showCheckoutCashPanel();
+  return;
+}
+/* CARD / QR AND PENDING */
+if (method !== "card" && method !== "pending") {
+  console.info(
+    "Payment method workflow will be connected next:",
+    method
+  );
+  return;
+}
+const total = getCheckoutTotal();
+if (total <= 0) {
+  console.warn(
+    "Cannot continue checkout with an empty cart."
+  );
+  return;
+}
+if (!paymentSuccessPanel || !checkoutSummaryView) {
+  console.error(
+    "Payment success panel is missing."
+  );
+  return;
+}
+const isPending = method === "pending";
+const heading =
+  paymentSuccessPanel.querySelector("h2");
+const message =
+  paymentSuccessPanel.querySelector(
+    ".payment-success-message"
+  );
+/* UPDATE SUCCESS SCREEN TEXT */
+if (heading) {
+  heading.textContent = isPending
+    ? "Pending Payment"
+    : "Payment Successful!";
+}
+if (message) {
+  message.textContent = isPending
+    ? "Payment has not been confirmed yet."
+    : "Payment verified by cashier.";
+}
+/* UPDATE PAYMENT DETAILS */
+if (successTotalPaid) {
+  successTotalPaid.textContent = isPending
+    ? "Pending"
+    : formatCheckoutMoney(total);
+}
+if (successAmountReceived) {
+  successAmountReceived.textContent = isPending
+    ? "Pending"
+    : formatCheckoutMoney(total);
+}
+if (successChange) {
+  successChange.textContent =
+    isPending ? "—" : formatCheckoutMoney(0);
+}
+/* BUILD RECEIPT FROM CURRENT CART */
+renderSuccessReceipt(total);
+/* SHOW PAYMENT SUCCESS PANEL */
+checkoutSummaryView.hidden = true;
+paymentSuccessPanel.hidden = false;
+if (paymentSuccessActions) {
+  paymentSuccessActions.hidden = false;
+}
+if (checkoutPaymentMethods) {
+  checkoutPaymentMethods.hidden = true;
+}
+if (checkoutCashPanel) {
+  checkoutCashPanel.hidden = true;
+}
+if (paymentSuccessReceiptArea) {
+  paymentSuccessReceiptArea.hidden = true;
+}
+if (checkoutModal) {
+  checkoutModal.classList.add("payment-success-mode");
 }
 
-
+});
+}
 /* =========================
    BACK TO PAYMENT OPTIONS
 ========================= */
