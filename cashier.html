@@ -2482,7 +2482,8 @@
 .checkout-cash-panel[hidden],
 #paymentSuccessPanel[hidden],
 #paymentSuccessActions[hidden],
-#paymentSuccessReceiptArea[hidden] {
+#paymentSuccessReceiptArea[hidden],
+.payment-success-detail[hidden] {
   display: none !important;
 }
   /* =========================
@@ -9185,17 +9186,28 @@ if (checkoutPaymentMethods) {
       );
     }
 
-    if (details) {
-      const firstLabel = details.querySelector(
-        ".payment-success-detail span"
-      );
+   if (details) {
+  const rows = details.querySelectorAll(
+    ".payment-success-detail"
+  );
 
-      if (firstLabel) {
-        firstLabel.textContent =
-          method === "card" ? "Total Paid" : "Total Amount";
-      }
-    }
+  const firstLabel = rows[0]?.querySelector("span");
 
+  if (firstLabel) {
+    firstLabel.textContent =
+      method === "card" ? "Total Paid" : "Total Amount";
+  }
+
+  // Pending Payment: show Total Amount only.
+  // Verified Card/QR Payment: restore all detail rows.
+  if (rows[1]) {
+    rows[1].hidden = method === "pending";
+  }
+
+  if (rows[2]) {
+    rows[2].hidden = method === "pending";
+  }
+}
     // Show action buttons for both verified and pending payments.
 // Accept Order does not automatically mean payment is confirmed.
 if (paymentSuccessActions) {
