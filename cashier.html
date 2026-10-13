@@ -3819,6 +3819,141 @@ body.pos-other-view .page-section {
     margin-left: 58px;
   }
 }
+  /* =========================================
+   STOCKS CATEGORY NAVIGATION — MODERN CARDS
+========================================= */
+
+#stockCategoryNav.stock-category-nav {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 20px;
+  padding: 0;
+  overflow: visible;
+  align-items: stretch;
+}
+
+#stockCategoryNav .stock-category-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: 1px solid #24543c;
+  border-radius: 14px;
+  background: #174b35;
+  box-shadow: 0 4px 12px rgba(23, 75, 53, 0.15);
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.28s ease,
+    height 0.28s ease;
+}
+
+#stockCategoryNav .stock-category-highlight.animate {
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.28s ease,
+    height 0.28s ease;
+}
+
+#stockCategoryNav .stock-category-btn {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 82px;
+  padding: 12px;
+  border: 1px solid #e8e6dc;
+  border-radius: 14px;
+  background: #fffefa;
+  color: #263d31;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 7px rgba(34, 56, 42, 0.035);
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+#stockCategoryNav .stock-category-btn > span:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 50%;
+  background: #e8f0e7;
+  font-size: 17px;
+  line-height: 1;
+}
+
+#stockCategoryNav .stock-category-btn > span:nth-child(2) {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+#stockCategoryNav .stock-category-btn:hover {
+  border-color: #c9d8cc;
+  box-shadow: 0 4px 12px rgba(34, 56, 42, 0.07);
+  transform: translateY(-1px);
+}
+
+#stockCategoryNav .stock-category-btn.active {
+  border-color: transparent;
+  background: transparent;
+  color: #ffffff;
+  box-shadow: none;
+  transform: none;
+}
+
+#stockCategoryNav .stock-category-btn.active > span:first-child {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#stockCategoryNav .stock-category-btn:focus-visible {
+  outline: 3px solid rgba(55, 117, 81, 0.3);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1100px) {
+  #stockCategoryNav.stock-category-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 9px;
+  }
+}
+
+@media (max-width: 700px) {
+  #stockCategoryNav.stock-category-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #stockCategoryNav .stock-category-btn {
+    min-height: 76px;
+    padding: 10px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #stockCategoryNav .stock-category-btn,
+  #stockCategoryNav .stock-category-highlight {
+    transition: none !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -6237,7 +6372,7 @@ function createStockCard(
   );
 
 }
-  /* =========================
+/* =========================
    STOCK CATEGORY FILTER
 ========================= */
 
@@ -6250,12 +6385,57 @@ if (
 ) {
   stockCategoryNav.dataset.filterInitialized = "true";
 
+  function updateStockCategoryHighlight(button, animate) {
+    if (!button || !stockCategoryNav) return;
+
+    let highlight = stockCategoryNav.querySelector(
+      ".stock-category-highlight"
+    );
+
+    if (!highlight) {
+      highlight = document.createElement("span");
+      highlight.className = "stock-category-highlight";
+      highlight.setAttribute("aria-hidden", "true");
+      stockCategoryNav.prepend(highlight);
+    }
+
+    const containerRect =
+      stockCategoryNav.getBoundingClientRect();
+
+    const buttonRect =
+      button.getBoundingClientRect();
+
+    const left =
+      buttonRect.left - containerRect.left;
+
+    const top =
+      buttonRect.top - containerRect.top;
+
+    highlight.style.width = buttonRect.width + "px";
+    highlight.style.height = buttonRect.height + "px";
+    highlight.style.transform =
+      "translate(" + left + "px, " + top + "px)";
+
+    highlight.classList.toggle("animate", Boolean(animate));
+  }
+
+  function syncStockCategoryHighlight(animate) {
+    const activeButton =
+      stockCategoryNav.querySelector(
+        ".stock-category-btn.active"
+      );
+
+    if (activeButton) {
+      updateStockCategoryHighlight(activeButton, animate);
+    }
+  }
+
   stockCategoryNav.addEventListener("click", function(event) {
     const button = event.target.closest(
       ".stock-category-btn"
     );
 
-    if (!button) return;
+    if (!button || !stockCategoryNav.contains(button)) return;
 
     const selectedCategory =
       button.dataset.stockCategory;
@@ -6268,6 +6448,8 @@ if (
           categoryButton === button
         );
       });
+
+    syncStockCategoryHighlight(true);
 
     stockContainer
       .querySelectorAll(".stock-card")
@@ -6282,8 +6464,15 @@ if (
             : "none";
       });
   });
-}
 
+  requestAnimationFrame(function() {
+    syncStockCategoryHighlight(false);
+  });
+
+  window.addEventListener("resize", function() {
+    syncStockCategoryHighlight(false);
+  });
+}
   /* =========================
      SAVE STOCK
   ========================= */
