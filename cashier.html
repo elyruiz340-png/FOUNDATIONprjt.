@@ -3673,7 +3673,7 @@ transform-origin: top center;
 
   <div class="pos-layout">
 
-   <!-- =====================
+ <!-- =====================
      POS SIDEBAR
 ====================== -->
 <aside class="pos-sidebar">
@@ -3681,36 +3681,24 @@ transform-origin: top center;
   <!-- Moving selected background -->
   <div class="pos-sidebar-highlight"></div>
 
+  <!-- 1. MENU / ORDERING -->
   <button
     type="button"
     class="pos-sidebar-btn active"
     data-pos-section="posSection"
-    aria-label="Menu"
-    title="Menu"
+    aria-label="Menu / Ordering"
+    title="Menu / Ordering"
   >
-    🍽️
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 3v7a3 3 0 0 0 6 0V3"/>
+      <path d="M7 3v18"/>
+      <path d="M4 7h6"/>
+      <path d="M16 3v18"/>
+      <path d="M16 3c4 2 4 7 0 9"/>
+    </svg>
   </button>
 
-  <button
-    type="button"
-    class="pos-sidebar-btn"
-    data-pos-section="tablesSection"
-    aria-label="Tables"
-    title="Tables"
-  >
-    🪑
-  </button>
-
-  <button
-    type="button"
-    class="pos-sidebar-btn"
-    data-pos-section="stocksSection"
-    aria-label="Stocks"
-    title="Stocks"
-  >
-    📦
-  </button>
-
+  <!-- 2. ORDERS -->
   <button
     type="button"
     class="pos-sidebar-btn"
@@ -3718,9 +3706,45 @@ transform-origin: top center;
     aria-label="Orders"
     title="Orders"
   >
-    🧾
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="5" y="3" width="14" height="18" rx="2"/>
+      <path d="M9 8h6M9 12h6M9 16h4"/>
+      <path d="m3 7 2-2M3 17l2 2"/>
+    </svg>
   </button>
 
+  <!-- 3. TABLES -->
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="tablesSection"
+    aria-label="Tables"
+    title="Tables"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 9h18"/>
+      <path d="M5 9l1 12M19 9l-1 12"/>
+      <path d="M4 5h16l1 4H3l1-4Z"/>
+    </svg>
+  </button>
+
+  <!-- 4. STOCKS -->
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="stocksSection"
+    aria-label="Stocks"
+    title="Stocks"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m12 3 9 5-9 5-9-5 9-5Z"/>
+      <path d="m3 8 9 5 9-5"/>
+      <path d="M3 8v9l9 5 9-5V8"/>
+      <path d="M12 13v9"/>
+    </svg>
+  </button>
+
+  <!-- 5. SETTINGS -->
   <button
     type="button"
     class="pos-sidebar-btn"
@@ -3728,9 +3752,11 @@ transform-origin: top center;
     aria-label="Settings"
     title="Settings"
   >
-    ⚙️
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>
+      <path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.9l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.6.9l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8Z" transform="translate(-1 -2) scale(1.08)"/>
+    </svg>
   </button>
-
 
 </aside>
   <!-- =====================
