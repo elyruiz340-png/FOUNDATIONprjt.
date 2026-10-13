@@ -3676,6 +3676,60 @@ transform-origin: top center;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
 }
+
+/* =========================================================
+   KEEP SIDEBAR VISIBLE WHEN SWITCHING SECTIONS
+   (Orders / Tables / Stocks / Settings)
+   Only active while body has class "pos-other-view".
+   The Menu / Ordering view is not affected.
+========================================================= */
+
+/* Hide only the menu + cart area, not the whole #posSection */
+body.pos-other-view .pos-main {
+  display: none;
+}
+
+/* #posSection takes no space; the sidebar inside it is pinned */
+body.pos-other-view #posSection {
+  height: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+body.pos-other-view .pos-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  height: auto;
+  min-height: 0;
+  z-index: 50;
+}
+
+/* Push the other sections to the right of the sidebar
+   (same widths as the sidebar: 56px / 68px / 58px) */
+body.pos-other-view .page-section,
+body.pos-other-view #message {
+  margin-left: 56px;
+}
+
+body.pos-other-view .page-section {
+  padding: 20px 24px;
+}
+
+@media (max-width: 850px) {
+  body.pos-other-view .page-section,
+  body.pos-other-view #message {
+    margin-left: 68px;
+  }
+}
+
+@media (max-width: 600px) {
+  body.pos-other-view .page-section,
+  body.pos-other-view #message {
+    margin-left: 58px;
+  }
+}
 </style>
 </head>
 <body>
@@ -5199,7 +5253,7 @@ transform-origin: top center;
    POS SIDEBAR NAVIGATION
 ========================= */
 
-(function initPosSidebarNavigation() {
+(function() {
   const sidebarButtons = document.querySelectorAll(
     ".pos-sidebar-btn"
   );
@@ -5208,6 +5262,10 @@ transform-origin: top center;
   const highlight = document.querySelector(
     ".pos-sidebar-highlight"
   );
+
+  /* =========================
+     MOVE GREEN HIGHLIGHT
+  ========================= */
 
   function moveSidebarHighlight(button) {
     if (!sidebar || !highlight || !button) return;
@@ -5236,6 +5294,10 @@ transform-origin: top center;
     }
   }
 
+  /* =========================
+     SIDEBAR NAVIGATION
+  ========================= */
+
   sidebarButtons.forEach(function(button) {
     button.addEventListener("click", function(event) {
       event.preventDefault();
@@ -5252,6 +5314,36 @@ transform-origin: top center;
         return;
       }
 
+      /* =========================
+         SIDEBAR ACTIVE STATE
+      ========================= */
+
+      sidebarButtons.forEach(function(btn) {
+        btn.classList.remove("active");
+      });
+
+      button.classList.add("active");
+
+      /* Move highlight to selected icon */
+      moveSidebarHighlight(button);
+
+      /* =========================
+         HIDE THE OTHER PAGE SECTIONS
+         Keep #posSection because it
+         contains the sidebar.
+      ========================= */
+
+      document.querySelectorAll(".page-section").forEach(
+        function(section) {
+          section.style.display = "none";
+          section.classList.remove("active");
+        }
+      );
+
+      /* =========================
+         SHOW SELECTED SECTION
+      ========================= */
+
       const selectedSection = document.getElementById(
         sectionId
       );
@@ -5264,30 +5356,6 @@ transform-origin: top center;
         return;
       }
 
-      /* =========================
-         SIDEBAR ACTIVE STATE
-      ========================= */
-
-      sidebarButtons.forEach(function(btn) {
-        btn.classList.remove("active");
-      });
-
-      button.classList.add("active");
-      moveSidebarHighlight(button);
-
-      /* =========================
-         HIDE OTHER PAGE SECTIONS
-         Keep #posSection visible
-         because it contains sidebar.
-      ========================= */
-
-      document.querySelectorAll(".page-section").forEach(
-        function(section) {
-          section.style.display = "none";
-          section.classList.remove("active");
-        }
-      );
-
       const showingMenu = sectionId === "posSection";
 
       document.body.classList.toggle(
@@ -5295,7 +5363,9 @@ transform-origin: top center;
         !showingMenu
       );
 
-      const posSection = document.getElementById("posSection");
+      const posSection = document.getElementById(
+        "posSection"
+      );
 
       if (posSection) {
         posSection.classList.toggle("active", showingMenu);
@@ -5332,28 +5402,89 @@ transform-origin: top center;
         loadStocks();
       }
 
-      if (sectionId === "ordersSection") {
-        if (typeof loadOrders === "function") {
-          loadOrders();
-        }
+      if (
+        sectionId === "ordersSection" &&
+        typeof loadOrders === "function"
+      ) {
+        loadOrders();
 
         if (typeof startOrdersRefresh === "function") {
           startOrdersRefresh();
         }
       }
 
-      /* Recalculate after the section layout updates */
+      /* Recalculate after the view updates */
       requestAnimationFrame(updateSidebarHighlight);
     });
   });
 
-  /* Keep highlight aligned after resizing */
+  /* =========================
+     INITIAL POSITION + RESIZE
+  ========================= */
+
   window.addEventListener("resize", updateSidebarHighlight);
 
-  /* Position it on initial page load */
   requestAnimationFrame(updateSidebarHighlight);
 })();
- 
+ /* LOAD TABLES FROM SUPABASE */
+async function loadTables() {
+  clearMessage();
+
+  tablesContainer.innerHTML =
+    '<div class="loading">Loading tables...</div>';
+
+  try {
+    const response = await fetch(
+      TABLE_ENDPOINT + "?select=id,table_number,status",
+      {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        data.error ||
+        data.hint ||
+        "Unable to load tables."
+      );
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      tablesContainer.innerHTML =
+        '<div class="loading">No tables found.</div>';
+      return;
+    }
+
+    data.sort(function(a, b) {
+      return String(a.table_number).localeCompare(
+        String(b.table_number),
+        undefined,
+        { numeric: true }
+      );
+    });
+
+    tablesContainer.innerHTML = "";
+
+    data.forEach(function(table) {
+      createTableCard(table);
+    });
+
+  } catch (error) {
+    console.error("Load tables error:", error);
+
+    tablesContainer.innerHTML =
+      '<div class="loading">Unable to load tables.</div>';
+
+    showError(error.message);
+  }
+}
   /* =========================
      CREATE TABLE CARD
   ========================= */
