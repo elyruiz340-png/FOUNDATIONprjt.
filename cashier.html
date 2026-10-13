@@ -6061,6 +6061,8 @@ function createStockCard(
 
   const firstItem =
     items[0];
+  card.dataset.stockCategory =
+  firstItem.menuCategory || "others";
 
 
   const remaining =
@@ -6235,6 +6237,53 @@ function createStockCard(
   );
 
 }
+  /* =========================
+   STOCK CATEGORY FILTER
+========================= */
+
+const stockCategoryNav =
+  document.getElementById("stockCategoryNav");
+
+if (
+  stockCategoryNav &&
+  !stockCategoryNav.dataset.filterInitialized
+) {
+  stockCategoryNav.dataset.filterInitialized = "true";
+
+  stockCategoryNav.addEventListener("click", function(event) {
+    const button = event.target.closest(
+      ".stock-category-btn"
+    );
+
+    if (!button) return;
+
+    const selectedCategory =
+      button.dataset.stockCategory;
+
+    stockCategoryNav
+      .querySelectorAll(".stock-category-btn")
+      .forEach(function(categoryButton) {
+        categoryButton.classList.toggle(
+          "active",
+          categoryButton === button
+        );
+      });
+
+    stockContainer
+      .querySelectorAll(".stock-card")
+      .forEach(function(card) {
+        const cardCategory =
+          card.dataset.stockCategory || "others";
+
+        card.style.display =
+          selectedCategory === "all" ||
+          cardCategory === selectedCategory
+            ? ""
+            : "none";
+      });
+  });
+}
+
   /* =========================
      SAVE STOCK
   ========================= */
