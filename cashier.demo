@@ -1,0 +1,9675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cashier | HALINA BISTRO CAFE</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4eadb;
+    color: #3d2b1f;
+  }
+
+  /* =========================
+     HEADER
+  ========================= */
+
+  header {
+    background: #6b4428;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(70, 40, 20, 0.18);
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 25px;
+    letter-spacing: 0.5px;
+  }
+
+  header p {
+    margin: 6px 0 0;
+    color: #eadbc8;
+    font-size: 14px;
+  }
+
+  /* =========================
+     NAVIGATION
+  ========================= */
+
+  .navigation {
+    background: #fffaf3;
+    border-bottom: 1px solid #ddcbb5;
+    padding: 12px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    box-shadow: 0 2px 8px rgba(70, 40, 20, 0.08);
+  }
+
+  .nav-btn {
+    border: 1px solid #d6bea3;
+    background: #f3e5d2;
+    color: #5a3822;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.2s;
+  }
+
+  .nav-btn:hover {
+    background: #ead4b8;
+  }
+
+  .nav-btn.active {
+    background: #8b5e3c;
+    color: white;
+    border-color: #8b5e3c;
+  }
+
+ /* =========================
+     CONTAINER
+  ========================= */
+
+  .container {
+    width: 100%;
+    max-width: none;
+
+    margin: 0;
+    padding: 0;
+
+    box-sizing: border-box;
+  }
+
+  .page-section {
+    display: none;
+  }
+
+  .page-section.active {
+    display: block;
+  }
+  /* =========================
+     TOP BAR
+  ========================= */
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .top-bar h2 {
+    margin: 0;
+    color: #4a2f1c;
+  }
+
+  .refresh-btn {
+    border: none;
+    background: #6b4428;
+    color: white;
+    padding: 11px 16px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .refresh-btn:hover {
+    background: #57351f;
+  }
+
+  /* =========================
+     MESSAGE
+  ========================= */
+
+  .message {
+    margin-bottom: 20px;
+    padding: 13px 15px;
+    border-radius: 9px;
+    display: none;
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .message.error {
+    display: block;
+    background: #ffe1df;
+    color: #a5221c;
+    border: 1px solid #efb7b3;
+  }
+
+  .message.success {
+    display: block;
+    background: #e1f4e5;
+    color: #236b34;
+    border: 1px solid #b6dfbd;
+  }
+
+  /* =========================
+     TABLES
+  ========================= */
+
+  .tables {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .table-card {
+    background: #fffaf3;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 14px rgba(70, 40, 20, 0.10);
+    border: 2px solid #ddcbb5;
+  }
+
+  .table-number {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    color: #4a2f1c;
+  }
+
+  .status {
+    display: inline-block;
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+
+  .locked {
+    background: #eee3d6;
+    color: #66584d;
+  }
+
+  .open {
+    background: #dff3e4;
+    color: #23733a;
+  }
+
+  .action-btn {
+    width: 100%;
+    border: none;
+    padding: 12px;
+    border-radius: 9px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .unlock-btn {
+    background: #6c8f45;
+    color: white;
+  }
+
+  .unlock-btn:hover {
+    background: #587738;
+  }
+
+  .lock-btn {
+    background: #6b4428;
+    color: white;
+  }
+
+  .lock-btn:hover {
+    background: #54331f;
+  }
+
+  .action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* =========================
+     STOCKS
+  ========================= */
+
+  .stock-intro {
+    background: #fffaf3;
+    border: 1px solid #ddcbb5;
+    border-radius: 13px;
+    padding: 16px;
+    margin-bottom: 18px;
+    color: #684a35;
+    line-height: 1.5;
+  }
+
+  .stock-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .stock-card {
+    background: #fffaf3;
+    border: 1px solid #ddcbb5;
+    border-radius: 13px;
+    padding: 16px;
+    box-shadow: 0 3px 10px rgba(70, 40, 20, 0.07);
+  }
+
+  .stock-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  .stock-name {
+    font-size: 17px;
+    font-weight: bold;
+    color: #4a2f1c;
+  }
+
+  .stock-shared {
+    display: inline-block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #8a6a4d;
+  }
+
+  .stock-remaining {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #66584d;
+  }
+
+  .stock-status {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .stock-available {
+    background: #dff3e4;
+    color: #23733a;
+  }
+
+  .stock-unavailable {
+    background: #ffe0de;
+    color: #a5221c;
+  }
+
+  .stock-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .stock-input {
+    width: 110px;
+    padding: 11px;
+    border: 1px solid #cdb79f;
+    border-radius: 8px;
+    background: white;
+    font-size: 15px;
+    text-align: center;
+    outline: none;
+  }
+
+  .stock-input:focus {
+    border-color: #8b5e3c;
+  }
+
+  .stock-save-btn {
+    border: none;
+    background: #8b5e3c;
+    color: white;
+    padding: 11px 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .stock-save-btn:hover {
+    background: #70492f;
+  }
+
+  .stock-save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* =========================
+     OTHER PAGES
+  ========================= */
+
+  .coming-soon {
+    background: #fffaf3;
+    border: 1px solid #ddcbb5;
+    border-radius: 15px;
+    padding: 40px 20px;
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(70, 40, 20, 0.08);
+  }
+
+  .coming-soon .icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+  }
+
+  .coming-soon h3 {
+    margin: 5px 0;
+    color: #4a2f1c;
+  }
+
+  .coming-soon p {
+    color: #766252;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 30px;
+    color: #766252;
+  }
+
+  /* =========================
+     STOCK CATEGORY HEADINGS
+  ========================= */
+
+  .stock-category-heading {
+    margin-top: 28px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+
+    background: #f3e4d0;
+
+    border-left: 5px solid #8b5e3c;
+    border-radius: 10px;
+
+    color: #5b3a29;
+
+    font-size: 16px;
+    font-weight: 800;
+
+    letter-spacing: 0.5px;
+  }
+
+  .stock-category-heading:first-child {
+    margin-top: 0;
+  }
+
+  /* =========================
+     INCOMING ORDERS
+  ========================= */
+
+  .orders-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 10px 0 30px 0;
+  }
+
+  .order-card {
+    width: 100%;
+    box-sizing: border-box;
+    background: #fffaf2;
+    border: 1px solid #e3d2bd;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(80, 55, 35, 0.10);
+  }
+
+  .order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eadcca;
+  }
+
+  .order-number {
+    font-size: 20px;
+    font-weight: 800;
+    color: #4b2e1f;
+  }
+
+  .order-time {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #8a6b55;
+  }
+
+  .order-status {
+    background: #f4c95d;
+    color: #4b2e1f;
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .order-details {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .order-details > div {
+    background: #f7eee3;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13px;
+    color: #5c4435;
+  }
+
+  .order-items {
+    margin-top: 18px;
+  }
+
+  .order-items-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #6b4f3a;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 9px 0;
+    border-bottom: 1px solid #eee2d5;
+    font-size: 14px;
+    color: #4b382d;
+  }
+
+  .order-item strong {
+    white-space: nowrap;
+    color: #4b2e1f;
+  }
+
+  .order-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 2px solid #d9c3aa;
+    color: #5c4435;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .order-total strong {
+    font-size: 22px;
+    color: #4b2e1f;
+  }
+
+  /* =========================
+     REFRESH
+  ========================= */
+
+  .refresh-btn {
+    border: none;
+    background: #6b4f3a;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .refresh-btn:hover {
+    opacity: 0.9;
+  }
+
+  /* =========================
+     ACCEPT ORDER BUTTON
+  ========================= */
+
+  .order-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 1px solid #eadcca;
+  }
+
+  .accept-order-btn {
+    min-width: 210px;
+    padding: 15px 24px;
+    border: none;
+    border-radius: 12px;
+    background: #2e8b3c;
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+    letter-spacing: 0.3px;
+  }
+
+  .accept-order-btn:hover {
+    background: #267632;
+  }
+
+  .accept-order-btn:active {
+    transform: scale(0.98);
+  }
+
+  /* =========================
+     ACCEPT ORDER MOVE ANIMATION
+  ========================= */
+
+  .order-card.accept-moving {
+    animation:
+      acceptOrderMove 0.45s
+      cubic-bezier(0.22, 1, 0.36, 1)
+      both;
+
+    position: relative;
+    z-index: 10;
+  }
+
+  @keyframes acceptOrderMove {
+    0% {
+      opacity: 1;
+      transform:
+        translateY(0)
+        scale(1);
+    }
+
+    45% {
+      opacity: 0.95;
+      transform:
+        translateY(28px)
+        scale(0.98);
+    }
+
+    100% {
+      opacity: 0;
+      transform:
+        translateY(65px)
+        scale(0.94);
+    }
+  }
+
+  /* =========================
+     NEW ORDER POP ANIMATION
+  ========================= */
+
+  .order-card.new-order-pop {
+    animation:
+      newOrderPop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both,
+      newOrderGlow 1.6s ease-in-out 0.55s 3;
+
+    position: relative;
+    z-index: 5;
+  }
+
+  @keyframes newOrderPop {
+    0% {
+      opacity: 0;
+      transform: scale(0.18);
+      border-radius: 50%;
+    }
+
+    45% {
+      opacity: 1;
+      transform: scale(1.08);
+      border-radius: 28px;
+    }
+
+    75% {
+      transform: scale(0.97);
+      border-radius: 20px;
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      border-radius: 16px;
+    }
+  }
+
+  /* =========================
+     WARM GREEN GLOW
+  ========================= */
+
+  @keyframes newOrderGlow {
+    0%,
+    100% {
+      box-shadow:
+        0 4px 12px rgba(80, 55, 35, 0.10),
+        0 0 0 rgba(91, 180, 83, 0);
+    }
+
+    50% {
+      box-shadow:
+        0 4px 12px rgba(80, 55, 35, 0.10),
+        0 0 14px rgba(91, 180, 83, 0.55),
+        0 0 28px rgba(91, 180, 83, 0.25);
+    }
+  }
+
+  /* =========================
+     NEW ORDER GLOW BORDER
+  ========================= */
+
+  .order-card.new-order-pop::before {
+    content: "";
+
+    position: absolute;
+
+    inset: -1px;
+
+    border-radius: inherit;
+
+    border: 1px solid rgba(91, 180, 83, 0.75);
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    animation:
+      newOrderBorderGlow
+      1.6s ease-in-out
+      0.55s 3;
+  }
+
+  @keyframes newOrderBorderGlow {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+ /* =========================
+   CASHIER POS
+========================= */
+
+#posSection {
+  width: 100%;
+  max-width: none;
+
+  height: 100vh;
+  min-height: 0;
+
+  margin: 0;
+
+  background: #F7F3EC;
+
+  padding: 0;
+
+  overflow: hidden;
+
+  box-sizing: border-box;
+}
+  /* =========================
+     POS LAYOUT
+  ========================= */
+
+  #posSection .pos-layout {
+    display: grid;
+
+    grid-template-columns:
+      56px minmax(0, 1fr);
+
+    width: 100%;
+    min-width: 0;
+
+    min-height: 0;
+
+    margin: 0;
+    padding: 0;
+
+    align-items: stretch;
+
+    box-sizing: border-box;
+  }
+
+  .pos-layout {
+    display: grid;
+
+    grid-template-columns:
+      56px minmax(0, 1fr);
+
+    min-height: 0;
+    width: 100%;
+    min-width: 0;
+
+    margin: 0;
+    padding: 0;
+
+    align-items: stretch;
+
+    box-sizing: border-box;
+  }
+
+
+  /* =========================
+     COMPACT SIDEBAR
+  ========================= */
+
+  .pos-sidebar {
+    width: 56px;
+    min-height: 720px;
+    height: 100%;
+
+    flex-shrink: 0;
+
+    background: #f0f2f0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 14px 4px;
+
+    box-sizing: border-box;
+
+    position: relative;
+  }
+
+  /* =========================
+     MOVING SELECTED HIGHLIGHT
+  ========================= */
+
+  .pos-sidebar-highlight {
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    width: 44px;
+    height: 44px;
+
+    border-radius: 12px;
+
+    background: #cfe3d6;
+
+    transform: translate(6px, 14px);
+
+    transition:
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+      width 0.2s ease,
+      height 0.2s ease;
+
+    pointer-events: none;
+
+    z-index: 0;
+  }
+
+ /* =========================
+   SIDEBAR BUTTONS
+========================= */
+
+.pos-sidebar-btn {
+  position: relative;
+  z-index: 1;
+
+  width: 48px;
+  min-height: 48px;
+  flex-shrink: 0;
+
+  border: 0;
+  border-radius: 12px;
+
+  background: transparent;
+  color: #46534c;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+
+  transition:
+    color 0.25s ease,
+    background-color 0.25s ease,
+    transform 0.25s ease;
+}
+
+/* Monochrome outline SVG icons */
+.pos-sidebar-btn svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  overflow: visible;
+  transition:
+    stroke 0.25s ease,
+    transform 0.25s ease;
+}
+
+.pos-sidebar-btn span {
+  display: none;
+}
+
+.pos-sidebar-btn:hover {
+  color: #315143;
+}
+
+.pos-sidebar-btn:active {
+  transform: scale(0.94);
+}
+
+.pos-sidebar-btn.active {
+  background: transparent;
+  color: #315143;
+}
+
+/* Sidebar separation shadow */
+.pos-sidebar {
+  box-shadow: 3px 0 12px rgba(35, 55, 43, 0.08);
+}
+/* =========================
+   MAIN POS AREA
+========================= */
+
+#posSection .pos-main,
+.pos-main {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+
+  height: 100vh;
+
+  padding: 0 24px 0;
+
+  box-sizing: border-box;
+
+  overflow-x: hidden;
+  overflow-y: hidden;
+
+  border-top: none;
+}
+/* =========================
+   POS TOP BAR
+========================= */
+
+.pos-topbar {
+  display: grid;
+
+  grid-template-columns: minmax(0, 1fr) auto;
+
+  grid-template-areas:
+    "title brand"
+    "subtitle brand"
+    "search search";
+
+  align-items: center;
+
+  column-gap: 20px;
+  row-gap: 0;
+
+  width: 100%;
+  max-width: 100%;
+
+  margin-bottom: 10px;
+
+  box-sizing: border-box;
+}
+
+.pos-topbar h2 {
+  grid-area: title;
+
+  margin: 0;
+
+  font-size: 26px;
+  line-height: 1.15;
+
+  color: #18231e;
+}
+
+.pos-brand {
+  grid-area: brand;
+
+  margin: 0;
+
+  color: #527563;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  letter-spacing: 1.2px;
+
+  text-transform: uppercase;
+
+  white-space: nowrap;
+
+  text-align: right;
+}
+
+.pos-topbar p {
+  grid-area: subtitle;
+
+  margin: -8px 0 0;
+
+  color: #748078;
+
+  font-size: 14px;
+
+  line-height: 1.3;
+}
+  /* =========================
+   SEARCH
+========================= */
+
+.pos-search-wrap {
+  grid-area: search;
+  position: relative;
+  width: 100%;
+}
+
+.pos-search-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #7a857f;
+  pointer-events: none;
+}
+
+.pos-search-icon circle,
+.pos-search-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pos-search {
+  width: 100%;
+  height: 34px;
+  border: 1px solid #d7dfda;
+  border-radius: 17px;
+  background: #ffffff;
+  padding: 0 14px 0 38px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.pos-search:focus {
+  border-color: #527563;
+  box-shadow: 0 0 0 3px rgba(82,117,99,0.08);
+}
+  /* =========================
+   ORDER TYPES
+========================= */
+
+.pos-order-types {
+  display: flex;
+
+  gap: 6px;
+
+  margin-bottom: 10px;
+
+  flex-wrap: nowrap;
+
+  width: 100%;
+
+  box-sizing: border-box;
+}
+
+.pos-order-type {
+  flex: 1 1 0;
+
+  min-width: 0;
+
+  min-height: 34px;
+
+  height: 34px;
+
+  padding: 0 6px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d8e0db;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #34433b;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.pos-order-type:hover {
+  background: #f4f7f5;
+
+  border-color: #b9c9bf;
+}
+
+.pos-order-type.active {
+  background: #315143;
+
+  color: #ffffff;
+
+  border-color: #315143;
+}
+ /* =========================
+   CATEGORIES
+========================= */
+
+.pos-categories {
+  position: relative;
+
+  display: flex;
+
+  gap: 7px;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  padding-bottom: 6px;
+
+  margin-bottom: 10px;
+
+  box-sizing: border-box;
+
+  scrollbar-width: thin;
+}
+
+.pos-category-highlight {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  z-index: 1;
+
+  border: 1px solid #a9c0b1;
+
+  border-radius: 20px;
+
+  background: #e4eee8;
+
+  pointer-events: none;
+
+  transition:
+    transform 0.28s ease,
+    width 0.28s ease,
+    height 0.28s ease;
+}
+
+.pos-category-highlight.animate {
+  transition:
+    transform 0.32s cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    ),
+    width 0.28s ease,
+    height 0.28s ease;
+}
+
+.pos-category {
+  position: relative;
+
+  z-index: 2;
+
+  flex-shrink: 0;
+
+  padding: 8px 13px;
+
+  border: 1px solid transparent;
+
+  border-radius: 20px;
+
+  background: transparent;
+
+  color: #46534c;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+
+  box-sizing: border-box;
+}
+
+.pos-category:hover {
+  background: transparent;
+
+  border-color: transparent;
+
+  color: #315143;
+}
+
+.pos-category.active {
+  background: transparent;
+
+  border-color: transparent;
+
+  color: #294438;
+}
+
+/* =========================
+   MENU + CART
+========================= */
+
+#posSection .pos-content,
+.pos-content {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) 380px;
+
+  gap: 20px;
+
+  width: 100%;
+  min-width: 0;
+
+  height: 100%;
+  min-height: 0;
+
+  align-items: stretch;
+
+  box-sizing: border-box;
+}
+/* =========================
+   MENU AREA
+========================= */
+
+.pos-menu-area {
+  min-width: 0;
+
+  width: 100%;
+  max-width: 100%;
+
+  height: 100%;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  padding-right: 6px;
+
+  box-sizing: border-box;
+}
+ /* =========================
+   MENU GRID
+========================= */
+
+.pos-menu-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(140px, 1fr));
+
+  grid-auto-rows: max-content;
+
+  align-content: start;
+
+  align-items: start;
+
+  gap: 14px;
+
+  width: 100%;
+  min-width: 0;
+
+  flex: 1;
+
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 4px;
+
+  box-sizing: border-box;
+}
+ /* =========================
+   MENU CARDS
+========================= */
+
+.pos-menu-card {
+  min-width: 0;
+
+  min-height: 220px;
+
+  background: #ffffff;
+
+  border: 1px solid #dfe6e1;
+
+  border-radius: 16px;
+
+  padding: 12px;
+
+  display: flex;
+  flex-direction: column;
+
+  box-sizing: border-box;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pos-menu-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #b6c8bd;
+
+  box-shadow:
+    0 6px 16px rgba(49, 81, 67, 0.07);
+}
+
+.pos-menu-image {
+  height: 72px;
+
+  flex-shrink: 0;
+
+  border-radius: 12px;
+
+  background: #eef2ef;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 34px;
+
+  margin-bottom: 10px;
+}
+
+.pos-menu-card h3 {
+  margin: 0;
+
+  color: #24332b;
+
+  font-size: 15px;
+
+  line-height: 1.3;
+}
+
+.pos-menu-card p {
+  margin: 5px 0 10px;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  color: #42624f;
+}
+
+.pos-menu-card button {
+  margin-top: auto;
+
+  width: 100%;
+
+  min-height: 38px;
+
+  border: 0;
+
+  border-radius: 9px;
+
+  background: #315143;
+
+  color: #ffffff;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.pos-menu-card button:hover {
+  background: #263f33;
+}
+  .pos-menu-card button:hover {
+    background: #263f33;
+  }
+
+/* =========================
+   CURRENT ORDER PANEL
+========================= */
+
+.pos-cart {
+  min-width: 0;
+
+  width: 100%;
+  height: calc(100vh - 20px);
+  min-height: calc(100vh - 20px);
+
+  padding: 10px;
+
+  background: #ffffff;
+
+  border: 1px solid #dfe6e1;
+
+  border-radius: 16px;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  position: sticky;
+  top: 10px;
+
+  box-sizing: border-box;
+}
+  /* =========================
+   CURRENT ORDER HEADER + TABLE
+========================= */
+
+.pos-cart-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+
+  margin: 0 0 8px;
+
+  box-sizing: border-box;
+}
+
+.pos-cart-header > div {
+  display: flex;
+
+  align-items: baseline;
+
+  justify-content: space-between;
+
+  width: 100%;
+}
+
+.pos-cart-header h2 {
+  margin: 0;
+
+  font-size: 18px;
+  line-height: 1.2;
+
+  color: #18231e;
+}
+
+.pos-cart-header span {
+  margin-left: auto;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  color: #527563;
+}
+
+.payment-status {
+  flex-shrink: 0;
+
+  margin-left: 10px;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.pos-table-select {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+
+  width: 100%;
+
+  margin-bottom: 8px;
+
+  box-sizing: border-box;
+}
+
+.pos-table-select label {
+  font-size: 12px;
+  font-weight: 700;
+
+  color: #46534c;
+}
+
+.pos-table-select select {
+  flex: 1;
+
+  min-width: 0;
+
+  height: 32px;
+
+  padding: 0 8px;
+
+  border: 1px solid #d8e0db;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #34433b;
+
+  font-size: 12px;
+
+  box-sizing: border-box;
+}
+  /* =========================
+     TABLE SELECT
+  ========================= */
+
+  .pos-table-select {
+    padding: 14px 18px;
+
+    border-bottom: 1px solid #e6ebe8;
+  }
+
+  .pos-table-select label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    color: #68756e;
+  }
+
+  .pos-table-select select {
+    width: 100%;
+
+    height: 40px;
+
+    border: 1px solid #d7dfda;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    padding: 0 10px;
+
+    font-size: 14px;
+  }
+
+  /* =========================
+     CURRENT ORDER ITEMS
+  ========================= */
+
+  .pos-cart-item {
+    padding: 13px 0;
+
+    border-bottom: 1px solid #edf1ee;
+  }
+
+  .pos-cart-item-info {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-bottom: 9px;
+  }
+
+  .pos-cart-item-info strong {
+    color: #28372f;
+
+    font-size: 14px;
+
+    font-weight: 800;
+  }
+
+  .pos-cart-item-info span {
+    color: #7a857f;
+
+    font-size: 12px;
+
+    font-weight: 600;
+  }
+
+  .pos-cart-item-bottom {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+  }
+
+  .pos-quantity-controls {
+    display: flex;
+
+    align-items: center;
+
+    height: 30px;
+
+    border: 1px solid #dfe6e2;
+
+    border-radius: 8px;
+
+    overflow: hidden;
+
+    background: #f8faf9;
+  }
+
+  .pos-qty-btn {
+    width: 29px;
+
+    height: 30px;
+
+    border: 0;
+
+    background: transparent;
+
+    color: #315143;
+
+    font-size: 17px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+  }
+
+  .pos-qty-btn:hover {
+    background: #eaf1ed;
+  }
+
+  .pos-quantity {
+    min-width: 28px;
+
+    text-align: center;
+
+    color: #28372f;
+
+    font-size: 13px;
+
+    font-weight: 800;
+  }
+
+  .pos-cart-item-total {
+    min-width: 65px;
+
+    text-align: right;
+
+    color: #28372f;
+
+    font-size: 14px;
+
+    font-weight: 800;
+  }
+
+  .pos-remove-item {
+    width: 28px;
+
+    height: 28px;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #9a6b6b;
+
+    font-size: 13px;
+
+    cursor: pointer;
+  }
+
+  .pos-remove-item:hover {
+    background: #f7eeee;
+
+    color: #a94d4d;
+  }
+
+  /* =========================
+     CART ITEMS
+  ========================= */
+
+  .pos-cart-items {
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+
+    padding: 14px 18px;
+  }
+
+  .pos-empty-cart {
+    min-height: 220px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-align: center;
+
+    color: #7d8982;
+  }
+
+  .pos-empty-cart span {
+    font-size: 38px;
+
+    margin-bottom: 10px;
+  }
+
+  .pos-empty-cart p {
+    margin: 0;
+
+    font-weight: 700;
+  }
+
+  .pos-empty-cart small {
+    margin-top: 5px;
+  }
+
+ /* =========================
+   CART SUMMARY
+========================= */
+
+.pos-cart-summary {
+  padding: 10px 18px 8px;
+
+  margin-top: auto;
+
+  border-top: 1px solid #e6ebe8;
+}
+
+.pos-cart-summary > div {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 5px;
+
+  font-size: 13px;
+
+  color: #69756e;
+}
+
+.pos-cart-summary strong {
+  color: #28372f;
+}
+
+.pos-cart-summary .pos-total {
+  margin-top: 7px;
+
+  padding-top: 8px;
+
+  border-top: 1px solid #e4e9e6;
+
+  font-size: 17px;
+
+  color: #1e2d25;
+}
+
+.pos-cart-summary .pos-total strong {
+  font-size: 21px;
+}
+
+
+/* =========================
+   CHECKOUT
+========================= */
+
+
+/* =========================
+   CHECKOUT BUTTON
+========================= */
+
+.pos-checkout-btn {
+  margin: 0 18px 10px;
+
+  min-height: 46px;
+
+  border: 1px solid #315143;
+
+  border-radius: 10px;
+
+  background: #315143;
+
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.pos-checkout-btn:hover {
+  background: #263f33;
+}
+
+.pos-checkout-btn:active {
+  transform: scale(0.98);
+}
+
+
+/* =========================
+   CHECKOUT OVERLAY
+========================= */
+
+.checkout-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 34px;
+
+  box-sizing: border-box;
+
+  background:
+    rgba(232, 237, 234, 0.18);
+
+  backdrop-filter:
+    blur(30px)
+    saturate(115%);
+
+  -webkit-backdrop-filter:
+    blur(30px)
+    saturate(115%);
+}
+
+.checkout-overlay.active {
+  display: flex;
+
+  animation:
+    checkoutOverlayIn
+    0.28s ease both;
+}
+
+@keyframes checkoutOverlayIn {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+
+}
+
+/* =========================
+   CHECKOUT MODAL
+========================= */
+
+.checkout-modal {
+  width: min(846px, 90vw);
+  max-width: 90vw;
+  max-height: 84vh;
+
+  display: grid;
+  grid-template-columns: minmax(0, 430px) minmax(0, 360px);
+  gap: 14px;
+
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  transform: translateY(14px) scale(0.97);
+  opacity: 0;
+
+  transition:
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease;
+}
+
+/* =========================
+   CHECKOUT MODAL ACTIVE
+========================= */
+
+.checkout-overlay.active .checkout-modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* =========================
+   PAYMENT SUCCESS MODE
+========================= */
+
+.checkout-modal.payment-success-mode {
+  display: grid;
+  grid-template-columns: minmax(0, 430px);
+  gap: 0;
+
+  width: min(430px, 94vw);
+  max-width: 94vw;
+  max-height: 88vh;
+
+  align-items: start;
+  justify-content: center;
+
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Keep the checkout card in one column */
+.checkout-modal.payment-success-mode .checkout-summary-card {
+  position: relative;
+  left: 0;
+
+  width: 100%;
+  max-width: 430px;
+  min-width: 0;
+
+  height: auto;
+  min-height: 0;
+  max-height: none;
+
+  margin: 0;
+  padding: 20px 24px;
+
+  border: none;
+  border-radius: 22px;
+  background: transparent;
+  box-shadow: none;
+
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* CRITICAL: Hide the complete Order Summary view */
+.checkout-modal.payment-success-mode
+.checkout-summary-card > #checkoutSummaryView[hidden] {
+  display: none !important;
+}
+
+/* Show Payment Successful or Pending Payment */
+.checkout-modal.payment-success-mode
+#paymentSuccessPanel:not([hidden]) {
+  display: flex !important;
+  position: relative;
+
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+
+  margin: 0;
+  padding: 22px 24px;
+
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 22px;
+
+  background: rgba(248, 252, 249, 0.72);
+
+  box-shadow:
+    0 18px 45px rgba(25, 54, 39, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Hide payment choices while showing the result */
+.checkout-modal.payment-success-mode
+.checkout-payment-options {
+  display: none !important;
+}
+
+/* Never show the success panel while hidden */
+#paymentSuccessPanel[hidden] {
+  display: none !important;
+}
+
+/* =========================
+   ORDER SUMMARY CARD
+   FIXED SIZE
+========================= */
+
+.checkout-summary-card {
+  min-width: 0;
+  width: 100%;
+  max-width: 430px;
+
+  height: min(620px, 72vh);
+  min-height: 390px;
+  max-height: 72vh;
+
+  padding: 22px;
+
+  background: transparent;
+  border: 1px solid rgba(220, 228, 223, 0.95);
+  border-radius: 10px;
+
+  box-shadow: 0 20px 50px rgba(31, 51, 42, 0.14);
+
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+  position: relative;
+  left: 240px;
+}
+/* =========================
+   SUMMARY VIEW LAYOUT
+========================= */
+
+.checkout-summary-card > #checkoutSummaryView {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+/* IMPORTANT: Completely hide Order Summary after payment selection */
+.checkout-summary-card > #checkoutSummaryView[hidden] {
+  display: none !important;
+}
+
+/* Keep the header fixed */
+.checkout-summary-header {
+  flex: 0 0 auto;
+}
+
+/* Only the item list scrolls */
+.checkout-summary-items {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 5px;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+}
+
+/* Keep Add More and totals visible in Order Summary */
+.checkout-add-more,
+.checkout-summary-lines,
+.checkout-total {
+  flex: 0 0 auto;
+}
+/* =========================
+   SUMMARY HEADER
+========================= */
+
+.checkout-summary-header {
+  display: flex;
+  align-items: center;
+
+  margin-bottom: 10px;
+}
+
+.checkout-summary-header h2 {
+  margin: 0;
+
+  color: #1e2d25;
+
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+/* =========================
+   SUMMARY ITEMS
+========================= */
+
+.checkout-summary-items {
+  flex: 1;
+
+  min-height: 120px;
+  max-height: 46vh;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 5px;
+
+  box-sizing: border-box;
+}
+
+.checkout-summary-items::-webkit-scrollbar {
+  width: 5px;
+}
+
+.checkout-summary-items::-webkit-scrollbar-thumb {
+  background: #cbd6cf;
+  border-radius: 10px;
+}
+/* =========================
+   SUMMARY ITEM
+========================= */
+
+.checkout-summary-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+
+  padding: 8px 0;
+
+  border-bottom: 1px solid #edf1ee;
+}
+
+.checkout-summary-item:last-child {
+  border-bottom: 0;
+}
+
+.checkout-summary-item-info {
+  min-width: 0;
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.checkout-summary-item-name {
+  color: #26372e;
+
+  font-size: 13px;
+  line-height: 1.3;
+
+  font-weight: 700;
+}
+
+.checkout-summary-item-qty {
+  color: #7a8780;
+
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.checkout-summary-item-price {
+  flex-shrink: 0;
+
+  color: #315143;
+
+  font-size: 13px;
+  line-height: 1.3;
+
+  font-weight: 800;
+}
+/* =========================
+   ADD MORE
+========================= */
+
+.checkout-add-more {
+
+  width: 100%;
+
+  min-height: 40px;
+
+  margin-top: 12px;
+
+  border:
+    1px dashed #b8c8bf;
+
+  border-radius: 11px;
+
+  background:
+    rgba(248, 250, 249, 0.9);
+
+  color: #315143;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.checkout-add-more:hover {
+
+  background: #eef4f0;
+
+  border-color: #98afa1;
+}
+
+.checkout-add-more:active {
+
+  transform: scale(0.98);
+}
+
+.checkout-add-more span {
+
+  margin-right: 4px;
+
+  font-size: 16px;
+}
+
+
+/* =========================
+   SUMMARY LINES
+========================= */
+
+.checkout-summary-lines {
+
+  margin-top: 16px;
+
+  padding-top: 14px;
+
+  border-top:
+    1px solid #e5ebe7;
+}
+
+.checkout-summary-lines > div {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+
+  color: #6d7972;
+
+  font-size: 13px;
+}
+
+.checkout-summary-lines strong {
+
+  color: #35443c;
+
+  font-weight: 700;
+}
+
+
+/* =========================
+   TOTAL
+========================= */
+
+.checkout-total {
+
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: space-between;
+
+  gap: 14px;
+
+  margin-top: 8px;
+
+  padding-top: 14px;
+
+  border-top:
+    1px solid #dfe6e1;
+}
+
+.checkout-total span {
+
+  color: #26352d;
+
+  font-size: 15px;
+
+  font-weight: 800;
+}
+
+.checkout-total strong {
+
+  color: #315143;
+
+  font-size: 27px;
+
+  line-height: 1;
+
+  font-weight: 900;
+
+  white-space: nowrap;
+}
+
+
+/* =========================
+   PAYMENT OPTIONS
+========================= */
+
+.checkout-payment-options {
+  min-width: 0;
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+}
+
+
+/* =========================
+   PAYMENT CARD SIZE
+========================= */
+
+.checkout-payment-options .checkout-payment-card {
+  width: 100%;
+  height: 82px;
+  min-height: 82px;
+
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  box-sizing: border-box;
+
+  justify-self: stretch;
+}
+/* =========================
+   CASH PAYMENT PANEL
+========================= */
+
+.checkout-payment-methods {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 170px 170px;
+  gap: 10px;
+  align-content: start;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* =========================
+   CASH PAYMENT TRANSITION
+========================= */
+
+.checkout-payment-options {
+  position: relative;
+}
+
+.checkout-payment-methods {
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: center;
+  transition:
+    opacity 0.28s ease,
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.checkout-payment-methods.cash-payment-methods-faded {
+  opacity: 0;
+  transform: scale(0.96);
+  pointer-events: none;
+}
+
+.checkout-payment-methods.cash-payment-methods-hidden {
+  display: none;
+}
+
+.checkout-cash-panel {
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: top center;
+  transition:
+    opacity 0.3s ease,
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.checkout-cash-panel.cash-panel-hidden {
+  display: none;
+}
+
+.checkout-cash-panel.cash-panel-expanded {
+  opacity: 1;
+  transform: scale(1);
+}
+.checkout-cash-panel {
+  width: 360px;
+  max-width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 22px;
+  border: 1px solid rgba(220, 228, 223, 0.95);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 30px rgba(31, 51, 42, 0.10);
+  box-sizing: border-box;
+  align-self: stretch;
+  position: relative;
+  left: 260px;
+}
+.checkout-cash-panel[hidden] {
+  display: none;
+}
+
+.checkout-cash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.checkout-cash-header h2 {
+  margin: 0;
+  color: #1e2d25;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+#checkoutCashBack {
+  padding: 8px 10px;
+  border: 1px solid #dbe5de;
+  border-radius: 9px;
+  background: #f6f9f7;
+  color: #315143;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout-cash-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.checkout-cash-field label {
+  color: #68776e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.checkout-cash-field strong {
+  color: #26372e;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+#checkoutCashReceived {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #d7e1da;
+  border-radius: 10px;
+  background: #fff;
+  color: #26372e;
+  font: inherit;
+  box-sizing: border-box;
+  outline: none;
+}
+
+#checkoutCashReceived:focus {
+  border-color: #759985;
+  box-shadow: 0 0 0 3px rgba(117, 153, 133, 0.14);
+}
+
+#checkoutCashMessage {
+  min-height: 18px;
+  margin: 0 0 12px;
+  color: #a33b3b;
+  font-size: 12px;
+}
+
+#checkoutConfirmCash {
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  border-radius: 10px;
+  background: #315143;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#checkoutConfirmCash:disabled {
+  background: #d9e1dc;
+  color: #78857d;
+  cursor: not-allowed;
+}
+  /* =========================
+   CHECKOUT HIDDEN STATE FIX
+========================= */
+
+.checkout-payment-methods[hidden],
+.checkout-cash-panel[hidden],
+#paymentSuccessPanel[hidden],
+#paymentSuccessActions[hidden],
+#paymentSuccessReceiptArea[hidden],
+.payment-success-detail[hidden] {
+  display: none !important;
+}
+  /* =========================
+   PAYMENT SUCCESSFUL OVERLAY
+   INLINE CHECKOUT MODE
+========================= */
+
+.payment-success-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+
+  display: none;
+  align-items: center;
+  justify-content: flex-start;
+
+  padding: 0;
+  box-sizing: border-box;
+
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 0.3s ease;
+}
+
+.payment-success-overlay.active {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.payment-success-overlay[hidden] {
+  display: none !important;
+}
+/* =========================
+   PAYMENT SUCCESSFUL MODAL
+   COMPACT CONTENT FIT
+========================= */
+
+.checkout-modal.payment-success-mode {
+  align-items: stretch;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.checkout-modal.payment-success-mode .checkout-summary-card {
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  padding: 20px 24px;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+#paymentSuccessPanel {
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  margin: auto;
+  justify-content: center;
+  gap: 0;
+  box-sizing: border-box;
+}
+
+/* Smaller success icon */
+
+#paymentSuccessPanel .payment-success-check {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  margin: 0 auto 12px;
+  font-size: 42px;
+}
+
+/* Heading and message */
+
+#paymentSuccessPanel h2 {
+  margin: 0 0 7px;
+  font-size: 27px;
+  line-height: 1.12;
+  letter-spacing: -0.4px;
+}
+
+#paymentSuccessPanel .payment-success-message {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Payment details */
+
+#paymentSuccessPanel .payment-success-details {
+  padding: 14px 16px;
+  border-radius: 14px;
+}
+
+#paymentSuccessPanel .payment-success-detail {
+  padding: 9px 0;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+#paymentSuccessPanel .payment-success-detail:first-child {
+  padding-bottom: 12px;
+}
+
+#paymentSuccessPanel .payment-success-detail:first-child strong {
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+#paymentSuccessPanel .payment-success-detail strong {
+  font-size: 13px;
+}
+
+/* Keep action buttons inside the panel */
+
+#paymentSuccessPanel .payment-success-actions {
+  margin-top: 14px;
+  gap: 8px;
+}
+
+#paymentSuccessPanel .payment-success-actions button {
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+/* Fit shorter laptop screens */
+
+@media (max-height: 760px) {
+  .checkout-modal.payment-success-mode .checkout-summary-card {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  #paymentSuccessPanel .payment-success-check {
+    width: 58px;
+    height: 58px;
+    margin-bottom: 9px;
+    font-size: 34px;
+  }
+
+  #paymentSuccessPanel h2 {
+    font-size: 24px;
+  }
+
+  #paymentSuccessPanel .payment-success-message {
+    margin-bottom: 10px;
+  }
+
+  #paymentSuccessPanel .payment-success-details {
+    padding: 10px 14px;
+  }
+
+  #paymentSuccessPanel .payment-success-detail {
+    padding: 7px 0;
+  }
+
+  #paymentSuccessPanel .payment-success-detail:first-child strong {
+    font-size: 28px;
+  }
+
+  #paymentSuccessPanel .payment-success-actions {
+    margin-top: 10px;
+  }
+
+  #paymentSuccessPanel .payment-success-actions button {
+    min-height: 40px;
+  }
+}
+
+
+/* =========================
+   SUCCESS PANEL
+   COMPACT CONTENT FIT
+========================= */
+
+#paymentSuccessPanel {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: auto;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  text-align: center;
+  color: #173f2b;
+  overflow: visible;
+  animation: halinaSuccessIn 0.45s ease both;
+}
+
+#paymentSuccessPanel .payment-success-check {
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #64d98a, #168849);
+  color: #ffffff;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow:
+    0 0 0 6px rgba(58, 190, 105, 0.10),
+    0 0 24px rgba(47, 201, 102, 0.32),
+    inset 0 2px 5px rgba(255, 255, 255, 0.35);
+}
+
+#paymentSuccessPanel h2 {
+  margin: 0 0 7px;
+  color: #123c28;
+  font-size: clamp(23px, 2.5vw, 29px);
+  line-height: 1.12;
+  letter-spacing: -0.4px;
+  font-weight: 800;
+}
+
+#paymentSuccessPanel .payment-success-message {
+  margin: 0 0 14px;
+  color: #425f4d;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Amount details card */
+
+#paymentSuccessPanel .payment-success-details {
+  width: 100%;
+  flex-shrink: 0;
+  padding: 12px 15px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow:
+    0 8px 24px rgba(30, 62, 43, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  text-align: left;
+}
+
+#paymentSuccessPanel .payment-success-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(45, 86, 59, 0.12);
+  color: #5c7063;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+#paymentSuccessPanel .payment-success-detail:first-child {
+  flex-wrap: wrap;
+  padding-top: 0;
+  padding-bottom: 10px;
+}
+
+#paymentSuccessPanel .payment-success-detail:first-child strong {
+  width: 100%;
+  color: #14643a;
+  font-size: clamp(27px, 3vw, 35px);
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  white-space: normal;
+}
+
+#paymentSuccessPanel .payment-success-detail:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+#paymentSuccessPanel .payment-success-detail strong {
+  color: #203d2b;
+  font-size: 12px;
+  font-weight: 750;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* =========================
+   SUCCESS ACTION BUTTONS
+========================= */
+
+#paymentSuccessPanel .payment-success-actions {
+  width: 100%;
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+#paymentSuccessPanel .payment-success-actions button {
+  min-width: 0;
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #183b29;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 16px rgba(28, 62, 41, 0.08);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+#paymentSuccessPanel .payment-success-actions button:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 20px rgba(28, 62, 41, 0.12);
+}
+
+#paymentSuccessPanel .payment-success-actions button:active {
+  transform: scale(0.98);
+}
+
+#paymentSuccessPanel .payment-success-actions button:first-child {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #24854c, #126638);
+  color: #ffffff;
+  border-color: rgba(26, 117, 62, 0.5);
+}
+
+#paymentSuccessPanel .payment-success-actions button:first-child:hover {
+  background: linear-gradient(135deg, #2b9959, #0e572e);
+}
+
+#paymentSuccessPanel .payment-success-actions button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =========================
+   PAYMENT OPTIONS / RECEIPT VISIBILITY
+========================= */
+
+/* Hide the right-side payment area while showing payment status. */
+.checkout-modal.payment-success-mode:not(.receipt-visible)
+.checkout-payment-options {
+  display: none !important;
+}
+
+/* Restore the right-side area only when the receipt is requested. */
+.checkout-modal.payment-success-mode.receipt-visible
+.checkout-payment-options {
+  position: relative;
+  left: auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  box-sizing: border-box;
+  display: block;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Hide the receipt only while its hidden attribute is present. */
+#paymentSuccessReceiptArea[hidden] {
+  display: none !important;
+}
+
+/* Show the receipt area when Print Receipt requests it. */
+#paymentSuccessReceiptArea:not([hidden]) {
+  display: flex;
+  min-height: 0;
+  height: auto;
+  padding: 0 0 12px;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+}
+/* Success transition */
+
+@keyframes halinaSuccessIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive layout */
+
+@media (max-width: 760px) {
+  .checkout-modal.payment-success-mode {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    width: 94vw;
+    max-width: 94vw;
+    max-height: 90vh;
+    padding: 12px;
+  }
+
+  .checkout-modal.payment-success-mode .checkout-summary-card {
+    min-height: 0;
+    padding: 22px 18px;
+  }
+
+  .checkout-modal.payment-success-mode .checkout-payment-options {
+    display: none;
+  }
+
+  #paymentSuccessPanel .payment-success-check {
+    width: 76px;
+    height: 76px;
+    font-size: 44px;
+  }
+
+  #paymentSuccessPanel .payment-success-details {
+    padding: 16px;
+  }
+}
+/* =========================
+RECEIPT AREA
+DOWNWARD PRINT + AUTO EXIT
+========================= */
+
+.payment-success-receipt-area {
+display: none;
+width: 100%;
+min-width: 0;
+min-height: 0;
+max-height: calc(90vh - 24px);
+height: auto;
+padding: 0;
+margin: 0;
+align-items: flex-start;
+justify-content: center;
+overflow: hidden;
+border: none;
+border-radius: 0;
+background: transparent;
+box-shadow: none;
+scrollbar-width: none;
+}
+
+.payment-success-receipt-area::-webkit-scrollbar {
+display: none;
+}
+
+.payment-success-receipt-area:not([hidden]) {
+display: flex;
+min-height: 0;
+padding: 0 0 12px;
+align-items: flex-start;
+}
+
+/* Minimal printer: wider idle black slot */
+.receipt-printer {
+position: relative;
+display: flex;
+flex-direction: column;
+align-items: center;
+
+width: min(100%, 300px);
+padding: 0;
+margin: 0 auto;
+
+box-sizing: border-box;
+background: transparent;
+}
+
+/* Hide printer illustration parts */
+.receipt-printer-top,
+.receipt-printer-body,
+.receipt-printer-display,
+.receipt-printer-button {
+display: none !important;
+}
+
+/* Idle printer slot — aligned with receipt paper */
+.receipt-printer-slot {
+display: block !important;
+position: relative;
+z-index: 3;
+
+width: 150px;
+height: 3px;
+
+margin: 0 auto -1px;
+padding: 0;
+
+flex: 0 0 auto;
+
+border: 0;
+border-radius: 2px;
+background: #20251f;
+
+box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+/* Receipt paper — natural length and proportions */
+.success-receipt {
+position: relative;
+z-index: 1;
+
+width: min(100%, 250px);
+min-width: 0;
+min-height: 0;
+height: auto;
+max-height: none;
+
+margin: 0 auto;
+padding: 24px 16px 20px;
+
+box-sizing: border-box;
+overflow: visible;
+overflow-wrap: anywhere;
+
+background: #fffefb;
+color: #35443a;
+
+border: 1px solid #e4e5df;
+border-radius: 2px;
+
+box-shadow: 0 8px 22px rgba(30, 48, 36, 0.10);
+
+font-family: “Courier New”, monospace;
+font-size: 11px;
+line-height: 1.45;
+text-align: center;
+
+transform-origin: top center;
+}
+/* =========================
+   RECEIPT PRINT SEQUENCE
+   PRINT → HOLD → AUTO EXIT
+========================= */
+
+.success-receipt.receipt-print-animation {
+  animation: halinaReceiptSequence 3.8s ease-in-out both;
+}
+
+@keyframes halinaReceiptSequence {
+  /* Start hidden above the slot */
+  0% {
+    opacity: 1;
+    transform: translateY(-100%);
+    clip-path: inset(100% 0 0 0);
+  }
+
+  /* Continuous reveal until 95% */
+  95% {
+    opacity: 1;
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0);
+  }
+
+  /* Fall away */
+  100% {
+    opacity: 0;
+    transform: translateY(110vh);
+    clip-path: inset(0 0 0 0);
+  }
+}
+/* Receipt content styling */
+.success-receipt-header {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.success-receipt p {
+  margin: 8px 0;
+}
+
+.success-receipt-divider {
+  margin: 10px 0;
+  border-top: 1px dashed #9da79f;
+}
+
+.success-receipt-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+  text-align: left;
+}
+
+.success-receipt-item span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.success-receipt-item strong {
+  flex-shrink: 0;
+}
+
+.success-receipt-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  text-align: left;
+}
+
+.success-receipt-footer {
+  padding-top: 8px;
+  font-size: 9px;
+}
+
+/* Responsive receipt */
+@media (max-width: 760px) {
+  .payment-success-receipt-area {
+    max-height: calc(85vh - 20px);
+  }
+
+  .receipt-printer {
+    width: min(100%, 260px);
+  }
+
+  .success-receipt {
+    width: min(100%, 240px);
+  }
+}
+
+/* =========================
+   SUCCESS POPUP RESPONSIVE
+========================= */
+
+@media (max-width: 720px) {
+  .payment-success-overlay {
+    padding: 12px;
+  }
+
+  .payment-success-modal {
+    width: 100%;
+    max-height: 92vh;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .payment-success-panel {
+    padding: 22px 16px;
+  }
+
+  .payment-success-check {
+    width: 60px;
+    height: 60px;
+    font-size: 34px;
+  }
+
+  .payment-success-receipt-area {
+    min-height: 320px;
+  }
+
+  .receipt-printer {
+    max-width: 270px;
+  }
+}
+/* =========================
+   PENDING PAYMENT
+========================= */
+
+.checkout-payment-options .checkout-payment-pending {
+  grid-column: 1 / -1;
+
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
+}
+/* =========================
+   PENDING FULL WIDTH
+========================= */
+
+.checkout-payment-options
+.checkout-payment-pending {
+
+  grid-column:
+    1 / -1;
+
+  width: 100%;
+
+  min-height: 58px;
+
+  height: 58px;
+}
+/* =========================
+   PAYMENT CARD
+========================= */
+
+.checkout-payment-card {
+  width: 100%;
+  height: 82px;
+  min-height: 82px;
+
+  padding: 12px 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  border: 1px solid rgba(220, 228, 223, 0.95);
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  color: #26352d;
+  text-align: left;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+
+  box-shadow:
+    0 12px 28px
+    rgba(36, 51, 43, 0.09);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.checkout-payment-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #b6c8bd;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 16px 34px
+    rgba(36, 51, 43, 0.13);
+}
+
+.checkout-payment-card:active {
+  transform: scale(0.985);
+}
+
+/* =========================
+   PAYMENT ICON
+========================= */
+
+.checkout-payment-icon {
+
+  width: 42px;
+
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background:
+    #edf3ef;
+
+  color: #315143;
+
+  font-size: 19px;
+
+  font-weight: 800;
+}
+
+
+/* =========================
+   PAYMENT TEXT
+========================= */
+
+.checkout-payment-text {
+
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.checkout-payment-text strong {
+
+  color: #26372e;
+
+  font-size: 14px;
+
+  line-height: 1.25;
+
+  font-weight: 800;
+}
+
+.checkout-payment-text small {
+
+  color: #7f8c84;
+
+  font-size: 11px;
+
+  line-height: 1.25;
+}
+
+
+/* =========================
+   PENDING
+========================= */
+
+.checkout-payment-pending {
+
+  border-color:
+    #d8e1db;
+}
+
+.checkout-payment-pending
+.checkout-payment-icon {
+
+  background:
+    #f1f4f2;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 760px) {
+
+  .checkout-overlay {
+
+    padding: 16px;
+  }
+
+  .checkout-modal {
+
+    width: 100%;
+
+    max-height: 92vh;
+
+    grid-template-columns:
+      1fr;
+
+    gap: 14px;
+
+    overflow-y: auto;
+  }
+
+  .checkout-summary-card {
+
+    max-height: none;
+
+    min-height: 400px;
+  }
+
+  .checkout-summary-items {
+
+    max-height: 30vh;
+  }
+
+  .checkout-payment-options {
+
+    padding-bottom: 4px;
+  }
+
+}
+  /* =========================
+     TABLET
+  ========================= */
+
+  @media (max-width: 1100px) {
+
+    .pos-content {
+      grid-template-columns:
+        minmax(0, 1fr) 340px;
+    }
+
+    .pos-menu-grid {
+      grid-template-columns:
+        repeat(3, minmax(140px, 1fr));
+    }
+
+    .pos-topbar {
+      column-gap: 14px;
+    }
+
+  }
+
+  /* =========================
+     SMALL TABLET
+  ========================= */
+
+  @media (max-width: 850px) {
+
+    .pos-sidebar {
+      width: 68px;
+
+      padding-left: 7px;
+      padding-right: 7px;
+    }
+
+    .pos-sidebar-btn {
+      width: 54px;
+    }
+
+    .pos-main {
+      padding: 12px 16px 20px;
+    }
+
+    .pos-content {
+      grid-template-columns: 1fr;
+
+      height: auto;
+    }
+
+    .pos-cart {
+      position: static;
+
+      height: 500px;
+
+      min-height: 500px;
+    }
+
+    .pos-search {
+      width: 100%;
+    }
+
+  }
+
+  /* =========================
+     MOBILE
+  ========================= */
+
+  @media (max-width: 600px) {
+
+    header {
+      padding: 17px 12px;
+    }
+
+    header h1 {
+      font-size: 21px;
+    }
+
+    .container {
+      padding: 15px;
+    }
+
+    .top-bar {
+      align-items: stretch;
+    }
+
+    .top-bar h2 {
+      font-size: 21px;
+    }
+
+    .refresh-btn {
+      width: 100%;
+    }
+
+    .stock-info {
+      align-items: stretch;
+    }
+
+    .stock-controls {
+      width: 100%;
+    }
+
+    .stock-input {
+      flex: 1;
+
+      width: auto;
+    }
+
+    .stock-save-btn {
+      flex: 1;
+    }
+
+    .order-card {
+      padding: 15px;
+    }
+
+    .order-card-header {
+      flex-direction: column;
+    }
+
+    .order-details {
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    }
+
+    .order-number {
+      font-size: 18px;
+    }
+
+    .order-total strong {
+      font-size: 20px;
+    }
+
+    .pos-layout {
+      min-height: auto;
+    }
+
+    .pos-sidebar {
+      width: 58px;
+    }
+
+    .pos-sidebar-btn {
+      width: 44px;
+
+      min-height: 56px;
+
+      font-size: 18px;
+    }
+
+    .pos-sidebar-btn span {
+      display: none;
+    }
+
+    .pos-topbar {
+      grid-template-columns: 1fr;
+
+      grid-template-areas:
+        "title"
+        "brand"
+        "subtitle"
+        "search";
+
+      row-gap: 4px;
+    }
+
+    .pos-brand {
+      text-align: left;
+    }
+
+    .pos-search {
+      width: 100%;
+
+      height: 38px;
+    }
+
+    .pos-menu-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .pos-order-types {
+      gap: 5px;
+    }
+
+    .pos-order-type {
+      font-size: 12px;
+
+      padding: 0 5px;
+    }
+
+  }
+
+  /* =========================
+     VERY SMALL PHONE
+  ========================= */
+
+  @media (max-width: 430px) {
+
+    .order-details {
+      grid-template-columns: 1fr;
+    }
+
+    .order-item {
+      font-size: 13px;
+    }
+
+    .pos-main {
+      padding: 10px 12px 18px;
+    }
+
+    .pos-topbar h2 {
+      font-size: 22px;
+    }
+
+    .pos-topbar p {
+      font-size: 13px;
+    }
+
+    .pos-category {
+      padding: 7px 11px;
+      font-size: 12px;
+    }
+
+    .pos-menu-grid {
+      gap: 10px;
+    }
+
+  }
+  /* =========================
+   FIX: HIDE SUCCESS PANEL
+   BEFORE PAYMENT CONFIRMATION
+========================= */
+
+#paymentSuccessPanel[hidden] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* =========================
+   PAYMENT SUCCESSFUL
+   FROSTED GLASS ONLY
+========================= */
+
+.checkout-modal.payment-success-mode {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.checkout-modal.payment-success-mode .checkout-summary-card {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Preserve the panel's existing position and layout */
+.checkout-modal.payment-success-mode #paymentSuccessPanel {
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 22px;
+
+  background: rgba(248, 252, 249, 0.48);
+
+  box-shadow:
+    0 18px 45px rgba(25, 54, 39, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* =========================================================
+   KEEP SIDEBAR VISIBLE WHEN SWITCHING SECTIONS
+   (Orders / Tables / Stocks / Settings)
+   Only active while body has class "pos-other-view".
+   The Menu / Ordering view is not affected.
+========================================================= */
+
+/* Hide only the menu + cart area, not the whole #posSection */
+body.pos-other-view .pos-main {
+  display: none;
+}
+
+/* #posSection takes no space; the sidebar inside it is pinned */
+body.pos-other-view #posSection {
+  height: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+body.pos-other-view .pos-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  height: auto;
+  min-height: 0;
+  z-index: 50;
+}
+
+/* Push the other sections to the right of the sidebar
+   (same widths as the sidebar: 56px / 68px / 58px) */
+body.pos-other-view .page-section,
+body.pos-other-view #message {
+  margin-left: 56px;
+}
+
+body.pos-other-view .page-section {
+  padding: 20px 24px;
+}
+
+@media (max-width: 850px) {
+  body.pos-other-view .page-section,
+  body.pos-other-view #message {
+    margin-left: 68px;
+  }
+}
+
+@media (max-width: 600px) {
+  body.pos-other-view .page-section,
+  body.pos-other-view #message {
+    margin-left: 58px;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- =========================
+     POS NAVIGATION
+========================= -->
+
+<div class="container">
+  <!-- =========================
+       GLOBAL MESSAGE
+  ========================= -->
+  <div id="message" class="message"></div>
+  <!-- =========================
+     CASHIER POS SECTION
+========================= -->
+
+<section
+  id="posSection"
+  class="page-sec active"
+>
+
+  <div class="pos-layout">
+
+ <!-- =====================
+     POS SIDEBAR
+====================== -->
+<aside class="pos-sidebar">
+
+  <!-- Moving selected background -->
+  <div class="pos-sidebar-highlight"></div>
+
+  <!-- 1. MENU / ORDERING -->
+  <button
+    type="button"
+    class="pos-sidebar-btn active"
+    data-pos-section="posSection"
+    aria-label="Menu / Ordering"
+    title="Menu / Ordering"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 3v7a3 3 0 0 0 6 0V3"/>
+      <path d="M7 3v18"/>
+      <path d="M4 7h6"/>
+      <path d="M16 3v18"/>
+      <path d="M16 3c4 2 4 7 0 9"/>
+    </svg>
+  </button>
+
+  <!-- 2. ORDERS -->
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="ordersSection"
+    aria-label="Orders"
+    title="Orders"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="5" y="3" width="14" height="18" rx="2"/>
+      <path d="M9 8h6M9 12h6M9 16h4"/>
+      <path d="m3 7 2-2M3 17l2 2"/>
+    </svg>
+  </button>
+
+  <!-- 3. TABLES -->
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="tablesSection"
+    aria-label="Tables"
+    title="Tables"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 9h18"/>
+      <path d="M5 9l1 12M19 9l-1 12"/>
+      <path d="M4 5h16l1 4H3l1-4Z"/>
+    </svg>
+  </button>
+
+  <!-- 4. STOCKS -->
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="stocksSection"
+    aria-label="Stocks"
+    title="Stocks"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m12 3 9 5-9 5-9-5 9-5Z"/>
+      <path d="m3 8 9 5 9-5"/>
+      <path d="M3 8v9l9 5 9-5V8"/>
+      <path d="M12 13v9"/>
+    </svg>
+  </button>
+
+  <!-- 5. SETTINGS -->
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="settingsSection"
+    aria-label="Settings"
+    title="Settings"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>
+      <path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.9l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.6.9l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8Z" transform="translate(-1 -2) scale(1.08)"/>
+    </svg>
+  </button>
+
+</aside>
+  <!-- =====================
+     POS MAIN AREA
+====================== -->
+<div class="pos-main">
+
+  <!-- =====================
+
+       MENU + CURRENT ORDER
+  ====================== -->
+  <div class="pos-content">
+
+    <!-- =====================
+         LEFT MENU AREA
+    ====================== -->
+    <div class="pos-menu-area">
+
+      <!-- =====================
+           POS TOP BAR
+      ====================== -->
+      <div class="pos-topbar">
+
+        <div>
+          <h2>Cashier POS</h2>
+
+          <div class="pos-brand">
+            HALINA BISTRO CAFE
+          </div>
+
+          <p>
+            Select items to create an order
+          </p>
+        </div>
+
+        <div class="pos-search-wrap">
+
+          <svg
+            class="pos-search-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="6.5"
+            ></circle>
+
+            <path
+              d="M16 16L21 21"
+            ></path>
+          </svg>
+
+          <input
+            type="search"
+            id="posSearch"
+            class="pos-search"
+            placeholder="Search menu items..."
+          >
+
+        </div>
+
+      </div>
+
+
+      <!-- =====================
+           CATEGORIES
+      ====================== -->
+      <div class="pos-categories">
+
+        <button
+          type="button"
+          class="pos-category active"
+        >
+          All Items
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Breakfast
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          A La Carte
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Pulutan
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Pasta
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Sandwich
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Rice
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Beers
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Whiskey
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Tequila
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Soju
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Soda
+        </button>
+
+        <button
+          type="button"
+          class="pos-category"
+        >
+          Others
+        </button>
+
+      </div>
+
+
+     <!-- =====================
+     MENU GRID
+====================== -->
+<div
+  id="posMenuGrid"
+  class="pos-menu-grid"
+>
+
+  <!-- =====================
+       ALL DAY BREAKFAST
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Breakfast">
+    <div class="pos-menu-image">🍳</div>
+    <h3>Tapsilog</h3>
+    <p>₱219</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Breakfast">
+    <div class="pos-menu-image">🍖</div>
+    <h3>Lechon Kawali Silog</h3>
+    <p>₱219</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Breakfast">
+    <div class="pos-menu-image">🍖</div>
+    <h3>Pork Silog</h3>
+    <p>₱199</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Breakfast">
+    <div class="pos-menu-image">🐟</div>
+    <h3>Bang Silog</h3>
+    <p>₱199</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       A LA CARTE
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🍗</div>
+    <h3>Whole Fried Chicken</h3>
+    <p>₱499</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🍗</div>
+    <h3>Half Fried Chicken</h3>
+    <p>₱299</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🥟</div>
+    <h3>Shanghai</h3>
+    <p>₱200</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🍢</div>
+    <h3>Chicken Barbecue</h3>
+    <p>₱350</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🍖</div>
+    <h3>Lechon Kawali</h3>
+    <p>₱360</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🐟</div>
+    <h3>Crispy Bangus</h3>
+    <p>₱360</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🥣</div>
+    <h3>Pork Sinigang</h3>
+    <p>₱360</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🥣</div>
+    <h3>Beef Sinigang</h3>
+    <p>₱390</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🥘</div>
+    <h3>Beef Caldereta</h3>
+    <p>₱399</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="A La Carte">
+    <div class="pos-menu-image">🥘</div>
+    <h3>Kare-Kare</h3>
+    <p>₱399</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       PULUTAN
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🫛</div>
+    <h3>Endamame</h3>
+    <p>₱79</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🫛</div>
+    <h3>CG Endamame</h3>
+    <p>₱99</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🍟</div>
+    <h3>Classic Fries</h3>
+    <p>₱149</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🐟</div>
+    <h3>Fish &amp; Fries</h3>
+    <p>₱219</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🍟</div>
+    <h3>Fries Overload</h3>
+    <p>₱249</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🍖</div>
+    <h3>Chichabu</h3>
+    <p>₱249</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🍗</div>
+    <h3>Chicken Fingers</h3>
+    <p>₱259</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🦑</div>
+    <h3>Calamari</h3>
+    <p>₱259</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🍖</div>
+    <h3>Tokwa't Baboy</h3>
+    <p>₱279</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🥓</div>
+    <h3>Pork Sisig</h3>
+    <p>₱279</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🧀</div>
+    <h3>Nachos</h3>
+    <p>₱299</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pulutan">
+    <div class="pos-menu-image">🍗</div>
+    <h3>Buffalo Wings</h3>
+    <p>₱299</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       PASTA
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Pasta">
+    <div class="pos-menu-image">🍝</div>
+    <h3>Kiddie Spaghetti</h3>
+    <p>₱129</p>
+    <small>Sweet and savory Filipino-style spaghetti perfectly sized for little ones.</small>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pasta">
+    <div class="pos-menu-image">🍝</div>
+    <h3>Creamy Carbonara</h3>
+    <p>₱149</p>
+    <small>Creamy pasta with white sauce, crispy bacon, and parmesan cheese.</small>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Pasta">
+    <div class="pos-menu-image">🍝</div>
+    <h3>Classic Spaghetti Marinara</h3>
+    <p>₱179</p>
+    <small>Tomatoes, garlic, extra virgin olive oil, and fresh herbs.</small>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       SANDWICH
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Sandwich">
+    <div class="pos-menu-image">🥪</div>
+    <h3>Ham &amp; Egg Sandwich</h3>
+    <p>₱119</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Sandwich">
+    <div class="pos-menu-image">🥪</div>
+    <h3>Clubhouse Sandwich</h3>
+    <p>₱199</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       RICE
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Rice">
+    <div class="pos-menu-image">🍚</div>
+    <h3>White Rice</h3>
+    <p>₱35</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Rice">
+    <div class="pos-menu-image">🍚</div>
+    <h3>Garlic Rice</h3>
+    <p>₱39</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Rice">
+    <div class="pos-menu-image">🍚</div>
+    <h3>White Rice Platter</h3>
+    <p>₱150</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Rice">
+    <div class="pos-menu-image">🍚</div>
+    <h3>Garlic Rice Platter</h3>
+    <p>₱200</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       BEERS
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Beers">
+    <div class="pos-menu-image">🍺</div>
+    <h3>SM Pale Pilsen</h3>
+    <p>₱95</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Beers">
+    <div class="pos-menu-image">🍺</div>
+    <h3>San Mig Light</h3>
+    <p>₱99</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Beers">
+    <div class="pos-menu-image">🍺</div>
+    <h3>San Mig Apple</h3>
+    <p>₱99</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Beers">
+    <div class="pos-menu-image">🍺</div>
+    <h3>Bed Horse Stallion</h3>
+    <p>₱99</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Beers">
+    <div class="pos-menu-image">🍺</div>
+    <h3>Bucket</h3>
+    <p>₱545</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       WHISKEY
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Whiskey">
+    <div class="pos-menu-image">🥃</div>
+    <h3>Jameson</h3>
+    <p>45ml ₱170</p>
+    <p>1L ₱1,999</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Whiskey">
+    <div class="pos-menu-image">🥃</div>
+    <h3>Black Label</h3>
+    <p>45ml ₱190</p>
+    <p>1L ₱2,599</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Whiskey">
+    <div class="pos-menu-image">🥃</div>
+    <h3>Jack Daniels</h3>
+    <p>45ml ₱200</p>
+    <p>1L ₱2,699</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       TEQUILA
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Tequila">
+    <div class="pos-menu-image">🥃</div>
+    <h3>Jose Cuervo</h3>
+    <p>45ml ₱190</p>
+    <p>1L ₱2,499</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       SOJU
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Soju">
+    <div class="pos-menu-image">🍾</div>
+    <h3>Jinro Grapefruit</h3>
+    <p>₱220</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Soju">
+    <div class="pos-menu-image">🍾</div>
+    <h3>Jinro Green Grape</h3>
+    <p>₱220</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Soju">
+    <div class="pos-menu-image">🍾</div>
+    <h3>Jinro Strawberry</h3>
+    <p>₱220</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       SODA
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Soda">
+    <div class="pos-menu-image">🥤</div>
+    <h3>Coke 320ml</h3>
+    <p>₱65</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Soda">
+    <div class="pos-menu-image">🥤</div>
+    <h3>Coke Zero 320ml</h3>
+    <p>₱65</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Soda">
+    <div class="pos-menu-image">🥤</div>
+    <h3>Royal 320ml</h3>
+    <p>₱65</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Soda">
+    <div class="pos-menu-image">🥤</div>
+    <h3>Sprite 320ml</h3>
+    <p>₱65</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Soda">
+    <div class="pos-menu-image">🥤</div>
+    <h3>Coke 1.5L</h3>
+    <p>₱160</p>
+    <button type="button">Add</button>
+  </div>
+
+  <div class="pos-menu-card" data-category="Soda">
+    <div class="pos-menu-image">🥤</div>
+    <h3>Sprite 1.5L</h3>
+    <p>₱160</p>
+    <button type="button">Add</button>
+  </div>
+
+
+  <!-- =====================
+       OTHERS
+  ====================== -->
+
+  <div class="pos-menu-card" data-category="Others">
+    <div class="pos-menu-image">💧</div>
+    <h3>Bottled Water</h3>
+    <p>₱25</p>
+    <button type="button">Add</button>
+  </div>
+
+ <div class="pos-menu-card" data-category="Others">
+    <div class="pos-menu-image">🧋</div>
+    <h3>Pitcher Iced Tea</h3>
+    <p>₱150</p>
+    <button type="button">Add</button>
+  </div>
+
+</div>
+
+</div>
+
+   <!-- =====================
+     CURRENT ORDER
+====================== -->
+<aside class="pos-cart">
+
+  <!-- =====================
+       ORDER TYPE
+  ====================== -->
+  <div class="pos-order-types">
+
+    <button
+      type="button"
+      class="pos-order-type active"
+    >
+      DINE IN
+    </button>
+
+    <button
+      type="button"
+      class="pos-order-type"
+    >
+      TAKEOUT
+    </button>
+
+    <button
+      type="button"
+      class="pos-order-type"
+    >
+      DELIVERY
+    </button>
+
+  </div>
+
+
+  <!-- CURRENT ORDER HEADER -->
+  <div class="pos-cart-header">
+
+    <div>
+      <h2>Current Order</h2>
+
+      <span>
+        New Order
+      </span>
+    </div>
+
+    <strong class="payment-status unpaid">
+      UNPAID
+    </strong>
+
+  </div>
+
+
+  <!-- TABLE -->
+  <div class="pos-table-select">
+
+    <label for="posTableNumber">
+      Table
+    </label>
+
+    <select id="posTableNumber">
+
+      <option value="">
+        Select Table
+      </option>
+
+      <option value="1">
+        Table 1
+      </option>
+
+      <option value="2">
+        Table 2
+      </option>
+
+      <option value="3">
+        Table 3
+      </option>
+
+      <option value="4">
+        Table 4
+      </option>
+
+      <option value="5">
+        Table 5
+      </option>
+
+    </select>
+
+  </div>
+
+
+  <!-- CART ITEMS ONLY WILL SCROLL -->
+  <div
+    id="posCartItems"
+    class="pos-cart-items"
+  >
+
+    <div class="pos-empty-cart">
+
+      <span>🛒</span>
+
+      <p>
+        No items added yet
+      </p>
+
+      <small>
+        Select items from the menu
+      </small>
+
+    </div>
+
+  </div>
+
+
+  <!-- FIXED CART SUMMARY -->
+  <div class="pos-cart-summary">
+
+    <div>
+      <span>Subtotal</span>
+      <strong>₱0.00</strong>
+    </div>
+
+    <div>
+      <span>VAT</span>
+      <strong>₱0.00</strong>
+    </div>
+
+    <div>
+      <span>Discount</span>
+      <strong>₱0.00</strong>
+    </div>
+
+    <div class="pos-total">
+      <span>Total</span>
+      <strong>₱0.00</strong>
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       FIXED CHECKOUT
+  ========================= -->
+
+  <button
+    type="button"
+    class="pos-checkout-btn"
+    id="posCheckoutBtn"
+  >
+    Checkout
+  </button>
+
+</aside>
+
+
+<!-- =========================
+     CHECKOUT POPUP
+========================= -->
+
+<div
+  id="checkoutOverlay"
+  class="checkout-overlay"
+  aria-hidden="true"
+
+  <div
+    class="checkout-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="checkoutTitle"
+  >
+
+    <!-- LEFT: ORDER SUMMARY / PAYMENT SUCCESS -->
+
+    <div class="checkout-summary-card">
+
+      <div id="checkoutSummaryView">
+
+        <div class="checkout-summary-header">
+          <h2 id="checkoutTitle">Order Summary</h2>
+        </div>
+
+        <div
+          id="checkoutSummaryItems"
+          class="checkout-summary-items"
+        ></div>
+
+        <button
+          type="button"
+          class="checkout-add-more"
+          id="checkoutAddMore"
+        >
+          <span>＋</span>
+          Add More
+        </button>
+
+        <div class="checkout-summary-lines">
+          <div>
+            <span>Subtotal</span>
+            <strong id="checkoutSubtotal">₱0.00</strong>
+          </div>
+          <div>
+            <span>VAT</span>
+            <strong id="checkoutVat">₱0.00</strong>
+          </div>
+          <div>
+            <span>Discount</span>
+            <strong id="checkoutDiscount">₱0.00</strong>
+          </div>
+        </div>
+
+        <div class="checkout-total">
+          <span>Total Amount</span>
+          <strong id="checkoutTotal">₱0.00</strong>
+        </div>
+
+      </div>
+
+      <!-- PAYMENT SUCCESS PANEL -->
+
+      <div
+        id="paymentSuccessPanel"
+        class="payment-success-panel"
+        hidden
+      >
+        <div class="payment-success-check">✓</div>
+
+        <h2>Payment Successful!</h2>
+
+        <p class="payment-success-message">
+          Payment has been verified successfully.
+        </p>
+
+        <div class="payment-success-details">
+          <div class="payment-success-detail">
+            <span>Total Paid</span>
+            <strong id="successTotalPaid">₱0.00</strong>
+          </div>
+
+          <div class="payment-success-detail">
+            <span>Amount Received</span>
+            <strong id="successAmountReceived">₱0.00</strong>
+          </div>
+
+          <div class="payment-success-detail">
+            <span>Change</span>
+            <strong id="successChange">₱0.00</strong>
+          </div>
+        </div>
+
+        <div
+          id="paymentSuccessActions"
+          class="payment-success-actions"
+          hidden
+        >
+          <button type="button" id="acceptOrderBtn">
+            Accept Order
+          </button>
+
+          <button type="button" id="newOrderBtn">
+            New Order
+          </button>
+
+          <button type="button" id="printReceiptBtn">
+            Print Receipt
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: PAYMENT OPTIONS / RECEIPT -->
+
+    <div class="checkout-payment-options">
+
+      <div
+        class="checkout-payment-methods"
+        id="checkoutPaymentMethods"
+      >
+
+        <button
+          type="button"
+          class="checkout-payment-card"
+          data-payment-method="gift"
+        >
+          <span class="checkout-payment-icon">🎁</span>
+          <span class="checkout-payment-text">
+            <strong>Gift Card / Voucher</strong>
+            <small>Apply voucher</small>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="checkout-payment-card"
+          data-payment-method="discount"
+        >
+          <span class="checkout-payment-icon">%</span>
+          <span class="checkout-payment-text">
+            <strong>Discount</strong>
+            <small>Senior / PWD</small>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="checkout-payment-card"
+          data-payment-method="cash"
+        >
+          <span class="checkout-payment-icon">💵</span>
+          <span class="checkout-payment-text">
+            <strong>Cash</strong>
+            <small>Pay at counter</small>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="checkout-payment-card"
+          data-payment-method="card"
+        >
+          <span class="checkout-payment-icon">▣</span>
+          <span class="checkout-payment-text">
+            <strong>Card / QR</strong>
+            <small>GCash / Bank / Card</small>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="checkout-payment-card checkout-payment-pending"
+          data-payment-method="pending"
+        >
+          <span class="checkout-payment-icon">◷</span>
+          <span class="checkout-payment-text">
+            <strong>Pending</strong>
+            <small>Payment later</small>
+          </span>
+        </button>
+
+      </div>
+
+      <!-- CASH PAYMENT -->
+
+      <div
+        class="checkout-cash-panel"
+        id="checkoutCashPanel"
+        hidden
+      >
+        <div class="checkout-cash-header">
+          <button type="button" id="checkoutCashBack">
+            ← Back
+          </button>
+          <h2>Cash Payment</h2>
+        </div>
+
+        <div class="checkout-cash-field">
+          <label for="checkoutCashAmountDue">Amount Due</label>
+          <strong id="checkoutCashAmountDue">₱0.00</strong>
+        </div>
+
+        <div class="checkout-cash-field">
+          <label for="checkoutCashReceived">Cash Received</label>
+          <input
+            id="checkoutCashReceived"
+            type="number"
+            min="0"
+            step="0.01"
+            inputmode="decimal"
+            placeholder="Enter amount"
+          />
+        </div>
+
+        <div class="checkout-cash-field">
+          <label>Change</label>
+          <strong id="checkoutCashChange">₱0.00</strong>
+        </div>
+
+        <p
+          id="checkoutCashMessage"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+        <button
+          type="button"
+          id="checkoutConfirmCash"
+          disabled
+        >
+          Confirm Payment
+        </button>
+      </div>
+
+      <!-- RECEIPT / PRINTER: HIDDEN UNTIL REQUESTED -->
+
+      <div
+        id="paymentSuccessReceiptArea"
+        class="payment-success-receipt-area"
+        hidden
+      >
+        <div class="receipt-printer">
+
+          <div class="receipt-printer-top"></div>
+          <div class="receipt-printer-slot"></div>
+
+          <div id="successReceipt" class="success-receipt">
+            <div class="success-receipt-header">
+              HALINA BISTRO CAFE
+            </div>
+
+            <p>PAYMENT RECEIPT</p>
+
+            <div class="success-receipt-divider"></div>
+
+            <div id="successReceiptItems"></div>
+
+            <div class="success-receipt-divider"></div>
+
+            <div class="success-receipt-total">
+              TOTAL:
+              <strong id="successReceiptTotal">₱0.00</strong>
+            </div>
+
+            <p class="success-receipt-footer">
+              Thank you for dining with us!
+            </p>
+          </div>
+
+          <div class="receipt-printer-body">
+            <div class="receipt-printer-display"></div>
+            <div class="receipt-printer-button"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</section>
+<!-- =========================
+     TABLES SECTION
+========================= -->
+
+<section
+  id="tablesSection"
+  class="page-section"
+>
+  <div class="top-bar">
+    <h2>Table Management</h2>
+
+    <button
+      class="refresh-btn"
+      id="refreshBtn"
+      type="button"
+    >
+      🔄 Refresh Tables
+    </button>
+  </div>
+
+  <div
+    id="tablesContainer"
+    class="tables"
+  >
+    <div class="loading">
+      Loading tables...
+    </div>
+  </div>
+</section>
+ <!-- =========================
+     STOCKS SECTION
+========================= -->
+
+<section
+  id="stocksSection"
+  class="page-section"
+  >
+
+
+  <div class="top-bar">
+
+    <h2>Product Stock</h2>
+
+    <button
+      class="refresh-btn"
+      id="refreshStockBtn"
+      type="button"
+    >
+      🔄 Refresh Stocks
+    </button>
+
+  </div>
+
+  <div class="stock-intro">
+
+    📦 <strong>Stock Management</strong><br>
+
+    Enter the total available stock for each product.
+    When you save a number, the remaining stock will be
+    reset to that amount.
+
+    <br><br>
+
+    Example:
+    If the kitchen has <strong>10 Chicken Wings</strong>,
+    enter <strong>10</strong>.
+
+    <br><br>
+
+    🍗 Chicken Wings can use one shared stock for different
+    wing flavors in the future.
+
+  </div>
+
+  <div
+    id="stockContainer"
+    class="stock-list"
+  >
+
+    <div class="loading">
+      Loading product stocks...
+    </div>
+
+  </div>
+
+</section>
+ <!-- =========================
+     ORDERS SECTION
+========================= -->
+
+<section
+  id="ordersSection"
+  class="page-section"
+  >
+
+
+  <div class="top-bar">
+
+    <h2>Incoming Orders</h2>
+
+    <button
+      class="refresh-btn"
+      id="refreshOrdersBtn"
+      type="button"
+    >
+      🔄 Refresh Orders
+    </button>
+
+  </div>
+
+  <div
+    id="ordersContainer"
+    class="orders-container"
+  >
+
+    <div class="loading">
+      Loading incoming orders...
+    </div>
+
+  </div>
+
+  <div
+    class="completed-orders-toggle"
+    style="margin-top: 24px;"
+  >
+
+    <button
+      type="button"
+      id="completedOrdersToggle"
+      class="refresh-btn"
+    >
+      📋 View Completed Orders
+    </button>
+
+  </div>
+
+  <div
+    id="completedOrdersContainer"
+    class="orders-container"
+    style="display: none; margin-top: 16px;"
+  >
+
+    <div class="loading">
+      Loading completed orders...
+    </div>
+
+  </div>
+
+</section>
+
+
+  <!-- =========================
+       SETTINGS SECTION
+  ========================= -->
+  <section
+    id="settingsSection"
+    class="page-section"
+  >
+    <div class="top-bar">
+      <h2>Settings</h2>
+    </div>
+    <div class="coming-soon">
+      <div class="icon">
+        ⚙️
+      </div>
+      <h3>Cashier Settings</h3>
+      <p>
+        Additional system settings will be added here.
+      </p>
+    </div>
+  </section>
+</div>
+  <!-- =========================
+     PAYMENT SUCCESSFUL POPUP
+========================= -->
+
+<div
+  id="paymentSuccessOverlay"
+  class="payment-success-overlay"
+  aria-hidden="true"
+  hidden
+>
+  <div
+    class="payment-success-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="paymentSuccessTitle"
+  >
+
+    <!-- LEFT: SUCCESS PANEL -->
+    <div class="payment-success-panel">
+
+      <div class="payment-success-check">✓</div>
+
+      <h2 id="paymentSuccessTitle">
+        Payment Successful!
+      </h2>
+
+      <p class="payment-success-message">
+        Payment has been verified successfully.
+      </p>
+
+      <div class="payment-success-details">
+
+        <div class="payment-success-detail">
+          <span>Total Paid</span>
+          <strong id="successTotalPaid">₱0.00</strong>
+        </div>
+
+        <div class="payment-success-detail">
+          <span>Amount Received</span>
+          <strong id="successAmountReceived">₱0.00</strong>
+        </div>
+
+        <div class="payment-success-detail">
+          <span>Change</span>
+          <strong id="successChange">₱0.00</strong>
+        </div>
+
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div
+        id="paymentSuccessActions"
+        class="payment-success-actions"
+        hidden
+      >
+        <button type="button" id="acceptOrderBtn">
+          Accept Order
+        </button>
+
+        <button type="button" id="newOrderBtn">
+          New Order
+        </button>
+
+        <button type="button" id="printReceiptBtn">
+          Print Receipt
+        </button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: PRINTER AND RECEIPT ANIMATION -->
+    <div class="payment-success-receipt-area">
+
+      <div class="receipt-printer">
+        <div class="receipt-printer-top"></div>
+        <div class="receipt-printer-slot"></div>
+
+        <div
+          id="successReceipt"
+          class="success-receipt"
+        >
+          <div class="success-receipt-header">
+            HALINA BISTRO CAFE
+          </div>
+
+          <p>PAYMENT RECEIPT</p>
+          <div class="success-receipt-divider"></div>
+
+          <div id="successReceiptItems">
+            <!-- Receipt items will be added by JavaScript -->
+          </div>
+
+          <div class="success-receipt-divider"></div>
+
+          <div class="success-receipt-total">
+            TOTAL: <strong id="successReceiptTotal">₱0.00</strong>
+          </div>
+
+          <p class="success-receipt-footer">
+            Thank you for dining with us!
+          </p>
+        </div>
+
+        <div class="receipt-printer-body">
+          <div class="receipt-printer-display"></div>
+          <div class="receipt-printer-button"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<script>
+  
+  window.onerror = function(message, source, lineno, colno, error) {
+  alert(
+    "JAVASCRIPT ERROR:\n\n" +
+    message +
+    "\n\nLine: " +
+    lineno
+  );
+};
+  /* =========================
+     SUPABASE
+  ========================= */
+  const SUPABASE_URL =
+    "https://isqcuycjrbjtmqhzckvb.supabase.co";
+  const SUPABASE_KEY =
+    "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
+  /* =========================
+     TABLE ENDPOINT
+  ========================= */
+  const TABLE_ENDPOINT =
+    SUPABASE_URL +
+    "/rest/v1/T%20A%20B%20L%20E%20S";
+  /* =========================
+     STOCK ENDPOINT
+  ========================= */
+  const STOCK_ENDPOINT =
+    SUPABASE_URL +
+    "/rest/v1/PRODUCT_STOCK";
+  /* =========================
+     ELEMENTS
+  ========================= */
+  const tablesContainer =
+    document.getElementById("tablesContainer");
+  const stockContainer =
+    document.getElementById("stockContainer");
+  const messageBox =
+    document.getElementById("message");
+  const refreshBtn =
+    document.getElementById("refreshBtn");
+  const refreshStockBtn =
+    document.getElementById("refreshStockBtn");
+  /* =========================
+     MESSAGES
+  ========================= */
+  function showError(text) {
+    messageBox.textContent = text;
+    messageBox.className =
+      "message error";
+  }
+  function showSuccess(text) {
+    messageBox.textContent = text;
+    messageBox.className =
+      "message success";
+  }
+  function clearMessage() {
+    messageBox.textContent = "";
+    messageBox.className =
+      "message";
+  }
+/* =========================
+   POS SIDEBAR NAVIGATION
+========================= */
+
+document
+  .querySelectorAll(".pos-sidebar-btn")
+  .forEach(function(button) {
+
+    button.addEventListener(
+      "click",
+      function(event) {
+
+        event.preventDefault();
+
+        const sectionId =
+          button.getAttribute(
+            "data-pos-section"
+          );
+
+        if (!sectionId) {
+          console.error(
+            "POS sidebar button has no data-pos-section:",
+            button
+          );
+          return;
+        }
+
+        /* =========================
+           SIDEBAR ACTIVE STATE
+        ========================= */
+
+        document
+          .querySelectorAll(".pos-sidebar-btn")
+          .forEach(function(btn) {
+            btn.classList.remove("active");
+          });
+
+        button.classList.add("active");
+
+        /* =========================
+           HIDE THE OTHER PAGE SECTIONS
+           NOTE: #posSection is NOT hidden anymore,
+           because the sidebar lives inside it.
+           Hiding it made the sidebar disappear.
+        ========================= */
+
+        document
+          .querySelectorAll(".page-section")
+          .forEach(function(section) {
+            section.style.display = "none";
+            section.classList.remove("active");
+          });
+
+        /* =========================
+           SHOW SELECTED SECTION
+        ========================= */
+
+        const selectedSection =
+          document.getElementById(sectionId);
+
+        if (!selectedSection) {
+          console.error(
+            "POS section not found:",
+            sectionId
+          );
+          return;
+        }
+
+        const showingMenu =
+          sectionId === "posSection";
+
+        /*
+         * body.pos-other-view tells the CSS to hide only
+         * the menu/cart area (.pos-main) and keep the
+         * sidebar visible while another section is shown.
+         */
+        document.body.classList.toggle(
+          "pos-other-view",
+          !showingMenu
+        );
+
+        document
+          .getElementById("posSection")
+          .classList.toggle("active", showingMenu);
+
+        if (!showingMenu) {
+          selectedSection.style.display = "block";
+          selectedSection.classList.add("active");
+        }
+
+        /* =========================
+           CLEAR MESSAGE
+        ========================= */
+
+        if (typeof clearMessage === "function") {
+          clearMessage();
+        }
+
+        /* =========================
+           LOAD SECTION DATA
+        ========================= */
+
+        if (
+          sectionId === "tablesSection" &&
+          typeof loadTables === "function"
+        ) {
+          loadTables();
+        }
+
+        if (
+          sectionId === "stocksSection" &&
+          typeof loadStocks === "function"
+        ) {
+          loadStocks();
+        }
+
+        if (
+          sectionId === "ordersSection" &&
+          typeof loadOrders === "function"
+        ) {
+          loadOrders();
+
+          if (
+            typeof startOrdersRefresh === "function"
+          ) {
+            startOrdersRefresh();
+          }
+        }
+
+      }
+    );
+
+  });
+ 
+  /* =========================
+     CREATE TABLE CARD
+  ========================= */
+  function createTableCard(table) {
+    const card =
+      document.createElement("div");
+    card.className =
+      "table-card";
+    card.dataset.id =
+      table.id;
+    const isOpen =
+      String(table.status)
+        .trim()
+        .toLowerCase() === "open";
+    card.innerHTML = `
+      <div class="table-number">
+        ${escapeHtml(table.table_number)}
+      </div>
+      <div class="status ${
+        isOpen ? "open" : "locked"
+      }">
+        ${
+          isOpen
+            ? "🟢 OPEN"
+            : "🔒 LOCKED"
+        }
+      </div>
+      <button
+        type="button"
+        class="action-btn ${
+          isOpen
+            ? "lock-btn"
+            : "unlock-btn"
+        }"
+      >
+        ${
+          isOpen
+            ? "🔒 LOCK TABLE"
+            : "🔓 UNLOCK TABLE"
+        }
+      </button>
+    `;
+    const button =
+      card.querySelector(".action-btn");
+    button.addEventListener(
+      "click",
+      function() {
+        const currentStatus =
+          isCardOpen(card)
+            ? "open"
+            : "locked";
+        const newStatus =
+          currentStatus === "open"
+            ? "locked"
+            : "open";
+        updateTableStatus(
+          table.id,
+          newStatus,
+          card,
+          button
+        );
+      }
+    );
+    tablesContainer.appendChild(card);
+  }
+  /* =========================
+     CHECK CARD STATUS
+  ========================= */
+  function isCardOpen(card) {
+    const status =
+      card.querySelector(".status");
+    return status.classList.contains("open");
+  }
+  /* =========================
+     UPDATE TABLE STATUS
+  ========================= */
+  async function updateTableStatus(
+    id,
+    newStatus,
+    card,
+    button
+  ) {
+    button.disabled = true;
+    button.textContent =
+      "Updating...";
+    clearMessage();
+    try {
+      const response =
+        await fetch(
+          TABLE_ENDPOINT +
+          "?id=eq." +
+          encodeURIComponent(id),
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type":
+                "application/json",
+              "apikey":
+                SUPABASE_KEY,
+              "Authorization":
+                "Bearer " +
+                SUPABASE_KEY,
+              "Prefer":
+                "return=representation"
+            },
+            body:
+              JSON.stringify({
+                status: newStatus
+              })
+          }
+        );
+      const data =
+        await response.json();
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          data.error ||
+          data.hint ||
+          "Unable to update table."
+        );
+      }
+      if (
+        !Array.isArray(data) ||
+        data.length === 0
+      ) {
+        throw new Error(
+          "The table was not updated. Please check the UPDATE policy in Supabase."
+        );
+      }
+      const statusElement =
+        card.querySelector(".status");
+      if (newStatus === "open") {
+        statusElement.className =
+          "status open";
+        statusElement.textContent =
+          "🟢 OPEN";
+        button.className =
+          "action-btn lock-btn";
+        button.textContent =
+          "🔒 LOCK TABLE";
+      } else {
+        statusElement.className =
+          "status locked";
+        statusElement.textContent =
+          "🔒 LOCKED";
+        button.className =
+          "action-btn unlock-btn";
+        button.textContent =
+          "🔓 UNLOCK TABLE";
+      }
+      button.disabled = false;
+    } catch (error) {
+      console.error(error);
+      showError(error.message);
+      const currentlyOpen =
+        isCardOpen(card);
+      button.disabled = false;
+      button.className =
+        currentlyOpen
+          ? "action-btn lock-btn"
+          : "action-btn unlock-btn";
+      button.textContent =
+        currentlyOpen
+          ? "🔒 LOCK TABLE"
+          : "🔓 UNLOCK TABLE";
+    }
+  }
+/* =========================
+   LOAD STOCKS
+========================= */
+async function loadStocks() {
+
+  clearMessage();
+
+  stockContainer.innerHTML =
+    '<div class="loading">Loading product stocks...</div>';
+
+
+  try {
+
+    const response =
+    
+      await fetch(
+        STOCK_ENDPOINT +
+        "?select=id,product_id,product_name,stock_group,stock_total,stock_remaining&order=id.asc",
+        {
+          method: "GET",
+
+          headers: {
+            "apikey":
+              SUPABASE_KEY,
+
+            "Authorization":
+              "Bearer " +
+              SUPABASE_KEY
+          }
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        data.error ||
+        data.hint ||
+        "Unable to load product stocks."
+      );
+
+    }
+
+
+    if (!data.length) {
+
+      stockContainer.innerHTML =
+        '<div class="loading">No product stocks found.</div>';
+
+      return;
+
+    }
+
+
+    /*
+     * MENU CATEGORY ORDER
+     *
+     * This follows the same order
+     * used by the HALINA BISTRO CAFE menu.
+     */
+
+    const categoryOrder = {
+
+      "all-day-breakfast": 1,
+
+      "a-la-carte": 2,
+
+      "pulutan": 3,
+
+      "pasta": 4,
+
+      "sandwich": 5,
+
+      "rice": 6,
+
+      "beers": 7,
+
+      "whiskey": 8,
+
+      "tequila": 9,
+
+      "soju": 10,
+
+      "soda": 11,
+
+      "others": 12
+
+    };
+
+
+    /*
+     * PRODUCT CATEGORY MAP
+     *
+     * PRODUCT_STOCK currently does not
+     * have a category column, so we map
+     * each product ID to its menu category.
+     */
+
+    const productCategory = {
+
+      "tapsilog":
+        "all-day-breakfast",
+
+      "lechon-kawali-silog":
+        "all-day-breakfast",
+
+      "pork-silog":
+        "all-day-breakfast",
+
+      "bang-silog":
+        "all-day-breakfast",
+
+
+      "whole-fried-chicken":
+        "a-la-carte",
+
+      "half-fried-chicken":
+        "a-la-carte",
+
+      "shanghai":
+        "a-la-carte",
+
+      "chicken-barbecue":
+        "a-la-carte",
+
+      "lechon-kawali":
+        "a-la-carte",
+
+      "crispy-bangus":
+        "a-la-carte",
+
+      "pork-sinigang":
+        "a-la-carte",
+
+      "beef-sinigang":
+        "a-la-carte",
+
+      "beef-caldereta":
+        "a-la-carte",
+
+      "kare-kare":
+        "a-la-carte",
+
+
+      "endamame":
+        "pulutan",
+
+      "cg-endamame":
+        "pulutan",
+
+      "classic-fries":
+        "pulutan",
+
+      "fish-fries":
+        "pulutan",
+
+      "fries-overload":
+        "pulutan",
+
+      "chichabu":
+        "pulutan",
+
+      "chicken-fingers":
+        "pulutan",
+
+      "calamari":
+        "pulutan",
+
+      "tokwat-baboy":
+        "pulutan",
+
+      "pork-sisig":
+        "pulutan",
+
+      "nachos":
+        "pulutan",
+
+      "buffalo-wings":
+        "pulutan",
+
+
+      "kiddie-spaghetti":
+        "pasta",
+
+      "creamy-carbonara":
+        "pasta",
+
+      "classic-spaghetti-marinara":
+        "pasta",
+
+
+      "ham-egg-sandwich":
+        "sandwich",
+
+      "clubhouse-sandwich":
+        "sandwich",
+
+
+      "white-rice":
+        "rice",
+
+      "garlic-rice":
+        "rice",
+
+      "white-rice-platter":
+        "rice",
+
+      "garlic-rice-platter":
+        "rice",
+
+
+      "sm-pale-pilsen":
+        "beers",
+
+      "san-mig-light":
+        "beers",
+
+      "san-mig-apple":
+        "beers",
+
+      "red-horse-stallion":
+        "beers",
+
+      "beer-bucket":
+        "beers",
+
+
+      "jameson-45ml":
+        "whiskey",
+
+      "jameson-1l":
+        "whiskey",
+
+      "black-label-45ml":
+        "whiskey",
+
+      "black-label-1l":
+        "whiskey",
+
+      "jack-daniels-45ml":
+        "whiskey",
+
+      "jack-daniels-1l":
+        "whiskey",
+
+
+      "jose-cuervo-45ml":
+        "tequila",
+
+      "jose-cuervo-1l":
+        "tequila",
+
+
+      "jinro-grapefruit":
+        "soju",
+
+      "jinro-green-grape":
+        "soju",
+
+      "jinro-strawberry":
+        "soju",
+
+
+      "coke-320ml":
+        "soda",
+
+      "coke-zero-320ml":
+        "soda",
+
+      "royal-320ml":
+        "soda",
+
+      "sprite-320ml":
+        "soda",
+
+      "coke-1-5l":
+        "soda",
+
+      "sprite-1-5l":
+        "soda",
+
+
+      "bottled-water":
+        "others",
+
+      "pitcher-iced-tea":
+        "others"
+
+    };
+
+
+    /*
+     * Add category information to
+     * every stock item.
+     */
+
+    data.forEach(function(item) {
+
+      item.menuCategory =
+        productCategory[
+          item.product_id
+        ] ||
+        "others";
+
+    });
+
+
+    /*
+     * Group products by stock_group.
+     *
+     * This keeps shared Chicken Wings
+     * working correctly.
+     */
+
+    const groups = {};
+
+
+    data.forEach(function(item) {
+
+      const group =
+        item.stock_group ||
+        item.product_id ||
+        item.product_name;
+
+
+      if (!groups[group]) {
+
+        groups[group] = [];
+
+      }
+
+
+      groups[group].push(item);
+
+    });
+
+
+    /*
+     * Convert grouped stocks into an
+     * array and sort by menu category.
+     */
+
+    const sortedGroups =
+      Object.keys(groups)
+        .map(function(group) {
+
+          return {
+            group: group,
+            items: groups[group]
+          };
+
+        })
+        .sort(function(a, b) {
+
+          const categoryA =
+            productCategory[
+              a.items[0].product_id
+            ] ||
+            "others";
+
+
+          const categoryB =
+            productCategory[
+              b.items[0].product_id
+            ] ||
+            "others";
+
+
+          const orderA =
+            categoryOrder[
+              categoryA
+            ] || 99;
+
+
+          const orderB =
+            categoryOrder[
+              categoryB
+            ] || 99;
+
+
+          if (orderA !== orderB) {
+
+            return orderA - orderB;
+
+          }
+
+
+          /*
+           * Within the same category,
+           * keep the original menu order.
+           */
+
+          return (
+            a.items[0].id -
+            b.items[0].id
+          );
+
+        });
+
+
+   stockContainer.innerHTML = "";
+
+
+/*
+ * CATEGORY HEADINGS
+ *
+ * Display stocks with clear
+ * menu category sections.
+ */
+
+let currentCategory = "";
+
+
+sortedGroups.forEach(
+  function(groupData) {
+
+    const category =
+      productCategory[
+        groupData.items[0].product_id
+      ] ||
+      "others";
+
+
+    /*
+     * Add category heading
+     * whenever the category changes.
+     */
+
+    if (
+      category !==
+      currentCategory
+    ) {
+
+      currentCategory =
+        category;
+
+
+      const categoryHeading =
+        document.createElement(
+          "div"
+        );
+
+
+      categoryHeading.className =
+        "stock-category-heading";
+
+
+      const categoryNames = {
+
+        "all-day-breakfast":
+          "🍳 ALL-DAY BREAKFAST",
+
+        "a-la-carte":
+          "🍽️ A LA CARTE",
+
+        "pulutan":
+          "🍻 PULUTAN",
+
+        "pasta":
+          "🍝 PASTA",
+
+        "sandwich":
+          "🥪 SANDWICH",
+
+        "rice":
+          "🍚 RICE",
+
+        "beers":
+          "🍺 BEERS",
+
+        "whiskey":
+          "🥃 WHISKEY",
+
+        "tequila":
+          "🥃 TEQUILA",
+
+        "soju":
+          "🍶 SOJU",
+
+        "soda":
+          "🥤 SODA",
+
+        "others":
+          "🧃 OTHERS"
+
+      };
+
+
+      categoryHeading.textContent =
+        categoryNames[
+          category
+        ] ||
+        "🧃 OTHERS";
+
+
+      stockContainer.appendChild(
+        categoryHeading
+      );
+
+    }
+
+
+    createStockCard(
+      groupData.group,
+      groupData.items
+    );
+
+  }
+);
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    stockContainer.innerHTML =
+      '<div class="loading">Unable to load product stocks.</div>';
+
+
+    showError(
+      error.message
+    );
+
+  }
+
+}
+ /* =========================
+   CREATE STOCK CARD
+========================= */
+function createStockCard(
+  stockGroup,
+  items
+) {
+
+  const card =
+    document.createElement("div");
+
+  card.className =
+    "stock-card";
+
+
+  const firstItem =
+    items[0];
+
+
+  const remaining =
+    Number(
+      firstItem.stock_remaining
+    ) || 0;
+
+
+  const isShared =
+    items.length > 1 ||
+    stockGroup === "chicken-wings";
+
+
+  const isAvailable =
+    remaining > 0;
+
+
+  let displayName =
+    firstItem.product_name;
+
+
+  if (
+    stockGroup ===
+    "chicken-wings"
+  ) {
+
+    displayName =
+      "Chicken Wings";
+
+  }
+
+
+  let sharedText = "";
+
+
+  if (isShared) {
+
+    if (items.length > 1) {
+
+      sharedText =
+        "🔗 Shared stock • " +
+        items.length +
+        " products";
+
+    } else {
+
+      sharedText =
+        "🔗 Shared Chicken Wings stock";
+
+    }
+
+  }
+
+
+  card.innerHTML = `
+
+    <div class="stock-info">
+
+      <div>
+
+        <div class="stock-name">
+          ${escapeHtml(displayName)}
+        </div>
+
+
+        ${
+          sharedText
+            ? `
+              <div class="stock-shared">
+                ${escapeHtml(sharedText)}
+              </div>
+            `
+            : ""
+        }
+
+
+        <div class="stock-remaining">
+
+          Remaining:
+          <strong>
+            ${remaining}
+          </strong>
+
+        </div>
+
+
+        <div class="stock-status ${
+          isAvailable
+            ? "stock-available"
+            : "stock-unavailable"
+        }">
+
+          ${
+            isAvailable
+              ? "🟢 AVAILABLE"
+              : "🔴 UNAVAILABLE"
+          }
+
+        </div>
+
+      </div>
+
+
+      <div class="stock-controls">
+
+        <label
+          style="
+            display:block;
+            font-size:12px;
+            margin-bottom:5px;
+            color:#6b4f3a;
+            font-weight:600;
+          "
+        >
+          Update Remaining Stock
+        </label>
+
+
+        <input
+          type="number"
+          min="0"
+          step="1"
+          class="stock-input"
+          value="${remaining}"
+          aria-label="Remaining stock for ${escapeHtml(displayName)}"
+        >
+
+
+        <button
+          type="button"
+          class="stock-save-btn"
+        >
+          💾 UPDATE STOCK
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  const input =
+    card.querySelector(
+      ".stock-input"
+    );
+
+
+  const saveButton =
+    card.querySelector(
+      ".stock-save-btn"
+    );
+
+
+  saveButton.addEventListener(
+    "click",
+    function() {
+
+      saveStock(
+        stockGroup,
+        items,
+        input,
+        saveButton
+      );
+
+    }
+  );
+
+
+  stockContainer.appendChild(
+    card
+  );
+
+}
+  /* =========================
+     SAVE STOCK
+  ========================= */
+ async function saveStock(
+    stockGroup,
+    items,
+    input,
+    button
+  ) {
+
+    const value =
+      Number(input.value);
+
+    if (
+      !Number.isInteger(value) ||
+      value < 0
+    ) {
+
+      showError(
+        "Please enter a valid stock number."
+      );
+
+      return;
+    }
+
+    button.disabled = true;
+
+    button.textContent =
+      "Saving...";
+
+    clearMessage();
+
+    try {
+
+      /*
+       * Update every product belonging
+       * to the same stock group.
+       *
+       * This allows Chicken Wings flavors
+       * to share one stock.
+       */
+
+      for (
+        const item of items
+      ) {
+
+        const response =
+          await fetch(
+
+            STOCK_ENDPOINT +
+            "?id=eq." +
+            encodeURIComponent(item.id),
+
+            {
+
+              method: "PATCH",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json",
+
+                "apikey":
+                  SUPABASE_KEY,
+
+                "Authorization":
+                  "Bearer " +
+                  SUPABASE_KEY,
+
+                "Prefer":
+                  "return=representation"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  stock_total:
+                    value,
+
+                  stock_remaining:
+                    value
+
+                })
+
+            }
+
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.message ||
+            data.error ||
+            data.hint ||
+            "Unable to save stock."
+          );
+
+        }
+
+
+        if (
+          !Array.isArray(data) ||
+          data.length === 0
+        ) {
+
+          throw new Error(
+            "Stock was not updated. Please check the UPDATE policy in Supabase."
+          );
+
+        }
+
+      }
+
+
+      /*
+       * Update only the current stock card.
+       * No full stock list refresh.
+       */
+
+      const card =
+        button.closest(".stock-card");
+
+
+      if (card) {
+
+        const remainingText =
+          card.querySelector(
+            ".stock-remaining"
+          );
+
+
+        if (remainingText) {
+
+          remainingText.innerHTML =
+            "Total Stock: <strong>" +
+            value +
+            "</strong>" +
+            " &nbsp; | &nbsp; " +
+            "Remaining: <strong>" +
+            value +
+            "</strong>";
+
+        }
+
+
+        const statusElement =
+          card.querySelector(
+            ".stock-status"
+          );
+
+
+        if (statusElement) {
+
+          if (value > 0) {
+
+            statusElement.className =
+              "stock-status stock-available";
+
+            statusElement.textContent =
+              "🟢 AVAILABLE";
+
+          } else {
+
+            statusElement.className =
+              "stock-status stock-unavailable";
+
+            statusElement.textContent =
+              "🔴 UNAVAILABLE";
+
+          }
+
+        }
+
+      }
+
+
+      showSuccess(
+        displayStockMessage(
+          items,
+          value
+        )
+      );
+
+
+      button.disabled = false;
+
+      button.textContent =
+        "💾 SET STOCK";
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      showError(error.message);
+
+      button.disabled = false;
+
+      button.textContent =
+        "💾 SET STOCK";
+
+    }
+
+  }
+
+
+  /* =========================
+     STOCK SUCCESS MESSAGE
+  ========================= */
+
+  function displayStockMessage(
+    items,
+    value
+  ) {
+
+    const firstItem =
+      items[0];
+
+    let name =
+      firstItem.product_name;
+
+    if (
+      firstItem.stock_group ===
+      "chicken-wings"
+    ) {
+
+      name =
+        "Chicken Wings";
+
+    }
+
+    return (
+      name +
+      " stock set to " +
+      value +
+      "."
+    );
+
+  }
+  /* =========================
+     STOCK SUCCESS MESSAGE
+  ========================= */
+  function displayStockMessage(
+    items,
+    value
+  ) {
+    const firstItem =
+      items[0];
+    let name =
+      firstItem.product_name;
+    if (
+      firstItem.stock_group ===
+      "chicken-wings"
+    ) {
+      name =
+        "Chicken Wings";
+    }
+    return (
+      name +
+      " stock set to " +
+      value +
+      "."
+    );
+  }
+  /* =========================
+     ESCAPE HTML
+  ========================= */
+  function escapeHtml(value) {
+    return String(value)
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
+      );
+  }
+  /* =========================
+   CASHIER CURRENT ORDER
+========================= */
+
+let posCart = [];
+
+
+/* =========================
+   POS CART ELEMENTS
+========================= */
+
+const posMenuGrid =
+  document.getElementById("posMenuGrid");
+
+const posCartItems =
+  document.getElementById("posCartItems");
+
+const posTableNumber =
+  document.getElementById("posTableNumber");
+
+const posCheckoutBtn =
+  document.querySelector(".pos-checkout-btn");
+/* =========================
+   POS CATEGORY + SEARCH
+========================= */
+
+const posCategories =
+  document.querySelectorAll(".pos-category");
+
+const posSearch =
+  document.getElementById("posSearch");
+
+let selectedPosCategory =
+  "All Items";
+
+
+function updateCategoryHighlight(
+  categoryButton,
+  animate
+) {
+
+  if (!categoryButton) {
+    return;
+  }
+
+  const categoriesContainer =
+    categoryButton.parentElement;
+
+  if (!categoriesContainer) {
+    return;
+  }
+
+  let highlight =
+    categoriesContainer.querySelector(
+      ".pos-category-highlight"
+    );
+
+  if (!highlight) {
+
+    highlight =
+      document.createElement("span");
+
+    highlight.className =
+      "pos-category-highlight";
+
+    categoriesContainer.prepend(
+      highlight
+    );
+  }
+
+  const containerRect =
+    categoriesContainer.getBoundingClientRect();
+
+  const buttonRect =
+    categoryButton.getBoundingClientRect();
+
+  const left =
+    buttonRect.left -
+    containerRect.left +
+    categoriesContainer.scrollLeft;
+
+  const top =
+    buttonRect.top -
+    containerRect.top;
+
+  highlight.style.width =
+    buttonRect.width + "px";
+
+  highlight.style.height =
+    buttonRect.height + "px";
+
+  highlight.style.transform =
+    "translate(" +
+    left + "px, " +
+    top + "px)";
+
+  highlight.classList.toggle(
+    "animate",
+    animate
+  );
+}
+
+
+function getCategoryButton(
+  categoryName
+) {
+
+  let foundButton = null;
+
+  posCategories.forEach(
+    function(button) {
+
+      if (
+        button.textContent.trim() ===
+        categoryName
+      ) {
+
+        foundButton = button;
+
+      }
+
+    }
+  );
+
+  return foundButton;
+}
+
+
+function setActiveCategory(
+  categoryName,
+  animate
+) {
+
+  const categoryButton =
+    getCategoryButton(
+      categoryName
+    );
+
+  if (!categoryButton) {
+    return;
+  }
+
+  posCategories.forEach(
+    function(button) {
+
+      button.classList.remove(
+        "active"
+      );
+
+    }
+  );
+
+  categoryButton.classList.add(
+    "active"
+  );
+
+  updateCategoryHighlight(
+    categoryButton,
+    animate
+  );
+}
+
+
+function getSearchCategories(
+  searchTerm
+) {
+
+  const categories =
+    new Set();
+
+  if (
+    !posMenuGrid ||
+    searchTerm === ""
+  ) {
+
+    return categories;
+
+  }
+
+  const menuCards =
+    posMenuGrid.querySelectorAll(
+      ".pos-menu-card"
+    );
+
+  menuCards.forEach(
+    function(card) {
+
+      const itemName =
+        card.querySelector("h3");
+
+      if (!itemName) {
+        return;
+      }
+
+      const name =
+        itemName.textContent
+          .trim()
+          .toLowerCase();
+
+      if (
+        name.includes(searchTerm)
+      ) {
+
+        const category =
+          card.getAttribute(
+            "data-category"
+          );
+
+        if (category) {
+
+          categories.add(
+            category
+          );
+
+        }
+
+      }
+
+    }
+  );
+
+  return categories;
+}
+
+
+function applyPosFilters() {
+
+  if (!posMenuGrid) {
+    return;
+  }
+
+  const searchTerm =
+    posSearch
+      ? posSearch.value
+          .trim()
+          .toLowerCase()
+      : "";
+
+  const menuCards =
+    posMenuGrid.querySelectorAll(
+      ".pos-menu-card"
+    );
+
+
+  /*
+   * NO SEARCH
+   * Use the manually selected category.
+   */
+
+  if (searchTerm === "") {
+
+    menuCards.forEach(
+      function(card) {
+
+        const cardCategory =
+          card.getAttribute(
+            "data-category"
+          );
+
+        if (
+          selectedPosCategory ===
+          "All Items" ||
+          cardCategory ===
+          selectedPosCategory
+        ) {
+
+          card.style.display = "";
+
+        } else {
+
+          card.style.display =
+            "none";
+
+        }
+
+      }
+    );
+
+    return;
+  }
+
+
+  /*
+   * SEARCH MODE
+   */
+
+  const matchingCategories =
+    getSearchCategories(
+      searchTerm
+    );
+
+
+  /*
+   * ONE CATEGORY
+   * Example:
+   * Tapsilog → Breakfast
+   */
+
+  if (
+    matchingCategories.size === 1
+  ) {
+
+    const matchingCategory =
+      Array.from(
+        matchingCategories
+      )[0];
+
+    selectedPosCategory =
+      matchingCategory;
+
+    setActiveCategory(
+      matchingCategory,
+      true
+    );
+
+
+    menuCards.forEach(
+      function(card) {
+
+        const cardCategory =
+          card.getAttribute(
+            "data-category"
+          );
+
+        const itemName =
+          card.querySelector("h3");
+
+        const name =
+          itemName
+            ? itemName.textContent
+                .trim()
+                .toLowerCase()
+            : "";
+
+        if (
+          cardCategory ===
+            matchingCategory &&
+          name.includes(
+            searchTerm
+          )
+        ) {
+
+          card.style.display = "";
+
+        } else {
+
+          card.style.display =
+            "none";
+
+        }
+
+      }
+    );
+
+    return;
+  }
+
+
+  /*
+   * MULTIPLE CATEGORIES
+   * Example:
+   * Chicken →
+   * Breakfast + Pulutan + Pasta
+   *
+   * Move highlight to All Items.
+   */
+
+  if (
+    matchingCategories.size > 1
+  ) {
+
+    selectedPosCategory =
+      "All Items";
+
+    setActiveCategory(
+      "All Items",
+      true
+    );
+
+
+    menuCards.forEach(
+      function(card) {
+
+        const itemName =
+          card.querySelector("h3");
+
+        const name =
+          itemName
+            ? itemName.textContent
+                .trim()
+                .toLowerCase()
+            : "";
+
+        if (
+          name.includes(
+            searchTerm
+          )
+        ) {
+
+          card.style.display = "";
+
+        } else {
+
+          card.style.display =
+            "none";
+
+        }
+
+      }
+    );
+
+    return;
+  }
+
+
+  /*
+   * NO RESULTS
+   * Keep current highlight.
+   */
+
+  menuCards.forEach(
+    function(card) {
+
+      card.style.display =
+        "none";
+
+    }
+  );
+
+}
+
+
+if (posCategories.length > 0) {
+
+  posCategories.forEach(
+    function(categoryButton) {
+
+      categoryButton.addEventListener(
+        "click",
+        function() {
+
+          selectedPosCategory =
+            categoryButton.textContent
+              .trim();
+
+          setActiveCategory(
+            selectedPosCategory,
+            true
+          );
+
+          applyPosFilters();
+
+        }
+      );
+
+    }
+  );
+
+
+  const activeCategory =
+    document.querySelector(
+      ".pos-category.active"
+    );
+
+  if (activeCategory) {
+
+    selectedPosCategory =
+      activeCategory.textContent
+        .trim();
+
+    updateCategoryHighlight(
+      activeCategory,
+      false
+    );
+
+  }
+
+}
+
+
+if (posSearch) {
+
+  posSearch.addEventListener(
+    "input",
+    function() {
+
+      applyPosFilters();
+
+    }
+  );
+
+}
+/* =========================
+   ADD MENU ITEM
+========================= */
+
+if (posMenuGrid) {
+
+  posMenuGrid
+    .querySelectorAll(".pos-menu-card")
+    .forEach(function(card) {
+
+      const addButton =
+        card.querySelector("button");
+
+      if (!addButton) {
+        return;
+      }
+
+      addButton.addEventListener(
+        "click",
+        function() {
+
+          const nameElement =
+            card.querySelector("h3");
+
+          const priceElement =
+            card.querySelector("p");
+
+          if (
+            !nameElement ||
+            !priceElement
+          ) {
+            return;
+          }
+
+          const name =
+            nameElement.textContent.trim();
+
+          const price =
+            Number(
+              priceElement.textContent
+                .replace("₱", "")
+                .replace(/,/g, "")
+                .trim()
+            ) || 0;
+
+
+          addToPosCart(
+            name,
+            price
+          );
+
+        }
+      );
+
+    });
+
+}
+
+
+/* =========================
+   ADD TO CART
+========================= */
+
+function addToPosCart(
+  name,
+  price
+) {
+
+  const existingItem =
+    posCart.find(function(item) {
+
+      return item.name === name;
+
+    });
+
+
+  if (existingItem) {
+
+    existingItem.quantity += 1;
+
+  } else {
+
+    posCart.push({
+
+      name: name,
+
+      price: price,
+
+      quantity: 1
+
+    });
+
+  }
+
+
+  renderPosCart();
+
+}
+
+
+/* =========================
+   RENDER CART
+========================= */
+
+function renderPosCart() {
+
+  if (!posCartItems) {
+    return;
+  }
+
+
+  if (posCart.length === 0) {
+
+    posCartItems.innerHTML = `
+      <div class="pos-empty-cart">
+
+        <span>🛒</span>
+
+        <p>No items added yet</p>
+
+        <small>
+          Select items from the menu
+        </small>
+
+      </div>
+    `;
+
+    updatePosCartSummary();
+
+    return;
+
+  }
+
+
+  posCartItems.innerHTML = "";
+
+
+  posCart.forEach(
+    function(item, index) {
+
+      const itemTotal =
+        item.price *
+        item.quantity;
+
+
+      const itemElement =
+        document.createElement("div");
+
+
+      itemElement.className =
+        "pos-cart-item";
+
+
+      itemElement.innerHTML = `
+
+        <div class="pos-cart-item-info">
+
+          <strong>
+            ${escapeHtml(
+              item.name
+            )}
+          </strong>
+
+          <span>
+            ₱${item.price.toLocaleString()}
+          </span>
+
+        </div>
+
+
+        <div class="pos-cart-item-bottom">
+
+          <div class="pos-quantity-controls">
+
+            <button
+              type="button"
+              class="pos-qty-btn"
+              data-action="decrease"
+              data-index="${index}"
+            >
+              −
+            </button>
+
+
+            <span class="pos-quantity">
+              ${item.quantity}
+            </span>
+
+
+            <button
+              type="button"
+              class="pos-qty-btn"
+              data-action="increase"
+              data-index="${index}"
+            >
+              +
+            </button>
+
+          </div>
+
+
+          <strong class="pos-cart-item-total">
+            ₱${itemTotal.toLocaleString()}
+          </strong>
+
+
+          <button
+            type="button"
+            class="pos-remove-item"
+            data-index="${index}"
+            aria-label="Remove ${escapeHtml(
+              item.name
+            )}"
+          >
+            ✕
+          </button>
+
+        </div>
+
+      `;
+
+
+      posCartItems.appendChild(
+        itemElement
+      );
+
+    }
+  );
+
+
+  /* =========================
+     QUANTITY BUTTONS
+  ========================= */
+
+  posCartItems
+    .querySelectorAll(
+      ".pos-qty-btn"
+    )
+    .forEach(function(button) {
+
+      button.addEventListener(
+        "click",
+        function() {
+
+          const index =
+            Number(
+              button.dataset.index
+            );
+
+
+          const action =
+            button.dataset.action;
+
+
+          if (
+            !posCart[index]
+          ) {
+            return;
+          }
+
+
+          if (
+            action ===
+            "increase"
+          ) {
+
+            posCart[index].quantity += 1;
+
+          }
+
+
+          if (
+            action ===
+            "decrease"
+          ) {
+
+            posCart[index].quantity -= 1;
+
+
+            if (
+              posCart[index].quantity <= 0
+            ) {
+
+              posCart.splice(
+                index,
+                1
+              );
+
+            }
+
+          }
+
+
+          renderPosCart();
+
+        }
+      );
+
+    });
+
+
+  /* =========================
+     REMOVE BUTTONS
+  ========================= */
+
+  posCartItems
+    .querySelectorAll(
+      ".pos-remove-item"
+    )
+    .forEach(function(button) {
+
+      button.addEventListener(
+        "click",
+        function() {
+
+          const index =
+            Number(
+              button.dataset.index
+            );
+
+
+          if (
+            !posCart[index]
+          ) {
+            return;
+          }
+
+
+          posCart.splice(
+            index,
+            1
+          );
+
+
+          renderPosCart();
+
+        }
+      );
+
+    });
+
+
+  updatePosCartSummary();
+
+}
+
+
+/* =========================
+   CART SUMMARY
+========================= */
+
+function updatePosCartSummary() {
+
+  const subtotal =
+    posCart.reduce(
+      function(total, item) {
+
+        return (
+          total +
+          (
+            item.price *
+            item.quantity
+          )
+        );
+
+      },
+      0
+    );
+
+
+  /*
+   * VAT
+   *
+   * Temporarily set to 0.
+   * We will configure the actual
+   * VAT/business rule later.
+   */
+
+  const vat = 0;
+
+
+  /*
+   * DISCOUNT
+   *
+   * Temporarily set to 0.
+   */
+
+  const discount = 0;
+
+
+  const total =
+    subtotal +
+    vat -
+    discount;
+
+
+  const summary =
+    document.querySelector(
+      ".pos-cart-summary"
+    );
+
+
+  if (!summary) {
+    return;
+  }
+
+
+  const rows =
+    summary.querySelectorAll(
+      ":scope > div"
+    );
+
+
+  if (rows[0]) {
+
+    const value =
+      rows[0].querySelector(
+        "strong"
+      );
+
+    if (value) {
+
+      value.textContent =
+        "₱" +
+        subtotal.toLocaleString(
+          undefined,
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }
+        );
+
+    }
+
+  }
+
+
+  if (rows[1]) {
+
+    const value =
+      rows[1].querySelector(
+        "strong"
+      );
+
+    if (value) {
+
+      value.textContent =
+        "₱" +
+        vat.toLocaleString(
+          undefined,
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }
+        );
+
+    }
+
+  }
+
+
+  if (rows[2]) {
+
+    const value =
+      rows[2].querySelector(
+        "strong"
+      );
+
+    if (value) {
+
+      value.textContent =
+        "₱" +
+        discount.toLocaleString(
+          undefined,
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }
+        );
+
+    }
+
+  }
+
+
+  const totalRow =
+    summary.querySelector(
+      ".pos-total"
+    );
+
+
+  if (totalRow) {
+
+    const value =
+      totalRow.querySelector(
+        "strong"
+      );
+
+    if (value) {
+
+      value.textContent =
+        "₱" +
+        total.toLocaleString(
+          undefined,
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }
+        );
+
+    }
+
+  }
+
+}
+
+
+/* =========================
+   INITIAL CART
+========================= */
+
+renderPosCart();
+  /* =========================
+   ORDERS
+========================= */
+
+let ordersRefreshTimer = null;
+  
+let knownOrderIds = new Set();
+
+let firstOrdersLoad = true;
+
+/* =========================
+   LOAD ORDERS
+========================= */
+
+/* =========================
+   LOAD ORDERS
+========================= */
+
+async function loadOrders() {
+
+  const ordersContainer =
+    document.getElementById(
+      "ordersContainer"
+    );
+
+  if (!ordersContainer) {
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/orders" +
+        "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,payment_reference,created_at" +
+        "&order=created_at.desc" +
+        "&limit=50",
+        {
+          method: "GET",
+
+          headers: {
+            "apikey":
+              SUPABASE_KEY,
+
+            "Authorization":
+              "Bearer " +
+              SUPABASE_KEY
+          }
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        data.error ||
+        data.hint ||
+        "Unable to load orders."
+      );
+
+    }
+
+
+    /* =========================
+       FIND NEW ORDERS
+    ========================= */
+
+    const newOrderIds =
+      new Set();
+
+    if (!firstOrdersLoad) {
+
+      data.forEach(
+        function(order) {
+
+          const orderId =
+            String(order.id);
+
+          const status =
+            String(
+              order.status ||
+              "new"
+            ).toLowerCase();
+
+          if (
+            !knownOrderIds.has(
+              orderId
+            ) &&
+            status === "new"
+          ) {
+
+            newOrderIds.add(
+              orderId
+            );
+
+          }
+
+        }
+      );
+
+    }
+
+
+    renderOrders(
+      data,
+      newOrderIds
+    );
+
+
+    /* =========================
+       REMEMBER ORDERS
+    ========================= */
+
+    data.forEach(
+      function(order) {
+
+        knownOrderIds.add(
+          String(order.id)
+        );
+
+      }
+    );
+
+
+    firstOrdersLoad = false;
+
+
+  } catch (error) {
+
+    console.error(
+      "Orders loading error:",
+      error
+    );
+
+    ordersContainer.innerHTML = `
+      <div class="loading">
+        Unable to load incoming orders.
+        <br><br>
+        ${escapeHtml(
+          error.message
+        )}
+      </div>
+    `;
+
+  }
+
+}
+
+
+/* =========================
+   RENDER ORDERS
+========================= */
+
+/* =========================
+   RENDER ORDERS
+========================= */
+
+function renderOrders(
+  orders,
+  newOrderIds
+) {
+
+  const ordersContainer =
+    document.getElementById(
+      "ordersContainer"
+    );
+
+  if (!ordersContainer) {
+    return;
+  }
+
+
+  /* =========================
+     SEPARATE NEW / ACTIVE
+  ========================= */
+
+  const newOrders = [];
+
+  const activeOrders = [];
+
+
+  orders.forEach(
+    function(order) {
+
+      const status =
+        String(
+          order.status ||
+          "new"
+        ).toLowerCase();
+
+
+      if (
+        status === "new"
+      ) {
+
+        newOrders.push(
+          order
+        );
+
+      } else if (
+        status === "accepted" ||
+        status === "preparing" ||
+        status === "now serving"
+      ) {
+
+        activeOrders.push(
+          order
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =========================
+     EMPTY STATE
+  ========================= */
+
+  if (
+    newOrders.length === 0 &&
+    activeOrders.length === 0
+  ) {
+
+    ordersContainer.innerHTML = `
+      <div class="loading">
+        🧾 No incoming orders yet.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  ordersContainer.innerHTML = "";
+
+
+  /* =========================
+     NEW ORDERS
+  ========================= */
+
+  if (
+    newOrders.length > 0
+  ) {
+
+    const newSection =
+      document.createElement(
+        "div"
+      );
+
+    newSection.className =
+      "orders-queue-section";
+
+
+    newSection.innerHTML = `
+      <div class="orders-section-title">
+        🆕 NEW ORDERS
+      </div>
+
+      <div class="orders-section-list new-orders-list"></div>
+    `;
+
+
+    ordersContainer.appendChild(
+      newSection
+    );
+
+
+    const newList =
+      newSection.querySelector(
+        ".new-orders-list"
+      );
+
+
+    newOrders.forEach(
+      function(order) {
+
+        const card =
+          createOrderCard(
+            order,
+            newOrderIds
+          );
+
+        newList.appendChild(
+          card
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =========================
+     ACTIVE ORDERS
+  ========================= */
+
+  if (
+    activeOrders.length > 0
+  ) {
+
+    const activeSection =
+      document.createElement(
+        "div"
+      );
+
+    activeSection.className =
+      "orders-queue-section active-orders-section";
+
+
+    activeSection.innerHTML = `
+      <div class="orders-section-title">
+        📦 ACTIVE ORDERS
+      </div>
+
+      <div class="orders-section-list active-orders-list"></div>
+    `;
+
+
+    ordersContainer.appendChild(
+      activeSection
+    );
+
+
+    const activeList =
+      activeSection.querySelector(
+        ".active-orders-list"
+      );
+
+
+    activeOrders.forEach(
+      function(order) {
+
+        const card =
+          createOrderCard(
+            order,
+            new Set()
+          );
+
+        activeList.appendChild(
+          card
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =========================
+     ACCEPT ORDER BUTTONS
+  ========================= */
+
+  document
+    .querySelectorAll(
+      ".accept-order-btn"
+    )
+    .forEach(
+      function(button) {
+
+        button.addEventListener(
+          "click",
+          function() {
+
+            acceptOrder(
+              button.dataset.orderId,
+              button
+            );
+
+          }
+        );
+
+      }
+    );
+
+}
+
+
+/* =========================
+   CREATE ORDER CARD
+========================= */
+
+function createOrderCard(
+  order,
+  newOrderIds
+) {
+
+  const card =
+    document.createElement(
+      "div"
+    );
+
+
+  const orderId =
+    String(order.id);
+
+
+  const isNewOrder =
+    newOrderIds &&
+    newOrderIds.has(
+      orderId
+    );
+
+
+  card.className =
+    "order-card" +
+    (
+      isNewOrder
+        ? " new-order-pop"
+        : ""
+    );
+
+
+  let items = [];
+
+
+  try {
+
+    items =
+      Array.isArray(order.items)
+        ? order.items
+        : JSON.parse(
+            order.items ||
+            "[]"
+          );
+
+  } catch (error) {
+
+    items = [];
+
+  }
+
+
+  let itemsHtml = "";
+
+
+  items.forEach(
+    function(item) {
+
+      const quantity =
+        Number(
+          item.quantity ||
+          item.qty ||
+          1
+        );
+
+
+      const price =
+        Number(
+          item.price ||
+          0
+        );
+
+
+      itemsHtml += `
+        <div class="order-item">
+
+          <span>
+            ${escapeHtml(
+              item.name ||
+              "Unknown Item"
+            )}
+            × ${quantity}
+          </span>
+
+          <strong>
+            ₱${(
+              price * quantity
+            ).toLocaleString()}
+          </strong>
+
+        </div>
+      `;
+
+    }
+  );
+
+
+  const orderNumber =
+    order.order_number ||
+    "Pending";
+
+
+  const tableNumber =
+    order.table_number ||
+    "—";
+
+
+  const orderType =
+    String(
+      order.order_type ||
+      ""
+    ).toLowerCase() ===
+    "takeout"
+      ? "🥡 TAKEOUT"
+      : "🍽️ DINE IN";
+
+
+  const paymentMethod =
+    order.payment_method ||
+    "—";
+
+
+  const paymentStatus =
+    order.payment_status ||
+    "pending";
+
+
+  const status =
+    String(
+      order.status ||
+      "new"
+    ).toLowerCase();
+
+
+  const createdAt =
+    order.created_at
+      ? new Date(
+          order.created_at
+        ).toLocaleString()
+      : "—";
+
+
+  let actionHtml = "";
+
+
+  if (
+    status === "new"
+  ) {
+
+    actionHtml = `
+      <div class="order-actions">
+
+        <button
+          type="button"
+          class="accept-order-btn"
+          data-order-id="${escapeHtml(
+            String(order.id)
+          )}"
+        >
+          🟢 ACCEPT ORDER
+        </button>
+
+      </div>
+    `;
+
+  }
+
+
+  if (
+    status === "accepted"
+  ) {
+
+    actionHtml = `
+      <div class="order-actions">
+
+        <div class="accepted-message">
+          🟢 ACCEPTED
+        </div>
+
+        <div class="next-status-message">
+          Waiting for Kitchen / Dispatcher
+        </div>
+
+      </div>
+    `;
+
+  }
+
+
+  if (
+    status === "preparing"
+  ) {
+
+    actionHtml = `
+      <div class="order-actions">
+
+        <div class="accepted-message">
+          👨‍🍳 PREPARING
+        </div>
+
+      </div>
+    `;
+
+  }
+
+
+  if (
+    status === "now serving"
+  ) {
+
+    actionHtml = `
+      <div class="order-actions">
+
+        <div class="accepted-message">
+          🔔 NOW SERVING
+        </div>
+
+      </div>
+    `;
+
+  }
+
+
+  card.innerHTML = `
+
+    <div class="order-card-header">
+
+      <div>
+
+        <div class="order-number">
+          ORDER #${escapeHtml(
+            String(orderNumber)
+          )}
+        </div>
+
+        <div class="order-time">
+          🕐 Order Time:
+          ${escapeHtml(
+            createdAt
+          )}
+        </div>
+
+      </div>
+
+
+      <div class="order-status">
+        ${escapeHtml(
+          status.toUpperCase()
+        )}
+      </div>
+
+    </div>
+
+
+    <div class="order-details">
+
+      <div>
+        <strong>Table:</strong>
+        ${escapeHtml(
+          String(tableNumber)
+        )}
+      </div>
+
+
+      <div>
+        <strong>Type:</strong>
+        ${orderType}
+      </div>
+
+
+      <div>
+        <strong>Payment:</strong>
+        ${escapeHtml(
+          String(paymentMethod)
+        )}
+      </div>
+
+
+      <div>
+        <strong>Payment Status:</strong>
+        ${escapeHtml(
+          String(paymentStatus)
+        ).toUpperCase()
+        }
+      </div>
+
+    </div>
+
+
+    <div class="order-items">
+
+      <div class="order-items-title">
+        ITEMS
+      </div>
+
+      ${
+        itemsHtml ||
+        `
+          <div class="order-item">
+            No item details available.
+          </div>
+        `
+      }
+
+    </div>
+
+
+    <div class="order-total">
+
+      <span>
+        TOTAL
+      </span>
+
+      <strong>
+        ₱${Number(
+          order.total ||
+          0
+        ).toLocaleString()}
+      </strong>
+
+    </div>
+
+
+    ${actionHtml}
+
+  `;
+
+
+  return card;
+
+}
+
+
+
+/* =========================
+   ACCEPT ORDER
+========================= */
+async function acceptOrder(
+  orderId,
+  button
+) {
+  if (!orderId) {
+    return;
+  }
+ button.disabled = true;
+button.textContent =
+  "Accepting...";
+
+
+/* =========================
+   ACCEPT ORDER ANIMATION
+========================= */
+
+const orderCard =
+  button.closest(
+    ".order-card"
+  );
+
+if (orderCard) {
+
+  orderCard.classList.add(
+    "accept-moving"
+  );
+
+}
+  try {
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/orders?id=eq." +
+        encodeURIComponent(
+          orderId
+        ),
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json",
+            "apikey":
+              SUPABASE_KEY,
+            "Authorization":
+              "Bearer " +
+              SUPABASE_KEY,
+            "Prefer":
+              "return=representation"
+          },
+          body:
+            JSON.stringify({
+              status:
+                "accepted"
+            })
+        }
+      );
+    const data =
+      await response.json();
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        data.error ||
+        data.hint ||
+        "Unable to accept order."
+      );
+    }
+    if (
+      !Array.isArray(data) ||
+      data.length === 0
+    ) {
+      throw new Error(
+        "Order was not updated. Please check the UPDATE policy in Supabase."
+      );
+    }
+    await loadOrders();
+  } catch (error) {
+    console.error(
+      "Accept order error:",
+      error
+    );
+    button.disabled = false;
+    button.textContent =
+      "🟢 ACCEPT ORDER";
+    showError(
+      error.message
+    );
+  }
+}
+/* =========================
+   COMPLETED ORDERS
+========================= */
+
+async function loadCompletedOrders() {
+
+  const completedContainer =
+    document.getElementById(
+      "completedOrdersContainer"
+    );
+
+  if (!completedContainer) {
+    return;
+  }
+
+  completedContainer.innerHTML = `
+    <div class="loading">
+      Loading completed orders...
+    </div>
+  `;
+
+  try {
+
+    const response =
+      await fetch(
+        SUPABASE_URL +
+        "/rest/v1/orders" +
+        "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,created_at,completed_at" +
+        "&status=eq.completed" +
+        "&order=completed_at.desc" +
+        "&limit=100",
+        {
+          method: "GET",
+
+          headers: {
+            "apikey":
+              SUPABASE_KEY,
+
+            "Authorization":
+              "Bearer " +
+              SUPABASE_KEY
+          }
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        data.error ||
+        data.hint ||
+        "Unable to load completed orders."
+      );
+
+    }
+
+    if (
+      !Array.isArray(data) ||
+      data.length === 0
+    ) {
+
+      completedContainer.innerHTML = `
+        <div class="loading">
+          📋 No completed orders yet.
+        </div>
+      `;
+
+      return;
+    }
+
+    completedContainer.innerHTML = "";
+
+    data.forEach(
+      function(order) {
+
+        const card =
+          createCompletedOrderCard(
+            order
+          );
+
+        completedContainer.appendChild(
+          card
+        );
+
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Completed orders loading error:",
+      error
+    );
+
+    completedContainer.innerHTML = `
+      <div class="loading">
+        Unable to load completed orders.
+        <br><br>
+        ${escapeHtml(
+          error.message
+        )}
+      </div>
+    `;
+
+  }
+
+}
+
+
+/* =========================
+   CREATE COMPLETED ORDER CARD
+========================= */
+
+function createCompletedOrderCard(
+  order
+) {
+
+  const card =
+    document.createElement(
+      "div"
+    );
+
+  card.className =
+    "order-card completed-order-card";
+
+
+  let items = [];
+
+
+  try {
+
+    items =
+      Array.isArray(order.items)
+        ? order.items
+        : JSON.parse(
+            order.items ||
+            "[]"
+          );
+
+  } catch (error) {
+
+    items = [];
+
+  }
+
+
+  let itemsHtml = "";
+
+
+  items.forEach(
+    function(item) {
+
+      const quantity =
+        Number(
+          item.quantity ||
+          item.qty ||
+          1
+        );
+
+      const price =
+        Number(
+          item.price ||
+          0
+        );
+
+      itemsHtml += `
+        <div class="order-item">
+
+          <span>
+            ${escapeHtml(
+              item.name ||
+              "Unknown Item"
+            )}
+            × ${quantity}
+          </span>
+
+          <strong>
+            ₱${(
+              price * quantity
+            ).toLocaleString()}
+          </strong>
+
+        </div>
+      `;
+
+    }
+  );
+
+
+  const orderNumber =
+    order.order_number ||
+    "Pending";
+
+  const tableNumber =
+    order.table_number ||
+    "—";
+
+  const orderType =
+    String(
+      order.order_type ||
+      ""
+    ).toLowerCase() ===
+    "takeout"
+      ? "🥡 TAKEOUT"
+      : "🍽️ DINE IN";
+
+  const paymentMethod =
+    order.payment_method ||
+    "—";
+
+  const paymentStatus =
+    order.payment_status ||
+    "pending";
+
+  const orderTime =
+    order.created_at
+      ? new Date(
+          order.created_at
+        ).toLocaleString()
+      : "—";
+
+  const completedTime =
+    order.completed_at
+      ? new Date(
+          order.completed_at
+        ).toLocaleString()
+      : "—";
+
+
+  card.innerHTML = `
+
+    <div class="order-card-header">
+
+      <div>
+
+        <div class="order-number">
+          ORDER #${escapeHtml(
+            String(orderNumber)
+          )}
+        </div>
+
+        <div class="order-time">
+          🕐 Order Time:
+          ${escapeHtml(
+            orderTime
+          )}
+        </div>
+
+        <div class="order-time">
+          ✅ Completed:
+          ${escapeHtml(
+            completedTime
+          )}
+        </div>
+
+      </div>
+
+      <div class="order-status">
+        COMPLETED
+      </div>
+
+    </div>
+
+
+    <div class="order-details">
+
+      <div>
+        <strong>Table:</strong>
+        ${escapeHtml(
+          String(tableNumber)
+        )}
+      </div>
+
+      <div>
+        <strong>Type:</strong>
+        ${orderType}
+      </div>
+
+      <div>
+        <strong>Payment:</strong>
+        ${escapeHtml(
+          String(paymentMethod)
+        )}
+      </div>
+
+      <div>
+        <strong>Payment Status:</strong>
+        ${escapeHtml(
+          String(paymentStatus)
+        ).toUpperCase()}
+      </div>
+
+    </div>
+
+
+    <div class="order-items">
+
+      <div class="order-items-title">
+        ITEMS
+      </div>
+
+      ${
+        itemsHtml ||
+        `
+          <div class="order-item">
+            No item details available.
+          </div>
+        `
+      }
+
+    </div>
+
+
+    <div class="order-total">
+
+      <span>
+        TOTAL
+      </span>
+
+      <strong>
+        ₱${Number(
+          order.total ||
+          0
+        ).toLocaleString()}
+      </strong>
+
+    </div>
+
+  `;
+
+  return card;
+
+}
+/* =========================
+   AUTO REFRESH ORDERS
+========================= */
+
+function startOrdersRefresh() {
+
+  if (ordersRefreshTimer) {
+
+    clearInterval(
+      ordersRefreshTimer
+    );
+
+  }
+
+
+  loadOrders();
+
+
+  ordersRefreshTimer =
+    setInterval(
+      function() {
+
+        loadOrders();
+
+      },
+      5000
+    );
+
+}
+
+
+/* =========================
+   REFRESH ORDERS BUTTON
+========================= */
+
+const refreshOrdersBtn =
+  document.getElementById(
+    "refreshOrdersBtn"
+  );
+
+
+if (refreshOrdersBtn) {
+
+  refreshOrdersBtn.addEventListener(
+    "click",
+    function() {
+
+      loadOrders();
+
+    }
+  );
+
+}
+
+
+/* =========================
+   COMPLETED ORDERS TOGGLE
+========================= */
+
+const completedOrdersToggle =
+  document.getElementById(
+    "completedOrdersToggle"
+  );
+
+const completedOrdersContainer =
+  document.getElementById(
+    "completedOrdersContainer"
+  );
+
+
+if (
+  completedOrdersToggle &&
+  completedOrdersContainer
+) {
+
+  completedOrdersToggle.addEventListener(
+    "click",
+    function() {
+
+      const isHidden =
+        completedOrdersContainer.style.display ===
+        "none";
+
+
+      if (isHidden) {
+
+        completedOrdersContainer.style.display =
+          "block";
+
+        completedOrdersToggle.textContent =
+          "📋 Hide Completed Orders";
+
+
+        /* =========================
+           LOAD COMPLETED ORDERS
+        ========================= */
+
+        loadCompletedOrders();
+
+      } else {
+
+        completedOrdersContainer.style.display =
+          "none";
+
+        completedOrdersToggle.textContent =
+          "📋 View Completed Orders";
+
+      }
+
+    }
+  );
+
+}
+  /* =========================
+   BUTTONS + INITIAL LOAD
+========================= */
+
+if (
+  refreshBtn &&
+  typeof loadTables === "function"
+) {
+
+  refreshBtn.addEventListener(
+    "click",
+    loadTables
+  );
+
+}
+
+if (
+  refreshStockBtn &&
+  typeof loadStocks === "function"
+) {
+
+  refreshStockBtn.addEventListener(
+    "click",
+    loadStocks
+  );
+
+}
+/* =========================
+   CHECKOUT POPUP
+========================= */
+
+const checkoutOverlay =
+  document.getElementById("checkoutOverlay");
+
+const checkoutModal =
+  checkoutOverlay?.querySelector(".checkout-modal");
+
+const posCheckoutButton =
+  document.getElementById("posCheckoutBtn");
+
+const checkoutSummaryView =
+  document.getElementById("checkoutSummaryView");
+
+const checkoutSummaryItems =
+  document.getElementById("checkoutSummaryItems");
+
+const checkoutSubtotal =
+  document.getElementById("checkoutSubtotal");
+
+const checkoutVat =
+  document.getElementById("checkoutVat");
+
+const checkoutDiscount =
+  document.getElementById("checkoutDiscount");
+
+const checkoutTotal =
+  document.getElementById("checkoutTotal");
+
+const checkoutAddMore =
+  document.getElementById("checkoutAddMore");
+
+const checkoutPaymentOptions =
+  document.querySelector(".checkout-payment-options");
+
+const checkoutPaymentMethods =
+  document.getElementById("checkoutPaymentMethods");
+
+const checkoutCashPanel =
+  document.getElementById("checkoutCashPanel");
+
+const checkoutCashBack =
+  document.getElementById("checkoutCashBack");
+
+const checkoutCashReceived =
+  document.getElementById("checkoutCashReceived");
+
+const checkoutCashAmountDue =
+  document.getElementById("checkoutCashAmountDue");
+
+const checkoutCashChange =
+  document.getElementById("checkoutCashChange");
+
+const checkoutCashMessage =
+  document.getElementById("checkoutCashMessage");
+
+const checkoutConfirmCash =
+  document.getElementById("checkoutConfirmCash");
+
+/* PAYMENT SUCCESS ELEMENTS */
+
+const paymentSuccessPanel =
+  document.getElementById("paymentSuccessPanel");
+
+const successTotalPaid =
+  document.getElementById("successTotalPaid");
+
+const successAmountReceived =
+  document.getElementById("successAmountReceived");
+
+const successChange =
+  document.getElementById("successChange");
+
+const paymentSuccessActions =
+  document.getElementById("paymentSuccessActions");
+
+const paymentSuccessReceiptArea =
+  document.getElementById("paymentSuccessReceiptArea");
+
+const successReceiptItems =
+  document.getElementById("successReceiptItems");
+
+const successReceiptTotal =
+  document.getElementById("successReceiptTotal");
+
+const acceptOrderBtn =
+  document.getElementById("acceptOrderBtn");
+
+const newOrderBtn =
+  document.getElementById("newOrderBtn");
+
+const printReceiptBtn =
+  document.getElementById("printReceiptBtn");
+
+
+/* =========================
+   CHECKOUT HELPERS
+========================= */
+
+function formatCheckoutMoney(amount) {
+  return "₱" + Number(amount).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+
+function getCheckoutTotal() {
+  if (!Array.isArray(posCart) || posCart.length === 0) {
+    return 0;
+  }
+
+  return posCart.reduce(function(total, item) {
+    return total +
+      Number(item.price) * Number(item.quantity);
+  }, 0);
+}
+
+
+function renderCheckoutSummary() {
+  if (!checkoutSummaryItems) {
+    return;
+  }
+
+  if (!Array.isArray(posCart) || posCart.length === 0) {
+    checkoutSummaryItems.innerHTML = `
+      <div class="pos-empty-cart">
+        <p>No items added yet</p>
+        <small>Select items from the menu</small>
+      </div>
+    `;
+  } else {
+    checkoutSummaryItems.innerHTML = "";
+
+    posCart.forEach(function(item) {
+      const itemRow = document.createElement("div");
+      itemRow.className = "checkout-summary-item";
+
+      const itemInfo = document.createElement("div");
+      itemInfo.className = "checkout-summary-item-info";
+
+      const itemName = document.createElement("span");
+      itemName.className = "checkout-summary-item-name";
+      itemName.textContent = item.name;
+
+      const itemQty = document.createElement("span");
+      itemQty.className = "checkout-summary-item-qty";
+      itemQty.textContent = "Qty: " + item.quantity;
+
+      itemInfo.appendChild(itemName);
+      itemInfo.appendChild(itemQty);
+
+      const itemPrice = document.createElement("strong");
+      itemPrice.className = "checkout-summary-item-price";
+      itemPrice.textContent = formatCheckoutMoney(
+        Number(item.price) * Number(item.quantity)
+      );
+
+      itemRow.appendChild(itemInfo);
+      itemRow.appendChild(itemPrice);
+
+      checkoutSummaryItems.appendChild(itemRow);
+    });
+  }
+
+  const subtotal = getCheckoutTotal();
+  const vat = 0;
+  const discount = 0;
+  const total = subtotal + vat - discount;
+
+  if (checkoutSubtotal) {
+    checkoutSubtotal.textContent =
+      formatCheckoutMoney(subtotal);
+  }
+
+  if (checkoutVat) {
+    checkoutVat.textContent =
+      formatCheckoutMoney(vat);
+  }
+
+  if (checkoutDiscount) {
+    checkoutDiscount.textContent =
+      formatCheckoutMoney(discount);
+  }
+
+  if (checkoutTotal) {
+    checkoutTotal.textContent =
+      formatCheckoutMoney(total);
+  }
+
+  updateCheckoutCashValues();
+}
+
+
+function updateCheckoutCashValues() {
+  const total = getCheckoutTotal();
+  const rawReceived = checkoutCashReceived
+    ? checkoutCashReceived.value.trim()
+    : "";
+
+  const received = rawReceived === ""
+    ? 0
+    : Number(rawReceived);
+
+  if (checkoutCashAmountDue) {
+    checkoutCashAmountDue.textContent =
+      formatCheckoutMoney(total);
+  }
+
+  if (checkoutCashChange) {
+    checkoutCashChange.textContent =
+      formatCheckoutMoney(Math.max(0, received - total));
+  }
+
+  if (checkoutCashMessage) {
+    if (rawReceived !== "" && received < total) {
+      checkoutCashMessage.textContent =
+        "Insufficient cash received.";
+    } else {
+      checkoutCashMessage.textContent = "";
+    }
+  }
+
+  if (checkoutConfirmCash) {
+    checkoutConfirmCash.disabled =
+      total <= 0 ||
+      rawReceived === "" ||
+      !Number.isFinite(received) ||
+      received < total;
+  }
+}
+
+
+/* =========================
+   PAYMENT METHOD / CASH
+========================= */
+
+function showCheckoutPaymentOptions() {
+  if (!checkoutPaymentOptions ||
+      !checkoutPaymentMethods ||
+      !checkoutCashPanel) {
+    return;
+  }
+
+  checkoutPaymentOptions.classList.remove("cash-payment-expanded");
+  checkoutPaymentMethods.classList.remove(
+    "cash-payment-methods-hidden",
+    "cash-payment-methods-faded"
+  );
+
+  checkoutCashPanel.classList.remove(
+    "cash-panel-expanded",
+    "cash-panel-hidden"
+  );
+
+  checkoutPaymentMethods.hidden = false;
+  checkoutCashPanel.hidden = true;
+
+  if (checkoutCashReceived) {
+    checkoutCashReceived.value = "";
+  }
+
+  if (paymentSuccessPanel) {
+    paymentSuccessPanel.hidden = true;
+  }
+
+  if (checkoutSummaryView) {
+    checkoutSummaryView.hidden = false;
+  }
+
+  if (paymentSuccessActions) {
+    paymentSuccessActions.hidden = true;
+  }
+
+  if (paymentSuccessReceiptArea) {
+    paymentSuccessReceiptArea.hidden = true;
+  }
+
+  if (checkoutModal) {
+    checkoutModal.classList.remove("payment-success-mode");
+  }
+
+  updateCheckoutCashValues();
+}
+
+
+function showCheckoutCashPanel() {
+  if (!checkoutPaymentOptions ||
+      !checkoutPaymentMethods ||
+      !checkoutCashPanel) {
+    return;
+  }
+
+  checkoutPaymentOptions.classList.add("cash-payment-expanded");
+
+  checkoutPaymentMethods.classList.add(
+    "cash-payment-methods-faded"
+  );
+
+  checkoutCashPanel.classList.remove("cash-panel-hidden");
+
+  requestAnimationFrame(function() {
+    checkoutPaymentMethods.classList.add(
+      "cash-payment-methods-hidden"
+    );
+
+    checkoutCashPanel.classList.add("cash-panel-expanded");
+  });
+
+  checkoutPaymentMethods.hidden = false;
+  checkoutCashPanel.hidden = false;
+
+  updateCheckoutCashValues();
+
+  if (checkoutCashReceived) {
+    checkoutCashReceived.focus();
+  }
+}
+
+
+/* =========================
+   OPEN CHECKOUT
+========================= */
+
+if (checkoutOverlay && posCheckoutButton) {
+  posCheckoutButton.addEventListener("click", function() {
+    showCheckoutPaymentOptions();
+    renderCheckoutSummary();
+
+    checkoutOverlay.classList.add("active");
+    checkoutOverlay.setAttribute("aria-hidden", "false");
+  });
+}
+
+
+/* =========================
+   ADD MORE ITEMS
+========================= */
+
+if (checkoutAddMore && checkoutOverlay) {
+  checkoutAddMore.addEventListener("click", function() {
+    checkoutOverlay.classList.remove("active");
+    checkoutOverlay.setAttribute("aria-hidden", "true");
+
+    showCheckoutPaymentOptions();
+  });
+}
+
+
+/* =========================
+   SELECT PAYMENT METHOD
+========================= */
+
+if (checkoutPaymentMethods) {
+  checkoutPaymentMethods.addEventListener("click", function(event) {
+    const paymentCard = event.target.closest("[data-payment-method]");
+
+    if (!paymentCard) {
+      return;
+    }
+
+    const method = paymentCard.dataset.paymentMethod;
+
+    // Keep the existing Cash workflow unchanged.
+    if (method === "cash") {
+      showCheckoutCashPanel();
+      return;
+    }
+
+    // Gift Card and Discount will be connected separately.
+    if (method === "gift" || method === "discount") {
+      console.info("Payment method not connected yet:", method);
+      return;
+    }
+
+    if (method !== "card" && method !== "pending") {
+      return;
+    }
+
+    const total = getCheckoutTotal();
+
+    if (total <= 0) {
+      console.warn("Cannot continue with an empty order.");
+      return;
+    }
+
+    if (!paymentSuccessPanel || !checkoutSummaryView) {
+      console.error("Payment success panel is missing.");
+      return;
+    }
+
+    const heading = paymentSuccessPanel.querySelector("h2");
+    const message = paymentSuccessPanel.querySelector(
+      ".payment-success-message"
+    );
+    const changeRow = successChange
+      ? successChange.closest(".payment-success-detail")
+      : null;
+    const details = paymentSuccessPanel.querySelector(
+      ".payment-success-details"
+    );
+
+    // Prepare the existing payment screen.
+    if (heading) {
+      heading.textContent =
+        method === "card" ? "Payment Successful!" : "Pending Payment";
+    }
+
+    if (message) {
+      message.textContent =
+        method === "card"
+          ? "Payment has been verified successfully."
+          : "Payment has not been confirmed. Please verify the payment before accepting this order.";
+    }
+
+    if (successTotalPaid) {
+      successTotalPaid.textContent = formatCheckoutMoney(total);
+    }
+
+    if (successAmountReceived) {
+      successAmountReceived.textContent =
+        method === "card" ? formatCheckoutMoney(total) : "—";
+    }
+
+    if (successChange) {
+      successChange.textContent = "—";
+    }
+
+    if (changeRow) {
+      changeRow.hidden = method !== "cash";
+    }
+
+    // Show a success check for verified payment, and a clock for pending.
+    const check = paymentSuccessPanel.querySelector(
+      ".payment-success-check"
+    );
+
+    if (check) {
+      check.textContent = method === "card" ? "✓" : "◷";
+      check.setAttribute(
+        "aria-label",
+        method === "card" ? "Payment verified" : "Payment pending"
+      );
+    }
+
+   if (details) {
+  const rows = details.querySelectorAll(
+    ".payment-success-detail"
+  );
+
+  const firstLabel = rows[0]?.querySelector("span");
+
+  if (firstLabel) {
+    firstLabel.textContent =
+      method === "card" ? "Total Paid" : "Total Amount";
+  }
+
+  // Pending Payment: show Total Amount only.
+  // Verified Card/QR Payment: restore all detail rows.
+  if (rows[1]) {
+    rows[1].hidden = method === "pending";
+  }
+
+  if (rows[2]) {
+    rows[2].hidden = method === "pending";
+  }
+}
+    // Show action buttons for both verified and pending payments.
+// Accept Order does not automatically mean payment is confirmed.
+if (paymentSuccessActions) {
+  paymentSuccessActions.hidden = false;
+}
+    if (paymentSuccessReceiptArea) {
+      paymentSuccessReceiptArea.hidden = true;
+    }
+
+    renderSuccessReceipt(total);
+
+    checkoutSummaryView.hidden = true;
+    paymentSuccessPanel.hidden = false;
+
+    if (checkoutPaymentOptions) {
+      checkoutPaymentOptions.hidden = true;
+    }
+
+    if (checkoutPaymentMethods) {
+      checkoutPaymentMethods.hidden = true;
+    }
+
+    if (checkoutCashPanel) {
+      checkoutCashPanel.hidden = true;
+    }
+
+    if (checkoutModal) {
+      checkoutModal.classList.add("payment-success-mode");
+      checkoutModal.classList.remove("receipt-visible");
+    }
+  });
+}
+function showCheckoutCashPanel() {
+  if (!checkoutPaymentOptions ||
+      !checkoutPaymentMethods ||
+      !checkoutCashPanel) {
+    return;
+  }
+
+  checkoutPaymentOptions.classList.add("cash-payment-expanded");
+
+  checkoutPaymentMethods.classList.add(
+    "cash-payment-methods-faded"
+  );
+
+  checkoutCashPanel.classList.remove("cash-panel-hidden");
+
+  requestAnimationFrame(function() {
+    checkoutPaymentMethods.classList.add(
+      "cash-payment-methods-hidden"
+    );
+
+    checkoutCashPanel.classList.add("cash-panel-expanded");
+  });
+
+  checkoutPaymentMethods.hidden = false;
+  checkoutCashPanel.hidden = false;
+
+  updateCheckoutCashValues();
+
+  if (checkoutCashReceived) {
+    checkoutCashReceived.focus();
+  }
+}/* =========================
+   BACK TO PAYMENT OPTIONS
+========================= */
+
+if (checkoutCashBack) {
+  checkoutCashBack.addEventListener("click", function() {
+    showCheckoutPaymentOptions();
+  });
+}
+
+
+if (checkoutCashReceived) {
+  checkoutCashReceived.addEventListener("input", function() {
+    updateCheckoutCashValues();
+  });
+}
+
+
+/* =========================
+   BUILD RECEIPT CONTENT
+========================= */
+
+function renderSuccessReceipt(total) {
+  if (successReceiptItems) {
+    successReceiptItems.innerHTML = "";
+
+    if (Array.isArray(posCart)) {
+      posCart.forEach(function(item) {
+        const receiptItem = document.createElement("div");
+        receiptItem.className = "success-receipt-item";
+
+        const itemName = document.createElement("span");
+        itemName.textContent =
+          item.name + " × " + item.quantity;
+
+        const itemPrice = document.createElement("strong");
+        itemPrice.textContent = formatCheckoutMoney(
+          Number(item.price) * Number(item.quantity)
+        );
+
+        receiptItem.appendChild(itemName);
+        receiptItem.appendChild(itemPrice);
+
+        successReceiptItems.appendChild(receiptItem);
+      });
+    }
+  }
+
+  if (successReceiptTotal) {
+    successReceiptTotal.textContent =
+      formatCheckoutMoney(total);
+  }
+}
+
+
+/* =========================
+   CONFIRM CASH PAYMENT
+========================= */
+
+if (checkoutConfirmCash) {
+  checkoutConfirmCash.addEventListener("click", function() {
+    updateCheckoutCashValues();
+
+    if (checkoutConfirmCash.disabled) {
+      return;
+    }
+
+    const total = getCheckoutTotal();
+    const rawReceived = checkoutCashReceived
+      ? checkoutCashReceived.value.trim()
+      : "";
+
+    const received = Number(rawReceived);
+
+    if (
+      total <= 0 ||
+      rawReceived === "" ||
+      !Number.isFinite(received) ||
+      received < total
+    ) {
+      updateCheckoutCashValues();
+      return;
+    }
+
+    if (!paymentSuccessPanel || !checkoutSummaryView) {
+      console.error(
+        "Payment success panel is missing from checkout HTML."
+      );
+      return;
+    }
+
+    if (successTotalPaid) {
+      successTotalPaid.textContent =
+        formatCheckoutMoney(total);
+    }
+
+    if (successAmountReceived) {
+      successAmountReceived.textContent =
+        formatCheckoutMoney(received);
+    }
+
+    if (successChange) {
+      successChange.textContent =
+        formatCheckoutMoney(received - total);
+    }
+
+    renderSuccessReceipt(total);
+
+    checkoutSummaryView.hidden = true;
+    paymentSuccessPanel.hidden = false;
+
+    if (paymentSuccessActions) {
+      paymentSuccessActions.hidden = false;
+    }
+
+    if (paymentSuccessReceiptArea) {
+      paymentSuccessReceiptArea.hidden = true;
+    }
+
+    if (checkoutPaymentMethods) {
+      checkoutPaymentMethods.hidden = true;
+    }
+
+    if (checkoutCashPanel) {
+      checkoutCashPanel.hidden = true;
+    }
+
+    if (checkoutModal) {
+      checkoutModal.classList.add("payment-success-mode");
+    }
+
+    if (checkoutCashMessage) {
+      checkoutCashMessage.textContent = "";
+    }
+  });
+}
+
+
+/* =========================
+   SHOW RECEIPT / PRINT
+========================= */
+
+function showSuccessReceipt() {
+  const receiptArea = document.getElementById(
+    "paymentSuccessReceiptArea"
+  );
+
+  if (!receiptArea) {
+    console.error("Receipt area is missing.");
+    return;
+  }
+
+  receiptArea.hidden = false;
+
+  if (checkoutModal) {
+    checkoutModal.classList.add("payment-success-mode");
+    checkoutModal.classList.add("receipt-visible");
+  }
+
+  const receipt = receiptArea.querySelector(".success-receipt");
+
+  if (!receipt) {
+    console.error("Receipt element is missing.");
+    return;
+  }
+
+  // Restart the animation on every click.
+  receipt.classList.remove("receipt-print-animation");
+
+  void receipt.offsetWidth;
+
+  receipt.classList.add("receipt-print-animation");
+}
+
+// Attach the handler to every Print Receipt button.
+document.querySelectorAll("#printReceiptBtn").forEach(function(button) {
+  button.addEventListener("click", function(event) {
+    event.preventDefault();
+    showSuccessReceipt();
+  });
+});
+/* =========================
+   ACCEPT ORDER
+   DISPATCHER INTEGRATION NEXT
+========================= */
+
+if (acceptOrderBtn) {
+  acceptOrderBtn.addEventListener("click", function() {
+    if (acceptOrderBtn.disabled) {
+      return;
+    }
+
+    // Allow Accept Order to trigger only once.
+    acceptOrderBtn.disabled = true;
+    acceptOrderBtn.textContent = "Accepted";
+
+    // Keep the existing receipt animation.
+    showSuccessReceipt();
+
+    console.info(
+      "Payment verified. Connect this button to the existing Dispatcher order workflow next."
+    );
+  });
+}
+/* =========================
+   NEW ORDER / RESET CHECKOUT
+========================= */
+
+document.querySelectorAll("#newOrderBtn").forEach(function(button) {
+  button.addEventListener("click", function() {
+
+    // Clear the previous cart for the next order.
+    // This does not delete previously saved orders.
+    posCart.length = 0;
+
+    // Reset cash input.
+    if (checkoutCashReceived) {
+      checkoutCashReceived.value = "";
+    }
+
+    if (checkoutCashMessage) {
+      checkoutCashMessage.textContent = "";
+    }
+
+    // Reset payment-success and receipt state.
+    if (paymentSuccessPanel) {
+      paymentSuccessPanel.hidden = true;
+    }
+
+    if (checkoutSummaryView) {
+      checkoutSummaryView.hidden = false;
+    }
+
+    if (paymentSuccessActions) {
+      paymentSuccessActions.hidden = true;
+    }
+
+    if (paymentSuccessReceiptArea) {
+      paymentSuccessReceiptArea.hidden = true;
+    }
+
+    if (checkoutModal) {
+      checkoutModal.classList.remove(
+        "payment-success-mode",
+        "receipt-visible"
+      );
+    }
+
+    // Reset the Accept Order button.
+    if (acceptOrderBtn) {
+      acceptOrderBtn.disabled = false;
+      acceptOrderBtn.textContent = "Accept Order";
+    }
+
+    // Refresh both cart and checkout displays.
+    if (typeof renderPosCart === "function") {
+      renderPosCart();
+    }
+
+    showCheckoutPaymentOptions();
+    renderCheckoutSummary();
+
+    // Close checkout so a fresh order can begin.
+    if (checkoutOverlay) {
+      checkoutOverlay.classList.remove("active");
+      checkoutOverlay.setAttribute("aria-hidden", "true");
+    }
+
+  });
+});
+</script>
+</body>
+</html>
