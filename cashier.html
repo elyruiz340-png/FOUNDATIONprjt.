@@ -5196,117 +5196,93 @@ transform-origin: top center;
       "message";
   }
 /* =========================
-   POS SIDEBAR NAVIGATION
+POS SIDEBAR NAVIGATION
 ========================= */
 
-document
-  .querySelectorAll(".pos-sidebar-btn")
-  .forEach(function(button) {
+// Keep the sidebar visible while switching sections.
+const posSidebar = document.querySelector(”.pos-sidebar”);
+const posContainer = document.querySelector(”.container”);
+const posMainSection = document.getElementById(“posSection”);
 
-    button.addEventListener(
-      "click",
-      function(event) {
+if (posSidebar && posContainer && posMainSection) {
+// Move sidebar outside the sections so it won’t disappear.
+posContainer.prepend(posSidebar);
 
-        event.preventDefault();
+// Keep sidebar fixed on the left.
+Object.assign(posSidebar.style, {
+position: “fixed”,
+top: “0”,
+left: “0”,
+width: “56px”,
+height: “100vh”,
+minHeight: “0”,
+zIndex: “1000”,
+boxSizing: “border-box”
+});
 
-        const sectionId =
-          button.getAttribute(
-            "data-pos-section"
-          );
+// Reserve space for the sidebar.
+const allSections = document.querySelectorAll(
+“#posSection, .page-section”
+);
 
-        if (!sectionId) {
-          console.error(
-            "POS sidebar button has no data-pos-section:",
-            button
-          );
-          return;
-        }
+allSections.forEach(function(section) {
+section.style.marginLeft = “56px”;
+section.style.width = “calc(100% - 56px)”;
+section.style.boxSizing = “border-box”;
+});
 
-        /* =========================
-           SIDEBAR ACTIVE STATE
-        ========================= */
+// The sidebar is now outside this layout.
+const posLayout = posMainSection.querySelector(”.pos-layout”);
 
-        document
-          .querySelectorAll(".pos-sidebar-btn")
-          .forEach(function(btn) {
-            btn.classList.remove("active");
-          });
+if (posLayout) {
+posLayout.style.gridTemplateColumns = “minmax(0, 1fr)”;
+posLayout.style.width = “100%”;
+}
+}
 
-        button.classList.add("active");
+document.querySelectorAll(”.pos-sidebar-btn”).forEach(function(button) {
+button.addEventListener(“click”, function(event) {
+event.preventDefault();
 
-        /* =========================
-           HIDE ALL POS SECTIONS
-        ========================= */
+const sectionId = button.getAttribute("data-pos-section");
+const selectedSection = document.getElementById(sectionId);
+if (!sectionId || !selectedSection) {
+  console.error("POS section not found:", sectionId);
+  return;
+}
+// Update active sidebar icon.
+document.querySelectorAll(".pos-sidebar-btn").forEach(function(btn) {
+  btn.classList.remove("active");
+});
+button.classList.add("active");
+// Hide all content sections, but never hide the sidebar.
+document.querySelectorAll("#posSection, .page-section").forEach(function(section) {
+  section.style.display = "none";
+  section.classList.remove("active");
+});
+// Show the selected section.
+selectedSection.style.display = "block";
+selectedSection.classList.add("active");
+// Clear any existing message.
+if (typeof clearMessage === "function") {
+  clearMessage();
+}
+// Load data for the selected section.
+if (sectionId === "tablesSection" && typeof loadTables === "function") {
+  loadTables();
+}
+if (sectionId === "stocksSection" && typeof loadStocks === "function") {
+  loadStocks();
+}
+if (sectionId === "ordersSection" && typeof loadOrders === "function") {
+  loadOrders();
+  if (typeof startOrdersRefresh === "function") {
+    startOrdersRefresh();
+  }
+}
 
-        document
-          .querySelectorAll("#posSection, .page-section")
-          .forEach(function(section) {
-            section.style.display = "none";
-            section.classList.remove("active");
-          });
-
-        /* =========================
-           SHOW SELECTED SECTION
-        ========================= */
-
-        const selectedSection =
-          document.getElementById(sectionId);
-
-        if (!selectedSection) {
-          console.error(
-            "POS section not found:",
-            sectionId
-          );
-          return;
-        }
-
-        selectedSection.style.display = "block";
-        selectedSection.classList.add("active");
-
-        /* =========================
-           CLEAR MESSAGE
-        ========================= */
-
-        if (typeof clearMessage === "function") {
-          clearMessage();
-        }
-
-        /* =========================
-           LOAD SECTION DATA
-        ========================= */
-
-        if (
-          sectionId === "tablesSection" &&
-          typeof loadTables === "function"
-        ) {
-          loadTables();
-        }
-
-        if (
-          sectionId === "stocksSection" &&
-          typeof loadStocks === "function"
-        ) {
-          loadStocks();
-        }
-
-        if (
-          sectionId === "ordersSection" &&
-          typeof loadOrders === "function"
-        ) {
-          loadOrders();
-
-          if (
-            typeof startOrdersRefresh === "function"
-          ) {
-            startOrdersRefresh();
-          }
-        }
-
-      }
-    );
-
-  });
- 
+});
+});
   /* =========================
      CREATE TABLE CARD
   ========================= */
