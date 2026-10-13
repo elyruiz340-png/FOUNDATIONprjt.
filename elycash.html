@@ -5426,7 +5426,65 @@ body.pos-other-view .page-section {
 
   requestAnimationFrame(updateSidebarHighlight);
 })();
- 
+ /* LOAD TABLES FROM SUPABASE */
+async function loadTables() {
+  clearMessage();
+
+  tablesContainer.innerHTML =
+    '<div class="loading">Loading tables...</div>';
+
+  try {
+    const response = await fetch(
+      TABLE_ENDPOINT + "?select=id,table_number,status",
+      {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        data.error ||
+        data.hint ||
+        "Unable to load tables."
+      );
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      tablesContainer.innerHTML =
+        '<div class="loading">No tables found.</div>';
+      return;
+    }
+
+    data.sort(function(a, b) {
+      return String(a.table_number).localeCompare(
+        String(b.table_number),
+        undefined,
+        { numeric: true }
+      );
+    });
+
+    tablesContainer.innerHTML = "";
+
+    data.forEach(function(table) {
+      createTableCard(table);
+    });
+
+  } catch (error) {
+    console.error("Load tables error:", error);
+
+    tablesContainer.innerHTML =
+      '<div class="loading">Unable to load tables.</div>';
+
+    showError(error.message);
+  }
+}
   /* =========================
      CREATE TABLE CARD
   ========================= */
