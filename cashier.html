@@ -5199,113 +5199,160 @@ transform-origin: top center;
    POS SIDEBAR NAVIGATION
 ========================= */
 
-document
-  .querySelectorAll(".pos-sidebar-btn")
-  .forEach(function(button) {
+(function initPosSidebarNavigation() {
+  const sidebarButtons = document.querySelectorAll(
+    ".pos-sidebar-btn"
+  );
 
-    button.addEventListener(
-      "click",
-      function(event) {
+  const sidebar = document.querySelector(".pos-sidebar");
+  const highlight = document.querySelector(
+    ".pos-sidebar-highlight"
+  );
 
-        event.preventDefault();
+  function moveSidebarHighlight(button) {
+    if (!sidebar || !highlight || !button) return;
 
-        const sectionId =
-          button.getAttribute(
-            "data-pos-section"
-          );
+    const sidebarRect = sidebar.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
 
-        if (!sectionId) {
-          console.error(
-            "POS sidebar button has no data-pos-section:",
-            button
-          );
-          return;
-        }
+    highlight.style.width = buttonRect.width + "px";
+    highlight.style.height = buttonRect.height + "px";
 
-        /* =========================
-           SIDEBAR ACTIVE STATE
-        ========================= */
+    highlight.style.transform =
+      "translate(" +
+      (buttonRect.left - sidebarRect.left) +
+      "px, " +
+      (buttonRect.top - sidebarRect.top) +
+      "px)";
+  }
 
-        document
-          .querySelectorAll(".pos-sidebar-btn")
-          .forEach(function(btn) {
-            btn.classList.remove("active");
-          });
-
-        button.classList.add("active");
-
-        /* =========================
-           HIDE ALL POS SECTIONS
-        ========================= */
-
-        document
-          .querySelectorAll("#posSection, .page-section")
-          .forEach(function(section) {
-            section.style.display = "none";
-            section.classList.remove("active");
-          });
-
-        /* =========================
-           SHOW SELECTED SECTION
-        ========================= */
-
-        const selectedSection =
-          document.getElementById(sectionId);
-
-        if (!selectedSection) {
-          console.error(
-            "POS section not found:",
-            sectionId
-          );
-          return;
-        }
-
-        selectedSection.style.display = "block";
-        selectedSection.classList.add("active");
-
-        /* =========================
-           CLEAR MESSAGE
-        ========================= */
-
-        if (typeof clearMessage === "function") {
-          clearMessage();
-        }
-
-        /* =========================
-           LOAD SECTION DATA
-        ========================= */
-
-        if (
-          sectionId === "tablesSection" &&
-          typeof loadTables === "function"
-        ) {
-          loadTables();
-        }
-
-        if (
-          sectionId === "stocksSection" &&
-          typeof loadStocks === "function"
-        ) {
-          loadStocks();
-        }
-
-        if (
-          sectionId === "ordersSection" &&
-          typeof loadOrders === "function"
-        ) {
-          loadOrders();
-
-          if (
-            typeof startOrdersRefresh === "function"
-          ) {
-            startOrdersRefresh();
-          }
-        }
-
-      }
+  function updateSidebarHighlight() {
+    const activeButton = document.querySelector(
+      ".pos-sidebar-btn.active"
     );
 
+    if (activeButton) {
+      moveSidebarHighlight(activeButton);
+    }
+  }
+
+  sidebarButtons.forEach(function(button) {
+    button.addEventListener("click", function(event) {
+      event.preventDefault();
+
+      const sectionId = button.getAttribute(
+        "data-pos-section"
+      );
+
+      if (!sectionId) {
+        console.error(
+          "POS sidebar button has no data-pos-section:",
+          button
+        );
+        return;
+      }
+
+      const selectedSection = document.getElementById(
+        sectionId
+      );
+
+      if (!selectedSection) {
+        console.error(
+          "POS section not found:",
+          sectionId
+        );
+        return;
+      }
+
+      /* =========================
+         SIDEBAR ACTIVE STATE
+      ========================= */
+
+      sidebarButtons.forEach(function(btn) {
+        btn.classList.remove("active");
+      });
+
+      button.classList.add("active");
+      moveSidebarHighlight(button);
+
+      /* =========================
+         HIDE OTHER PAGE SECTIONS
+         Keep #posSection visible
+         because it contains sidebar.
+      ========================= */
+
+      document.querySelectorAll(".page-section").forEach(
+        function(section) {
+          section.style.display = "none";
+          section.classList.remove("active");
+        }
+      );
+
+      const showingMenu = sectionId === "posSection";
+
+      document.body.classList.toggle(
+        "pos-other-view",
+        !showingMenu
+      );
+
+      const posSection = document.getElementById("posSection");
+
+      if (posSection) {
+        posSection.classList.toggle("active", showingMenu);
+      }
+
+      if (!showingMenu) {
+        selectedSection.style.display = "block";
+        selectedSection.classList.add("active");
+      }
+
+      /* =========================
+         CLEAR MESSAGE
+      ========================= */
+
+      if (typeof clearMessage === "function") {
+        clearMessage();
+      }
+
+      /* =========================
+         LOAD SECTION DATA
+      ========================= */
+
+      if (
+        sectionId === "tablesSection" &&
+        typeof loadTables === "function"
+      ) {
+        loadTables();
+      }
+
+      if (
+        sectionId === "stocksSection" &&
+        typeof loadStocks === "function"
+      ) {
+        loadStocks();
+      }
+
+      if (sectionId === "ordersSection") {
+        if (typeof loadOrders === "function") {
+          loadOrders();
+        }
+
+        if (typeof startOrdersRefresh === "function") {
+          startOrdersRefresh();
+        }
+      }
+
+      /* Recalculate after the section layout updates */
+      requestAnimationFrame(updateSidebarHighlight);
+    });
   });
+
+  /* Keep highlight aligned after resizing */
+  window.addEventListener("resize", updateSidebarHighlight);
+
+  /* Position it on initial page load */
+  requestAnimationFrame(updateSidebarHighlight);
+})();
  
   /* =========================
      CREATE TABLE CARD
