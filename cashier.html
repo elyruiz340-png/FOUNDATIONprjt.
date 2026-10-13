@@ -5196,58 +5196,117 @@ transform-origin: top center;
       "message";
   }
 /* =========================
-POS SIDEBAR NAVIGATION
+   POS SIDEBAR NAVIGATION
 ========================= */
 
 document
-.querySelectorAll(”.pos-sidebar-btn”)
-.forEach(function(button) {
+  .querySelectorAll(".pos-sidebar-btn")
+  .forEach(function(button) {
 
-button.addEventListener("click", function(event) {
-  event.preventDefault();
-  const sectionId = button.getAttribute("data-pos-section");
-  if (!sectionId) {
-    console.error("POS sidebar button has no data-pos-section:", button);
-    return;
-  }
-  // Update active icon.
-  document.querySelectorAll(".pos-sidebar-btn").forEach(function(btn) {
-    btn.classList.remove("active");
+    button.addEventListener(
+      "click",
+      function(event) {
+
+        event.preventDefault();
+
+        const sectionId =
+          button.getAttribute(
+            "data-pos-section"
+          );
+
+        if (!sectionId) {
+          console.error(
+            "POS sidebar button has no data-pos-section:",
+            button
+          );
+          return;
+        }
+
+        /* =========================
+           SIDEBAR ACTIVE STATE
+        ========================= */
+
+        document
+          .querySelectorAll(".pos-sidebar-btn")
+          .forEach(function(btn) {
+            btn.classList.remove("active");
+          });
+
+        button.classList.add("active");
+
+        /* =========================
+           HIDE ALL POS SECTIONS
+        ========================= */
+
+        document
+          .querySelectorAll("#posSection, .page-section")
+          .forEach(function(section) {
+            section.style.display = "none";
+            section.classList.remove("active");
+          });
+
+        /* =========================
+           SHOW SELECTED SECTION
+        ========================= */
+
+        const selectedSection =
+          document.getElementById(sectionId);
+
+        if (!selectedSection) {
+          console.error(
+            "POS section not found:",
+            sectionId
+          );
+          return;
+        }
+
+        selectedSection.style.display = "block";
+        selectedSection.classList.add("active");
+
+        /* =========================
+           CLEAR MESSAGE
+        ========================= */
+
+        if (typeof clearMessage === "function") {
+          clearMessage();
+        }
+
+        /* =========================
+           LOAD SECTION DATA
+        ========================= */
+
+        if (
+          sectionId === "tablesSection" &&
+          typeof loadTables === "function"
+        ) {
+          loadTables();
+        }
+
+        if (
+          sectionId === "stocksSection" &&
+          typeof loadStocks === "function"
+        ) {
+          loadStocks();
+        }
+
+        if (
+          sectionId === "ordersSection" &&
+          typeof loadOrders === "function"
+        ) {
+          loadOrders();
+
+          if (
+            typeof startOrdersRefresh === "function"
+          ) {
+            startOrdersRefresh();
+          }
+        }
+
+      }
+    );
+
   });
-  button.classList.add("active");
-  // Hide all sections.
-  document
-    .querySelectorAll("#posSection, .page-section")
-    .forEach(function(section) {
-      section.style.display = "none";
-      section.classList.remove("active");
-    });
-  // Show selected section.
-  const selectedSection = document.getElementById(sectionId);
-  if (!selectedSection) {
-    console.error("POS section not found:", sectionId);
-    return;
-  }
-  selectedSection.style.display = "block";
-  selectedSection.classList.add("active");
-  if (typeof clearMessage === "function") {
-    clearMessage();
-  }
-  if (sectionId === "tablesSection" && typeof loadTables === "function") {
-    loadTables();
-  }
-  if (sectionId === "stocksSection" && typeof loadStocks === "function") {
-    loadStocks();
-  }
-  if (sectionId === "ordersSection" && typeof loadOrders === "function") {
-    loadOrders();
-    if (typeof startOrdersRefresh === "function") {
-      startOrdersRefresh();
-    }
-  }
-});
-
-});
+ 
   /* =========================
      CREATE TABLE CARD
   ========================= */
