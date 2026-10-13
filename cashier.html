@@ -5022,60 +5022,166 @@ body.pos-other-view .page-section {
     </div>
   </div>
 </section>
- <!-- =========================
+<!-- =========================
      STOCKS SECTION
 ========================= -->
 
 <section
   id="stocksSection"
   class="page-section"
-  >
-
+>
 
   <div class="top-bar">
+    <div class="stocks-heading">
+      <h2>Stocks</h2>
+      <p class="stocks-subtitle">
+        Manage your product stocks and inventory
+      </p>
+    </div>
 
-    <h2>Product Stock</h2>
+    <div class="stocks-header-actions">
+      <button
+        class="refresh-btn"
+        id="refreshStockBtn"
+        type="button"
+      >
+        🔄 Refresh Stocks
+      </button>
+    </div>
+  </div>
 
+  <!-- STOCK CATEGORY NAVIGATION -->
+  <div
+    id="stockCategoryNav"
+    class="stock-category-nav"
+    aria-label="Stock categories"
+  >
     <button
-      class="refresh-btn"
-      id="refreshStockBtn"
       type="button"
+      class="stock-category-btn active"
+      data-stock-category="all"
     >
-      🔄 Refresh Stocks
+      <span>▦</span>
+      <span>All Items</span>
     </button>
 
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="all-day-breakfast"
+    >
+      <span>🍳</span>
+      <span>All-Day Breakfast</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="a-la-carte"
+    >
+      <span>🍽️</span>
+      <span>A La Carte</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="pulutan"
+    >
+      <span>🍢</span>
+      <span>Pulutan</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="pasta"
+    >
+      <span>🍝</span>
+      <span>Pasta</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="sandwich"
+    >
+      <span>🥪</span>
+      <span>Sandwich</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="rice"
+    >
+      <span>🍚</span>
+      <span>Rice</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="beers"
+    >
+      <span>🍺</span>
+      <span>Beers</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="whiskey"
+    >
+      <span>🥃</span>
+      <span>Whiskey</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="tequila"
+    >
+      <span>🍸</span>
+      <span>Tequila</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="soju"
+    >
+      <span>🍶</span>
+      <span>Soju</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="soda"
+    >
+      <span>🥤</span>
+      <span>Soda</span>
+    </button>
+
+    <button
+      type="button"
+      class="stock-category-btn"
+      data-stock-category="others"
+    >
+      <span>🧃</span>
+      <span>Others</span>
+    </button>
   </div>
 
-  <div class="stock-intro">
-
-    📦 <strong>Stock Management</strong><br>
-
-    Enter the total available stock for each product.
-    When you save a number, the remaining stock will be
-    reset to that amount.
-
-    <br><br>
-
-    Example:
-    If the kitchen has <strong>10 Chicken Wings</strong>,
-    enter <strong>10</strong>.
-
-    <br><br>
-
-    🍗 Chicken Wings can use one shared stock for different
-    wing flavors in the future.
-
-  </div>
-
+  <!-- PRODUCTS -->
   <div
     id="stockContainer"
     class="stock-list"
   >
-
     <div class="loading">
       Loading product stocks...
     </div>
-
   </div>
 
 </section>
@@ -5741,537 +5847,26 @@ async function loadTables() {
           : "🔓 UNLOCK TABLE";
     }
   }
-/* =========================
-   LOAD STOCKS
-========================= */
-async function loadStocks() {
-
-  clearMessage();
-
-  stockContainer.innerHTML =
-    '<div class="loading">Loading product stocks...</div>';
-
-
-  try {
-
-    const response =
-    
-      await fetch(
-        STOCK_ENDPOINT +
-        "?select=id,product_id,product_name,stock_group,stock_total,stock_remaining&order=id.asc",
-        {
-          method: "GET",
-
-          headers: {
-            "apikey":
-              SUPABASE_KEY,
-
-            "Authorization":
-              "Bearer " +
-              SUPABASE_KEY
-          }
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.message ||
-        data.error ||
-        data.hint ||
-        "Unable to load product stocks."
-      );
-
-    }
-
-
-    if (!data.length) {
-
-      stockContainer.innerHTML =
-        '<div class="loading">No product stocks found.</div>';
-
-      return;
-
-    }
-
-
-    /*
-     * MENU CATEGORY ORDER
-     *
-     * This follows the same order
-     * used by the HALINA BISTRO CAFE menu.
-     */
-
-    const categoryOrder = {
-
-      "all-day-breakfast": 1,
-
-      "a-la-carte": 2,
-
-      "pulutan": 3,
-
-      "pasta": 4,
-
-      "sandwich": 5,
-
-      "rice": 6,
-
-      "beers": 7,
-
-      "whiskey": 8,
-
-      "tequila": 9,
-
-      "soju": 10,
-
-      "soda": 11,
-
-      "others": 12
-
-    };
-
-
-    /*
-     * PRODUCT CATEGORY MAP
-     *
-     * PRODUCT_STOCK currently does not
-     * have a category column, so we map
-     * each product ID to its menu category.
-     */
-
-    const productCategory = {
-
-      "tapsilog":
-        "all-day-breakfast",
-
-      "lechon-kawali-silog":
-        "all-day-breakfast",
-
-      "pork-silog":
-        "all-day-breakfast",
-
-      "bang-silog":
-        "all-day-breakfast",
-
-
-      "whole-fried-chicken":
-        "a-la-carte",
-
-      "half-fried-chicken":
-        "a-la-carte",
-
-      "shanghai":
-        "a-la-carte",
-
-      "chicken-barbecue":
-        "a-la-carte",
-
-      "lechon-kawali":
-        "a-la-carte",
-
-      "crispy-bangus":
-        "a-la-carte",
-
-      "pork-sinigang":
-        "a-la-carte",
-
-      "beef-sinigang":
-        "a-la-carte",
-
-      "beef-caldereta":
-        "a-la-carte",
-
-      "kare-kare":
-        "a-la-carte",
-
-
-      "endamame":
-        "pulutan",
-
-      "cg-endamame":
-        "pulutan",
-
-      "classic-fries":
-        "pulutan",
-
-      "fish-fries":
-        "pulutan",
-
-      "fries-overload":
-        "pulutan",
-
-      "chichabu":
-        "pulutan",
-
-      "chicken-fingers":
-        "pulutan",
-
-      "calamari":
-        "pulutan",
-
-      "tokwat-baboy":
-        "pulutan",
-
-      "pork-sisig":
-        "pulutan",
-
-      "nachos":
-        "pulutan",
-
-      "buffalo-wings":
-        "pulutan",
-
-
-      "kiddie-spaghetti":
-        "pasta",
-
-      "creamy-carbonara":
-        "pasta",
-
-      "classic-spaghetti-marinara":
-        "pasta",
-
-
-      "ham-egg-sandwich":
-        "sandwich",
-
-      "clubhouse-sandwich":
-        "sandwich",
-
-
-      "white-rice":
-        "rice",
-
-      "garlic-rice":
-        "rice",
-
-      "white-rice-platter":
-        "rice",
-
-      "garlic-rice-platter":
-        "rice",
-
-
-      "sm-pale-pilsen":
-        "beers",
-
-      "san-mig-light":
-        "beers",
-
-      "san-mig-apple":
-        "beers",
-
-      "red-horse-stallion":
-        "beers",
-
-      "beer-bucket":
-        "beers",
-
-
-      "jameson-45ml":
-        "whiskey",
-
-      "jameson-1l":
-        "whiskey",
-
-      "black-label-45ml":
-        "whiskey",
-
-      "black-label-1l":
-        "whiskey",
-
-      "jack-daniels-45ml":
-        "whiskey",
-
-      "jack-daniels-1l":
-        "whiskey",
-
-
-      "jose-cuervo-45ml":
-        "tequila",
-
-      "jose-cuervo-1l":
-        "tequila",
-
-
-      "jinro-grapefruit":
-        "soju",
-
-      "jinro-green-grape":
-        "soju",
-
-      "jinro-strawberry":
-        "soju",
-
-
-      "coke-320ml":
-        "soda",
-
-      "coke-zero-320ml":
-        "soda",
-
-      "royal-320ml":
-        "soda",
-
-      "sprite-320ml":
-        "soda",
-
-      "coke-1-5l":
-        "soda",
-
-      "sprite-1-5l":
-        "soda",
-
-
-      "bottled-water":
-        "others",
-
-      "pitcher-iced-tea":
-        "others"
-
-    };
-
-
-    /*
-     * Add category information to
-     * every stock item.
-     */
-
-    data.forEach(function(item) {
-
-      item.menuCategory =
-        productCategory[
-          item.product_id
-        ] ||
-        "others";
-
-    });
-
-
-    /*
-     * Group products by stock_group.
-     *
-     * This keeps shared Chicken Wings
-     * working correctly.
-     */
-
-    const groups = {};
-
-
-    data.forEach(function(item) {
-
-      const group =
-        item.stock_group ||
-        item.product_id ||
-        item.product_name;
-
-
-      if (!groups[group]) {
-
-        groups[group] = [];
-
-      }
-
-
-      groups[group].push(item);
-
-    });
-
-
-    /*
-     * Convert grouped stocks into an
-     * array and sort by menu category.
-     */
-
-    const sortedGroups =
-      Object.keys(groups)
-        .map(function(group) {
-
-          return {
-            group: group,
-            items: groups[group]
-          };
-
-        })
-        .sort(function(a, b) {
-
-          const categoryA =
-            productCategory[
-              a.items[0].product_id
-            ] ||
-            "others";
-
-
-          const categoryB =
-            productCategory[
-              b.items[0].product_id
-            ] ||
-            "others";
-
-
-          const orderA =
-            categoryOrder[
-              categoryA
-            ] || 99;
-
-
-          const orderB =
-            categoryOrder[
-              categoryB
-            ] || 99;
-
-
-          if (orderA !== orderB) {
-
-            return orderA - orderB;
-
-          }
-
-
-          /*
-           * Within the same category,
-           * keep the original menu order.
-           */
-
-          return (
-            a.items[0].id -
-            b.items[0].id
-          );
-
-        });
-
-
-   stockContainer.innerHTML = "";
-
-
 /*
- * CATEGORY HEADINGS
- *
- * Display stocks with clear
- * menu category sections.
- */
-
-let currentCategory = "";
-
-
-sortedGroups.forEach(
-  function(groupData) {
-
-    const category =
-      productCategory[
-        groupData.items[0].product_id
-      ] ||
-      "others";
-
-
-    /*
-     * Add category heading
-     * whenever the category changes.
+     * RENDER STOCK CARDS
+     *
+     * Category headings are removed
+     * from the product grid.
+     *
+     * Category filtering will be connected
+     * separately using the category buttons.
      */
 
-    if (
-      category !==
-      currentCategory
-    ) {
+    stockContainer.innerHTML = "";
 
-      currentCategory =
-        category;
+    sortedGroups.forEach(function(groupData) {
 
-
-      const categoryHeading =
-        document.createElement(
-          "div"
-        );
-
-
-      categoryHeading.className =
-        "stock-category-heading";
-
-
-      const categoryNames = {
-
-        "all-day-breakfast":
-          "🍳 ALL-DAY BREAKFAST",
-
-        "a-la-carte":
-          "🍽️ A LA CARTE",
-
-        "pulutan":
-          "🍻 PULUTAN",
-
-        "pasta":
-          "🍝 PASTA",
-
-        "sandwich":
-          "🥪 SANDWICH",
-
-        "rice":
-          "🍚 RICE",
-
-        "beers":
-          "🍺 BEERS",
-
-        "whiskey":
-          "🥃 WHISKEY",
-
-        "tequila":
-          "🥃 TEQUILA",
-
-        "soju":
-          "🍶 SOJU",
-
-        "soda":
-          "🥤 SODA",
-
-        "others":
-          "🧃 OTHERS"
-
-      };
-
-
-      categoryHeading.textContent =
-        categoryNames[
-          category
-        ] ||
-        "🧃 OTHERS";
-
-
-      stockContainer.appendChild(
-        categoryHeading
+      createStockCard(
+        groupData.group,
+        groupData.items
       );
 
-    }
-
-
-    createStockCard(
-      groupData.group,
-      groupData.items
-    );
-
-  }
-);
-
-  } catch (error) {
-
-    console.error(error);
-
-
-    stockContainer.innerHTML =
-      '<div class="loading">Unable to load product stocks.</div>';
-
-
-    showError(
-      error.message
-    );
-
-  }
-
-}
+    });
  /* =========================
    CREATE STOCK CARD
 ========================= */
