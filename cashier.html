@@ -7064,8 +7064,8 @@ function createStockCard(stockGroup, items) {
         <div class="stock-focus-image">
           ${
             imagePath
-              ? <img src="${escapeHtml(imagePath)}" alt="${escapeHtml(name)}">
-              : <div class="stock-focus-placeholder">🍽️</div>
+              ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(name)}">`
+              : `<div class="stock-focus-placeholder">🍽️</div>`
           }
         </div>
 
