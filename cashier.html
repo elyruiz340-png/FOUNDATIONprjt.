@@ -6357,14 +6357,11 @@ async function loadStocks() {
     showError(error.message);
   }
 }
- /* =========================
+/* =========================
    CREATE STOCK CARD
 ========================= */
 
-function createStockCard(
-  stockGroup,
-  items
-) {
+function createStockCard(stockGroup, items) {
   const card = document.createElement("div");
 
   card.className = "stock-card";
@@ -6477,7 +6474,8 @@ function createStockCard(
     </div>
   `;
 
-  
+  stockContainer.appendChild(card);
+}
 /* =========================
    STOCK CATEGORY FILTER
 ========================= */
