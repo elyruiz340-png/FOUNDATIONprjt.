@@ -6617,7 +6617,7 @@ function createStockCard(stockGroup, items) {
   const imageFile = imageMap[normalizedName];
 
   const imagePath = imageFile
-    ? images/${imageFile}
+    ? `images/${imageFile}`
     : "";
 
   let sharedText = "";
