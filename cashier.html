@@ -3836,133 +3836,196 @@ body.pos-other-view .page-section {
 }
  /* =========================================
    STOCKS CATEGORY NAVIGATION — MODERN CARDS
-   HALINA BISTRO CAFE · WARM BEIGE THEME
+   HALINA BISTRO CAFE · REFINED BEIGE THEME
 ========================================= */
+
 #stockCategoryNav.stock-category-nav {
   position: relative;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
+  gap: 9px;
+
   width: 100%;
   margin: 0 0 16px;
-  padding: 0;
+  padding: 2px;
+
   overflow: visible;
   align-items: stretch;
 }
+
+/* Smooth selected-category highlight */
 #stockCategoryNav .stock-category-highlight {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 2px;
+  left: 2px;
   z-index: 1;
+
   pointer-events: none;
+  box-sizing: border-box;
+
   border: 1px solid #C5D5C1;
   border-radius: 10px;
-  background: #DCE8D9;
-  box-shadow: 0 3px 8px rgba(64, 91, 69, 0.10);
+
+  background: #E4EDE0;
+  box-shadow:
+    0 3px 9px rgba(64, 91, 69, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+
   transition:
     transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
     width 0.28s ease,
     height 0.28s ease;
 }
+
 #stockCategoryNav .stock-category-highlight.animate {
   transition:
     transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
     width 0.28s ease,
     height 0.28s ease;
 }
+
+/* Category card */
 #stockCategoryNav .stock-category-btn {
   position: relative;
   z-index: 2;
+
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 9px;
+
+  box-sizing: border-box;
   min-width: 0;
   width: 100%;
   height: 48px;
   min-height: 48px;
-  padding: 6px 11px;
-  border: 1px solid #D9D1C2;
+
+  padding: 6px 10px;
+
+  border: 1px solid #E2DACC;
   border-radius: 10px;
+
   background: #FFFCF6;
-  color: #34372F;
+  color: #42483F;
+
   font-family: inherit;
   font-size: 13px;
   font-weight: 650;
   line-height: 1.2;
   text-align: left;
+
   cursor: pointer;
+
   box-shadow:
-    0 2px 5px rgba(52, 55, 47, 0.06),
-    0 1px 2px rgba(52, 55, 47, 0.04);
+    0 2px 5px rgba(52, 55, 47, 0.045),
+    0 1px 2px rgba(52, 55, 47, 0.035);
+
   transition:
     color 0.2s ease,
     border-color 0.2s ease,
+    background 0.2s ease,
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
+
+/* Consistent icon container */
 #stockCategoryNav .stock-category-btn > span:first-child {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
-  border-radius: 50%;
-  background: #E8F0E7;
+
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+
+  border-radius: 8px;
+  background: #F0F2E9;
+
   font-size: 18px;
   line-height: 1;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
+
+/* Category label */
 #stockCategoryNav .stock-category-btn > span:nth-child(2) {
   display: block;
+  flex: 1 1 auto;
   min-width: 0;
+
   overflow-wrap: anywhere;
 }
+
+/* Gentle hover */
 #stockCategoryNav .stock-category-btn:hover {
-  border-color: #B9CBB8;
+  border-color: #C4D1BE;
+  background: #FAFBF5;
+
   box-shadow:
-    0 4px 9px rgba(64, 91, 69, 0.10),
-    0 2px 3px rgba(52, 55, 47, 0.05);
+    0 4px 10px rgba(64, 91, 69, 0.09),
+    0 2px 3px rgba(52, 55, 47, 0.04);
+
   transform: translateY(-1px);
 }
+
+#stockCategoryNav .stock-category-btn:hover > span:first-child {
+  background: #E5EDE0;
+}
+
+/* Active card: highlight is provided by the moving highlight element */
 #stockCategoryNav .stock-category-btn.active {
   border-color: transparent;
   background: transparent;
   color: #344B38;
+
   box-shadow: none;
   transform: none;
 }
+
 #stockCategoryNav .stock-category-btn.active > span:first-child {
   background: rgba(64, 91, 69, 0.10);
 }
+
+/* Keyboard accessibility */
 #stockCategoryNav .stock-category-btn:focus-visible {
   outline: 3px solid rgba(64, 91, 69, 0.25);
   outline-offset: 2px;
 }
+
+/* Medium screens */
 @media (max-width: 1100px) {
   #stockCategoryNav.stock-category-nav {
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 7px;
+    gap: 8px;
   }
 }
+
+/* Small screens */
 @media (max-width: 700px) {
   #stockCategoryNav.stock-category-nav {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 7px;
+    padding: 2px;
   }
+
   #stockCategoryNav .stock-category-btn {
     gap: 6px;
-    padding: 5px 8px;
+    padding: 5px 7px;
     font-size: 12px;
   }
+
   #stockCategoryNav .stock-category-btn > span:first-child {
-    width: 22px;
-    height: 22px;
-    flex-basis: 22px;
+    width: 23px;
+    height: 23px;
+    flex-basis: 23px;
     font-size: 16px;
   }
 }
+
+/* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   #stockCategoryNav .stock-category-btn,
   #stockCategoryNav .stock-category-highlight {
