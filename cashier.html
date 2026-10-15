@@ -3969,6 +3969,69 @@ body.pos-other-view .page-section {
     transition: none !important;
   }
 }
+  /* =========================
+   STOCKS — INTERNAL SCROLL
+   & SLIM SCROLLBAR
+========================= */
+
+#stocksSection.active {
+  display: flex;
+  flex-direction: column;
+
+  height: calc(100vh - 150px);
+  min-height: 0;
+
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Keep the category navigation above the scrolling items */
+#stockCategoryNav {
+  flex: 0 0 auto;
+}
+
+/* Only the stock items scroll */
+#stockContainer {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scrollbar-width: thin;
+  scrollbar-color: #c9cfc5 transparent;
+
+  padding: 2px 8px 12px 2px;
+  overscroll-behavior: contain;
+}
+
+/* Slim scrollbar for Chrome, Edge and Safari */
+#stockContainer::-webkit-scrollbar {
+  width: 5px;
+}
+
+#stockContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#stockContainer::-webkit-scrollbar-thumb {
+  background: #c9cfc5;
+  border-radius: 10px;
+}
+
+#stockContainer::-webkit-scrollbar-thumb:hover {
+  background: #9eaa9b;
+}
+
+/* Keep scrolling smooth on mobile */
+@media (max-width: 600px) {
+  #stocksSection.active {
+    height: calc(100dvh - 130px);
+  }
+
+  #stockContainer {
+    -webkit-overflow-scrolling: touch;
+  }
+}
 </style>
 </head>
 <body>
