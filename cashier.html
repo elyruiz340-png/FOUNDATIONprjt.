@@ -6690,698 +6690,546 @@ function createStockCard(stockGroup, items) {
   stockContainer.appendChild(card);
 }
  /* =========================================
-   STOCK EDIT / FOCUS / SAVE WORKFLOW
-   HALINA BISTRO CAFE
+  STOCK EDIT / FOCUS / SAVE WORKFLOW
+  HALINA BISTRO CAFE
 ========================================= */
-
 (function initStockEditWorkflow() {
-  const editSaveBtn = document.getElementById("stockEditSaveBtn");
-  const container = document.getElementById("stockContainer");
-
-  if (!editSaveBtn || !container) return;
-  if (editSaveBtn.dataset.workflowInitialized === "true") return;
-
-  editSaveBtn.dataset.workflowInitialized = "true";
-
-  let editMode = false;
-  let focusedCard = null;
-  let stagedStocks = new Map();
-  let originalValues = new Map();
-  let saving = false;
-
-  const originalButtonHTML = editSaveBtn.innerHTML;
-
-  const style = document.createElement("style");
-  style.id = "stockEditWorkflowStyles";
-
-  style.textContent = `
-    .stock-card.stock-edit-mode {
-      cursor: pointer;
-      transition: transform .25s ease, box-shadow .25s ease;
-    }
-
-    .stock-card.stock-edit-mode:hover {
-      transform: translateY(-2px);
-    }
-
-    .stock-focus-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 9998;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background: rgba(42, 39, 33, .22);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      opacity: 0;
-      transition: opacity .28s ease;
-    }
-
-    .stock-focus-backdrop.is-visible {
-      opacity: 1;
-    }
-
-    .stock-focus-panel {
-      width: min(360px, 100%);
-      aspect-ratio: 1 / 1;
-      max-height: calc(100dvh - 32px);
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      box-sizing: border-box;
-      border: 1px solid #e5ddcf;
-      border-radius: 22px;
-      background: #fffdf8;
-      box-shadow: 0 20px 60px rgba(40, 35, 25, .22);
-      transform: translateY(24px) scale(.92);
-      transition: transform .32s cubic-bezier(.22, 1, .36, 1);
-    }
-
-    .stock-focus-backdrop.is-visible .stock-focus-panel {
-      transform: translateY(0) scale(1);
-    }
-
-    .stock-focus-image {
-      width: 112px;
-      height: 112px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      border-radius: 16px;
-      background: #f3eee5;
-    }
-
-    .stock-focus-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .stock-focus-placeholder {
-      font-size: 44px;
-    }
-
-    .stock-focus-title {
-      width: 100%;
-      margin: 0;
-      color: #34372f;
-      font-size: 20px;
-      line-height: 1.25;
-      text-align: center;
-      overflow-wrap: anywhere;
-    }
-
-    .stock-focus-remaining {
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 8px;
-      color: #687568;
-      font-size: 14px;
-    }
-
-    .stock-focus-remaining strong {
-      color: #294a34;
-      font-size: 30px;
-      line-height: 1;
-    }
-
-    .stock-focus-adjustment {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 18px;
-      margin: 2px 0;
-    }
-
-    .stock-focus-step {
-      width: 48px;
-      height: 48px;
-      flex-shrink: 0;
-      border: 1px solid #d7dfd2;
-      border-radius: 14px;
-      background: #edf3e9;
-      color: #294a34;
-      font-size: 28px;
-      line-height: 1;
-      cursor: pointer;
-      transition: transform .15s ease, background .15s ease;
-    }
-
-    .stock-focus-step:hover {
-      background: #dce9d5;
-    }
-
-    .stock-focus-step:active {
-      transform: scale(.94);
-    }
-
-    .stock-focus-delta {
-      width: 82px;
-      min-height: 46px;
-      box-sizing: border-box;
-      padding: 8px;
-      border: 1px solid #d9d3c6;
-      border-radius: 12px;
-      background: #fff;
-      color: #34372f;
-      font-size: 23px;
-      font-weight: 700;
-      text-align: center;
-      outline: none;
-    }
-
-    .stock-focus-delta:focus {
-      border-color: #91aa86;
-      box-shadow: 0 0 0 3px rgba(145, 170, 134, .18);
-    }
-
-    .stock-focus-actions {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 2px;
-    }
-
-    .stock-focus-back-btn,
-    .stock-focus-submit-btn {
-      min-height: 42px;
-      border-radius: 11px;
-      padding: 10px 16px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .stock-focus-back-btn {
-      border: 1px solid #ded8cc;
-      background: #f6f2e9;
-      color: #45463e;
-    }
-
-    .stock-focus-submit-btn {
-      border: 1px solid #294a34;
-      background: #294a34;
-      color: white;
-    }
-
-    .stock-focus-submit-btn:hover {
-      background: #203c29;
-    }
-
-    .stock-staged {
-      outline: 2px solid #a6bb99;
-      outline-offset: 2px;
-    }
-
-    #stockEditSaveBtn:disabled {
-      opacity: .65;
-      cursor: wait;
-    }
-
-    body.stock-focus-active {
-      overflow: hidden;
-    }
-
-    @media (max-width: 420px) {
-      .stock-focus-panel {
-        width: min(340px, 100%);
-        padding: 16px;
-        gap: 10px;
-      }
-
-      .stock-focus-image {
-        width: 96px;
-        height: 96px;
-      }
-
-      .stock-focus-title {
-        font-size: 18px;
-      }
-    }
-
-    @media (max-height: 540px) {
-      .stock-focus-panel {
-        aspect-ratio: auto;
-        min-height: 0;
-        gap: 8px;
-        padding: 12px;
-      }
-
-      .stock-focus-image {
-        width: 70px;
-        height: 70px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .stock-focus-backdrop,
-      .stock-focus-panel,
-      .stock-focus-step {
-        transition: none;
-      }
-    }
-  `;
-
-  if (!document.getElementById(style.id)) {
-    document.head.appendChild(style);
-  }
-
-  function getCardValue(card) {
-    if (stagedStocks.has(card)) {
-      return stagedStocks.get(card);
-    }
-
-    const strong = card.querySelector(".stock-remaining strong");
-    return strong ? Number(strong.textContent) || 0 : 0;
-  }
-
-  function updateCardPreview(card, value) {
-    const remaining = card.querySelector(".stock-remaining");
-    const status = card.querySelector(".stock-status");
-
-    if (remaining) {
-      remaining.innerHTML = "Remaining: <strong>" + value + "</strong>";
-    }
-
-    if (status) {
-      status.className = value > 0
-        ? "stock-status stock-available"
-        : "stock-status stock-unavailable";
-
-      status.textContent = value > 0
-        ? "🟢 AVAILABLE"
-        : "🔴 UNAVAILABLE";
-    }
-
-    card.classList.toggle("stock-staged", stagedStocks.has(card));
-  }
-
-  function setEditMode(enabled) {
-    editMode = enabled;
-
-    container.querySelectorAll(".stock-card").forEach(function(card) {
-      card.classList.toggle("stock-edit-mode", enabled);
-      card.setAttribute("aria-disabled", enabled ? "false" : "true");
-    });
-
-    const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
-    const label = editSaveBtn.querySelector(".stock-edit-save-label");
-
-    if (icon) icon.textContent = enabled ? "💾" : "✏️";
-    if (label) label.textContent = enabled ? "Save" : "Edit";
-
-    editSaveBtn.setAttribute("aria-pressed", String(enabled));
-  }
-
-  function rememberOriginalValues() {
-    originalValues.clear();
-
-    container.querySelectorAll(".stock-card").forEach(function(card) {
-      const strong = card.querySelector(".stock-remaining strong");
-
-      originalValues.set(
-        card,
-        strong ? Number(strong.textContent) || 0 : 0
-      );
-    });
-  }
-
-  function closeFocusMode() {
-    if (!focusedCard) return;
-
-    const backdrop = document.querySelector(".stock-focus-backdrop");
-
-    if (backdrop) {
-      backdrop.classList.remove("is-visible");
-      document.body.classList.remove("stock-focus-active");
-
-      window.setTimeout(function() {
-        backdrop.remove();
-      }, 300);
-    } else {
-      document.body.classList.remove("stock-focus-active");
-    }
-
-    focusedCard = null;
-  }
-
-  function openFocusMode(card) {
-    if (!editMode || focusedCard || saving) return;
-
-    focusedCard = card;
-
-    const nameElement = card.querySelector(".stock-name");
-    const name = nameElement
-      ? nameElement.textContent.trim()
-      : "Stock item";
-
-    const currentValue = getCardValue(card);
-    const imageElement = card.querySelector(".stock-item-image");
-    const imagePath = imageElement ? imageElement.getAttribute("src") : "";
-
-    const backdrop = document.createElement("div");
-    backdrop.className = "stock-focus-backdrop";
-
-    backdrop.innerHTML = `
-      <div
-        class="stock-focus-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Adjust stock"
-      >
-        <div class="stock-focus-image">
-          ${
-            imagePath
-              ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(name)}">`
-              : `<div class="stock-focus-placeholder">🍽️</div>`
-          }
-        </div>
-
-        <h3 class="stock-focus-title">${escapeHtml(name)}</h3>
-
-        <div class="stock-focus-remaining">
-          <span>Remaining</span>
-          <strong id="stockFocusRemaining">${currentValue}</strong>
-        </div>
-
-        <div class="stock-focus-adjustment">
-          <button
-            type="button"
-            class="stock-focus-step"
-            id="stockFocusMinus"
-            aria-label="Subtract stock"
-          >−</button>
-
-          <input
-            type="number"
-            class="stock-focus-delta"
-            id="stockFocusDelta"
-            min="0"
-            step="1"
-            inputmode="numeric"
-            value="0"
-            aria-label="Quantity to add or subtract"
-          >
-
-          <button
-            type="button"
-            class="stock-focus-step"
-            id="stockFocusPlus"
-            aria-label="Add stock"
-          >+</button>
-        </div>
-
-        <div class="stock-focus-actions">
-          <button
-            type="button"
-            class="stock-focus-back-btn"
-            id="stockFocusBackBtn"
-          >← Back</button>
-
-          <button
-            type="button"
-            class="stock-focus-submit-btn"
-            id="stockFocusSubmitBtn"
-          >Submit</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(backdrop);
-    document.body.classList.add("stock-focus-active");
-
-    const deltaInput = backdrop.querySelector("#stockFocusDelta");
-    const remainingDisplay = backdrop.querySelector("#stockFocusRemaining");
-    const minusBtn = backdrop.querySelector("#stockFocusMinus");
-    const plusBtn = backdrop.querySelector("#stockFocusPlus");
-    const backBtn = backdrop.querySelector("#stockFocusBackBtn");
-    const submitBtn = backdrop.querySelector("#stockFocusSubmitBtn");
-
-    let delta = 0;
-
-    function setDelta(nextValue) {
-      const value = Number(nextValue);
-
-      if (!Number.isInteger(value) || value < 0) return;
-
-      delta = value;
-      deltaInput.value = String(delta);
-    }
-
-    function getPreviewQuantity() {
-      const baseValue = getCardValue(card);
-      const direction = deltaInput.dataset.direction || "add";
-
-      return direction === "subtract"
-        ? baseValue - delta
-        : baseValue + delta;
-    }
-
-    function updateDeltaDirection(direction) {
-      deltaInput.dataset.direction = direction;
-
-      const quantity = getPreviewQuantity();
-
-      remainingDisplay.textContent = String(
-        Math.max(0, quantity)
-      );
-    }
-
-    plusBtn.addEventListener("click", function() {
-      setDelta(delta + 1);
-      updateDeltaDirection("add");
-    });
-
-    minusBtn.addEventListener("click", function() {
-      setDelta(delta + 1);
-      updateDeltaDirection("subtract");
-    });
-
-    deltaInput.addEventListener("input", function() {
-      const raw = deltaInput.value.trim();
-
-      if (raw === "") {
-        delta = 0;
-        return;
-      }
-
-      const value = Number(raw);
-
-      if (Number.isInteger(value) && value >= 0) {
-        delta = value;
-        updateDeltaDirection(
-          deltaInput.dataset.direction || "add"
-        );
-      }
-    });
-
-    deltaInput.addEventListener("focus", function() {
-      if (!deltaInput.dataset.direction) {
-        deltaInput.dataset.direction = "add";
-      }
-    });
-
-    function returnToInventory() {
-      // Back closes the editor without applying an unsubmitted delta.
-      // Any adjustment submitted earlier remains staged.
-      closeFocusMode();
-    }
-
-    function submitAdjustment() {
-      const raw = deltaInput.value.trim();
-      const amount = Number(raw);
-
-      if (
-        raw === "" ||
-        !Number.isInteger(amount) ||
-        amount < 0
-      ) {
-        deltaInput.setCustomValidity(
-          "Enter a whole number equal to or greater than zero."
-        );
-        deltaInput.reportValidity();
-        deltaInput.focus();
-        return;
-      }
-
-      deltaInput.setCustomValidity("");
-
-      const baseValue = getCardValue(card);
-      const direction = deltaInput.dataset.direction || "add";
-      const nextValue = direction === "subtract"
-        ? baseValue - amount
-        : baseValue + amount;
-
-      if (nextValue < 0) {
-        showError("Remaining stock cannot be less than zero.");
-        return;
-      }
-
-      const originalValue = originalValues.has(card)
-        ? originalValues.get(card)
-        : baseValue;
-
-      if (nextValue === originalValue) {
-        stagedStocks.delete(card);
-      } else {
-        stagedStocks.set(card, nextValue);
-      }
-
-      updateCardPreview(card, nextValue);
-      closeFocusMode();
-      showSuccess("Pending stock adjustment updated. Press Save to send it to Supabase.");
-    }
-
-    backBtn.addEventListener("click", returnToInventory);
-    submitBtn.addEventListener("click", submitAdjustment);
-
-    backdrop.addEventListener("click", function(event) {
-      if (event.target === backdrop) {
-        returnToInventory();
-      }
-    });
-
-    document.addEventListener("keydown", handleEscape);
-
-    function handleEscape(event) {
-      if (event.key === "Escape" && focusedCard === card) {
-        event.preventDefault();
-        returnToInventory();
-        document.removeEventListener("keydown", handleEscape);
-      }
-    }
-
-    requestAnimationFrame(function() {
-      backdrop.classList.add("is-visible");
-    });
-  }
-
-  async function saveAllChanges() {
-    if (saving || focusedCard) return;
-
-    if (stagedStocks.size === 0) {
-      setEditMode(false);
-      showSuccess("No stock changes to save.");
-      return;
-    }
-
-    saving = true;
-    editSaveBtn.disabled = true;
-
-    const label = editSaveBtn.querySelector(".stock-edit-save-label");
-    if (label) label.textContent = "Saving...";
-
-    try {
-      for (const [card, value] of stagedStocks.entries()) {
-        const items = card._stockItems;
-
-        if (!Array.isArray(items) || items.length === 0) {
-          throw new Error("Stock data is missing for one of the edited cards.");
-        }
-
-        for (const item of items) {
-          const response = await fetch(
-            STOCK_ENDPOINT + "?id=eq." + encodeURIComponent(item.id),
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                "apikey": SUPABASE_KEY,
-                "Authorization": "Bearer " + SUPABASE_KEY,
-                "Prefer": "return=representation"
-              },
-              body: JSON.stringify({
-                stock_remaining: value
-              })
-            }
-          );
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(
-              data.message ||
-              data.error ||
-              data.hint ||
-              "Unable to save stock."
-            );
-          }
-
-          if (!Array.isArray(data) || data.length === 0) {
-            throw new Error(
-              "Stock was not updated. Please check the Supabase UPDATE policy."
-            );
-          }
-        }
-      }
-
-      stagedStocks.forEach(function(value, card) {
-        updateCardPreview(card, value);
-      });
-
-      stagedStocks.clear();
-      rememberOriginalValues();
-      setEditMode(false);
-      showSuccess("Stock changes saved successfully.");
-
-    } catch (error) {
-      console.error("Stock Save Error:", error);
-
-      showError(
-        error.message || "Unable to save stock changes."
-      );
-
-    } finally {
-      saving = false;
-      editSaveBtn.disabled = false;
-
-      const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
-      const buttonLabel = editSaveBtn.querySelector(".stock-edit-save-label");
-
-      if (editMode) {
-        if (icon) icon.textContent = "💾";
-        if (buttonLabel) buttonLabel.textContent = "Save";
-      } else {
-        editSaveBtn.innerHTML = originalButtonHTML;
-      }
-    }
-  }
-
-  editSaveBtn.addEventListener("click", function() {
-    if (saving) return;
-
-    if (!editMode) {
-      rememberOriginalValues();
-      stagedStocks.clear();
-      setEditMode(true);
-      return;
-    }
-
-    saveAllChanges();
-  });
-
-  container.addEventListener("click", function(event) {
-    const card = event.target.closest(".stock-card");
-
-    if (!card || !container.contains(card)) return;
-    if (!editMode || focusedCard) return;
-
-    openFocusMode(card);
-  });
-
-  setEditMode(false);
+ const editSaveBtn = document.getElementById("stockEditSaveBtn");
+ const container = document.getElementById("stockContainer");
+ if (!editSaveBtn || !container) return;
+ if (editSaveBtn.dataset.workflowInitialized === "true") return;
+ editSaveBtn.dataset.workflowInitialized = "true";
+ let editMode = false;
+ let focusedCard = null;
+ let stagedStocks = new Map();
+ let originalValues = new Map();
+ let saving = false;
+ let focusEscapeHandler = null;
+ const originalButtonHTML = editSaveBtn.innerHTML;
+ const style = document.createElement("style");
+style.id = "stockEditWorkflowStyles";
+ style.textContent = `
+   .stock-card.stock-edit-mode {
+     cursor: pointer;
+     transition: transform .25s ease, box-shadow .25s ease;
+   }
+   .stock-card.stock-edit-mode:hover {
+     transform: translateY(-2px);
+   }
+   .stock-focus-backdrop {
+     position: fixed;
+     inset: 0;
+     z-index: 9998;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     padding: 16px;
+     background: rgba(42, 39, 33, .22);
+     backdrop-filter: blur(5px);
+     -webkit-backdrop-filter: blur(5px);
+     opacity: 0;
+     transition: opacity .28s ease;
+   }
+   .stock-focus-backdrop.is-visible {
+     opacity: 1;
+   }
+   .stock-focus-panel {
+     width: min(360px, 100%);
+     aspect-ratio: 1 / 1;
+     max-height: calc(100dvh - 32px);
+     overflow-y: auto;
+     padding: 20px;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     gap: 12px;
+     box-sizing: border-box;
+     border: 1px solid #e5ddcf;
+     border-radius: 22px;
+     background: #fffdf8;
+     box-shadow: 0 20px 60px rgba(40, 35, 25, .22);
+     transform: translateY(24px) scale(.92);
+     transition: transform .32s cubic-bezier(.22, 1, .36, 1);
+   }
+   .stock-focus-backdrop.is-visible .stock-focus-panel {
+     transform: translateY(0) scale(1);
+   }
+   .stock-focus-image {
+     width: 112px;
+     height: 112px;
+     flex-shrink: 0;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     overflow: hidden;
+     border-radius: 16px;
+     background: #f3eee5;
+   }
+   .stock-focus-image img {
+     width: 100%;
+     height: 100%;
+     object-fit: cover;
+   }
+   .stock-focus-placeholder {
+     font-size: 44px;
+   }
+   .stock-focus-title {
+     width: 100%;
+     margin: 0;
+     color: #34372f;
+     font-size: 20px;
+     line-height: 1.25;
+     text-align: center;
+     overflow-wrap: anywhere;
+   }
+   .stock-focus-remaining {
+     display: flex;
+     align-items: baseline;
+     justify-content: center;
+     gap: 8px;
+     color: #687568;
+     font-size: 14px;
+   }
+   .stock-focus-remaining strong {
+     color: #294a34;
+     font-size: 30px;
+     line-height: 1;
+   }
+   .stock-focus-adjustment {
+     width: 100%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 18px;
+     margin: 2px 0;
+   }
+   .stock-focus-step {
+     width: 48px;
+     height: 48px;
+     flex-shrink: 0;
+     border: 1px solid #d7dfd2;
+     border-radius: 14px;
+     background: #edf3e9;
+     color: #294a34;
+     font-size: 28px;
+     line-height: 1;
+     cursor: pointer;
+     transition: transform .15s ease, background .15s ease;
+   }
+   .stock-focus-step:hover {
+     background: #dce9d5;
+   }
+   .stock-focus-step:active {
+     transform: scale(.94);
+   }
+   .stock-focus-delta {
+     width: 82px;
+     min-height: 46px;
+     box-sizing: border-box;
+     padding: 8px;
+     border: 1px solid #d9d3c6;
+     border-radius: 12px;
+     background: #fff;
+     color: #34372f;
+     font-size: 23px;
+     font-weight: 700;
+     text-align: center;
+     outline: none;
+   }
+   .stock-focus-delta:focus {
+     border-color: #91aa86;
+     box-shadow: 0 0 0 3px rgba(145, 170, 134, .18);
+   }
+   .stock-focus-actions {
+     width: 100%;
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     gap: 10px;
+     margin-top: 2px;
+   }
+   .stock-focus-back-btn,
+   .stock-focus-submit-btn {
+     min-height: 42px;
+     border-radius: 11px;
+     padding: 10px 16px;
+     font-size: 14px;
+     font-weight: 700;
+     cursor: pointer;
+   }
+   .stock-focus-back-btn {
+     border: 1px solid #ded8cc;
+     background: #f6f2e9;
+     color: #45463e;
+   }
+   .stock-focus-submit-btn {
+     border: 1px solid #294a34;
+     background: #294a34;
+     color: white;
+   }
+   .stock-focus-submit-btn:hover {
+     background: #203c29;
+   }
+   .stock-staged {
+     outline: 2px solid #a6bb99;
+     outline-offset: 2px;
+   }
+   #stockEditSaveBtn:disabled {
+     opacity: .65;
+     cursor: wait;
+   }
+   body.stock-focus-active {
+     overflow: hidden;
+   }
+   @media (max-width: 420px) {
+     .stock-focus-panel {
+       width: min(340px, 100%);
+       padding: 16px;
+       gap: 10px;
+     }
+     .stock-focus-image {
+       width: 96px;
+       height: 96px;
+     }
+     .stock-focus-title {
+       font-size: 18px;
+     }
+   }
+   @media (max-height: 540px) {
+     .stock-focus-panel {
+       aspect-ratio: auto;
+       min-height: 0;
+       gap: 8px;
+       padding: 12px;
+     }
+     .stock-focus-image {
+       width: 70px;
+       height: 70px;
+     }
+   }
+   @media (prefers-reduced-motion: reduce) {
+     .stock-focus-backdrop,
+     .stock-focus-panel,
+     .stock-focus-step {
+       transition: none;
+     }
+   }
+ `;
+ if (!document.getElementById(style.id)) {
+   document.head.appendChild(style);
+ }
+ function getCardValue(card) {
+   if (stagedStocks.has(card)) {
+     return stagedStocks.get(card);
+   }
+   const strong = card.querySelector(".stock-remaining strong");
+   return strong ? Number(strong.textContent) || 0 : 0;
+ }
+ function updateCardPreview(card, value) {
+   const remaining = card.querySelector(".stock-remaining");
+   const status = card.querySelector(".stock-status");
+   if (remaining) {
+     remaining.innerHTML = "Remaining: <strong>" + value + "</strong>";
+   }
+   if (status) {
+     status.className = value > 0
+       ? "stock-status stock-available"
+       : "stock-status stock-unavailable";
+     status.textContent = value > 0
+       ? "🟢 AVAILABLE"
+       : "🔴 UNAVAILABLE";
+   }
+   card.classList.toggle("stock-staged", stagedStocks.has(card));
+ }
+ function setEditMode(enabled) {
+   editMode = enabled;
+   container.querySelectorAll(".stock-card").forEach(function(card) {
+     card.classList.toggle("stock-edit-mode", enabled);
+     card.setAttribute("aria-disabled", enabled ? "false" : "true");
+   });
+   const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
+   const label = editSaveBtn.querySelector(".stock-edit-save-label");
+   if (icon) icon.textContent = enabled ? "💾" : "✏️";
+   if (label) label.textContent = enabled ? "Save" : "Edit";
+   editSaveBtn.setAttribute("aria-pressed", String(enabled));
+ }
+ function rememberOriginalValues() {
+   originalValues.clear();
+   container.querySelectorAll(".stock-card").forEach(function(card) {
+     const strong = card.querySelector(".stock-remaining strong");
+     originalValues.set(
+       card,
+       strong ? Number(strong.textContent) || 0 : 0
+     );
+   });
+ }
+ function closeFocusMode() {
+   if (!focusedCard) return;
+   const backdrop = document.querySelector(".stock-focus-backdrop");
+   if (focusEscapeHandler) {
+     document.removeEventListener("keydown", focusEscapeHandler);
+     focusEscapeHandler = null;
+   }
+   if (backdrop) {
+     backdrop.classList.remove("is-visible");
+     document.body.classList.remove("stock-focus-active");
+     window.setTimeout(function() {
+       backdrop.remove();
+     }, 300);
+   } else {
+     document.body.classList.remove("stock-focus-active");
+   }
+   focusedCard = null;
+ }
+ function openFocusMode(card) {
+   if (!editMode || focusedCard || saving) return;
+   focusedCard = card;
+   const nameElement = card.querySelector(".stock-name");
+   const name = nameElement
+     ? nameElement.textContent.trim()
+     : "Stock item";
+   // This is the current pending value, not a new adjustment.
+   const baseValue = getCardValue(card);
+   const imageElement = card.querySelector(".stock-item-image");
+   const imagePath = imageElement ? imageElement.getAttribute("src") : "";
+   const backdrop = document.createElement("div");
+   backdrop.className = "stock-focus-backdrop";
+   backdrop.innerHTML = `
+<div
+       class="stock-focus-panel"
+       role="dialog"
+       aria-modal="true"
+       aria-label="Adjust stock"
+>
+<div class="stock-focus-image">
+         ${
+           imagePath
+             ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(name)}">`
+             : `<div class="stock-focus-placeholder">🍽️</div>`
+         }
+</div>
+<h3 class="stock-focus-title">${escapeHtml(name)}</h3>
+<div class="stock-focus-remaining">
+<span>Remaining</span>
+<strong id="stockFocusRemaining">${baseValue}</strong>
+</div>
+<div class="stock-focus-adjustment">
+<button
+           type="button"
+           class="stock-focus-step"
+           id="stockFocusMinus"
+           aria-label="Subtract one"
+>−</button>
+<input
+           type="number"
+           class="stock-focus-delta"
+           id="stockFocusDelta"
+           step="1"
+           inputmode="numeric"
+           value="0"
+           aria-label="Net quantity adjustment"
+>
+<button
+           type="button"
+           class="stock-focus-step"
+           id="stockFocusPlus"
+           aria-label="Add one"
+>+</button>
+</div>
+<div class="stock-focus-actions">
+<button
+           type="button"
+           class="stock-focus-back-btn"
+           id="stockFocusBackBtn"
+>← Back</button>
+<button
+           type="button"
+           class="stock-focus-submit-btn"
+           id="stockFocusSubmitBtn"
+>Submit</button>
+</div>
+</div>
+   `;
+   document.body.appendChild(backdrop);
+   document.body.classList.add("stock-focus-active");
+   const deltaInput = backdrop.querySelector("#stockFocusDelta");
+   const minusBtn = backdrop.querySelector("#stockFocusMinus");
+   const plusBtn = backdrop.querySelector("#stockFocusPlus");
+   const backBtn = backdrop.querySelector("#stockFocusBackBtn");
+   const submitBtn = backdrop.querySelector("#stockFocusSubmitBtn");
+   // Signed adjustment: +5 followed by -1 becomes +4.
+   let delta = 0;
+   function setDelta(nextValue) {
+     if (!Number.isInteger(nextValue)) return;
+     delta = nextValue;
+     deltaInput.value = String(delta);
+     // Do not change Remaining while adjusting.
+     // Remaining changes only after Submit.
+   }
+   plusBtn.addEventListener("click", function() {
+     setDelta(delta + 1);
+   });
+   minusBtn.addEventListener("click", function() {
+     setDelta(delta - 1);
+   });
+   deltaInput.addEventListener("input", function() {
+     const raw = deltaInput.value.trim();
+     if (raw === "" || raw === "-") {
+       delta = 0;
+       return;
+     }
+     const value = Number(raw);
+     if (Number.isInteger(value)) {
+       delta = value;
+     }
+   });
+   function returnToInventory() {
+     // Discard only this editor's unsubmitted adjustment.
+     // Previously submitted pending changes remain staged.
+     closeFocusMode();
+   }
+   function submitAdjustment() {
+     const raw = deltaInput.value.trim();
+     if (raw === "" || !Number.isInteger(Number(raw))) {
+       deltaInput.setCustomValidity("Enter a whole number adjustment.");
+       deltaInput.reportValidity();
+       deltaInput.focus();
+       return;
+     }
+     deltaInput.setCustomValidity("");
+     const amount = Number(raw);
+     const nextValue = baseValue + amount;
+     if (nextValue < 0) {
+       showError("Remaining stock cannot be less than zero.");
+       return;
+     }
+     const originalValue = originalValues.has(card)
+       ? originalValues.get(card)
+       : baseValue;
+     if (nextValue === originalValue) {
+       stagedStocks.delete(card);
+     } else {
+       stagedStocks.set(card, nextValue);
+     }
+     // Update the stock card only after Submit.
+     updateCardPreview(card, nextValue);
+     closeFocusMode();
+     showSuccess(
+       "Pending stock adjustment updated. Press Save to send it to Supabase."
+     );
+   }
+   backBtn.addEventListener("click", returnToInventory);
+   submitBtn.addEventListener("click", submitAdjustment);
+   backdrop.addEventListener("click", function(event) {
+     if (event.target === backdrop) {
+       returnToInventory();
+     }
+   });
+   focusEscapeHandler = function(event) {
+     if (event.key === "Escape" && focusedCard === card) {
+       event.preventDefault();
+       returnToInventory();
+     }
+   };
+   document.addEventListener("keydown", focusEscapeHandler);
+   requestAnimationFrame(function() {
+     backdrop.classList.add("is-visible");
+   });
+ }
+ async function saveAllChanges() {
+   if (saving || focusedCard) return;
+   if (stagedStocks.size === 0) {
+     setEditMode(false);
+     showSuccess("No stock changes to save.");
+     return;
+   }
+   saving = true;
+   editSaveBtn.disabled = true;
+   const label = editSaveBtn.querySelector(".stock-edit-save-label");
+   if (label) label.textContent = "Saving...";
+   try {
+     for (const [card, value] of stagedStocks.entries()) {
+       const items = card._stockItems;
+       if (!Array.isArray(items) || items.length === 0) {
+         throw new Error(
+           "Stock data is missing for one of the edited cards."
+         );
+       }
+       for (const item of items) {
+         const response = await fetch(
+           STOCK_ENDPOINT + "?id=eq." + encodeURIComponent(item.id),
+           {
+             method: "PATCH",
+             headers: {
+               "Content-Type": "application/json",
+               "apikey": SUPABASE_KEY,
+               "Authorization": "Bearer " + SUPABASE_KEY,
+               "Prefer": "return=representation"
+             },
+             body: JSON.stringify({
+               stock_remaining: value
+             })
+           }
+         );
+         const data = await response.json();
+         if (!response.ok) {
+           throw new Error(
+             data.message ||
+             data.error ||
+             data.hint ||
+             "Unable to save stock."
+           );
+         }
+         if (!Array.isArray(data) || data.length === 0) {
+           throw new Error(
+             "Stock was not updated. Please check the Supabase UPDATE policy."
+           );
+         }
+       }
+     }
+     stagedStocks.forEach(function(value, card) {
+       updateCardPreview(card, value);
+     });
+     stagedStocks.clear();
+     rememberOriginalValues();
+     setEditMode(false);
+     showSuccess("Stock changes saved successfully.");
+   } catch (error) {
+     console.error("Stock Save Error:", error);
+     showError(
+       error.message || "Unable to save stock changes."
+     );
+   } finally {
+     saving = false;
+     editSaveBtn.disabled = false;
+     const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
+     const buttonLabel = editSaveBtn.querySelector(".stock-edit-save-label");
+     if (editMode) {
+       if (icon) icon.textContent = "💾";
+       if (buttonLabel) buttonLabel.textContent = "Save";
+     } else {
+       editSaveBtn.innerHTML = originalButtonHTML;
+     }
+   }
+ }
+ editSaveBtn.addEventListener("click", function() {
+   if (saving) return;
+   if (!editMode) {
+     rememberOriginalValues();
+     stagedStocks.clear();
+     setEditMode(true);
+     return;
+   }
+   saveAllChanges();
+ });
+ container.addEventListener("click", function(event) {
+   const card = event.target.closest(".stock-card");
+   if (!card || !container.contains(card)) return;
+   if (!editMode || focusedCard) return;
+   openFocusMode(card);
+ });
+ setEditMode(false);
 })();
 /* =========================
    STOCK CATEGORY FILTER
