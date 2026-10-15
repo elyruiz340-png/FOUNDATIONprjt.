@@ -4031,6 +4031,100 @@ body.pos-other-view .page-section {
     -webkit-overflow-scrolling: touch;
   }
 }
+  /* =========================
+   STOCKS — FOOD IMAGE LAYOUT
+========================= */
+
+.stock-card {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 14px;
+
+  height: 150px;
+  min-height: 150px;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  padding: 8px;
+  border-radius: 10px;
+
+  background: #FFFCF6;
+  border: 1px solid #E5E9E1;
+  box-shadow: 0 3px 10px rgba(35, 55, 40, 0.07);
+}
+
+.stock-image-wrap {
+  flex: 0 0 42%;
+  width: 42%;
+  height: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+  border-radius: 7px;
+  background: #F0E9DC;
+}
+
+.stock-item-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.stock-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+  font-size: 36px;
+}
+
+.stock-info {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+
+  overflow: hidden;
+}
+
+.stock-name {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+
+  overflow-wrap: anywhere;
+}
+
+.stock-remaining {
+  font-size: 13px;
+}
+
+.stock-remaining strong {
+  display: block;
+  font-size: 24px;
+  line-height: 1.1;
+  color: #344B38;
+}
+
+.stock-status {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.stock-shared {
+  font-size: 10px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
 </style>
 </head>
 <body>
@@ -6296,6 +6390,25 @@ function createStockCard(
     displayName = "Chicken Wings";
   }
 
+  /* PRODUCT IMAGE */
+  const imageMap = {
+    "bang silog": "bang-silog.jpg",
+    "bangus silog": "bang-silog.jpg",
+    "pork silog": "pork-silog.jpg",
+    "tapsilog": "tapsilog.jpg",
+    "lechon kawali silog": "lechon-kawali-silog.jpg"
+  };
+
+  const normalizedName = displayName
+    .trim()
+    .toLowerCase();
+
+  const imageFile = imageMap[normalizedName];
+
+  const imagePath = imageFile
+    ? images/${imageFile}
+    : "";
+
   let sharedText = "";
 
   if (isShared) {
@@ -6310,44 +6423,61 @@ function createStockCard(
   }
 
   card.innerHTML = `
+    <div class="stock-image-wrap">
+      ${
+        imagePath
+          ? `
+            <img
+              class="stock-item-image"
+              src="${imagePath}"
+              alt="${escapeHtml(displayName)}"
+              loading="lazy"
+              onerror="this.style.display='none';"
+            />
+          `
+          : `
+            <div class="stock-image-placeholder">
+              🍽️
+            </div>
+          `
+      }
+    </div>
+
     <div class="stock-info">
-      <div>
-        <div class="stock-name">
-          ${escapeHtml(displayName)}
-        </div>
+      <div class="stock-name">
+        ${escapeHtml(displayName)}
+      </div>
 
+      ${
+        sharedText
+          ? `
+            <div class="stock-shared">
+              ${escapeHtml(sharedText)}
+            </div>
+          `
+          : ""
+      }
+
+      <div class="stock-remaining">
+        Remaining:
+        <strong>${remaining}</strong>
+      </div>
+
+      <div class="stock-status ${
+        isAvailable
+          ? "stock-available"
+          : "stock-unavailable"
+      }">
         ${
-          sharedText
-            ? `
-              <div class="stock-shared">
-                ${escapeHtml(sharedText)}
-              </div>
-            `
-            : ""
-        }
-
-        <div class="stock-remaining">
-          Remaining:
-          <strong>${remaining}</strong>
-        </div>
-
-        <div class="stock-status ${
           isAvailable
-            ? "stock-available"
-            : "stock-unavailable"
-        }">
-          ${
-            isAvailable
-              ? "🟢 AVAILABLE"
-              : "🔴 UNAVAILABLE"
-          }
-        </div>
+            ? "🟢 AVAILABLE"
+            : "🔴 UNAVAILABLE"
+        }
       </div>
     </div>
   `;
 
-  stockContainer.appendChild(card);
-}
+  
 /* =========================
    STOCK CATEGORY FILTER
 ========================= */
