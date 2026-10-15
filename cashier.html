@@ -4229,6 +4229,123 @@ body.pos-other-view .page-section {
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
+  /* =========================================
+   STOCKS HEADER — REFINED ACTION BUTTON
+========================================= */
+
+.stocks-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.stocks-heading {
+  min-width: 0;
+}
+
+.stocks-heading h2 {
+  margin: 0;
+  color: #344B38;
+  font-size: 26px;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+}
+
+.stocks-subtitle {
+  margin: 6px 0 0;
+  color: #77796F;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.stocks-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.stock-edit-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  min-width: 112px;
+  height: 42px;
+  padding: 0 16px;
+
+  border: 1px solid #C6D5C1;
+  border-radius: 10px;
+
+  background: #E4EDE0;
+  color: #344B38;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 3px 8px rgba(52, 75, 56, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.stock-edit-save-btn:hover {
+  background: #D8E5D3;
+  border-color: #B4C8AE;
+  box-shadow: 0 5px 12px rgba(52, 75, 56, 0.12);
+  transform: translateY(-1px);
+}
+
+.stock-edit-save-btn:active {
+  transform: translateY(0);
+}
+
+.stock-edit-save-btn:focus-visible {
+  outline: 3px solid rgba(64, 91, 69, 0.25);
+  outline-offset: 3px;
+}
+
+.stock-edit-save-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.stock-edit-save-label {
+  line-height: 1;
+}
+
+@media (max-width: 600px) {
+  .stocks-top-bar {
+    gap: 10px;
+  }
+
+  .stocks-heading h2 {
+    font-size: 22px;
+  }
+
+  .stocks-subtitle {
+    font-size: 12px;
+  }
+
+  .stock-edit-save-btn {
+    min-width: 96px;
+    height: 40px;
+    padding: 0 12px;
+    gap: 7px;
+  }
+}
 </style>
 </head>
 <body>
