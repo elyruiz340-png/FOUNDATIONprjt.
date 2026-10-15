@@ -3969,31 +3969,33 @@ body.pos-other-view .page-section {
     transition: none !important;
   }
 }
-  /* =========================
+ /* =========================
    STOCKS — INTERNAL SCROLL
    & SLIM SCROLLBAR
 ========================= */
 
 #stocksSection.active {
-  display: flex;
-  flex-direction: column;
-
-  height: calc(100vh - 150px);
-  min-height: 0;
-
-  overflow: hidden;
-  box-sizing: border-box;
+  display: block;
+  height: auto;
+  max-height: none;
+  overflow: visible;
 }
 
-/* Keep the category navigation above the scrolling items */
+/* Keep categories visible above the items */
 #stockCategoryNav {
-  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #f5f0e6;
 }
 
-/* Only the stock items scroll */
+/* Scroll only the stock cards */
 #stockContainer {
-  flex: 1 1 auto;
-  min-height: 0;
+  display: grid;
+
+  max-height: calc(100vh - 310px);
+  min-height: 180px;
+
   overflow-y: auto;
   overflow-x: hidden;
 
@@ -4004,7 +4006,7 @@ body.pos-other-view .page-section {
   overscroll-behavior: contain;
 }
 
-/* Slim scrollbar for Chrome, Edge and Safari */
+/* Slim scrollbar for Chrome and Edge */
 #stockContainer::-webkit-scrollbar {
   width: 5px;
 }
@@ -4022,13 +4024,10 @@ body.pos-other-view .page-section {
   background: #9eaa9b;
 }
 
-/* Keep scrolling smooth on mobile */
 @media (max-width: 600px) {
-  #stocksSection.active {
-    height: calc(100dvh - 130px);
-  }
-
   #stockContainer {
+    max-height: calc(100dvh - 280px);
+    min-height: 180px;
     -webkit-overflow-scrolling: touch;
   }
 }
