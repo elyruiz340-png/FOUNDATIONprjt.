@@ -5973,160 +5973,129 @@ body.pos-other-view .page-section {
       "message";
   }
 /* =========================
-   POS SIDEBAR NAVIGATION
+  POS SIDEBAR NAVIGATION
 ========================= */
-
 (function() {
-  const sidebarButtons = document.querySelectorAll(".pos-sidebar-btn");
-  const sidebar = document.querySelector(".pos-sidebar");
-  const highlight = document.querySelector(".pos-sidebar-highlight");
-  const stockEditSaveBtn = document.getElementById("stockEditSaveBtn");
-
-  const reminderStyle = document.createElement("style");
-  reminderStyle.id = "stockSaveReminderStyles";
-  reminderStyle.textContent =
-    "#stockEditSaveBtn.stock-save-reminder {" +
-    "animation: stockSaveReminderPulse 1s ease-in-out infinite;" +
-    "box-shadow: 0 0 0 3px rgba(93, 139, 78, .16)," +
-    "0 0 18px rgba(93, 139, 78, .48);" +
-    "border-color: #789b6b;" +
-    "}" +
-    "@keyframes stockSaveReminderPulse {" +
-    "0%,100% { box-shadow: 0 0 0 2px rgba(93,139,78,.12)," +
-    "0 0 8px rgba(93,139,78,.25); }" +
-    "50% { box-shadow: 0 0 0 4px rgba(93,139,78,.22)," +
-    "0 0 20px rgba(93,139,78,.55); }" +
-    "}";
-
-  if (!document.getElementById(reminderStyle.id)) {
-    document.head.appendChild(reminderStyle);
-  }
-
-  function moveSidebarHighlight(button) {
-    if (!sidebar || !highlight || !button) return;
-
-    const sidebarRect = sidebar.getBoundingClientRect();
-    const buttonRect = button.getBoundingClientRect();
-
-    highlight.style.width = buttonRect.width + "px";
-    highlight.style.height = buttonRect.height + "px";
-    highlight.style.transform =
-      "translate(" +
-      (buttonRect.left - sidebarRect.left) +
-      "px, " +
-      (buttonRect.top - sidebarRect.top) +
-      "px)";
-  }
-
-  function updateSidebarHighlight() {
-    const activeButton = document.querySelector(
-      ".pos-sidebar-btn.active"
-    );
-
-    if (activeButton) {
-      moveSidebarHighlight(activeButton);
-    }
-  }
-
-  sidebarButtons.forEach(function(button) {
-    button.addEventListener("click", function(event) {
-      event.preventDefault();
-
-      const sectionId = button.getAttribute("data-pos-section");
-
-      if (!sectionId) {
-        console.error(
-          "POS sidebar button has no data-pos-section:",
-          button
-        );
-        return;
-      }
-
-      const isStockEditing =
-        stockEditSaveBtn &&
-        stockEditSaveBtn.getAttribute("aria-pressed") === "true";
-
-      if (isStockEditing && sectionId !== "stocksSection") {
-        stockEditSaveBtn.classList.add("stock-save-reminder");
-        return;
-      }
-
-      sidebarButtons.forEach(function(btn) {
-        btn.classList.remove("active");
-      });
-
-      button.classList.add("active");
-      moveSidebarHighlight(button);
-
-      document.querySelectorAll(".page-section").forEach(
-        function(section) {
-          section.style.display = "none";
-          section.classList.remove("active");
-        }
-      );
-
-      const selectedSection = document.getElementById(sectionId);
-
-      if (!selectedSection) {
-        console.error("POS section not found:", sectionId);
-        return;
-      }
-
-      const showingMenu = sectionId === "posSection";
-
-      document.body.classList.toggle(
-        "pos-other-view",
-        !showingMenu
-      );
-
-      const posSection = document.getElementById("posSection");
-
-      if (posSection) {
-        posSection.classList.toggle("active", showingMenu);
-      }
-
-      if (!showingMenu) {
-        selectedSection.style.display = "block";
-        selectedSection.classList.add("active");
-      }
-
-      if (typeof clearMessage === "function") {
-        clearMessage();
-      }
-
-      if (
-        sectionId === "tablesSection" &&
-        typeof loadTables === "function"
-      ) {
-        loadTables();
-      }
-
-      if (
-        sectionId === "stocksSection" &&
-        typeof loadStocks === "function"
-      ) {
-        loadStocks();
-      }
-
-      if (
-        sectionId === "ordersSection" &&
-        typeof loadOrders === "function"
-      ) {
-        loadOrders();
-
-        if (typeof startOrdersRefresh === "function") {
-          startOrdersRefresh();
-        }
-      }
-
-      requestAnimationFrame(updateSidebarHighlight);
-    });
-  });
-
-  window.addEventListener("resize", updateSidebarHighlight);
-  requestAnimationFrame(updateSidebarHighlight);
+ const sidebarButtons = document.querySelectorAll(".pos-sidebar-btn");
+ const sidebar = document.querySelector(".pos-sidebar");
+ const highlight = document.querySelector(".pos-sidebar-highlight");
+ const stockEditSaveBtn = document.getElementById("stockEditSaveBtn");
+ const reminderStyle = document.createElement("style");
+reminderStyle.id = "stockSaveReminderStyles";
+ reminderStyle.textContent =
+   "#stockEditSaveBtn.stock-save-reminder {" +
+   "animation: stockSaveReminderPulse 1s ease-in-out infinite;" +
+   "box-shadow: 0 0 0 3px rgba(93, 139, 78, .16)," +
+   "0 0 18px rgba(93, 139, 78, .48);" +
+   "border-color: #789b6b;" +
+   "}" +
+   "@keyframes stockSaveReminderPulse {" +
+   "0%,100% { box-shadow: 0 0 0 2px rgba(93,139,78,.12)," +
+   "0 0 8px rgba(93,139,78,.25); }" +
+   "50% { box-shadow: 0 0 0 4px rgba(93,139,78,.22)," +
+   "0 0 20px rgba(93,139,78,.55); }" +
+   "}";
+ if (!document.getElementById(reminderStyle.id)) {
+   document.head.appendChild(reminderStyle);
+ }
+ function moveSidebarHighlight(button) {
+   if (!sidebar || !highlight || !button) return;
+   const sidebarRect = sidebar.getBoundingClientRect();
+   const buttonRect = button.getBoundingClientRect();
+   highlight.style.width = buttonRect.width + "px";
+   highlight.style.height = buttonRect.height + "px";
+   highlight.style.transform =
+     "translate(" +
+     (buttonRect.left - sidebarRect.left) +
+     "px, " +
+     (buttonRect.top - sidebarRect.top) +
+     "px)";
+ }
+ function updateSidebarHighlight() {
+   const activeButton = document.querySelector(
+     ".pos-sidebar-btn.active"
+   );
+   if (activeButton) {
+     moveSidebarHighlight(activeButton);
+   }
+ }
+ sidebarButtons.forEach(function(button) {
+   button.addEventListener("click", function(event) {
+     event.preventDefault();
+     const sectionId = button.getAttribute("data-pos-section");
+     if (!sectionId) {
+       console.error(
+         "POS sidebar button has no data-pos-section:",
+         button
+       );
+       return;
+     }
+     const isStockEditing =
+       stockEditSaveBtn &&
+       stockEditSaveBtn.getAttribute("aria-pressed") === "true";
+     if (isStockEditing && sectionId !== "stocksSection") {
+       stockEditSaveBtn.classList.add("stock-save-reminder");
+       return;
+     }
+     sidebarButtons.forEach(function(btn) {
+       btn.classList.remove("active");
+     });
+     button.classList.add("active");
+     moveSidebarHighlight(button);
+     document.querySelectorAll(".page-section").forEach(
+       function(section) {
+         section.style.display = "none";
+         section.classList.remove("active");
+       }
+     );
+     const selectedSection = document.getElementById(sectionId);
+     if (!selectedSection) {
+       console.error("POS section not found:", sectionId);
+       return;
+     }
+     const showingMenu = sectionId === "posSection";
+     document.body.classList.toggle(
+       "pos-other-view",
+       !showingMenu
+     );
+     const posSection = document.getElementById("posSection");
+     if (posSection) {
+       posSection.classList.toggle("active", showingMenu);
+     }
+     if (!showingMenu) {
+       selectedSection.style.display = "block";
+       selectedSection.classList.add("active");
+     }
+     if (typeof clearMessage === "function") {
+       clearMessage();
+     }
+     if (
+       sectionId === "tablesSection" &&
+       typeof loadTables === "function"
+     ) {
+       loadTables();
+     }
+     if (
+       sectionId === "stocksSection" &&
+       typeof loadStocks === "function"
+     ) {
+       loadStocks();
+     }
+     if (
+       sectionId === "ordersSection" &&
+       typeof loadOrders === "function"
+     ) {
+       loadOrders();
+       if (typeof startOrdersRefresh === "function") {
+         startOrdersRefresh();
+       }
+     }
+     requestAnimationFrame(updateSidebarHighlight);
+   });
+ });
+ window.addEventListener("resize", updateSidebarHighlight);
+ requestAnimationFrame(updateSidebarHighlight);
 })();
-
   /* =========================
      INITIAL POSITION + RESIZE
   ========================= */
