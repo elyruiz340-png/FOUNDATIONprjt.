@@ -7137,7 +7137,7 @@ style.id = "stockEditWorkflowStyles";
      backdrop.classList.add("is-visible");
    });
  }
- async function saveAllChanges() {
+async function saveAllChanges() {
   if (saving || focusedCard) return;
 
   if (stagedStocks.size === 0) {
@@ -7223,9 +7223,12 @@ style.id = "stockEditWorkflowStyles";
       backdropFilter: "blur(7px)",
       WebkitBackdropFilter: "blur(7px)",
       color: "#294a34",
-      fontSize: "22px",
-      fontWeight: "600",
+      fontFamily: "Georgia, 'Times New Roman', serif",
+      fontSize: "30px",
+      fontWeight: "700",
+      letterSpacing: "0.5px",
       textAlign: "center",
+      textShadow: "0 1px 2px rgba(41, 74, 52, 0.12)",
       pointerEvents: "none"
     });
 
@@ -7257,23 +7260,29 @@ style.id = "stockEditWorkflowStyles";
     }
   }
 }
- editSaveBtn.addEventListener("click", function() {
-   if (saving) return;
-   if (!editMode) {
-     rememberOriginalValues();
-     stagedStocks.clear();
-     setEditMode(true);
-     return;
-   }
-   saveAllChanges();
- });
- container.addEventListener("click", function(event) {
-   const card = event.target.closest(".stock-card");
-   if (!card || !container.contains(card)) return;
-   if (!editMode || focusedCard) return;
-   openFocusMode(card);
- });
- setEditMode(false);
+
+editSaveBtn.addEventListener("click", function() {
+  if (saving) return;
+
+  if (!editMode) {
+    rememberOriginalValues();
+    stagedStocks.clear();
+    setEditMode(true);
+    return;
+  }
+
+  saveAllChanges();
+});
+
+container.addEventListener("click", function(event) {
+  const card = event.target.closest(".stock-card");
+  if (!card || !container.contains(card)) return;
+  if (!editMode || focusedCard) return;
+
+  openFocusMode(card);
+});
+
+setEditMode(false);
 })();
 /* =========================
    STOCK CATEGORY FILTER
