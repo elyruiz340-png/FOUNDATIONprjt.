@@ -5977,18 +5977,30 @@ body.pos-other-view .page-section {
 ========================= */
 
 (function() {
-  const sidebarButtons = document.querySelectorAll(
-    ".pos-sidebar-btn"
-  );
-
+  const sidebarButtons = document.querySelectorAll(".pos-sidebar-btn");
   const sidebar = document.querySelector(".pos-sidebar");
-  const highlight = document.querySelector(
-    ".pos-sidebar-highlight"
-  );
+  const highlight = document.querySelector(".pos-sidebar-highlight");
+  const stockEditSaveBtn = document.getElementById("stockEditSaveBtn");
 
-  /* =========================
-     MOVE GREEN HIGHLIGHT
-  ========================= */
+  const reminderStyle = document.createElement("style");
+  reminderStyle.id = "stockSaveReminderStyles";
+  reminderStyle.textContent =
+    "#stockEditSaveBtn.stock-save-reminder {" +
+    "animation: stockSaveReminderPulse 1s ease-in-out infinite;" +
+    "box-shadow: 0 0 0 3px rgba(93, 139, 78, .16)," +
+    "0 0 18px rgba(93, 139, 78, .48);" +
+    "border-color: #789b6b;" +
+    "}" +
+    "@keyframes stockSaveReminderPulse {" +
+    "0%,100% { box-shadow: 0 0 0 2px rgba(93,139,78,.12)," +
+    "0 0 8px rgba(93,139,78,.25); }" +
+    "50% { box-shadow: 0 0 0 4px rgba(93,139,78,.22)," +
+    "0 0 20px rgba(93,139,78,.55); }" +
+    "}";
+
+  if (!document.getElementById(reminderStyle.id)) {
+    document.head.appendChild(reminderStyle);
+  }
 
   function moveSidebarHighlight(button) {
     if (!sidebar || !highlight || !button) return;
@@ -5998,7 +6010,6 @@ body.pos-other-view .page-section {
 
     highlight.style.width = buttonRect.width + "px";
     highlight.style.height = buttonRect.height + "px";
-
     highlight.style.transform =
       "translate(" +
       (buttonRect.left - sidebarRect.left) +
@@ -6017,17 +6028,11 @@ body.pos-other-view .page-section {
     }
   }
 
-  /* =========================
-     SIDEBAR NAVIGATION
-  ========================= */
-
   sidebarButtons.forEach(function(button) {
     button.addEventListener("click", function(event) {
       event.preventDefault();
 
-      const sectionId = button.getAttribute(
-        "data-pos-section"
-      );
+      const sectionId = button.getAttribute("data-pos-section");
 
       if (!sectionId) {
         console.error(
@@ -6037,24 +6042,21 @@ body.pos-other-view .page-section {
         return;
       }
 
-      /* =========================
-         SIDEBAR ACTIVE STATE
-      ========================= */
+      const isStockEditing =
+        stockEditSaveBtn &&
+        stockEditSaveBtn.getAttribute("aria-pressed") === "true";
+
+      if (isStockEditing && sectionId !== "stocksSection") {
+        stockEditSaveBtn.classList.add("stock-save-reminder");
+        return;
+      }
 
       sidebarButtons.forEach(function(btn) {
         btn.classList.remove("active");
       });
 
       button.classList.add("active");
-
-      /* Move highlight to selected icon */
       moveSidebarHighlight(button);
-
-      /* =========================
-         HIDE THE OTHER PAGE SECTIONS
-         Keep #posSection because it
-         contains the sidebar.
-      ========================= */
 
       document.querySelectorAll(".page-section").forEach(
         function(section) {
@@ -6063,19 +6065,10 @@ body.pos-other-view .page-section {
         }
       );
 
-      /* =========================
-         SHOW SELECTED SECTION
-      ========================= */
-
-      const selectedSection = document.getElementById(
-        sectionId
-      );
+      const selectedSection = document.getElementById(sectionId);
 
       if (!selectedSection) {
-        console.error(
-          "POS section not found:",
-          sectionId
-        );
+        console.error("POS section not found:", sectionId);
         return;
       }
 
@@ -6086,9 +6079,7 @@ body.pos-other-view .page-section {
         !showingMenu
       );
 
-      const posSection = document.getElementById(
-        "posSection"
-      );
+      const posSection = document.getElementById("posSection");
 
       if (posSection) {
         posSection.classList.toggle("active", showingMenu);
@@ -6099,17 +6090,9 @@ body.pos-other-view .page-section {
         selectedSection.classList.add("active");
       }
 
-      /* =========================
-         CLEAR MESSAGE
-      ========================= */
-
       if (typeof clearMessage === "function") {
         clearMessage();
       }
-
-      /* =========================
-         LOAD SECTION DATA
-      ========================= */
 
       if (
         sectionId === "tablesSection" &&
@@ -6136,10 +6119,13 @@ body.pos-other-view .page-section {
         }
       }
 
-      /* Recalculate after the view updates */
       requestAnimationFrame(updateSidebarHighlight);
     });
   });
+
+  window.addEventListener("resize", updateSidebarHighlight);
+  requestAnimationFrame(updateSidebarHighlight);
+})();
 
   /* =========================
      INITIAL POSITION + RESIZE
@@ -6943,17 +6929,25 @@ style.id = "stockEditWorkflowStyles";
    card.classList.toggle("stock-staged", stagedStocks.has(card));
  }
  function setEditMode(enabled) {
-   editMode = enabled;
-   container.querySelectorAll(".stock-card").forEach(function(card) {
-     card.classList.toggle("stock-edit-mode", enabled);
-     card.setAttribute("aria-disabled", enabled ? "false" : "true");
-   });
-   const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
-   const label = editSaveBtn.querySelector(".stock-edit-save-label");
-   if (icon) icon.textContent = enabled ? "💾" : "✏️";
-   if (label) label.textContent = enabled ? "Save" : "Edit";
-   editSaveBtn.setAttribute("aria-pressed", String(enabled));
- }
+  editMode = enabled;
+
+  container.querySelectorAll(".stock-card").forEach(function(card) {
+    card.classList.toggle("stock-edit-mode", enabled);
+    card.setAttribute("aria-disabled", enabled ? "false" : "true");
+  });
+
+  const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
+  const label = editSaveBtn.querySelector(".stock-edit-save-label");
+
+  if (icon) icon.textContent = enabled ? "💾" : "✏️";
+  if (label) label.textContent = enabled ? "Save" : "Edit";
+
+  editSaveBtn.setAttribute("aria-pressed", String(enabled));
+
+  if (!enabled) {
+    editSaveBtn.classList.remove("stock-save-reminder");
+  }
+}
  function rememberOriginalValues() {
    originalValues.clear();
    container.querySelectorAll(".stock-card").forEach(function(card) {
