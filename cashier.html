@@ -6898,25 +6898,17 @@ style.id = "stockEditWorkflowStyles";
    card.classList.toggle("stock-staged", stagedStocks.has(card));
  }
  function setEditMode(enabled) {
-  editMode = enabled;
-
-  container.querySelectorAll(".stock-card").forEach(function(card) {
-    card.classList.toggle("stock-edit-mode", enabled);
-    card.setAttribute("aria-disabled", enabled ? "false" : "true");
-  });
-
-  const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
-  const label = editSaveBtn.querySelector(".stock-edit-save-label");
-
-  if (icon) icon.textContent = enabled ? "💾" : "✏️";
-  if (label) label.textContent = enabled ? "Save" : "Edit";
-
-  editSaveBtn.setAttribute("aria-pressed", String(enabled));
-
-  if (!enabled) {
-    editSaveBtn.classList.remove("stock-save-reminder");
-  }
-}
+   editMode = enabled;
+   container.querySelectorAll(".stock-card").forEach(function(card) {
+     card.classList.toggle("stock-edit-mode", enabled);
+     card.setAttribute("aria-disabled", enabled ? "false" : "true");
+   });
+   const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
+   const label = editSaveBtn.querySelector(".stock-edit-save-label");
+   if (icon) icon.textContent = enabled ? "💾" : "✏️";
+   if (label) label.textContent = enabled ? "Save" : "Edit";
+   editSaveBtn.setAttribute("aria-pressed", String(enabled));
+ }
  function rememberOriginalValues() {
    originalValues.clear();
    container.querySelectorAll(".stock-card").forEach(function(card) {
