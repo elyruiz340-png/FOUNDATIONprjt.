@@ -5989,15 +5989,11 @@ body.pos-other-view .page-section {
  <!-- =========================
      ORDERS SECTION
 ========================= -->
-
 <section
   id="ordersSection"
   class="page-section"
-  >
-
 
   <div class="top-bar">
-
     <h2>Incoming Orders</h2>
 
     <button
@@ -6007,25 +6003,35 @@ body.pos-other-view .page-section {
     >
       🔄 Refresh Orders
     </button>
-
   </div>
 
-  <div
-    id="ordersContainer"
-    class="orders-container"
-  >
-
-    <div class="loading">
-      Loading incoming orders...
+  <div class="orders-workspace">
+    <div
+      id="ordersContainer"
+      class="orders-container"
+    >
+      <div class="loading">
+        Loading incoming orders...
+      </div>
     </div>
 
+    <aside
+      id="orderDetailsPanel"
+      class="order-details-panel"
+      aria-live="polite"
+    >
+      <div class="order-details-empty">
+        <div class="order-details-empty-icon">🧾</div>
+        <h3>Order Details</h3>
+        <p>Select an order card to view its details here.</p>
+      </div>
+    </aside>
   </div>
 
   <div
     class="completed-orders-toggle"
     style="margin-top: 24px;"
   >
-
     <button
       type="button"
       id="completedOrdersToggle"
@@ -6033,7 +6039,6 @@ body.pos-other-view .page-section {
     >
       📋 View Completed Orders
     </button>
-
   </div>
 
   <div
@@ -6041,16 +6046,11 @@ body.pos-other-view .page-section {
     class="orders-container"
     style="display: none; margin-top: 16px;"
   >
-
     <div class="loading">
       Loading completed orders...
     </div>
-
   </div>
-
 </section>
-
-
   <!-- =========================
        SETTINGS SECTION
   ========================= -->
@@ -9087,230 +9087,434 @@ async function loadOrders() {
 ========================= */
 
 /* =========================
-   RENDER ORDERS
+  RENDER ORDERS
 ========================= */
-
 function renderOrders(
-  orders,
-  newOrderIds
+ orders,
+ newOrderIds
 ) {
-
-  const ordersContainer =
-    document.getElementById(
-      "ordersContainer"
-    );
-
-  if (!ordersContainer) {
-    return;
-  }
-
-
-  /* =========================
-     SEPARATE NEW / ACTIVE
-  ========================= */
-
-  const newOrders = [];
-
-  const activeOrders = [];
-
-
-  orders.forEach(
-    function(order) {
-
-      const status =
-        String(
-          order.status ||
-          "new"
-        ).toLowerCase();
-
-
-      if (
-        status === "new"
-      ) {
-
-        newOrders.push(
-          order
-        );
-
-      } else if (
-        status === "accepted" ||
-        status === "preparing" ||
-        status === "now serving"
-      ) {
-
-        activeOrders.push(
-          order
-        );
-
-      }
-
-    }
-  );
-
-
-  /* =========================
-     EMPTY STATE
-  ========================= */
-
-  if (
-    newOrders.length === 0 &&
-    activeOrders.length === 0
-  ) {
-
-    ordersContainer.innerHTML = `
-      <div class="loading">
-        🧾 No incoming orders yet.
-      </div>
-    `;
-
-    return;
-  }
-
-
-  ordersContainer.innerHTML = "";
-
-
-  /* =========================
-     NEW ORDERS
-  ========================= */
-
-  if (
-    newOrders.length > 0
-  ) {
-
-    const newSection =
-      document.createElement(
-        "div"
-      );
-
-    newSection.className =
-      "orders-queue-section";
-
-
-    newSection.innerHTML = `
-      <div class="orders-section-title">
-        🆕 NEW ORDERS
-      </div>
-
-      <div class="orders-section-list new-orders-list"></div>
-    `;
-
-
-    ordersContainer.appendChild(
-      newSection
-    );
-
-
-    const newList =
-      newSection.querySelector(
-        ".new-orders-list"
-      );
-
-
-    newOrders.forEach(
-      function(order) {
-
-        const card =
-          createOrderCard(
-            order,
-            newOrderIds
-          );
-
-        newList.appendChild(
-          card
-        );
-
-      }
-    );
-
-  }
-
-
-  /* =========================
-     ACTIVE ORDERS
-  ========================= */
-
-  if (
-    activeOrders.length > 0
-  ) {
-
-    const activeSection =
-      document.createElement(
-        "div"
-      );
-
-    activeSection.className =
-      "orders-queue-section active-orders-section";
-
-
-    activeSection.innerHTML = `
-      <div class="orders-section-title">
-        📦 ACTIVE ORDERS
-      </div>
-
-      <div class="orders-section-list active-orders-list"></div>
-    `;
-
-
-    ordersContainer.appendChild(
-      activeSection
-    );
-
-
-    const activeList =
-      activeSection.querySelector(
-        ".active-orders-list"
-      );
-
-
-    activeOrders.forEach(
-      function(order) {
-
-        const card =
-          createOrderCard(
-            order,
-            new Set()
-          );
-
-        activeList.appendChild(
-          card
-        );
-
-      }
-    );
-
-  }
-
-
-  /* =========================
-     ACCEPT ORDER BUTTONS
-  ========================= */
-
-  document
-    .querySelectorAll(
-      ".accept-order-btn"
-    )
-    .forEach(
-      function(button) {
-
-        button.addEventListener(
-          "click",
-          function() {
-
-            acceptOrder(
-              button.dataset.orderId,
-              button
-            );
-
-          }
-        );
-
-      }
-    );
-
+ const ordersContainer =
+   document.getElementById(
+     "ordersContainer"
+   );
+ const detailsPanel =
+   document.getElementById(
+     "orderDetailsPanel"
+   );
+ if (!ordersContainer) {
+   return;
+ }
+ const newOrders = [];
+ const activeOrders = [];
+ orders.forEach(function(order) {
+   const status = String(
+     order.status || "new"
+   ).toLowerCase();
+   if (status === "new") {
+     newOrders.push(order);
+   } else if (
+     status === "accepted" ||
+     status === "preparing" ||
+     status === "now serving"
+   ) {
+     activeOrders.push(order);
+   }
+ });
+ const visibleOrders = [
+   ...newOrders,
+   ...activeOrders
+ ];
+ if (visibleOrders.length === 0) {
+   ordersContainer.innerHTML = `
+<div class="loading">
+       🧾 No incoming orders yet.
+</div>
+   `;
+   if (detailsPanel) {
+     detailsPanel.innerHTML = `
+<div class="order-details-empty">
+<div class="order-details-empty-icon">🧾</div>
+<h3>Order Details</h3>
+<p>No incoming or active orders to display.</p>
+</div>
+     `;
+   }
+   window.selectedCashierOrderId = null;
+   return;
+ }
+ /*
+    PRESERVE SELECTED ORDER
+    DURING AUTO REFRESH
+ */
+ let selectedOrder =
+   visibleOrders.find(function(order) {
+     return String(order.id) ===
+       String(window.selectedCashierOrderId);
+   });
+ if (!selectedOrder) {
+   selectedOrder =
+     newOrders[0] || activeOrders[0];
+   window.selectedCashierOrderId =
+     String(selectedOrder.id);
+ }
+ /*
+    RENDER ORDER QUEUES
+ */
+ ordersContainer.innerHTML = "";
+ function createQueueSection(
+   title,
+   sectionClass,
+   listClass,
+   sectionOrders,
+   highlightNew
+ ) {
+   if (sectionOrders.length === 0) {
+     return;
+   }
+   const section =
+     document.createElement("div");
+   section.className =
+     "orders-queue-section " +
+     sectionClass;
+   section.innerHTML = `
+<div class="orders-section-title">
+       ${title}
+</div>
+<div class="orders-section-list ${listClass}"></div>
+   `;
+   ordersContainer.appendChild(section);
+   const list =
+     section.querySelector("." + listClass);
+   sectionOrders.forEach(function(order) {
+     const card = createOrderCard(
+       order,
+       highlightNew ? newOrderIds : new Set()
+     );
+     if (
+       String(order.id) ===
+       String(window.selectedCashierOrderId)
+     ) {
+       card.classList.add("selected-order-card");
+     }
+     card.setAttribute(
+       "data-select-order-id",
+       String(order.id)
+     );
+     card.setAttribute(
+       "role",
+       "button"
+     );
+     card.setAttribute(
+       "tabindex",
+       "0"
+     );
+     card.addEventListener(
+       "click",
+       function(event) {
+         if (
+           event.target.closest(
+             ".accept-order-btn"
+           )
+         ) {
+           return;
+         }
+         window.selectedCashierOrderId =
+           String(order.id);
+         document
+           .querySelectorAll(
+             "#ordersContainer .order-card"
+           )
+           .forEach(function(existingCard) {
+             existingCard.classList.remove(
+               "selected-order-card"
+             );
+           });
+         card.classList.add(
+           "selected-order-card"
+         );
+         renderSelectedOrderDetails(
+           order,
+           detailsPanel
+         );
+       }
+     );
+     card.addEventListener(
+       "keydown",
+       function(event) {
+         if (
+           event.key === "Enter" ||
+           event.key === " "
+         ) {
+           if (
+             event.target.closest(
+               ".accept-order-btn"
+             )
+           ) {
+             return;
+           }
+           event.preventDefault();
+           card.click();
+         }
+       }
+     );
+     list.appendChild(card);
+   });
+ }
+ createQueueSection(
+   "🆕 NEW ORDERS",
+   "",
+   "new-orders-list",
+   newOrders,
+   true
+ );
+ createQueueSection(
+   "📦 ACTIVE ORDERS",
+   "active-orders-section",
+   "active-orders-list",
+   activeOrders,
+   false
+ );
+ /*
+    ACCEPT ORDER BUTTONS
+ */
+ ordersContainer
+   .querySelectorAll(".accept-order-btn")
+   .forEach(function(button) {
+     button.addEventListener(
+       "click",
+       function() {
+         acceptOrder(
+           button.dataset.orderId,
+           button
+         );
+       }
+     );
+   });
+ /*
+    UPDATE DETAILS PANEL
+ */
+ renderSelectedOrderDetails(
+   selectedOrder,
+   detailsPanel
+ );
 }
 
-
+/* =========================
+  SELECTED ORDER DETAILS
+========================= */
+function renderSelectedOrderDetails(
+ order,
+ detailsPanel
+) {
+ if (!detailsPanel || !order) {
+   return;
+ }
+ let items = [];
+ try {
+   items = Array.isArray(order.items)
+     ? order.items
+     : JSON.parse(order.items || "[]");
+ } catch (error) {
+   items = [];
+ }
+ const orderNumber =
+   order.order_number || "Pending";
+ const tableNumber =
+   order.table_number || "—";
+ const orderType =
+   String(order.order_type || "")
+     .toLowerCase() === "takeout"
+     ? "🥡 TAKEOUT"
+     : "🍽️ DINE IN";
+ const paymentMethod =
+   order.payment_method || "—";
+ const paymentStatus =
+   order.payment_status || "pending";
+ const status =
+   String(order.status || "new")
+     .toLowerCase();
+ const createdAt =
+   order.created_at
+     ? new Date(
+         order.created_at
+       ).toLocaleString()
+     : "—";
+ let itemsHtml = "";
+ let calculatedTotal = 0;
+ items.forEach(function(item) {
+   const quantity = Number(
+     item.quantity || item.qty || 1
+   );
+   const price = Number(item.price || 0);
+   const lineTotal = price * quantity;
+   calculatedTotal += lineTotal;
+   itemsHtml += `
+<div class="order-item">
+<span>
+         ${escapeHtml(
+           item.name || "Unknown Item"
+         )}
+         × ${quantity}
+</span>
+<strong>
+         ₱${lineTotal.toLocaleString()}
+</strong>
+</div>
+   `;
+ });
+ const total =
+   order.total !== null &&
+   order.total !== undefined &&
+   order.total !== ""
+     ? Number(order.total)
+     : calculatedTotal;
+ detailsPanel.innerHTML = `
+<div class="order-details-content">
+<div class="order-details-heading">
+<span class="order-details-eyebrow">
+         SELECTED ORDER
+</span>
+<h3>
+         ORDER #${escapeHtml(
+           String(orderNumber)
+         )}
+</h3>
+<span class="order-details-status">
+         ${escapeHtml(status.toUpperCase())}
+</span>
+</div>
+<div class="order-details-info">
+<div>
+<span>Table</span>
+<strong>${escapeHtml(
+           String(tableNumber)
+         )}</strong>
+</div>
+<div>
+<span>Order Type</span>
+<strong>${orderType}</strong>
+</div>
+<div>
+<span>Payment Method</span>
+<strong>${escapeHtml(
+           String(paymentMethod)
+         )}</strong>
+</div>
+<div>
+<span>Payment Status</span>
+<strong>${escapeHtml(
+           String(paymentStatus).toUpperCase()
+         )}</strong>
+</div>
+<div class="order-details-time">
+<span>Order Time</span>
+<strong>${escapeHtml(createdAt)}</strong>
+</div>
+</div>
+<div class="order-details-items">
+<h4>ORDER ITEMS</h4>
+       ${
+         itemsHtml ||
+         `<p>No item details available.</p>`
+       }
+</div>
+<div class="order-details-total">
+<span>ORDER TOTAL</span>
+<strong>
+         ₱${total.toLocaleString()}
+</strong>
+</div>
+     ${
+       status === "new"
+         ? `
+<div class="order-details-note">
+             This order is waiting for cashier acceptance.
+</div>
+         `
+         : `
+<div class="order-details-note">
+             ${
+               status === "accepted"
+                 ? "Waiting for Kitchen / Dispatcher."
+                 : status === "preparing"
+                   ? "The Kitchen is preparing this order."
+                   : "The Dispatcher is serving this order."
+             }
+</div>
+         `
+     }
+</div>
+ `;
+}
+  /* =========================
+  SELECTED ORDER DETAILS
+========================= */
+function renderSelectedOrderDetails(order, detailsPanel) {
+ if (!detailsPanel || !order) {
+   return;
+ }
+ let items = [];
+ try {
+   items = Array.isArray(order.items)
+     ? order.items
+     : JSON.parse(order.items || "[]");
+ } catch (error) {
+   items = [];
+ }
+ const orderNumber = order.order_number || "Pending";
+ const tableNumber = order.table_number || "—";
+ const status = String(order.status || "new").toLowerCase();
+ const itemsHtml = items.map(function(item) {
+   const quantity = Number(item.quantity || item.qty || 1);
+   const price = Number(item.price || 0);
+   const lineTotal = price * quantity;
+   return `
+<div class="order-item">
+<span>${escapeHtml(item.name || "Unknown Item")} × ${quantity}</span>
+<strong>₱${lineTotal.toLocaleString()}</strong>
+</div>
+   `;
+ }).join("");
+ const total = Number(order.total || 0);
+ detailsPanel.innerHTML = `
+<div class="order-details-content">
+<div class="order-details-heading">
+<span class="order-details-eyebrow">SELECTED ORDER</span>
+<h3>ORDER #${escapeHtml(String(orderNumber))}</h3>
+<span class="order-details-status">${escapeHtml(status.toUpperCase())}</span>
+</div>
+<div class="order-details-info">
+<div>
+<span>Table</span>
+<strong>${escapeHtml(String(tableNumber))}</strong>
+</div>
+<div>
+<span>Order Type</span>
+<strong>${String(order.order_type || "Dine In").toUpperCase()}</strong>
+</div>
+</div>
+<div class="order-details-items">
+<h4>ORDER ITEMS</h4>
+       ${itemsHtml || "<p>No item details available.</p>"}
+</div>
+<div class="order-details-total">
+<span>ORDER TOTAL</span>
+<strong>₱${total.toLocaleString()}</strong>
+</div>
+<div class="order-details-note">
+       ${
+         status === "new"
+           ? "Waiting for cashier acceptance."
+           : status === "accepted"
+             ? "Waiting for Kitchen / Dispatcher."
+             : status === "preparing"
+               ? "The Kitchen is preparing this order."
+               : "The Dispatcher is serving this order."
+       }
+</div>
+</div>
+ `;
+}
 /* =========================
    CREATE ORDER CARD
 ========================= */
