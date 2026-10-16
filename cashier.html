@@ -4811,55 +4811,99 @@ body.pos-other-view .page-section {
 ========================================= */
 #ordersSection .orders-workspace {
  display: grid;
- grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+ grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.8fr);
  gap: 18px;
  align-items: start;
+ width: 100%;
+ min-width: 0;
+}
+#ordersSection #ordersContainer {
+ min-width: 0;
+ width: 100%;
 }
 #ordersSection .orders-container {
  min-width: 0;
- gap: 14px;
+ gap: 12px;
  padding: 4px 2px 20px;
 }
 #ordersSection .order-card {
  padding: 12px 14px;
- border-radius: 12px;
+ border-radius: 11px;
 }
 #ordersSection .order-card-header {
  padding-bottom: 8px;
  gap: 8px;
+ align-items: center;
 }
 #ordersSection .order-number {
  font-size: 15px;
 }
 #ordersSection .order-time {
  font-size: 11px;
+ margin-top: 3px;
 }
-#ordersSection .order-details {
+#ordersSection .order-status {
+ font-size: 10px;
+ padding: 5px 8px;
+}
+#ordersSection .compact-order-info,
+#ordersSection .compact-order-payment {
+ display: flex;
+ flex-wrap: wrap;
+ align-items: center;
  gap: 6px;
- margin-top: 9px;
- font-size: 12px;
+ font-size: 11px;
+ color: #62665c;
 }
-#ordersSection .order-actions {
- margin-top: 10px;
+#ordersSection .compact-order-info span,
+#ordersSection .compact-order-payment span {
+ padding: 5px 7px;
+ border: 1px solid #e6e0d5;
+ background: #f5f2eb;
+ border-radius: 6px;
+}
+#ordersSection .compact-order-footer {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: 8px;
+ margin-top: 2px;
+}
+#ordersSection .compact-order-footer strong {
+ font-size: 15px;
+ color: #34452f;
 }
 #ordersSection .view-order-details-btn {
- width: 100%;
- min-height: 38px;
- padding: 9px 12px;
- border: 1px solid #34452f;
- border-radius: 9px;
+ width: auto;
+ min-height: 34px;
+ padding: 7px 10px;
+ border: 0;
+ border-radius: 7px;
  background: #34452f;
  color: #fffdf7;
- font-size: 12px;
+ font-size: 11px;
  font-weight: 700;
+ white-space: nowrap;
  cursor: pointer;
+ flex-shrink: 0;
 }
 #ordersSection .view-order-details-btn:hover {
  background: #43583b;
 }
+#ordersSection .order-details-panel {
+ min-width: 0;
+ padding: 16px;
+}
+#ordersSection .order-details-heading h3 {
+ font-size: 18px;
+}
 @media (max-width: 900px) {
  #ordersSection .orders-workspace {
-   grid-template-columns: 1fr;
+   grid-template-columns: minmax(0, 1fr);
+ }
+ #ordersSection .order-details-panel {
+   position: static;
+   max-height: none;
  }
 }
   /* =========================================
@@ -4924,6 +4968,95 @@ body.pos-other-view .page-section {
 }
 #ordersSection .view-order-details-btn:hover {
  background: #43583b;
+}
+  /* =========================================
+  INCOMING ORDERS — FILTER TABS
+========================================= */
+#ordersSection .orders-filter-tabs {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 10px;
+ margin: 0 0 18px;
+ padding: 8px;
+ border: 1px solid #e6dccd;
+ border-radius: 12px;
+ background: #fffaf3;
+}
+#ordersSection .orders-filter-tab {
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
+ gap: 9px;
+ min-height: 42px;
+ padding: 10px 14px;
+ border: 1px solid transparent;
+ border-radius: 9px;
+ background: transparent;
+ color: #69513e;
+ font-size: 12px;
+ font-weight: 800;
+ cursor: pointer;
+ transition:
+   background 180ms ease,
+   color 180ms ease,
+   border-color 180ms ease,
+   box-shadow 180ms ease;
+}
+#ordersSection .orders-filter-tab:hover {
+ background: #f3eadc;
+}
+#ordersSection .orders-filter-tab.active {
+ background: #6b4428;
+ border-color: #6b4428;
+ color: #ffffff;
+}
+#ordersSection .orders-filter-count {
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
+ min-width: 22px;
+ height: 22px;
+ padding: 0 6px;
+ border-radius: 999px;
+ background: #eadbc8;
+ color: #57351f;
+ font-size: 11px;
+ font-weight: 800;
+}
+#ordersSection .orders-filter-tab.active .orders-filter-count {
+ background: #fffaf3;
+ color: #57351f;
+}
+#ordersSection .orders-filter-tab.has-new-orders {
+ border-color: #8fb184;
+ animation: newOrdersTabGlow 1.8s ease-in-out infinite;
+}
+@keyframes newOrdersTabGlow {
+ 0%, 100% {
+   box-shadow: 0 0 0 0 rgba(91, 145, 75, 0.08);
+ }
+ 50% {
+   box-shadow: 0 0 0 3px rgba(91, 145, 75, 0.18);
+ }
+}
+@media (max-width: 600px) {
+ #ordersSection .orders-filter-tabs {
+   gap: 6px;
+   padding: 6px;
+ }
+ #ordersSection .orders-filter-tab {
+   flex: 1 1 auto;
+   padding: 9px 10px;
+   font-size: 10px;
+ }
+}
+@media (prefers-reduced-motion: reduce) {
+ #ordersSection .orders-filter-tab {
+   transition: none;
+ }
+ #ordersSection .orders-filter-tab.has-new-orders {
+   animation: none;
+ }
 }
 </style>
 </head>
@@ -6300,9 +6433,40 @@ body.pos-other-view .page-section {
   class="page-section"
 >
   <div class="top-bar">
-    <h2>Incoming Orders</h2>
-  </div>
-
+<h2>Incoming Orders</h2>
+</div>
+<div class="orders-filter-tabs" role="tablist" aria-label="Filter orders">
+<button
+   type="button"
+   class="orders-filter-tab active"
+   data-order-filter="new"
+   role="tab"
+   aria-selected="true"
+>
+<span>NEW ORDERS</span>
+<span class="orders-filter-count" id="newOrdersCount">0</span>
+</button>
+<button
+   type="button"
+   class="orders-filter-tab"
+   data-order-filter="active"
+   role="tab"
+   aria-selected="false"
+>
+<span>ACCEPTED / ACTIVE</span>
+<span class="orders-filter-count" id="activeOrdersCount">0</span>
+</button>
+<button
+   type="button"
+   class="orders-filter-tab"
+   data-order-filter="completed"
+   role="tab"
+   aria-selected="false"
+>
+<span>COMPLETED</span>
+<span class="orders-filter-count" id="completedOrdersCount">0</span>
+</button>
+</div>
   <div class="orders-workspace">
     <div
       id="ordersContainer"
