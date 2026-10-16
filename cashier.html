@@ -7138,81 +7138,125 @@ style.id = "stockEditWorkflowStyles";
    });
  }
  async function saveAllChanges() {
-   if (saving || focusedCard) return;
-   if (stagedStocks.size === 0) {
-     setEditMode(false);
-     showSuccess("No stock changes to save.");
-     return;
-   }
-   saving = true;
-   editSaveBtn.disabled = true;
-   const label = editSaveBtn.querySelector(".stock-edit-save-label");
-   if (label) label.textContent = "Saving...";
-   try {
-     for (const [card, value] of stagedStocks.entries()) {
-       const items = card._stockItems;
-       if (!Array.isArray(items) || items.length === 0) {
-         throw new Error(
-           "Stock data is missing for one of the edited cards."
-         );
-       }
-       for (const item of items) {
-         const response = await fetch(
-           STOCK_ENDPOINT + "?id=eq." + encodeURIComponent(item.id),
-           {
-             method: "PATCH",
-             headers: {
-               "Content-Type": "application/json",
-               "apikey": SUPABASE_KEY,
-               "Authorization": "Bearer " + SUPABASE_KEY,
-               "Prefer": "return=representation"
-             },
-             body: JSON.stringify({
-               stock_remaining: value
-             })
-           }
-         );
-         const data = await response.json();
-         if (!response.ok) {
-           throw new Error(
-             data.message ||
-             data.error ||
-             data.hint ||
-             "Unable to save stock."
-           );
-         }
-         if (!Array.isArray(data) || data.length === 0) {
-           throw new Error(
-             "Stock was not updated. Please check the Supabase UPDATE policy."
-           );
-         }
-       }
-     }
-     stagedStocks.forEach(function(value, card) {
-       updateCardPreview(card, value);
-     });
-     stagedStocks.clear();
-     rememberOriginalValues();
-     setEditMode(false);
-     showSuccess("Stock changes saved successfully.");
-   } catch (error) {
-     console.error("Stock Save Error:", error);
-     showError(
-       error.message || "Unable to save stock changes."
-     );
-   } finally {
-     saving = false;
-     editSaveBtn.disabled = false;
-     const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
-     const buttonLabel = editSaveBtn.querySelector(".stock-edit-save-label");
-     if (editMode) {
-       if (icon) icon.textContent = "💾";
-       if (buttonLabel) buttonLabel.textContent = "Save";
-     } else {
-       editSaveBtn.innerHTML = originalButtonHTML;
-     }
-   }
- }
+  if (saving || focusedCard) return;
+
+  if (stagedStocks.size === 0) {
+    setEditMode(false);
+    showSuccess("No stock changes to save.");
+    return;
+  }
+
+  saving = true;
+  editSaveBtn.disabled = true;
+
+  const label = editSaveBtn.querySelector(".stock-edit-save-label");
+  if (label) label.textContent = "Saving...";
+
+  try {
+    for (const [card, value] of stagedStocks.entries()) {
+      const items = card._stockItems;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        throw new Error(
+          "Stock data is missing for one of the edited cards."
+        );
+      }
+
+      for (const item of items) {
+        const response = await fetch(
+          STOCK_ENDPOINT + "?id=eq." + encodeURIComponent(item.id),
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": SUPABASE_KEY,
+              "Authorization": "Bearer " + SUPABASE_KEY,
+              "Prefer": "return=representation"
+            },
+            body: JSON.stringify({
+              stock_remaining: value
+            })
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            data.error ||
+            data.hint ||
+            "Unable to save stock."
+          );
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+          throw new Error(
+            "Stock was not updated. Please check the Supabase UPDATE policy."
+          );
+        }
+      }
+    }
+
+    stagedStocks.forEach(function(value, card) {
+      updateCardPreview(card, value);
+    });
+
+    stagedStocks.clear();
+    rememberOriginalValues();
+    setEditMode(false);
+
+    const overlay = document.createElement("div");
+    overlay.className = "stock-save-success-overlay";
+    overlay.textContent = "Save Successful";
+
+    Object.assign(overlay.style, {
+      position: "fixed",
+      inset: "0",
+      zIndex: "10000",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px",
+      boxSizing: "border-box",
+      background: "rgba(255, 253, 248, 0.18)",
+      backdropFilter: "blur(7px)",
+      WebkitBackdropFilter: "blur(7px)",
+      color: "#294a34",
+      fontSize: "22px",
+      fontWeight: "600",
+      textAlign: "center",
+      pointerEvents: "none"
+    });
+
+    document.body.appendChild(overlay);
+
+    window.setTimeout(function() {
+      overlay.remove();
+    }, 1000);
+
+  } catch (error) {
+    console.error("Stock Save Error:", error);
+
+    showError(
+      error.message || "Unable to save stock changes."
+    );
+
+  } finally {
+    saving = false;
+    editSaveBtn.disabled = false;
+
+    const icon = editSaveBtn.querySelector(".stock-edit-save-icon");
+    const buttonLabel = editSaveBtn.querySelector(".stock-edit-save-label");
+
+    if (editMode) {
+      if (icon) icon.textContent = "💾";
+      if (buttonLabel) buttonLabel.textContent = "Save";
+    } else {
+      editSaveBtn.innerHTML = originalButtonHTML;
+    }
+  }
+}
  editSaveBtn.addEventListener("click", function() {
    if (saving) return;
    if (!editMode) {
