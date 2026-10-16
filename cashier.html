@@ -4806,6 +4806,62 @@ body.pos-other-view .page-section {
    font-size: 18px;
  }
 }
+  /* =========================================
+  INCOMING ORDERS — COMPACT CARD OVERRIDE
+========================================= */
+#ordersSection .orders-workspace {
+ display: grid;
+ grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+ gap: 18px;
+ align-items: start;
+}
+#ordersSection .orders-container {
+ min-width: 0;
+ gap: 14px;
+ padding: 4px 2px 20px;
+}
+#ordersSection .order-card {
+ padding: 12px 14px;
+ border-radius: 12px;
+}
+#ordersSection .order-card-header {
+ padding-bottom: 8px;
+ gap: 8px;
+}
+#ordersSection .order-number {
+ font-size: 15px;
+}
+#ordersSection .order-time {
+ font-size: 11px;
+}
+#ordersSection .order-details {
+ gap: 6px;
+ margin-top: 9px;
+ font-size: 12px;
+}
+#ordersSection .order-actions {
+ margin-top: 10px;
+}
+#ordersSection .view-order-details-btn {
+ width: 100%;
+ min-height: 38px;
+ padding: 9px 12px;
+ border: 1px solid #34452f;
+ border-radius: 9px;
+ background: #34452f;
+ color: #fffdf7;
+ font-size: 12px;
+ font-weight: 700;
+ cursor: pointer;
+}
+#ordersSection .view-order-details-btn:hover {
+ background: #43583b;
+}
+@media (max-width: 900px) {
+ #ordersSection .orders-workspace {
+   grid-template-columns: 1fr;
+ }
+}
 </style>
 </head>
 <body>
@@ -6182,14 +6238,6 @@ body.pos-other-view .page-section {
 >
   <div class="top-bar">
     <h2>Incoming Orders</h2>
-
-    <button
-      class="refresh-btn"
-      id="refreshOrdersBtn"
-      type="button"
-    >
-      🔄 Refresh Orders
-    </button>
   </div>
 
   <div class="orders-workspace">
