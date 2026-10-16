@@ -5326,6 +5326,48 @@ body.pos-other-view .page-section {
 #ordersSection .order-details-panel:focus-within::-webkit-scrollbar-thumb {
  background: #c7c8bd;
 }
+  /* =========================================
+  ORDERS — REMOVE BOTTOM GAP
+========================================= */
+#ordersSection {
+ padding-bottom: 0 !important;
+ margin-bottom: 0 !important;
+}
+#ordersSection .orders-workspace {
+ height: calc(100vh - 155px) !important;
+ max-height: calc(100vh - 155px) !important;
+ min-height: 420px;
+ margin-bottom: 0 !important;
+ padding-bottom: 0 !important;
+ border-bottom: none !important;
+}
+#ordersSection .orders-list-column,
+#ordersSection #ordersContainer,
+#ordersSection #completedOrdersContainer,
+#ordersSection .order-details-panel {
+ margin-bottom: 0 !important;
+ border-bottom: none !important;
+}
+#ordersSection .orders-list-column {
+ height: 100%;
+ min-height: 0;
+}
+#ordersSection #ordersContainer,
+#ordersSection #completedOrdersContainer {
+ padding-bottom: 6px;
+}
+#ordersSection .order-details-panel {
+ height: 100%;
+ max-height: 100%;
+ min-height: 0;
+ box-sizing: border-box;
+}
+@media (max-width: 900px) {
+ #ordersSection .orders-workspace {
+   height: auto !important;
+   max-height: none !important;
+ }
+}
 </style>
 </head>
 <body>
