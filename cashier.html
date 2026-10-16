@@ -5149,6 +5149,73 @@ body.pos-other-view .page-section {
    max-height: 55vh;
  }
 }
+  /* =========================================
+  ORDERS — FIXED HEIGHT + LIST-ONLY SCROLL
+========================================= */
+#ordersSection .orders-workspace {
+ display: grid;
+ grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+ gap: 18px;
+ align-items: stretch;
+ height: calc(100vh - 245px);
+ min-height: 360px;
+ max-height: calc(100vh - 245px);
+ overflow: hidden;
+}
+#ordersSection .orders-list-column {
+ display: flex;
+ flex-direction: column;
+ min-width: 0;
+ min-height: 0;
+ height: 100%;
+ overflow: hidden;
+}
+#ordersSection #ordersContainer,
+#ordersSection #completedOrdersContainer {
+ flex: 1 1 auto;
+ min-width: 0;
+ min-height: 0;
+ height: 100%;
+ max-height: 100%;
+ overflow-x: hidden;
+ overflow-y: auto;
+ overscroll-behavior: contain;
+ align-content: start;
+ padding: 4px 8px 14px 2px;
+}
+#ordersSection .order-details-panel {
+ position: relative;
+ top: auto;
+ align-self: stretch;
+ width: 100%;
+ height: 100%;
+ min-width: 0;
+ min-height: 0;
+ max-height: 100%;
+ overflow: hidden;
+ box-sizing: border-box;
+}
+#ordersSection .order-details-content {
+ min-width: 0;
+ max-width: 100%;
+}
+@media (max-width: 900px) {
+ #ordersSection .orders-workspace {
+   grid-template-columns: minmax(0, 1fr);
+   height: auto;
+   max-height: none;
+   overflow: visible;
+ }
+ #ordersSection .orders-list-column {
+   height: 55vh;
+   min-height: 300px;
+ }
+ #ordersSection .order-details-panel {
+   height: auto;
+   min-height: 300px;
+   overflow: visible;
+ }
+}
 </style>
 </head>
 <body>
@@ -9856,9 +9923,7 @@ function renderSelectedOrderDetails(order, detailsPanel) {
    calculatedTotal += lineTotal;
    return `
 <div class="order-item">
-<span>
-         ${escapeHtml(item.name || "Unknown Item")} × ${quantity}
-</span>
+<span>${escapeHtml(item.name || "Unknown Item")} × ${quantity}</span>
 <strong>₱${lineTotal.toLocaleString()}</strong>
 </div>
    `;
@@ -9878,7 +9943,22 @@ function renderSelectedOrderDetails(order, detailsPanel) {
    statusNote = "Waiting for Kitchen / Dispatcher.";
  } else if (status === "preparing") {
    statusNote = "The Kitchen is preparing this order.";
+ } else if (status === "completed") {
+   statusNote = "This order has been completed.";
  }
+ const acceptButtonHtml = status === "new"
+   ? `
+<div class="order-actions">
+<button
+         type="button"
+         class="accept-order-btn"
+         data-order-id="${escapeHtml(String(order.id))}"
+>
+         🟢 ACCEPT ORDER
+</button>
+</div>
+   `
+   : "";
  detailsPanel.innerHTML = `
 <div class="order-details-content">
 <div class="order-details-heading">
@@ -9921,8 +10001,18 @@ function renderSelectedOrderDetails(order, detailsPanel) {
 <div class="order-details-note">
        ${escapeHtml(statusNote)}
 </div>
+     ${acceptButtonHtml}
 </div>
  `;
+ const acceptButton = detailsPanel.querySelector(".accept-order-btn");
+ if (acceptButton) {
+   acceptButton.addEventListener("click", function() {
+     acceptOrder(
+       acceptButton.dataset.orderId,
+       acceptButton
+     );
+   });
+ }
 }
 /* =========================
   CREATE ORDER CARD
