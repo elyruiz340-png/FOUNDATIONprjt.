@@ -5368,6 +5368,30 @@ body.pos-other-view .page-section {
    max-height: none !important;
  }
 }
+  /* =========================================
+  ORDERS — FULL HEIGHT DETAILS PANEL
+========================================= */
+#ordersSection .orders-workspace {
+ align-items: stretch !important;
+}
+#ordersSection .order-details-panel {
+ align-self: stretch !important;
+ height: calc(100vh - 155px) !important;
+ min-height: calc(100vh - 155px) !important;
+ max-height: calc(100vh - 155px) !important;
+ margin-top: 0 !important;
+ margin-bottom: 0 !important;
+ box-sizing: border-box;
+ overflow-x: hidden;
+ overflow-y: auto;
+}
+@media (max-width: 900px) {
+ #ordersSection .order-details-panel {
+   height: auto !important;
+   min-height: 300px !important;
+   max-height: none !important;
+ }
+}
 </style>
 </head>
 <body>
