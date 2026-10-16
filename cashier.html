@@ -6991,47 +6991,51 @@ style.id = "stockEditWorkflowStyles";
    card.style.removeProperty("bottom");
  }
  function closeFocusMode() {
-   if (!focusedCard || closingFocus) return;
-   closingFocus = true;
-   const card = focusedCard;
-   const backdrop = document.querySelector(".stock-focus-backdrop");
-   const placeholder = card._stockFocusPlaceholder;
-   const originalContent = card._stockFocusOriginalContent;
-   removeFocusKeyHandler();
-   if (!placeholder || !placeholder.parentNode) {
-     if (originalContent) {
-       card.replaceChildren(originalContent);
-     }
-     clearCardPositionStyles(card);
-     document.body.classList.remove("stock-focus-active");
-     if (backdrop) backdrop.remove();
-     focusedCard = null;
-     closingFocus = false;
-     return;
+ if (!focusedCard || closingFocus) return;
+ closingFocus = true;
+ const card = focusedCard;
+ const backdrop = document.querySelector(".stock-focus-backdrop");
+ const placeholder = card._stockFocusPlaceholder;
+ const originalContent = card._stockFocusOriginalContent;
+ removeFocusKeyHandler();
+ if (!placeholder || !placeholder.parentNode) {
+   if (originalContent) {
+     card.replaceChildren(originalContent);
    }
-   const targetRect = placeholder.getBoundingClientRect();
-   if (backdrop) {
-     backdrop.classList.remove("is-visible");
-   }
-   card.style.left = targetRect.left + "px";
-   card.style.top = targetRect.top + "px";
-   card.style.width = targetRect.width + "px";
-   card.style.height = targetRect.height + "px";
-   window.setTimeout(function() {
-     if (originalContent) {
-       card.replaceChildren(originalContent);
-     }
-     placeholder.parentNode.insertBefore(card, placeholder);
-     placeholder.remove();
-     clearCardPositionStyles(card);
-     card._stockFocusPlaceholder = null;
-     card._stockFocusOriginalContent = null;
-     document.body.classList.remove("stock-focus-active");
-     if (backdrop) backdrop.remove();
-     focusedCard = null;
-     closingFocus = false;
-   }, 440);
+   clearCardPositionStyles(card);
+   if (backdrop) backdrop.remove();
+   document.body.classList.remove("stock-focus-active");
+   focusedCard = null;
+   closingFocus = false;
+   return;
  }
+ const targetRect = placeholder.getBoundingClientRect();
+ if (backdrop) {
+   backdrop.classList.remove("is-visible");
+ }
+ // Panatilihing naka-lock ang page habang gumagalaw
+ // ang card para hindi bumalik agad ang scrollbar.
+ card.style.left = targetRect.left + "px";
+ card.style.top = targetRect.top + "px";
+ card.style.width = targetRect.width + "px";
+ card.style.height = targetRect.height + "px";
+ window.setTimeout(function() {
+   if (originalContent) {
+     card.replaceChildren(originalContent);
+   }
+   placeholder.parentNode.insertBefore(card, placeholder);
+   placeholder.remove();
+   clearCardPositionStyles(card);
+   card._stockFocusPlaceholder = null;
+   card._stockFocusOriginalContent = null;
+   // Ibalik lang ang normal page scrolling
+   // pagkatapos maibalik ang card sa original grid.
+   document.body.classList.remove("stock-focus-active");
+   if (backdrop) backdrop.remove();
+   focusedCard = null;
+   closingFocus = false;
+ }, 440);
+}
  function openFocusMode(card) {
    if (!editMode || focusedCard || saving || closingFocus) return;
    const startRect = card.getBoundingClientRect();
