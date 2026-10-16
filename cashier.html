@@ -5281,6 +5281,51 @@ body.pos-other-view .page-section {
    overflow: visible;
  }
 }
+  /* =========================================
+  ORDERS — REMOVE BOTTOM LINE + ALIGN DETAILS
+========================================= */
+#ordersSection .orders-workspace {
+ margin-top: 0;
+ border: none;
+ border-bottom: none;
+ box-shadow: none;
+ align-items: stretch;
+}
+#ordersSection .orders-list-column,
+#ordersSection #ordersContainer,
+#ordersSection #completedOrdersContainer {
+ border-bottom: none;
+ box-shadow: none;
+}
+#ordersSection .order-details-panel {
+ align-self: stretch;
+ margin-top: 0;
+ height: 100%;
+ min-height: 0;
+ max-height: 100%;
+ border-bottom: 1px solid #e6dfd3;
+ box-shadow: 0 5px 18px rgba(65, 54, 35, 0.04);
+ overflow-x: hidden;
+ overflow-y: auto;
+}
+#ordersSection .order-details-content {
+ margin-top: 0;
+ padding-top: 0;
+}
+#ordersSection .order-details-heading {
+ margin-top: 0;
+}
+#ordersSection .order-details-panel::-webkit-scrollbar {
+ width: 4px;
+}
+#ordersSection .order-details-panel::-webkit-scrollbar-thumb {
+ background: transparent;
+ border-radius: 10px;
+}
+#ordersSection .order-details-panel:hover::-webkit-scrollbar-thumb,
+#ordersSection .order-details-panel:focus-within::-webkit-scrollbar-thumb {
+ background: #c7c8bd;
+}
 </style>
 </head>
 <body>
