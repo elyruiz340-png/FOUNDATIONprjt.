@@ -5380,6 +5380,202 @@ body.pos-other-view .page-section {
     overflow: visible;
   }
 }
+  /* =========================================
+   ORDERS DETAILS — FIXED FOOTER + ITEMS SCROLL
+   HALINA BISTRO CAFE
+========================================= */
+
+#ordersSection .order-details-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#ordersSection .order-details-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+#ordersSection .order-details-heading {
+  flex: 0 0 auto;
+  gap: 7px;
+  padding-bottom: 12px;
+}
+
+#ordersSection .order-details-heading h3 {
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+#ordersSection .order-details-info {
+  flex: 0 0 auto;
+  gap: 10px 12px;
+  padding: 12px 0;
+}
+
+#ordersSection .order-details-items {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 0 6px;
+  overflow: hidden;
+}
+
+#ordersSection .order-details-items h4 {
+  flex: 0 0 auto;
+  margin: 0 0 8px;
+  padding: 0;
+  color: #52624b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+#ordersSection .order-details-items-list {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 5px 0 0;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+#ordersSection .order-details-items-list:hover,
+#ordersSection .order-details-items-list:focus-within {
+  scrollbar-color: #c7c8bd transparent;
+}
+
+#ordersSection .order-details-items-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+#ordersSection .order-details-items-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#ordersSection .order-details-items-list::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 10px;
+}
+
+#ordersSection .order-details-items-list:hover::-webkit-scrollbar-thumb,
+#ordersSection .order-details-items-list:focus-within::-webkit-scrollbar-thumb {
+  background: #c7c8bd;
+}
+
+#ordersSection .order-details-items-list .order-item {
+  gap: 10px;
+  padding: 10px 2px;
+  border-bottom: 1px solid #eee9df;
+}
+
+#ordersSection .order-details-items-list .order-item span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#ordersSection .order-details-items-list .order-item strong {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+#ordersSection .order-details-total {
+  flex: 0 0 auto;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid #e0e9d8;
+  border-radius: 10px;
+  background: #eef3e8;
+}
+
+#ordersSection .order-details-total span {
+  font-size: 10px;
+  letter-spacing: 0.4px;
+}
+
+#ordersSection .order-details-total strong {
+  font-size: 20px;
+}
+
+#ordersSection .order-details-note {
+  flex: 0 0 auto;
+  margin-top: 8px;
+  padding: 9px 10px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+#ordersSection .order-actions {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: stretch;
+  align-items: stretch;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e9e2d7;
+}
+
+#ordersSection .accept-order-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid #294a34;
+  border-radius: 10px;
+  background: #294a34;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-align: center;
+  box-shadow: 0 3px 8px rgba(40, 54, 36, 0.12);
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+#ordersSection .accept-order-btn:hover {
+  background: #203c29;
+  box-shadow: 0 5px 12px rgba(40, 54, 36, 0.17);
+}
+
+#ordersSection .accept-order-btn:active {
+  transform: scale(0.99);
+}
+
+#ordersSection .accept-order-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  #ordersSection .order-details-panel {
+    min-height: 500px;
+    overflow: hidden;
+  }
+
+  #ordersSection .order-details-content {
+    min-height: 460px;
+  }
+}
 </style>
 </head>
 <body>
@@ -10156,7 +10352,9 @@ function renderSelectedOrderDetails(order, detailsPanel) {
 </div>
 <div class="order-details-items">
 <h4>ORDER ITEMS</h4>
-       ${itemsHtml || "<p>No item details available.</p>"}
+<div class="order-details-items-list">
+         ${itemsHtml || "<p>No item details available.</p>"}
+</div>
 </div>
 <div class="order-details-total">
 <span>ORDER TOTAL</span>
