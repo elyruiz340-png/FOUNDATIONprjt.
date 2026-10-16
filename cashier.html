@@ -4619,6 +4619,193 @@ body.pos-other-view .page-section {
     min-width: 0;
   }
 }
+  /* =========================================
+  INCOMING ORDERS — DETAILS PANEL FIX
+========================================= */
+#ordersSection .orders-workspace {
+ display: grid;
+ grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+ align-items: start;
+ gap: 20px;
+ width: 100%;
+ min-width: 0;
+}
+#ordersSection #ordersContainer {
+ min-width: 0;
+ width: 100%;
+}
+#ordersSection .order-details-panel {
+ position: sticky;
+ top: 18px;
+ min-width: 0;
+ width: 100%;
+ max-height: calc(100vh - 36px);
+ overflow-y: auto;
+ padding: 20px;
+ background: #fffdf8;
+ border: 1px solid #e6dfd3;
+ border-radius: 14px;
+ box-shadow: 0 5px 18px rgba(65, 54, 35, 0.06);
+}
+#ordersSection .order-details-empty {
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ min-height: 250px;
+ padding: 24px 12px;
+ text-align: center;
+ color: #77796e;
+}
+#ordersSection .order-details-empty-icon {
+ margin-bottom: 12px;
+ font-size: 34px;
+}
+#ordersSection .order-details-empty h3 {
+ margin: 0 0 8px;
+ color: #35392f;
+ font-size: 18px;
+}
+#ordersSection .order-details-empty p {
+ margin: 0;
+ font-size: 13px;
+ line-height: 1.6;
+}
+#ordersSection .order-details-heading {
+ display: flex;
+ flex-direction: column;
+ align-items: flex-start;
+ gap: 9px;
+ padding-bottom: 17px;
+ border-bottom: 1px solid #e9e2d7;
+}
+#ordersSection .order-details-eyebrow {
+ color: #818474;
+ font-size: 10px;
+ font-weight: 800;
+ letter-spacing: 1.4px;
+}
+#ordersSection .order-details-heading h3 {
+ margin: 0;
+ color: #30352c;
+ font-size: 21px;
+ overflow-wrap: anywhere;
+}
+#ordersSection .order-details-status {
+ display: inline-flex;
+ align-items: center;
+ padding: 6px 10px;
+ border: 1px solid #d9e3cf;
+ border-radius: 7px;
+ background: #edf3e7;
+ color: #49663c;
+ font-size: 11px;
+ font-weight: 800;
+}
+#ordersSection .order-details-info {
+ display: grid;
+ grid-template-columns: repeat(2, minmax(0, 1fr));
+ gap: 15px 12px;
+ padding: 18px 0;
+ border-bottom: 1px solid #e9e2d7;
+}
+#ordersSection .order-details-info > div {
+ display: flex;
+ flex-direction: column;
+ gap: 5px;
+ min-width: 0;
+}
+#ordersSection .order-details-info span {
+ color: #858579;
+ font-size: 11px;
+}
+#ordersSection .order-details-info strong {
+ color: #393d33;
+ font-size: 12px;
+ overflow-wrap: anywhere;
+}
+#ordersSection .order-details-items {
+ padding: 18px 0;
+}
+#ordersSection .order-details-items h4 {
+ margin: 0 0 13px;
+ color: #77796e;
+ font-size: 11px;
+ letter-spacing: 1px;
+}
+#ordersSection .order-details-items .order-item {
+ display: flex;
+ justify-content: space-between;
+ align-items: flex-start;
+ gap: 12px;
+ padding: 11px 0;
+ border-bottom: 1px solid #f0ebe2;
+ color: #45473e;
+ font-size: 12px;
+ line-height: 1.5;
+}
+#ordersSection .order-details-items .order-item span {
+ min-width: 0;
+ overflow-wrap: anywhere;
+}
+#ordersSection .order-details-items .order-item strong {
+ flex-shrink: 0;
+ color: #34382f;
+ white-space: nowrap;
+}
+#ordersSection .order-details-total {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ gap: 12px;
+ padding: 16px;
+ border-radius: 10px;
+ background: #f1f3e9;
+}
+#ordersSection .order-details-total span {
+ color: #656a58;
+ font-size: 11px;
+ font-weight: 800;
+}
+#ordersSection .order-details-total strong {
+ color: #35452d;
+ font-size: 20px;
+ white-space: nowrap;
+}
+#ordersSection .order-details-note {
+ margin-top: 15px;
+ padding: 12px;
+ border-left: 3px solid #a4b58e;
+ border-radius: 5px;
+ background: #f7f5ee;
+ color: #686a60;
+ font-size: 12px;
+ line-height: 1.6;
+}
+#ordersSection .order-card.selected-order-card {
+ border-color: #a5b995;
+ box-shadow: 0 0 0 2px rgba(130, 157, 108, 0.16);
+}
+@media (max-width: 900px) {
+ #ordersSection .orders-workspace {
+   grid-template-columns: minmax(0, 1fr);
+ }
+ #ordersSection .order-details-panel {
+   position: static;
+   max-height: none;
+ }
+}
+@media (max-width: 480px) {
+ #ordersSection .order-details-panel {
+   padding: 15px;
+ }
+ #ordersSection .order-details-info {
+   gap: 13px 9px;
+ }
+ #ordersSection .order-details-heading h3 {
+   font-size: 18px;
+ }
+}
 </style>
 </head>
 <body>
@@ -9298,155 +9485,7 @@ function renderOrders(
    detailsPanel
  );
 }
-
 /* =========================
-  SELECTED ORDER DETAILS
-========================= */
-function renderSelectedOrderDetails(
- order,
- detailsPanel
-) {
- if (!detailsPanel || !order) {
-   return;
- }
- let items = [];
- try {
-   items = Array.isArray(order.items)
-     ? order.items
-     : JSON.parse(order.items || "[]");
- } catch (error) {
-   items = [];
- }
- const orderNumber =
-   order.order_number || "Pending";
- const tableNumber =
-   order.table_number || "—";
- const orderType =
-   String(order.order_type || "")
-     .toLowerCase() === "takeout"
-     ? "🥡 TAKEOUT"
-     : "🍽️ DINE IN";
- const paymentMethod =
-   order.payment_method || "—";
- const paymentStatus =
-   order.payment_status || "pending";
- const status =
-   String(order.status || "new")
-     .toLowerCase();
- const createdAt =
-   order.created_at
-     ? new Date(
-         order.created_at
-       ).toLocaleString()
-     : "—";
- let itemsHtml = "";
- let calculatedTotal = 0;
- items.forEach(function(item) {
-   const quantity = Number(
-     item.quantity || item.qty || 1
-   );
-   const price = Number(item.price || 0);
-   const lineTotal = price * quantity;
-   calculatedTotal += lineTotal;
-   itemsHtml += `
-<div class="order-item">
-<span>
-         ${escapeHtml(
-           item.name || "Unknown Item"
-         )}
-         × ${quantity}
-</span>
-<strong>
-         ₱${lineTotal.toLocaleString()}
-</strong>
-</div>
-   `;
- });
- const total =
-   order.total !== null &&
-   order.total !== undefined &&
-   order.total !== ""
-     ? Number(order.total)
-     : calculatedTotal;
- detailsPanel.innerHTML = `
-<div class="order-details-content">
-<div class="order-details-heading">
-<span class="order-details-eyebrow">
-         SELECTED ORDER
-</span>
-<h3>
-         ORDER #${escapeHtml(
-           String(orderNumber)
-         )}
-</h3>
-<span class="order-details-status">
-         ${escapeHtml(status.toUpperCase())}
-</span>
-</div>
-<div class="order-details-info">
-<div>
-<span>Table</span>
-<strong>${escapeHtml(
-           String(tableNumber)
-         )}</strong>
-</div>
-<div>
-<span>Order Type</span>
-<strong>${orderType}</strong>
-</div>
-<div>
-<span>Payment Method</span>
-<strong>${escapeHtml(
-           String(paymentMethod)
-         )}</strong>
-</div>
-<div>
-<span>Payment Status</span>
-<strong>${escapeHtml(
-           String(paymentStatus).toUpperCase()
-         )}</strong>
-</div>
-<div class="order-details-time">
-<span>Order Time</span>
-<strong>${escapeHtml(createdAt)}</strong>
-</div>
-</div>
-<div class="order-details-items">
-<h4>ORDER ITEMS</h4>
-       ${
-         itemsHtml ||
-         `<p>No item details available.</p>`
-       }
-</div>
-<div class="order-details-total">
-<span>ORDER TOTAL</span>
-<strong>
-         ₱${total.toLocaleString()}
-</strong>
-</div>
-     ${
-       status === "new"
-         ? `
-<div class="order-details-note">
-             This order is waiting for cashier acceptance.
-</div>
-         `
-         : `
-<div class="order-details-note">
-             ${
-               status === "accepted"
-                 ? "Waiting for Kitchen / Dispatcher."
-                 : status === "preparing"
-                   ? "The Kitchen is preparing this order."
-                   : "The Dispatcher is serving this order."
-             }
-</div>
-         `
-     }
-</div>
- `;
-}
-  /* =========================
   SELECTED ORDER DETAILS
 ========================= */
 function renderSelectedOrderDetails(order, detailsPanel) {
@@ -9463,25 +9502,55 @@ function renderSelectedOrderDetails(order, detailsPanel) {
  }
  const orderNumber = order.order_number || "Pending";
  const tableNumber = order.table_number || "—";
+ const orderType =
+   String(order.order_type || "").toLowerCase() === "takeout"
+     ? "🥡 TAKEOUT"
+     : "🍽️ DINE IN";
+ const paymentMethod = order.payment_method || "—";
+ const paymentStatus = order.payment_status || "pending";
  const status = String(order.status || "new").toLowerCase();
+ const createdAt = order.created_at
+   ? new Date(order.created_at).toLocaleString()
+   : "—";
+ let calculatedTotal = 0;
  const itemsHtml = items.map(function(item) {
    const quantity = Number(item.quantity || item.qty || 1);
    const price = Number(item.price || 0);
    const lineTotal = price * quantity;
+   calculatedTotal += lineTotal;
    return `
 <div class="order-item">
-<span>${escapeHtml(item.name || "Unknown Item")} × ${quantity}</span>
+<span>
+         ${escapeHtml(item.name || "Unknown Item")} × ${quantity}
+</span>
 <strong>₱${lineTotal.toLocaleString()}</strong>
 </div>
    `;
  }).join("");
- const total = Number(order.total || 0);
+ const suppliedTotal = Number(order.total);
+ const total =
+   order.total !== null &&
+   order.total !== undefined &&
+   order.total !== "" &&
+   Number.isFinite(suppliedTotal)
+     ? suppliedTotal
+     : calculatedTotal;
+ let statusNote = "The Dispatcher is serving this order.";
+ if (status === "new") {
+   statusNote = "This order is waiting for cashier acceptance.";
+ } else if (status === "accepted") {
+   statusNote = "Waiting for Kitchen / Dispatcher.";
+ } else if (status === "preparing") {
+   statusNote = "The Kitchen is preparing this order.";
+ }
  detailsPanel.innerHTML = `
 <div class="order-details-content">
 <div class="order-details-heading">
 <span class="order-details-eyebrow">SELECTED ORDER</span>
 <h3>ORDER #${escapeHtml(String(orderNumber))}</h3>
-<span class="order-details-status">${escapeHtml(status.toUpperCase())}</span>
+<span class="order-details-status">
+         ${escapeHtml(status.toUpperCase())}
+</span>
 </div>
 <div class="order-details-info">
 <div>
@@ -9490,7 +9559,19 @@ function renderSelectedOrderDetails(order, detailsPanel) {
 </div>
 <div>
 <span>Order Type</span>
-<strong>${String(order.order_type || "Dine In").toUpperCase()}</strong>
+<strong>${orderType}</strong>
+</div>
+<div>
+<span>Payment Method</span>
+<strong>${escapeHtml(String(paymentMethod))}</strong>
+</div>
+<div>
+<span>Payment Status</span>
+<strong>${escapeHtml(String(paymentStatus).toUpperCase())}</strong>
+</div>
+<div class="order-details-time">
+<span>Order Time</span>
+<strong>${escapeHtml(createdAt)}</strong>
 </div>
 </div>
 <div class="order-details-items">
@@ -9502,15 +9583,7 @@ function renderSelectedOrderDetails(order, detailsPanel) {
 <strong>₱${total.toLocaleString()}</strong>
 </div>
 <div class="order-details-note">
-       ${
-         status === "new"
-           ? "Waiting for cashier acceptance."
-           : status === "accepted"
-             ? "Waiting for Kitchen / Dispatcher."
-             : status === "preparing"
-               ? "The Kitchen is preparing this order."
-               : "The Dispatcher is serving this order."
-       }
+       ${escapeHtml(statusNote)}
 </div>
 </div>
  `;
