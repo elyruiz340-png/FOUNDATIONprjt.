@@ -5058,6 +5058,97 @@ body.pos-other-view .page-section {
    animation: none;
  }
 }
+  /* =========================================
+  ORDERS — SEPARATE TABS + INDEPENDENT SCROLL
+========================================= */
+#ordersSection {
+ min-height: 0;
+}
+#ordersSection .orders-filter-tabs {
+ display: flex;
+ align-items: center;
+ flex-wrap: wrap;
+ gap: 8px;
+ margin: 0 0 16px;
+ padding: 0;
+ border: 0;
+ background: transparent;
+}
+#ordersSection .orders-filter-tab {
+ flex: 0 0 auto;
+ min-height: 40px;
+ padding: 9px 13px;
+ border: 1px solid #dfd2c0;
+ border-radius: 10px;
+ background: #fffaf3;
+ color: #69513e;
+ box-shadow: 0 2px 5px rgba(70, 40, 20, 0.05);
+}
+#ordersSection .orders-filter-tab.active {
+ background: #6b4428;
+ border-color: #6b4428;
+ color: #ffffff;
+ box-shadow: 0 3px 8px rgba(70, 40, 20, 0.13);
+}
+#ordersSection .orders-filter-tab.has-new-orders {
+ border-color: #8fb184;
+ animation: newOrdersTabGlow 1.8s ease-in-out infinite;
+}
+#ordersSection .orders-workspace {
+ display: grid;
+ grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.8fr);
+ gap: 18px;
+ align-items: stretch;
+ height: calc(100vh - 245px);
+ min-height: 320px;
+ width: 100%;
+ min-width: 0;
+}
+#ordersSection #ordersContainer,
+#ordersSection #completedOrdersContainer {
+ min-width: 0;
+ min-height: 0;
+ height: 100%;
+ max-height: 100%;
+ overflow-y: auto;
+ overscroll-behavior: contain;
+ scrollbar-gutter: stable;
+ padding: 4px 8px 18px 2px;
+}
+#ordersSection .order-details-panel {
+ position: sticky;
+ top: 0;
+ align-self: stretch;
+ height: 100%;
+ min-height: 0;
+ max-height: 100%;
+ overflow-y: auto;
+ overscroll-behavior: contain;
+}
+#ordersSection .orders-filter-tab {
+ transition:
+   background 180ms ease,
+   color 180ms ease,
+   border-color 180ms ease,
+   box-shadow 180ms ease;
+}
+@media (max-width: 900px) {
+ #ordersSection .orders-workspace {
+   grid-template-columns: minmax(0, 1fr);
+   height: auto;
+   min-height: 0;
+ }
+ #ordersSection #ordersContainer,
+ #ordersSection #completedOrdersContainer {
+   height: 55vh;
+   max-height: 55vh;
+ }
+ #ordersSection .order-details-panel {
+   position: static;
+   height: auto;
+   max-height: 55vh;
+ }
+}
 </style>
 </head>
 <body>
@@ -6425,93 +6516,76 @@ body.pos-other-view .page-section {
   </div>
 
 </section>
- <!-- =========================
-     ORDERS SECTION
+<!-- =========================
+    ORDERS SECTION
 ========================= -->
 <section
-  id="ordersSection"
-  class="page-section"
+ id="ordersSection"
+ class="page-section"
 >
-  <div class="top-bar">
+<div class="top-bar">
 <h2>Incoming Orders</h2>
 </div>
 <div class="orders-filter-tabs" role="tablist" aria-label="Filter orders">
 <button
-   type="button"
-   class="orders-filter-tab active"
-   data-order-filter="new"
-   role="tab"
-   aria-selected="true"
+     type="button"
+     class="orders-filter-tab active"
+     data-order-filter="new"
+     role="tab"
+     aria-selected="true"
 >
 <span>NEW ORDERS</span>
 <span class="orders-filter-count" id="newOrdersCount">0</span>
 </button>
 <button
-   type="button"
-   class="orders-filter-tab"
-   data-order-filter="active"
-   role="tab"
-   aria-selected="false"
+     type="button"
+     class="orders-filter-tab"
+     data-order-filter="active"
+     role="tab"
+     aria-selected="false"
 >
 <span>ACCEPTED / ACTIVE</span>
 <span class="orders-filter-count" id="activeOrdersCount">0</span>
 </button>
 <button
-   type="button"
-   class="orders-filter-tab"
-   data-order-filter="completed"
-   role="tab"
-   aria-selected="false"
+     type="button"
+     class="orders-filter-tab"
+     data-order-filter="completed"
+     role="tab"
+     aria-selected="false"
 >
 <span>COMPLETED</span>
 <span class="orders-filter-count" id="completedOrdersCount">0</span>
 </button>
 </div>
-  <div class="orders-workspace">
-    <div
-      id="ordersContainer"
-      class="orders-container"
-    >
-      <div class="loading">
-        Loading incoming orders...
-      </div>
-    </div>
-
-    <aside
-      id="orderDetailsPanel"
-      class="order-details-panel"
-      aria-live="polite"
-    >
-      <div class="order-details-empty">
-        <div class="order-details-empty-icon">🧾</div>
-        <h3>Order Details</h3>
-        <p>Select an order card to view its details here.</p>
-      </div>
-    </aside>
-  </div>
-
-  <div
-    class="completed-orders-toggle"
-    style="margin-top: 24px;"
-  >
-    <button
-      type="button"
-      id="completedOrdersToggle"
-      class="refresh-btn"
-    >
-      📋 View Completed Orders
-    </button>
-  </div>
-
-  <div
-    id="completedOrdersContainer"
-    class="orders-container"
-    style="display: none; margin-top: 16px;"
-  >
-    <div class="loading">
-      Loading completed orders...
-    </div>
-  </div>
+<div class="orders-workspace">
+<div class="orders-list-column">
+<div
+       id="ordersContainer"
+       class="orders-container"
+>
+<div class="loading">Loading incoming orders...</div>
+</div>
+<div
+       id="completedOrdersContainer"
+       class="orders-container"
+       style="display: none;"
+>
+<div class="loading">Loading completed orders...</div>
+</div>
+</div>
+<aside
+     id="orderDetailsPanel"
+     class="order-details-panel"
+     aria-live="polite"
+>
+<div class="order-details-empty">
+<div class="order-details-empty-icon">🧾</div>
+<h3>Order Details</h3>
+<p>Select an order card to view its details here.</p>
+</div>
+</aside>
+</div>
 </section>
   <!-- =========================
        SETTINGS SECTION
@@ -9551,27 +9625,105 @@ async function loadOrders() {
 /* =========================
   RENDER ORDERS
 ========================= */
-function renderOrders(
- orders,
- newOrderIds
-) {
- const ordersContainer =
-   document.getElementById(
-     "ordersContainer"
+window.cashierOrderFilter =
+ window.cashierOrderFilter || "new";
+function updateOrderFilterTabs(counts) {
+ const tabs = document.querySelectorAll(
+   "#ordersSection .orders-filter-tab"
+ );
+ tabs.forEach(function(tab) {
+   const filter = tab.dataset.orderFilter;
+   const isActive = filter === window.cashierOrderFilter;
+   tab.classList.toggle("active", isActive);
+   tab.setAttribute(
+     "aria-selected",
+     isActive ? "true" : "false"
    );
- const detailsPanel =
-   document.getElementById(
-     "orderDetailsPanel"
-   );
+   const countId = {
+     new: "newOrdersCount",
+     active: "activeOrdersCount",
+     completed: "completedOrdersCount"
+   }[filter];
+   const countElement = document.getElementById(countId);
+   if (countElement) {
+     countElement.textContent = counts[filter] || 0;
+   }
+   if (filter === "new") {
+     tab.classList.toggle(
+       "has-new-orders",
+       (counts.new || 0) > 0
+     );
+   }
+ });
+}
+function setupOrderFilterTabs() {
+ document.querySelectorAll(
+   "#ordersSection .orders-filter-tab"
+ ).forEach(function(tab) {
+   if (tab.dataset.filterBound === "true") {
+     return;
+   }
+   tab.dataset.filterBound = "true";
+   tab.addEventListener("click", function() {
+     window.cashierOrderFilter =
+       tab.dataset.orderFilter || "new";
+     document.querySelectorAll(
+       "#ordersSection .orders-filter-tab"
+     ).forEach(function(item) {
+       const active =
+         item.dataset.orderFilter === window.cashierOrderFilter;
+       item.classList.toggle("active", active);
+       item.setAttribute(
+         "aria-selected",
+         active ? "true" : "false"
+       );
+     });
+     const completedContainer = document.getElementById(
+       "completedOrdersContainer"
+     );
+     const ordersContainer = document.getElementById(
+       "ordersContainer"
+     );
+     if (window.cashierOrderFilter === "completed") {
+       if (ordersContainer) {
+         ordersContainer.style.display = "none";
+       }
+       if (completedContainer) {
+         completedContainer.style.display = "flex";
+       }
+       loadCompletedOrders();
+     } else {
+       if (completedContainer) {
+         completedContainer.style.display = "none";
+       }
+       if (ordersContainer) {
+         ordersContainer.style.display = "flex";
+       }
+       if (window.cashierOrdersCache) {
+         renderOrders(
+           window.cashierOrdersCache,
+           new Set()
+         );
+       }
+     }
+   });
+ });
+}
+function renderOrders(orders, newOrderIds) {
+ const ordersContainer = document.getElementById(
+   "ordersContainer"
+ );
+ const detailsPanel = document.getElementById(
+   "orderDetailsPanel"
+ );
  if (!ordersContainer) {
    return;
  }
+ window.cashierOrdersCache = orders;
  const newOrders = [];
  const activeOrders = [];
  orders.forEach(function(order) {
-   const status = String(
-     order.status || "new"
-   ).toLowerCase();
+   const status = String(order.status || "new").toLowerCase();
    if (status === "new") {
      newOrders.push(order);
    } else if (
@@ -9582,184 +9734,93 @@ function renderOrders(
      activeOrders.push(order);
    }
  });
- const visibleOrders = [
-   ...newOrders,
-   ...activeOrders
- ];
- if (visibleOrders.length === 0) {
-   ordersContainer.innerHTML = `
-<div class="loading">
-       🧾 No incoming orders yet.
-</div>
-   `;
+ const counts = {
+   new: newOrders.length,
+   active: activeOrders.length,
+   completed: 0
+ };
+ updateOrderFilterTabs(counts);
+ setupOrderFilterTabs();
+ const selectedFilter = window.cashierOrderFilter || "new";
+ const filteredOrders =
+   selectedFilter === "active" ? activeOrders : newOrders;
+ ordersContainer.innerHTML = "";
+ if (filteredOrders.length === 0) {
+   const emptyMessage = document.createElement("div");
+   emptyMessage.className = "loading";
+   emptyMessage.textContent =
+     selectedFilter === "active"
+       ? "📦 No accepted or active orders."
+       : "🧾 No new orders right now.";
+   ordersContainer.appendChild(emptyMessage);
    if (detailsPanel) {
      detailsPanel.innerHTML = `
 <div class="order-details-empty">
 <div class="order-details-empty-icon">🧾</div>
 <h3>Order Details</h3>
-<p>No incoming or active orders to display.</p>
+<p>Select an order card to view its details here.</p>
 </div>
      `;
    }
    window.selectedCashierOrderId = null;
    return;
  }
- /*
-    PRESERVE SELECTED ORDER
-    DURING AUTO REFRESH
- */
- let selectedOrder =
-   visibleOrders.find(function(order) {
-     return String(order.id) ===
-       String(window.selectedCashierOrderId);
-   });
+ let selectedOrder = filteredOrders.find(function(order) {
+   return String(order.id) ===
+     String(window.selectedCashierOrderId);
+ });
  if (!selectedOrder) {
-   selectedOrder =
-     newOrders[0] || activeOrders[0];
-   window.selectedCashierOrderId =
-     String(selectedOrder.id);
+   selectedOrder = filteredOrders[0];
+   window.selectedCashierOrderId = String(selectedOrder.id);
  }
- /*
-    RENDER ORDER QUEUES
- */
- ordersContainer.innerHTML = "";
- function createQueueSection(
-   title,
-   sectionClass,
-   listClass,
-   sectionOrders,
-   highlightNew
- ) {
-   if (sectionOrders.length === 0) {
-     return;
+ filteredOrders.forEach(function(order) {
+   const card = createOrderCard(
+     order,
+     selectedFilter === "new" ? newOrderIds : new Set()
+   );
+   card.setAttribute("data-select-order-id", String(order.id));
+   card.setAttribute("role", "button");
+   card.setAttribute("tabindex", "0");
+   if (
+     String(order.id) ===
+     String(window.selectedCashierOrderId)
+   ) {
+     card.classList.add("selected-order-card");
    }
-   const section =
-     document.createElement("div");
-   section.className =
-     "orders-queue-section " +
-     sectionClass;
-   section.innerHTML = `
-<div class="orders-section-title">
-       ${title}
-</div>
-<div class="orders-section-list ${listClass}"></div>
-   `;
-   ordersContainer.appendChild(section);
-   const list =
-     section.querySelector("." + listClass);
-   sectionOrders.forEach(function(order) {
-     const card = createOrderCard(
-       order,
-       highlightNew ? newOrderIds : new Set()
-     );
-     if (
-       String(order.id) ===
-       String(window.selectedCashierOrderId)
-     ) {
-       card.classList.add("selected-order-card");
+   card.addEventListener("click", function(event) {
+     if (event.target.closest(".accept-order-btn")) {
+       return;
      }
-     card.setAttribute(
-       "data-select-order-id",
-       String(order.id)
-     );
-     card.setAttribute(
-       "role",
-       "button"
-     );
-     card.setAttribute(
-       "tabindex",
-       "0"
-     );
-     card.addEventListener(
-       "click",
-       function(event) {
-         if (
-           event.target.closest(
-             ".accept-order-btn"
-           )
-         ) {
-           return;
-         }
-         window.selectedCashierOrderId =
-           String(order.id);
-         document
-           .querySelectorAll(
-             "#ordersContainer .order-card"
-           )
-           .forEach(function(existingCard) {
-             existingCard.classList.remove(
-               "selected-order-card"
-             );
-           });
-         card.classList.add(
-           "selected-order-card"
-         );
-         renderSelectedOrderDetails(
-           order,
-           detailsPanel
-         );
+     window.selectedCashierOrderId = String(order.id);
+     ordersContainer.querySelectorAll(".order-card").forEach(
+       function(existingCard) {
+         existingCard.classList.remove("selected-order-card");
        }
      );
-     card.addEventListener(
-       "keydown",
-       function(event) {
-         if (
-           event.key === "Enter" ||
-           event.key === " "
-         ) {
-           if (
-             event.target.closest(
-               ".accept-order-btn"
-             )
-           ) {
-             return;
-           }
-           event.preventDefault();
-           card.click();
-         }
-       }
-     );
-     list.appendChild(card);
+     card.classList.add("selected-order-card");
+     renderSelectedOrderDetails(order, detailsPanel);
    });
- }
- createQueueSection(
-   "🆕 NEW ORDERS",
-   "",
-   "new-orders-list",
-   newOrders,
-   true
- );
- createQueueSection(
-   "📦 ACTIVE ORDERS",
-   "active-orders-section",
-   "active-orders-list",
-   activeOrders,
-   false
- );
- /*
-    ACCEPT ORDER BUTTONS
- */
- ordersContainer
-   .querySelectorAll(".accept-order-btn")
-   .forEach(function(button) {
-     button.addEventListener(
-       "click",
-       function() {
-         acceptOrder(
-           button.dataset.orderId,
-           button
-         );
+   card.addEventListener("keydown", function(event) {
+     if (event.key === "Enter" || event.key === " ") {
+       if (event.target.closest(".accept-order-btn")) {
+         return;
        }
-     );
+       event.preventDefault();
+       card.click();
+     }
    });
- /*
-    UPDATE DETAILS PANEL
- */
- renderSelectedOrderDetails(
-   selectedOrder,
-   detailsPanel
+   ordersContainer.appendChild(card);
+ });
+ ordersContainer.querySelectorAll(".accept-order-btn").forEach(
+   function(button) {
+     button.addEventListener("click", function() {
+       acceptOrder(button.dataset.orderId, button);
+     });
+   }
  );
+ renderSelectedOrderDetails(selectedOrder, detailsPanel);
 }
+setupOrderFilterTabs();
 /* =========================
   SELECTED ORDER DETAILS
 ========================= */
