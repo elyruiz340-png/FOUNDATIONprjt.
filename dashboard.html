@@ -1169,16 +1169,9 @@ async function loadCashierStaff() {
   status.textContent = "";
 
   try {
-    if (!currentRestaurantId) {
-      throw new Error("The owner account has no restaurant assigned.");
-    }
-
-    const { data, error } = await supabaseClient
-      .from("restaurant_users")
-      .select("id, user_id, role, restaurant_id")
-      .eq("restaurant_id", currentRestaurantId)
-      .eq("role", "staff")
-      .order("created_at", { ascending: true });
+    const { data, error } = await supabaseClient.rpc(
+      "get_restaurant_cashiers"
+    );
 
     if (error) throw error;
 
@@ -1186,7 +1179,7 @@ async function loadCashierStaff() {
 
     if (!data || data.length === 0) {
       select.innerHTML = '<option value="">No cashiers found</option>';
-      status.textContent = "Create a staff account before setting a PIN.";
+      status.textContent = "No cashier accounts are assigned to this restaurant.";
       return;
     }
 
@@ -1207,7 +1200,6 @@ async function loadCashierStaff() {
     status.textContent = error.message || "Unable to load cashier list.";
   }
 }
-
 function openIndividualCashierPinModal() {
   const select = document.getElementById("cashierStaffSelect");
   const selected = select?.selectedOptions?.[0];
