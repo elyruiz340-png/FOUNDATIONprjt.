@@ -5582,6 +5582,8 @@ body.pos-other-view .page-section {
   padding-top: 8px;
 }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 <body>
   <!-- =========================
@@ -7373,6 +7375,8 @@ body.pos-other-view .page-section {
     "https://isqcuycjrbjtmqhzckvb.supabase.co";
   const SUPABASE_KEY =
     "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
+
+
   /* =========================
      TABLE ENDPOINT
   ========================= */
@@ -11998,6 +12002,101 @@ document.querySelectorAll("#newOrderBtn").forEach(function(button) {
 
   });
 });
+  /* =========================================
+  HALINA CASHIER LOGIN AUTHENTICATION
+========================================= */
+const cashierLoginForm = document.getElementById("cashierLoginForm");
+const cashierLoginScreen = document.getElementById("cashierLoginScreen");
+const cashierLoginMessage = document.getElementById("cashierLoginMessage");
+const cashierLoginButton = document.getElementById("cashierLoginButton");
+const CASHIER_LOGIN_URL =
+ SUPABASE_URL + "/functions/v1/cashier-login";
+const cashierAuthClient = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY,
+ {
+   auth: {
+     persistSession: true,
+     autoRefreshToken: true,
+     detectSessionInUrl: false
+   }
+ }
+);
+// Keep the POS hidden until authentication succeeds.
+document.querySelectorAll(
+ "body > .container, body > header, body > .navigation, body > section"
+).forEach((element) => {
+ if (element.id !== "cashierLoginScreen") {
+   element.dataset.cashierAuthHidden = "true";
+   element.style.display = "none";
+ }
+});
+if (cashierLoginForm) {
+ cashierLoginForm.addEventListener("submit", async (event) => {
+   event.preventDefault();
+   const username = document
+     .getElementById("cashierUsername")
+     .value.trim();
+   const pin = document
+     .getElementById("cashierPin")
+     .value;
+   cashierLoginMessage.textContent = "";
+   if (!username || !/^\d{6}$/.test(pin)) {
+     cashierLoginMessage.textContent =
+       "Enter your username and 6-digit PIN.";
+     return;
+   }
+   cashierLoginButton.disabled = true;
+   cashierLoginButton.textContent = "Signing in...";
+   try {
+     const response = await fetch(CASHIER_LOGIN_URL, {
+       method: "POST",
+       headers: {
+         "Content-Type": "application/json",
+         "apikey": SUPABASE_KEY,
+         "Authorization": "Bearer " + SUPABASE_KEY
+       },
+       body: JSON.stringify({ username, pin })
+     });
+     const result = await response.json();
+     if (!response.ok) {
+       throw new Error(
+         response.status === 401
+           ? "Invalid username or PIN."
+           : "Unable to sign in. Please try again."
+       );
+     }
+     if (!result.token_hash || result.type !== "magiclink") {
+       throw new Error("The server returned an invalid login response.");
+     }
+     const { data, error } =
+       await cashierAuthClient.auth.verifyOtp({
+         token_hash: result.token_hash,
+         type: "magiclink"
+       });
+     if (error || !data.session) {
+       throw new Error(
+         "Authentication could not be completed. Please try again."
+       );
+     }
+     cashierLoginScreen.style.display = "none";
+     document.querySelectorAll(
+       '[data-cashier-auth-hidden="true"]'
+     ).forEach((element) => {
+       element.style.display = "";
+       delete element.dataset.cashierAuthHidden;
+     });
+     document.getElementById("cashierPin").value = "";
+   } catch (error) {
+     console.error("Cashier login failed:", error);
+     cashierLoginMessage.textContent =
+       error.message || "Login failed. Please try again.";
+   } finally {
+     cashierLoginButton.disabled = false;
+     cashierLoginButton.textContent = "Sign In";
+   }
+ });
+}
 </script>
 </body>
 </html>
