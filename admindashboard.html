@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>HALINA BISTRO CAFE - Owner Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f7f5;
+      color: #222;
+    }
+
+    .topbar {
+      background: #173f2b;
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0.5px;
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .user-email {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .logout-btn {
+      background: #ffffff;
+      color: #173f2b;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .page {
+      max-width: 1250px;
+      margin: 0 auto;
+      padding: 25px;
+    }
+
+    .welcome {
+      margin-bottom: 20px;
+    }
+
+    .welcome h2 {
+      margin: 0 0 5px;
+      font-size: 25px;
+    }
+
+    .welcome p {
+      margin: 0;
+      color: #666;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 5px 18px rgba(0,0,0,0.06);
+      border: 1px solid #e9ece9;
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 10px;
+    }
+
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #173f2b;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 5px 18px rgba(0,0,0,0.05);
+      border: 1px solid #e9ece9;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .section-header h3 {
+      margin: 0;
+      font-size: 19px;
+      color: #173f2b;
+    }
+
+    .refresh-btn {
+      background: #173f2b;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .refresh-btn:hover {
+      background: #215b3d;
+    }
+
+    .orders-table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 750px;
+    }
+
+    th {
+      background: #f0f4f1;
+      color: #173f2b;
+      text-align: left;
+      padding: 12px;
+      font-size: 13px;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .status-new {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-preparing {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .status-ready {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-completed {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .status-cancelled {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .empty {
+      padding: 30px 10px;
+      text-align: center;
+      color: #777;
+    }
+
+    .security-section {
+      display: none;
+    }
+
+    .security-card {
+      border: 1px solid #e5ebe6;
+      border-radius: 12px;
+      padding: 18px;
+      background: #fbfdfb;
+    }
+
+    .security-card h4 {
+      margin: 0 0 7px;
+      color: #173f2b;
+      font-size: 17px;
+    }
+
+    .security-card p {
+      margin: 0 0 15px;
+      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .danger-note {
+      margin-top: 12px;
+      padding: 11px 13px;
+      border-radius: 8px;
+      background: #fff8e6;
+      color: #795800;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .pin-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .pin-modal.show {
+      display: flex;
+    }
+
+    .pin-modal-box {
+      width: 100%;
+      max-width: 440px;
+      background: white;
+      border-radius: 18px;
+      padding: 25px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+
+    .pin-step {
+      display: none;
+    }
+
+    .pin-step.active {
+      display: block;
+    }
+
+    .pin-step h2 {
+      margin: 0 0 8px;
+      color: #173f2b;
+      font-size: 22px;
+    }
+
+    .pin-step p {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .email-display {
+      background: #f0f4f1;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      color: #173f2b !important;
+      word-break: break-word;
+    }
+
+    .pin-input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ccd5ce;
+      border-radius: 9px;
+      font-size: 22px;
+      text-align: center;
+      letter-spacing: 7px;
+      outline: none;
+      margin: 8px 0 14px;
+    }
+
+    .pin-input:focus {
+      border-color: #173f2b;
+      box-shadow: 0 0 0 3px rgba(23,63,43,0.1);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .primary-btn {
+      flex: 1;
+      background: #173f2b;
+      color: white;
+      padding: 12px 15px;
+      border-radius: 9px;
+      font-weight: bold;
+    }
+
+    .primary-btn:hover {
+      background: #215b3d;
+    }
+
+    .secondary-btn {
+      flex: 1;
+      background: #eef1ee;
+      color: #333;
+      padding: 12px 15px;
+      border-radius: 9px;
+      font-weight: bold;
+    }
+
+    .secondary-btn:hover {
+      background: #e0e5e1;
+    }
+
+    .message {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .message.success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .loading {
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    .login-loading {
+      text-align: center;
+      padding: 50px 20px;
+      color: #666;
+    }
+
+    @media (max-width: 900px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .page {
+        padding: 15px;
+      }
+
+      .topbar {
+        padding: 15px;
+      }
+
+      .brand h1 {
+        font-size: 20px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .stat-card {
+        padding: 15px;
+      }
+
+      .stat-card .value {
+        font-size: 23px;
+      }
+
+      .pin-modal-box {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <h1>HALINA BISTRO CAFE</h1>
+      <p>Owner Dashboard</p>
+    </div>
+
+    <div class="top-actions">
+      <span class="user-email" id="userEmail">Checking account...</span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <main class="page">
+
+    <div id="loadingScreen" class="login-loading">
+      Checking your account...
+    </div>
+
+    <div id="dashboardContent" style="display:none;">
+
+      <div class="welcome">
+        <h2>Welcome, Owner</h2>
+        <p>Manage and monitor HALINA BISTRO CAFE.</p>
+      </div>
+
+      <div class="stats">
+
+        <div class="stat-card">
+          <div class="label">Total Orders</div>
+          <div class="value" id="totalOrders">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">New Orders</div>
+          <div class="value" id="newOrders">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Completed Orders</div>
+          <div class="value" id="completedOrders">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Total Sales</div>
+          <div class="value" id="totalSales">₱0.00</div>
+        </div>
+
+      </div>
+
+      <div class="dashboard-grid">
+
+        <section class="section">
+          <div class="section-header">
+            <h3>Recent Orders</h3>
+            <button class="refresh-btn" onclick="loadOrders()">Refresh</button>
+          </div>
+
+          <div class="orders-table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Table</th>
+                  <th>Order Type</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+
+              <tbody id="ordersBody">
+                <tr>
+                  <td colspan="7" class="empty">
+                    Loading orders...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+<section id="securitySection" class="section security-section">
+
+  <div class="section-header">
+    <h3>Security & Staff</h3>
+  </div>
+
+  <div class="security-card">
+    <h4>Individual Cashier PINs</h4>
+
+    <p>
+      Manage each cashier's 6-digit PIN. Locked cashiers
+      can be unlocked by setting a new PIN.
+    </p>
+
+    <div class="form-group">
+      <label for="cashierStaffSelect">Select Cashier</label>
+      <select id="cashierStaffSelect">
+        <option value="">Loading cashiers...</option>
+      </select>
+    </div>
+
+    <div id="cashierStaffStatus" class="message"></div>
+
+    <button
+      id="manageCashierPinBtn"
+      class="refresh-btn"
+      type="button"
+      onclick="openIndividualCashierPinModal()"
+      disabled
+    >
+      Set / Reset Cashier PIN
+    </button>
+
+    <button
+      id="refreshCashiersBtn"
+      class="refresh-btn"
+      type="button"
+      onclick="loadCashierStaff()"
+    >
+      Refresh Cashier List
+    </button>
+  </div>
+
+</section>
+
+    </div>
+
+  </main>
+
+
+  <!-- CASHIER PIN MODAL -->
+
+  <div id="cashierPinModal" class="pin-modal">
+
+    <div class="pin-modal-box">
+
+      <!-- STEP 1 -->
+
+      <div id="pinStep1" class="pin-step active">
+
+        <h2>Change Cashier PIN</h2>
+
+        <p>
+         For security, only the restaurant owner can change the Cashier PIN.
+        </p>
+
+        
+
+        <div class="modal-actions">
+
+          <button
+            id="sendPinCodeBtn"
+            class="primary-btn"
+            onclick="sendPinVerificationCode()"
+          >
+            Continue
+          </button>
+
+          <button
+            class="secondary-btn"
+            onclick="closeCashierPinModal()"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+        <div id="pinStep1Message" class="message"></div>
+
+      </div>
+
+
+    
+
+      <!-- STEP 3 -->
+
+      <div id="pinStep3" class="pin-step">
+
+        <h2>Set New Cashier PIN</h2>
+
+        <p>
+          Create a new 6-digit PIN for the Cashier Dashboard.
+        </p>
+
+        <input
+          id="newCashierPin"
+          class="pin-input"
+          type="password"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="••••••"
+        >
+
+        <input
+          id="confirmCashierPin"
+          class="pin-input"
+          type="password"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="••••••"
+        >
+
+        <div class="modal-actions">
+
+          <button
+            id="saveCashierPinBtn"
+            class="primary-btn"
+            onclick="saveCashierPin()"
+          >
+            Save New PIN
+          </button>
+
+          <button
+            class="secondary-btn"
+            onclick="closeCashierPinModal()"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+        <div id="pinStep3Message" class="message"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    /* =========================================================
+       SUPABASE
+    ========================================================= */
+
+    const SUPABASE_URL =
+      "https://isqcuycjrbjtmqhzckvb.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    /* =========================================================
+       GLOBAL VARIABLES
+    ========================================================= */
+
+    let currentRestaurantId = null;
+    let currentUserRole = null;
+    let currentOwnerEmail = null;
+    let pinVerificationCompleted = false;
+
+
+    /* =========================================================
+       CHECK SESSION
+    ========================================================= */
+
+    async function checkSession() {
+
+      try {
+
+        const {
+          data: {
+            session
+          },
+          error
+        } = await supabaseClient.auth.getSession();
+
+        if (error) {
+          throw error;
+        }
+
+        if (!session) {
+
+          window.location.href = "index.html";
+
+          return;
+        }
+
+        currentOwnerEmail =
+          session.user.email || null;
+
+        document.getElementById("userEmail").textContent =
+          currentOwnerEmail || "Owner";
+
+        await loadUserProfile(session.user);
+
+        if (currentUserRole &&
+    ["owner", "admin"].includes(currentUserRole.toLowerCase())) {
+  await loadCashierStaff();
+}
+
+        document.getElementById("loadingScreen").style.display =
+          "none";
+
+        document.getElementById("dashboardContent").style.display =
+          "block";
+
+        await loadOrders();
+
+      } catch (error) {
+
+        console.error(
+          "Session error:",
+          error
+        );
+
+        document.getElementById("loadingScreen").innerHTML =
+          "Unable to load dashboard. Please login again.";
+
+      }
+
+    }
+
+
+    /* =========================================================
+       LOAD USER PROFILE
+    ========================================================= */
+
+    async function loadUserProfile(user) {
+
+      try {
+
+        /*
+          First try restaurant_users.
+          This keeps the dashboard compatible with
+          the restaurant staff structure.
+        */
+
+        const {
+          data,
+          error
+        } = await supabaseClient
+          .from("restaurant_users")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!error && data) {
+
+          currentUserRole =
+            data.role || "owner";
+
+          currentRestaurantId =
+            data.restaurant_id || null;
+
+        } else {
+
+          /*
+            Owner fallback.
+            The owner account is allowed to access
+            the Security & Staff section.
+          */
+
+          if (
+            user.email &&
+            user.email.toLowerCase() ===
+            "halinabistrocafe101@gmail.com"
+          ) {
+
+            currentUserRole = "owner";
+
+          }
+
+        }
+
+        if (
+          currentUserRole &&
+          currentUserRole.toLowerCase() === "owner"
+        ) {
+
+          document.getElementById(
+            "securitySection"
+          ).style.display = "block";
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Profile error:",
+          error
+        );
+
+        /*
+          Owner fallback.
+        */
+
+        if (
+          user.email &&
+          user.email.toLowerCase() ===
+          "halinabistrocafe101@gmail.com"
+        ) {
+
+          currentUserRole = "owner";
+
+          document.getElementById(
+            "securitySection"
+          ).style.display = "block";
+
+        }
+
+      }
+
+    }
+
+
+    /* =========================================================
+       LOAD ORDERS
+    ========================================================= */
+
+    async function loadOrders() {
+
+      const ordersBody =
+        document.getElementById("ordersBody");
+
+      ordersBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty">
+            Loading orders...
+          </td>
+        </tr>
+      `;
+
+      try {
+
+        let query =
+          supabaseClient
+            .from("orders")
+            .select("*")
+            .order(
+              "created_at",
+              {
+                ascending: false
+              }
+            )
+            .limit(100);
+
+        if (currentRestaurantId) {
+
+          query = query.eq(
+            "restaurant_id",
+            currentRestaurantId
+          );
+
+        }
+
+        const {
+          data,
+          error
+        } = await query;
+
+        if (error) {
+          throw error;
+        }
+
+        const orders =
+          data || [];
+
+        updateOrderStats(orders);
+
+        renderOrders(orders);
+
+      } catch (error) {
+
+        console.error(
+          "Orders error:",
+          error
+        );
+
+        ordersBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty">
+              Unable to load orders.
+              <br>
+              <small>${escapeHtml(error.message || "Unknown error")}</small>
+            </td>
+          </tr>
+        `;
+
+      }
+
+    }
+
+
+    /* =========================================================
+       UPDATE ORDER STATS
+    ========================================================= */
+
+    function updateOrderStats(orders) {
+
+      const total =
+        orders.length;
+
+      const newCount =
+        orders.filter(order =>
+          String(order.status || "")
+            .toLowerCase() === "new"
+        ).length;
+
+      const completedCount =
+        orders.filter(order =>
+          String(order.status || "")
+            .toLowerCase() === "completed"
+        ).length;
+
+      let totalSales = 0;
+
+      orders.forEach(order => {
+
+        const status =
+          String(order.status || "")
+            .toLowerCase();
+
+        if (status !== "cancelled") {
+
+          const value =
+            Number(order.total || 0);
+
+          if (!Number.isNaN(value)) {
+
+            totalSales += value;
+
+          }
+
+        }
+
+      });
+
+      document.getElementById("totalOrders").textContent =
+        total;
+
+      document.getElementById("newOrders").textContent =
+        newCount;
+
+      document.getElementById("completedOrders").textContent =
+        completedCount;
+
+      document.getElementById("totalSales").textContent =
+        "₱" +
+        totalSales.toLocaleString(
+          "en-PH",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }
+        );
+
+    }
+
+
+    /* =========================================================
+       RENDER ORDERS
+    ========================================================= */
+
+    function renderOrders(orders) {
+
+      const ordersBody =
+        document.getElementById("ordersBody");
+
+      if (!orders.length) {
+
+        ordersBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty">
+              No orders yet.
+            </td>
+          </tr>
+        `;
+
+        return;
+      }
+
+      ordersBody.innerHTML =
+        orders.map(order => {
+
+          const status =
+            String(
+              order.status || "new"
+            ).toLowerCase();
+
+          const statusClass =
+            getStatusClass(status);
+
+          const createdAt =
+            order.created_at
+              ? new Date(
+                  order.created_at
+                ).toLocaleString(
+                  "en-PH"
+                )
+              : "-";
+
+          const orderId =
+            order.id || "-";
+
+          const tableNumber =
+            order.table_number ||
+            "-";
+
+          const orderType =
+            order.order_type ||
+            order.orderType ||
+            "-";
+
+          const total =
+            Number(
+              order.total || 0
+            ).toLocaleString(
+              "en-PH",
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              }
+            );
+
+          const payment =
+            order.payment_method ||
+            order.payment ||
+            "-";
+
+          return `
+            <tr>
+
+              <td>
+                ${escapeHtml(
+                  String(orderId)
+                    .substring(0, 12)
+                )}
+              </td>
+
+              <td>
+                ${escapeHtml(
+                  String(tableNumber)
+                )}
+              </td>
+
+              <td>
+                ${escapeHtml(
+                  String(orderType)
+                )}
+              </td>
+
+              <td>
+                ₱${total}
+              </td>
+
+              <td>
+                <span class="status ${statusClass}">
+                  ${escapeHtml(status)}
+                </span>
+              </td>
+
+              <td>
+                ${escapeHtml(
+                  String(payment)
+                )}
+              </td>
+
+              <td>
+                ${escapeHtml(
+                  createdAt
+                )}
+              </td>
+
+            </tr>
+          `;
+
+        }).join("");
+
+    }
+
+
+    /* =========================================================
+       STATUS CLASS
+    ========================================================= */
+
+    function getStatusClass(status) {
+
+      switch (status) {
+
+        case "new":
+          return "status-new";
+
+        case "preparing":
+          return "status-preparing";
+
+        case "ready":
+          return "status-ready";
+
+        case "completed":
+          return "status-completed";
+
+        case "cancelled":
+          return "status-cancelled";
+
+        default:
+          return "status-new";
+
+      }
+
+    }
+
+
+    /* =========================================================
+   INDIVIDUAL CASHIER PIN MANAGEMENT
+========================================================= */
+
+let selectedCashierUserId = null;
+let selectedCashierRecordId = null;
+
+async function loadCashierStaff() {
+  const select = document.getElementById("cashierStaffSelect");
+  const status = document.getElementById("cashierStaffStatus");
+  const manageButton = document.getElementById("manageCashierPinBtn");
+
+  if (!select || !status || !manageButton) return;
+
+  select.innerHTML = '<option value="">Loading cashiers...</option>';
+  manageButton.disabled = true;
+  status.textContent = "";
+
+  try {
+    const { data, error } = await supabaseClient.rpc(
+      "get_restaurant_cashiers"
+    );
+
+    if (error) throw error;
+
+    select.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      select.innerHTML = '<option value="">No cashiers found</option>';
+      status.textContent = "No cashier accounts are assigned to this restaurant.";
+      return;
+    }
+
+    data.forEach(cashier => {
+      const option = document.createElement("option");
+      option.value = cashier.id;
+      option.textContent = "Cashier • " + cashier.user_id.slice(0, 8);
+      option.dataset.userId = cashier.user_id;
+      select.appendChild(option);
+    });
+
+    manageButton.disabled = false;
+    status.textContent = data.length + " cashier account(s) found.";
+
+  } catch (error) {
+    console.error("Load cashier list error:", error);
+    select.innerHTML = '<option value="">Unable to load cashiers</option>';
+    status.textContent = error.message || "Unable to load cashier list.";
+  }
+}
+function openIndividualCashierPinModal() {
+  const select = document.getElementById("cashierStaffSelect");
+  const selected = select?.selectedOptions?.[0];
+
+  if (!selected || !selected.value) {
+    const status = document.getElementById("cashierStaffStatus");
+    if (status) status.textContent = "Select a cashier first.";
+    return;
+  }
+
+  selectedCashierRecordId = selected.value;
+  selectedCashierUserId = selected.dataset.userId;
+
+  document.getElementById("newCashierPin").value = "";
+  document.getElementById("confirmCashierPin").value = "";
+
+  const modalTitle = document.querySelector("#pinStep3 h2");
+  if (modalTitle) modalTitle.textContent = "Set / Reset Cashier PIN";
+
+  const modalDescription = document.querySelector("#pinStep3 p");
+  if (modalDescription) {
+    modalDescription.textContent =
+      "Set a new 6-digit PIN for " + selected.textContent + ". This also clears the lockout.";
+  }
+
+  clearPinMessages();
+  showPinStep(3);
+  document.getElementById("cashierPinModal").classList.add("show");
+}
+
+function closeCashierPinModal() {
+  document.getElementById("cashierPinModal").classList.remove("show");
+
+  clearPinMessages();
+
+  document.getElementById("newCashierPin").value = "";
+  document.getElementById("confirmCashierPin").value = "";
+
+  selectedCashierRecordId = null;
+  selectedCashierUserId = null;
+
+  showPinStep(1);
+}
+
+function showPinStep(stepNumber) {
+  document.querySelectorAll(".pin-step").forEach(step => {
+    step.classList.remove("active");
+  });
+
+  const step = document.getElementById("pinStep" + stepNumber);
+  if (step) step.classList.add("active");
+}
+
+function clearPinMessages() {
+  ["pinStep1Message", "pinStep3Message"].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.className = "message";
+      element.textContent = "";
+    }
+  });
+}
+
+function showPinMessage(step, message, type) {
+  const element = document.getElementById("pinStep" + step + "Message");
+  if (!element) return;
+
+  element.textContent = message;
+  element.className = "message show " + type;
+}
+
+async function sendPinVerificationCode() {
+  showPinMessage(
+    1,
+    "Use the Individual Cashier PIN section to select a cashier.",
+    "error"
+  );
+}
+
+async function saveCashierPin() {
+  if (!selectedCashierRecordId) {
+    showPinMessage(3, "Select a cashier first.", "error");
+    return;
+  }
+
+  const newPin = document.getElementById("newCashierPin").value.trim();
+  const confirmPin = document.getElementById("confirmCashierPin").value.trim();
+
+  if (!/^[0-9]{6}$/.test(newPin)) {
+    showPinMessage(3, "PIN must be exactly 6 digits.", "error");
+    return;
+  }
+
+  if (newPin !== confirmPin) {
+    showPinMessage(3, "PIN confirmation does not match.", "error");
+    return;
+  }
+
+  const button = document.getElementById("saveCashierPinBtn");
+  button.disabled = true;
+  button.textContent = "Saving...";
+  clearPinMessages();
+
+  try {
+    const { error } = await supabaseClient.rpc(
+      "set_cashier_pin_for_user",
+      {
+        p_restaurant_user_id: selectedCashierRecordId,
+        p_new_pin: newPin
+      }
+    );
+
+    if (error) throw error;
+
+    showPinMessage(
+      3,
+      "Cashier PIN saved and lockout cleared.",
+      "success"
+    );
+
+    await loadCashierStaff();
+
+    setTimeout(() => closeCashierPinModal(), 1200);
+
+  } catch (error) {
+    console.error("Save individual cashier PIN error:", error);
+
+    showPinMessage(
+      3,
+      error.message || "Unable to save the cashier PIN.",
+      "error"
+    );
+
+  } finally {
+    button.disabled = false;
+    button.textContent = "Save New PIN";
+  }
+}
+    /* =========================================================
+       LOGOUT
+    ========================================================= */
+
+    async function logout() {
+
+      try {
+
+        await supabaseClient.auth.signOut();
+
+      } catch (error) {
+
+        console.error(
+          "Logout error:",
+          error
+        );
+
+      }
+
+      window.location.href =
+        "index.html";
+
+    }
+
+
+    /* =========================================================
+       ESCAPE HTML
+    ========================================================= */
+
+    function escapeHtml(value) {
+
+      return String(value)
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+        .replace(
+          /</g,
+          "&lt;"
+        )
+        .replace(
+          />/g,
+          "&gt;"
+        )
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+        .replace(
+          /'/g,
+          "&#039;"
+        );
+
+    }
+
+
+    /* =========================================================
+       AUTO CHECK SESSION
+    ========================================================= */
+
+    checkSession();
+
+
+    /* =========================================================
+       AUTH STATE LISTENER
+    ========================================================= */
+
+    supabaseClient.auth.onAuthStateChange(
+      (event, session) => {
+
+        if (
+          event === "SIGNED_OUT"
+        ) {
+
+          window.location.href =
+            "index.html";
+
+        }
+
+      }
+    );
+
+
+    /* =========================================================
+       CLOSE MODAL WHEN CLICKING OUTSIDE
+    ========================================================= */
+
+    document
+      .getElementById("cashierPinModal")
+      .addEventListener(
+        "click",
+        function(event) {
+
+          if (
+            event.target === this
+          ) {
+
+            closeCashierPinModal();
+
+          }
+
+        }
+      );
+
+
+    /* =========================================================
+       NUMERIC INPUT HELPERS
+    ========================================================= */
+
+  
+    document
+      .getElementById("newCashierPin")
+      .addEventListener(
+        "input",
+        function() {
+
+          this.value =
+            this.value
+              .replace(
+                /[^0-9]/g,
+                ""
+              )
+              .slice(
+                0,
+                6
+              );
+
+        }
+      );
+
+
+    document
+      .getElementById("confirmCashierPin")
+      .addEventListener(
+        "input",
+        function() {
+
+          this.value =
+            this.value
+              .replace(
+                /[^0-9]/g,
+                ""
+              )
+              .slice(
+                0,
+                6
+              );
+
+        }
+      );
+
+  </script>
+</body>
+</html>
