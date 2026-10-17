@@ -5581,6 +5581,45 @@ body.pos-other-view .page-section {
 #ordersSection .order-details-items {
   padding-top: 8px;
 }
+  /* =========================
+  CASHIER SIGN OUT BUTTON
+========================= */
+.cashier-signout-btn {
+ position: relative;
+ z-index: 2;
+ width: 48px;
+ min-height: 48px;
+ flex-shrink: 0;
+ margin-top: auto;
+ border: 0;
+ border-radius: 12px;
+ background: transparent;
+ color: #9b4942;
+ cursor: pointer;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ padding: 0;
+ transition:
+   background-color 0.25s ease,
+   transform 0.25s ease;
+}
+.cashier-signout-btn svg {
+ display: block;
+ width: 24px;
+ height: 24px;
+ fill: none;
+ stroke: currentColor;
+ stroke-width: 1.8;
+ stroke-linecap: round;
+ stroke-linejoin: round;
+}
+.cashier-signout-btn:hover {
+ background: #f5e4e1;
+}
+.cashier-signout-btn:active {
+ transform: scale(0.94);
+}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -5893,8 +5932,22 @@ body.pos-other-view .page-section {
       <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>
       <path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.9l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.6.9l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8Z" transform="translate(-1 -2) scale(1.08)"/>
     </svg>
+    
   </button>
-
+<!-- CASHIER SIGN OUT -->
+<button
+ type="button"
+ id="cashierSignOutButton"
+ class="cashier-signout-btn"
+ aria-label="Sign Out"
+ title="Sign Out"
+>
+<svg viewBox="0 0 24 24" aria-hidden="true">
+<path d="M10 17l5-5-5-5"/>
+<path d="M15 12H3"/>
+<path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/>
+</svg>
+</button>
 </aside>
   <!-- =====================
      POS MAIN AREA
@@ -12172,6 +12225,35 @@ if (cashierLoginForm) {
      );
    } finally {
      setCashierLoginLoading(false);
+   }
+ });
+}
+  /* =========================
+  CASHIER SIGN OUT HANDLER
+========================= */
+const cashierSignOutButton =
+ document.getElementById("cashierSignOutButton");
+if (cashierSignOutButton && cashierAuthClient) {
+ cashierSignOutButton.addEventListener("click", async () => {
+   const confirmed = window.confirm(
+     "Are you sure you want to sign out?"
+   );
+   if (!confirmed) return;
+   cashierSignOutButton.disabled = true;
+   try {
+     const { error } =
+       await cashierAuthClient.auth.signOut();
+     if (error) {
+       throw error;
+     }
+     window.location.reload();
+   } catch (error) {
+     console.error("Cashier sign out failed:", error);
+     window.alert(
+       "Unable to sign out. Please try again."
+     );
+   } finally {
+     cashierSignOutButton.disabled = false;
    }
  });
 }
