@@ -6274,7 +6274,7 @@ background:
     0 0 34px rgba(255, 174, 35, 0.😎,
     inset 0 0 12px rgba(255, 210, 120, 0.45);
   animation:
-    halinaFanOrbit 1.15s linear infinite,
+
     halinaPinNeonPulse 700ms ease-in-out infinite alternate;
 }
 
@@ -12888,13 +12888,64 @@ function showCashierLogin(message = "") {
     cashierLoginMessage.textContent = message;
   }
 }
+let cashierFanAnimationFrame = null;
+let cashierFanStartedAt = 0;
 
+function startCashierFanAnimation() {
+  stopCashierFanAnimation();
+
+  const boxes = document.querySelectorAll(
+    "#cashierPinBoxes .cashier-pin-box"
+  );
+
+  if (boxes.length !== 6) return;
+
+  const baseAngles = [0, 60, 120, 180, 240, 300];
+  cashierFanStartedAt = performance.now();
+
+  function animateFan(now) {
+    const elapsed = (now - cashierFanStartedAt) / 1000;
+
+    // Starts at 90 degrees/second and continuously accelerates.
+    const rotation = 90 * elapsed + 90 * elapsed * elapsed;
+
+    boxes.forEach((box, index) => {
+      const angle = baseAngles[index];
+
+      box.style.transform = `
+        translate(-50%, -50%)
+        rotate(${angle + rotation}deg)
+        translateY(-47px)
+        rotate(${-angle - rotation}deg)
+      `;
+    });
+
+    cashierFanAnimationFrame =
+      requestAnimationFrame(animateFan);
+  }
+
+  cashierFanAnimationFrame =
+    requestAnimationFrame(animateFan);
+}
+
+function stopCashierFanAnimation() {
+  if (cashierFanAnimationFrame !== null) {
+    cancelAnimationFrame(cashierFanAnimationFrame);
+    cashierFanAnimationFrame = null;
+  }
+
+  document
+    .querySelectorAll("#cashierPinBoxes .cashier-pin-box")
+    .forEach((box) => {
+      box.style.removeProperty("transform");
+    });
+}
 function setCashierLoginLoading(isLoading) {
-  if (!cashierLoginButton) return;
-
-  cashierLoginButton.disabled = isLoading;
-  cashierLoginButton.textContent =
-    isLoading ? "Verifying..." : "Sign In";
+  if (cashierLoginButton) {
+    cashierLoginButton.disabled = isLoading;
+    cashierLoginButton.textContent =
+      isLoading ? "Verifying..." : "Sign In";
+  }
 
   if (cashierContinueButton) {
     cashierContinueButton.disabled = isLoading;
@@ -12907,13 +12958,19 @@ function setCashierLoginLoading(isLoading) {
     );
   }
 
-  const pinBoxes = document.getElementById("cashierPinBoxes");
+  const pinBoxes =
+    document.getElementById("cashierPinBoxes");
 
   if (pinBoxes) {
     pinBoxes.classList.toggle("is-verifying", isLoading);
   }
-}
 
+  if (isLoading) {
+    startCashierFanAnimation();
+  } else {
+    stopCashierFanAnimation();
+  }
+}
 /* Hide the POS immediately while checking the session. */
 showCashierLogin();
 
@@ -13068,6 +13125,10 @@ if (cashierLoginForm) {
       return;
     }
 
+    const verificationStartedAt = Date.now();
+    let loginSucceeded = false;
+    let loginErrorMessage = "";
+
     setCashierLoginLoading(true);
 
     try {
@@ -13113,17 +13174,35 @@ if (cashierLoginForm) {
         cashierPinInput.value = "";
       }
 
-      showCashierPOS();
+      loginSucceeded = true;
 
     } catch (error) {
       console.error("Cashier login failed:", error);
 
-      showCashierLogin(
-        error.message || "Login failed. Please try again."
-      );
+      loginErrorMessage =
+        error.message || "Login failed. Please try again.";
 
     } finally {
+      const remaining = Math.max(
+        0,
+        5000 - (Date.now() - verificationStartedAt)
+      );
+
+      if (remaining > 0) {
+        await new Promise(resolve =>
+          setTimeout(resolve, remaining)
+        );
+      }
+
       setCashierLoginLoading(false);
+
+      if (loginSucceeded) {
+        showCashierPOS();
+      } else {
+        showCashierLogin(
+          loginErrorMessage || "Login failed. Please try again."
+        );
+      }
     }
   });
 }
