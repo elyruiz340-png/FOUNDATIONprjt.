@@ -12569,35 +12569,6 @@ if (cashierBackButton) {
 /* Begin on the username screen. */
 cashierShowUsernameStep();
 
-function cashierShowPinStep() {
-  const username = cashierUsernameInput.value.trim();
-
-  if (!username) {
-    cashierLoginMessage.textContent =
-      "Please enter your username first.";
-    cashierUsernameInput.focus();
-    return;
-  }
-
-  const usernamePreviewValue = cashierUsernamePreview.querySelector("strong");
-  if (usernamePreviewValue) usernamePreviewValue.textContent = username;
-
-  cashierUsernameStep.hidden = true;
-  cashierPinStep.hidden = false;
-
-  cashierUsernameInput.disabled = false;
-  cashierUsernameInput.required = true;
-
-  cashierPinInput.disabled = false;
-  cashierPinInput.required = true;
-
-  cashierLoginTitle.textContent = "Secure Sign In";
-  cashierLoginSubtitle.textContent =
-    "Enter your 6-digit cashier PIN";
-
-  cashierLoginMessage.textContent = "";
-  cashierPinInput.focus();
-}
 
 if (cashierContinueButton) {
   cashierContinueButton.addEventListener(
