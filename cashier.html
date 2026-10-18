@@ -5599,40 +5599,80 @@ body.pos-other-view .page-section {
     </div>
 
     <div class="cashier-login-heading">
-      <h2>Cashier Login</h2>
-      <p>Sign in to access the cashier system</p>
+      <h2 id="cashierLoginTitle">Welcome Back</h2>
+      <p id="cashierLoginSubtitle">Enter your cashier username to continue</p>
     </div>
 
-    <form id="cashierLoginForm">
-      <label for="cashierUsername">Username</label>
-      <input
-        id="cashierUsername"
-        name="username"
-        type="text"
-        placeholder="Enter your username"
-        autocomplete="username"
-        maxlength="80"
-        required
-      >
+    <form id="cashierLoginForm" novalidate>
 
-      <label for="cashierPin">6-Digit PIN</label>
-      <input
-        id="cashierPin"
-        name="pin"
-        type="password"
-        placeholder="Enter your 6-digit PIN"
-        inputmode="numeric"
-        pattern="[0-9]{6}"
-        maxlength="6"
-        autocomplete="current-password"
-        required
-      >
+      <div id="cashierUsernameStep">
+        <label for="cashierUsername">Username</label>
+        <input
+          id="cashierUsername"
+          name="username"
+          type="text"
+          placeholder="Enter your username"
+          autocomplete="username"
+          maxlength="80"
+          required
+        >
 
-      <p id="cashierLoginMessage" role="alert" aria-live="polite"></p>
+        <button id="cashierContinueButton" type="button">
+          Continue
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
 
-      <button id="cashierLoginButton" type="submit">
-        Sign In
-      </button>
+      <div id="cashierPinStep" hidden>
+        <button
+          id="cashierBackButton"
+          type="button"
+          class="cashier-back-button"
+        >
+          ← Change username
+        </button>
+
+        <div class="cashier-username-preview">
+          <span>Signing in as</span>
+          <strong id="cashierUsernamePreview"></strong>
+        </div>
+
+        <label for="cashierPin">6-Digit PIN</label>
+        <input
+          id="cashierPin"
+          name="pin"
+          type="password"
+          placeholder="Enter your 6-digit PIN"
+          inputmode="numeric"
+          pattern="[0-9]{6}"
+          maxlength="6"
+          autocomplete="current-password"
+          required
+          disabled
+        >
+
+        <div
+          id="cashierVerificationBox"
+          class="cashier-verification-box"
+          aria-hidden="true"
+        >
+          <div class="cashier-verification-cube"></div>
+        </div>
+
+        <p class="cashier-verification-caption">
+          Your account will be securely verified
+        </p>
+
+        <button id="cashierLoginButton" type="submit">
+          Sign In
+        </button>
+      </div>
+
+      <p
+        id="cashierLoginMessage"
+        role="alert"
+        aria-live="polite"
+      ></p>
     </form>
 
     <p class="cashier-login-footer">
@@ -5652,43 +5692,65 @@ body.pos-other-view .page-section {
     justify-content: center;
     padding: 24px;
     overflow-y: auto;
-    background:
-      radial-gradient(
-        circle at top left,
-        rgba(220, 190, 151, 0.35),
-        transparent 42%
-      ),
-      #f4eadb;
+    box-sizing: border-box;
     font-family: Arial, sans-serif;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(32, 23, 16, 0.72),
+        rgba(32, 23, 16, 0.32)
+      ),
+      url("https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2000&q=85")
+      center / cover no-repeat,
+      #3d2b1f;
+  }
+
+  #cashierLoginScreen *,
+  #cashierLoginScreen *::before,
+  #cashierLoginScreen *::after {
+    box-sizing: border-box;
   }
 
   .cashier-login-card {
     width: 100%;
-    max-width: 420px;
+    max-width: 430px;
     padding: 36px;
-    border: 1px solid #e5d4bd;
+    border: 1px solid rgba(255, 255, 255, 0.65);
     border-radius: 22px;
-    background: #fffaf3;
-    box-shadow: 0 18px 55px rgba(61, 43, 31, 0.13);
+    background: rgba(255, 250, 243, 0.97);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+    animation: cashierLoginAppear 0.45s ease both;
+  }
+
+  @keyframes cashierLoginAppear {
+    from {
+      opacity: 0;
+      transform: translateY(14px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
   .cashier-login-brand {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 28px;
   }
 
   .cashier-login-logo {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
+    width: 62px;
+    height: 62px;
     margin: 0 auto 12px;
     border-radius: 18px;
     background: #6b4428;
     color: #fffaf3;
     font-size: 32px;
     font-weight: 700;
+    box-shadow: 0 8px 20px rgba(107, 68, 40, 0.22);
   }
 
   .cashier-login-brand h1 {
@@ -5720,6 +5782,7 @@ body.pos-other-view .page-section {
     margin: 0;
     color: #8b7968;
     font-size: 13px;
+    line-height: 1.5;
   }
 
   #cashierLoginForm label {
@@ -5731,8 +5794,9 @@ body.pos-other-view .page-section {
   }
 
   #cashierLoginForm input {
+    display: block;
     width: 100%;
-    min-height: 48px;
+    min-height: 49px;
     padding: 12px 14px;
     border: 1px solid #ddcbb5;
     border-radius: 10px;
@@ -5740,28 +5804,45 @@ body.pos-other-view .page-section {
     background: #fff;
     color: #3d2b1f;
     font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
 
   #cashierLoginForm input:focus {
     border-color: #8b6948;
-    box-shadow: 0 0 0 3px rgba(139, 105, 72, 0.12);
+    box-shadow: 0 0 0 3px rgba(139, 105, 72, 0.13);
   }
 
   #cashierPin {
-    letter-spacing: 5px;
+    letter-spacing: 6px;
   }
 
+  #cashierContinueButton,
   #cashierLoginButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     width: 100%;
-    min-height: 49px;
+    min-height: 50px;
     margin-top: 24px;
     border: 0;
     border-radius: 10px;
     background: #6b4428;
-    color: white;
+    color: #fff;
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  #cashierContinueButton:hover,
+  #cashierLoginButton:hover {
+    background: #51321f;
+  }
+
+  #cashierContinueButton:active,
+  #cashierLoginButton:active {
+    transform: scale(0.99);
   }
 
   #cashierLoginButton:disabled {
@@ -5769,11 +5850,83 @@ body.pos-other-view .page-section {
     cursor: wait;
   }
 
+  .cashier-back-button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #79583e;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .cashier-username-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 20px;
+    padding: 12px 14px;
+    border: 1px solid #e5d4bd;
+    border-radius: 10px;
+    background: #f7efe4;
+  }
+
+  .cashier-username-preview span {
+    color: #8b7968;
+    font-size: 11px;
+  }
+
+  .cashier-username-preview strong {
+    overflow-wrap: anywhere;
+    color: #513a28;
+    font-size: 14px;
+  }
+
+  .cashier-verification-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 62px;
+    margin-top: 16px;
+  }
+
+  .cashier-verification-cube {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #ddcbb5;
+    border-top-color: #6b4428;
+    border-right-color: #6b4428;
+    border-radius: 5px;
+    transform: rotate(0deg);
+  }
+
+  #cashierLoginScreen.cashier-verifying
+    .cashier-verification-cube {
+    animation: cashierCubeRotate 0.9s linear infinite;
+  }
+
+  @keyframes cashierCubeRotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .cashier-verification-caption {
+    margin: 0;
+    color: #8b7968;
+    font-size: 11px;
+    text-align: center;
+  }
+
   #cashierLoginMessage {
     min-height: 18px;
     margin: 12px 0 0;
     color: #b42318;
     font-size: 13px;
+    line-height: 1.45;
   }
 
   .cashier-login-footer {
@@ -5784,12 +5937,23 @@ body.pos-other-view .page-section {
   }
 
   @media (max-width: 480px) {
+    #cashierLoginScreen {
+      padding: 16px;
+    }
+
     .cashier-login-card {
-      padding: 26px 22px;
+      padding: 27px 22px;
+      border-radius: 18px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cashier-login-card,
+    .cashier-verification-cube {
+      animation-duration: 0.01ms !important;
     }
   }
 </style>
-
 <!-- =========================
      POS NAVIGATION
 ========================= -->
@@ -12020,7 +12184,98 @@ const cashierLoginButton =
 
 const cashierPinInput =
   document.getElementById("cashierPin");
+/* =========================
+   CASHIER LOGIN SCREEN FLOW
+========================= */
 
+const cashierUsernameInput =
+  document.getElementById("cashierUsername");
+
+const cashierUsernameStep =
+  document.getElementById("cashierUsernameStep");
+
+const cashierPinStep =
+  document.getElementById("cashierPinStep");
+
+const cashierContinueButton =
+  document.getElementById("cashierContinueButton");
+
+const cashierBackButton =
+  document.getElementById("cashierBackButton");
+
+const cashierLoginTitle =
+  document.getElementById("cashierLoginTitle");
+
+const cashierLoginSubtitle =
+  document.getElementById("cashierLoginSubtitle");
+
+const cashierUsernamePreview =
+  document.getElementById("cashierUsernamePreview");
+
+function cashierShowUsernameStep() {
+  cashierUsernameStep.hidden = false;
+  cashierPinStep.hidden = true;
+
+  cashierUsernameInput.disabled = false;
+  cashierUsernameInput.required = true;
+
+  cashierPinInput.disabled = true;
+  cashierPinInput.required = false;
+  cashierPinInput.value = "";
+
+  cashierLoginTitle.textContent = "Welcome Back";
+  cashierLoginSubtitle.textContent =
+    "Enter your cashier username to continue";
+
+  cashierLoginScreen.classList.remove("cashier-verifying");
+  cashierLoginMessage.textContent = "";
+}
+
+function cashierShowPinStep() {
+  const username = cashierUsernameInput.value.trim();
+
+  if (!username) {
+    cashierLoginMessage.textContent =
+      "Please enter your username first.";
+    cashierUsernameInput.focus();
+    return;
+  }
+
+  cashierUsernamePreview.textContent = username;
+
+  cashierUsernameStep.hidden = true;
+  cashierPinStep.hidden = false;
+
+  cashierUsernameInput.disabled = false;
+  cashierUsernameInput.required = true;
+
+  cashierPinInput.disabled = false;
+  cashierPinInput.required = true;
+
+  cashierLoginTitle.textContent = "Secure Sign In";
+  cashierLoginSubtitle.textContent =
+    "Enter your 6-digit cashier PIN";
+
+  cashierLoginMessage.textContent = "";
+  cashierPinInput.focus();
+}
+
+if (cashierContinueButton) {
+  cashierContinueButton.addEventListener(
+    "click",
+    cashierShowPinStep
+  );
+}
+
+if (cashierBackButton) {
+  cashierBackButton.addEventListener("click", () => {
+    cashierShowUsernameStep();
+    cashierUsernameInput.focus();
+  });
+}
+
+/* Begin on the username screen. */
+cashierShowUsernameStep();
 const CASHIER_LOGIN_URL =
   SUPABASE_URL + "/functions/v1/cashier-login";
 
@@ -12076,7 +12331,18 @@ function setCashierLoginLoading(isLoading) {
 
   cashierLoginButton.disabled = isLoading;
   cashierLoginButton.textContent =
-    isLoading ? "Signing in..." : "Sign In";
+    isLoading ? "Verifying..." : "Sign In";
+
+  if (cashierContinueButton) {
+    cashierContinueButton.disabled = isLoading;
+  }
+
+  if (cashierLoginScreen) {
+    cashierLoginScreen.classList.toggle(
+      "cashier-verifying",
+      isLoading
+    );
+  }
 }
 
 /* Hide the POS immediately while checking the session. */
