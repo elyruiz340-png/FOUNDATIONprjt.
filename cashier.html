@@ -5686,43 +5686,125 @@ backdrop-filter: blur(6px) saturate(135%);
 }
 
 /* Soft liquid-glass reflections */
+.cashier-login-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  width: 100%;
+  max-width: 430px;
+  padding: 36px;
+
+  border: 1px solid rgba(255, 224, 160, 0.28);
+  border-radius: 34px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(20, 20, 19, 0.35) 38%,
+      rgba(12, 13, 12, 0.62) 65%,
+      rgba(216, 181, 109, 0.045) 100%
+    ),
+    rgba(16, 17, 16, 0.56);
+
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+
+  box-shadow:
+    0 0 12px rgba(225, 190, 110, 0.10),
+    0 0 30px rgba(225, 190, 110, 0.06),
+    0 28px 80px rgba(0, 0, 0, 0.42),
+    0 8px 24px rgba(0, 0, 0, 0.22),
+    inset 0 2px 3px rgba(255, 255, 255, 0.25),
+    inset 2px 0 4px rgba(255, 255, 255, 0.10),
+    inset -2px 0 4px rgba(255, 255, 255, 0.08),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.25);
+
+  animation: cashierLoginAppear 0.45s ease both;
+}
+
+/* Moving water-like light reflections */
 .cashier-login-card::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -45%;
   z-index: -1;
   pointer-events: none;
   border-radius: inherit;
 
   background:
     radial-gradient(
-      ellipse at 12% 0%,
-      rgba(255, 255, 255, 0.24),
-      transparent 38%
+      ellipse at 20% 25%,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.06) 12%,
+      transparent 30%
     ),
     radial-gradient(
-      ellipse at 100% 100%,
-      rgba(216, 181, 109, 0.12),
-      transparent 42%
+      ellipse at 75% 65%,
+      rgba(232, 190, 105, 0.22) 0%,
+      rgba(232, 190, 105, 0.06) 15%,
+      transparent 34%
     ),
     linear-gradient(
-      155deg,
-      rgba(255, 255, 255, 0.09),
-      transparent 38%,
-      rgba(255, 255, 255, 0.025) 72%,
-      rgba(255, 255, 255, 0.075)
+      125deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.02) 38%,
+      rgba(255, 255, 255, 0.20) 42%,
+      rgba(222, 185, 115, 0.13) 45%,
+      transparent 51%,
+      transparent 64%,
+      rgba(255, 255, 255, 0.10) 68%,
+      transparent 73%
     );
+
+  opacity: 0.8;
+  filter: blur(5px);
+  transform: translate3d(-8%, -5%, 0) rotate(0deg);
+  animation: cashierLiquidGlare 12s ease-in-out infinite alternate;
 }
 
-/* Fine reflective edge */
+/* Smooth continuous glass rim */
 .cashier-login-card::after {
   content: "";
   position: absolute;
   inset: 1px;
   z-index: -1;
   pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 25px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: inherit;
+
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.22),
+    inset 0 -1px 2px rgba(255, 224, 160, 0.10);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.09),
+      transparent 24%,
+      transparent 72%,
+      rgba(255, 224, 160, 0.07)
+    );
+}
+
+/* Slow flowing reflection movement */
+@keyframes cashierLiquidGlare {
+  0% {
+    transform: translate3d(-8%, -5%, 0) rotate(0deg);
+    background-position: 0% 0%;
+  }
+
+  50% {
+    transform: translate3d(4%, 3%, 0) rotate(4deg);
+    background-position: 60% 45%;
+  }
+
+  100% {
+    transform: translate3d(8%, -2%, 0) rotate(-3deg);
+    background-position: 100% 70%;
+  }
 }
 
   @keyframes cashierLoginAppear {
