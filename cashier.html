@@ -6231,7 +6231,7 @@ if (cashierAuthClient) {
     <button
       type="button"
       id="cashierLogoutButton"
-      class="pos-sidebar-btn cashier-logout-sidebar-btn"
+      class="cashier-logout-sidebar-btn"
       aria-label="Log Out"
       title="Log Out"
     >
@@ -7595,7 +7595,7 @@ if (cashierAuthClient) {
   <p>Sign out securely when your shift is finished.</p>
   <button
     type="button"
-    id="cashierLogoutButton"
+  id="cashierSettingsLogoutButton"
     class="cashier-logout-button"
   >
     Log Out
@@ -12761,9 +12761,10 @@ if (cashierLogoutButton) {
       window.alert(
         "Unable to log out. Please try again."
       );
-    } finally {
-      cashierLogoutButton.disabled = false;
-    }
+  } finally {
+  cashierLogoutButton.disabled = false;
+  cashierLogoutButton.textContent = "Log Out";
+}
   });
 }
 /* Authenticate with the server-side username + PIN check. */
