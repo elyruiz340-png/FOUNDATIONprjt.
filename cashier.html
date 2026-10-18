@@ -12087,17 +12087,18 @@ try {
     throw new Error("The authentication library could not load.");
   }
 
-  cashierAuthClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: false
-      }
+ cashierAuthClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  {
+    auth: {
+      storageKey: "halina-cashier-auth",
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false
     }
-  );
+  }
+);
 } catch (error) {
   console.error("Cashier authentication setup failed:", error);
   showCashierLogin(
