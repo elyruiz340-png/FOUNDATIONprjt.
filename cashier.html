@@ -6183,6 +6183,106 @@ background:
   animation: none !important;
   opacity: 0 !important;
 }
+   /* =========================
+   HALINA CASHIER PIN BOXES
+========================= */
+
+.cashier-pin-boxes {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 16px 0 22px;
+}
+
+.cashier-pin-boxes #cashierPin {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: text;
+}
+
+.cashier-pin-box {
+  height: 54px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(226, 196, 139, 0.65);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.cashier-pin-boxes:focus-within .cashier-pin-box {
+  border-color: rgba(238, 207, 151, 0.9);
+}
+
+.cashier-pin-box.is-filled {
+  background: rgba(232, 201, 138, 0.12);
+  border-color: #e8c98a;
+}
+
+.cashier-pin-box.is-current {
+  border-color: #f0d7a5;
+  box-shadow: 0 0 0 2px rgba(232, 201, 138, 0.16);
+  transform: translateY(-2px);
+}
+
+.cashier-pin-boxes.is-verifying .cashier-pin-box {
+  animation: cashierPinVerifyPulse 900ms ease-in-out infinite alternate;
+}
+
+.cashier-pin-boxes.is-error .cashier-pin-box {
+  border-color: #e58b83;
+  animation: cashierPinErrorShake 300ms ease-in-out;
+}
+
+@keyframes cashierPinVerifyPulse {
+  from {
+    box-shadow: 0 0 0 0 rgba(232, 201, 138, 0.08);
+  }
+  to {
+    box-shadow: 0 0 9px 2px rgba(232, 201, 138, 0.24);
+  }
+}
+
+@keyframes cashierPinErrorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+@media (max-width: 420px) {
+  .cashier-pin-boxes {
+    gap: 6px;
+  }
+
+  .cashier-pin-box {
+    height: 46px;
+    border-radius: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cashier-pin-box,
+  .cashier-pin-boxes.is-verifying .cashier-pin-box,
+  .cashier-pin-boxes.is-error .cashier-pin-box {
+    animation: none;
+    transition: none;
+  }
+}
 </style>
 <!-- =========================
      POS NAVIGATION
@@ -6203,18 +6303,41 @@ background:
         <input id="cashierUsername" name="username" type="text" autocomplete="username" required>
         <button id="cashierContinueButton" type="button">Continue</button>
       </div>
-      <div id="cashierPinStep" hidden>
-        <div class="cashier-username-preview" id="cashierUsernamePreview">
-          <span>Signing in as</span>
-          <strong></strong>
-        </div>
-        <label for="cashierPin">6-Digit Cashier PIN</label>
-        <input id="cashierPin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="current-password" disabled required>
-        <div class="cashier-login-actions">
-          <button id="cashierBackButton" class="cashier-back-button" type="button">Back</button>
-          <button id="cashierLoginButton" type="submit">Sign In</button>
-        </div>
-      </div>
+     <div id="cashierPinStep" hidden>
+  <label for="cashierPin">6-Digit Cashier PIN</label>
+
+  <div class="cashier-pin-boxes" id="cashierPinBoxes">
+    <input
+      id="cashierPin"
+      name="pin"
+      type="password"
+      inputmode="numeric"
+      pattern="[0-9]{6}"
+      maxlength="6"
+      autocomplete="current-password"
+      disabled
+      required
+      aria-label="Enter your 6-digit cashier PIN"
+    >
+
+    <div class="cashier-pin-box" aria-hidden="true"></div>
+    <div class="cashier-pin-box" aria-hidden="true"></div>
+    <div class="cashier-pin-box" aria-hidden="true"></div>
+    <div class="cashier-pin-box" aria-hidden="true"></div>
+    <div class="cashier-pin-box" aria-hidden="true"></div>
+    <div class="cashier-pin-box" aria-hidden="true"></div>
+  </div>
+
+  <div class="cashier-login-actions">
+    <button
+      id="cashierBackButton"
+      class="cashier-back-button"
+      type="button"
+    >Back</button>
+
+    <button id="cashierLoginButton" type="submit">Sign In</button>
+  </div>
+</div>
       <div class="cashier-verification-box" aria-hidden="true"><div class="cashier-verification-cube"></div></div>
       <p class="cashier-verification-caption">Secure cashier verification</p>
       <p id="cashierLoginMessage" role="alert" aria-live="polite"></p>
@@ -12413,7 +12536,55 @@ const cashierLoginButton =
 
 const cashierPinInput =
   document.getElementById("cashierPin");
-  
+
+  /* =========================
+   HALINA CASHIER PIN BOX LOGIC
+========================= */
+
+const cashierPinBoxesContainer =
+  document.getElementById("cashierPinBoxes");
+
+const cashierPinVisualBoxes = cashierPinBoxesContainer
+  ? Array.from(
+      cashierPinBoxesContainer.querySelectorAll(".cashier-pin-box")
+    )
+  : [];
+
+function cashierUpdatePinBoxes() {
+  if (!cashierPinInput || cashierPinVisualBoxes.length !== 6) return;
+
+  const pin = cashierPinInput.value.replace(/\D/g, "").slice(0, 6);
+
+  if (cashierPinInput.value !== pin) {
+    cashierPinInput.value = pin;
+  }
+
+  cashierPinVisualBoxes.forEach((box, index) => {
+    box.classList.toggle("is-filled", index < pin.length);
+    box.classList.toggle(
+      "is-current",
+      index === pin.length && pin.length < 6
+    );
+
+    box.textContent = index < pin.length ? "•" : "";
+  });
+}
+
+if (cashierPinInput && cashierPinBoxesContainer) {
+  cashierPinInput.addEventListener("input", cashierUpdatePinBoxes);
+
+  cashierPinInput.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+    }
+  });
+
+  cashierPinBoxesContainer.addEventListener("click", () => {
+    cashierPinInput.focus();
+  });
+
+  cashierUpdatePinBoxes();
+}
 /* =========================
    CASHIER LOGIN SCREEN FLOW
 ========================= */
