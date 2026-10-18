@@ -5651,21 +5651,79 @@ body.pos-other-view .page-section {
     box-sizing: border-box;
   }
 
-  .cashier-login-card {
-    width: 100%;
-    max-width: 430px;
-    padding: 38px 34px;
-    border: 1px solid rgba(216, 181, 109, 0.35);
-    border-radius: 22px;
-    background: rgba(29, 30, 27, 0.82);
-    -webkit-backdrop-filter: blur(22px);
-    backdrop-filter: blur(22px);
-    box-shadow:
-      0 28px 80px rgba(0, 0, 0, 0.42),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    color: #f7f2e8;
-    animation: cashierLoginAppear 0.45s ease both;
-  }
+.cashier-login-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  width: 100%;
+  max-width: 430px;
+  padding: 36px;
+
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 26px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.19) 0%,
+      rgba(255, 255, 255, 0.055) 24%,
+      rgba(216, 181, 109, 0.075) 62%,
+      rgba(255, 255, 255, 0.11) 100%
+    ),
+    rgba(31, 32, 29, 0.57);
+
+  -webkit-backdrop-filter: blur(28px) saturate(155%);
+  backdrop-filter: blur(28px) saturate(155%);
+
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.32),
+    0 8px 24px rgba(0, 0, 0, 0.16),
+    inset 0 1px 1px rgba(255, 255, 255, 0.34),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.08);
+
+  animation: cashierLoginAppear 0.45s ease both;
+}
+
+/* Soft liquid-glass reflections */
+.cashier-login-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+
+  background:
+    radial-gradient(
+      ellipse at 12% 0%,
+      rgba(255, 255, 255, 0.24),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 100% 100%,
+      rgba(216, 181, 109, 0.12),
+      transparent 42%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.09),
+      transparent 38%,
+      rgba(255, 255, 255, 0.025) 72%,
+      rgba(255, 255, 255, 0.075)
+    );
+}
+
+/* Fine reflective edge */
+.cashier-login-card::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 25px;
+}
 
   @keyframes cashierLoginAppear {
     from {
