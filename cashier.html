@@ -6109,6 +6109,75 @@ backdrop-filter: blur(6px) saturate(135%);
       animation-iteration-count: 1 !important;
     }
   }
+   /* =========================
+   HALINA LIQUID GLASS — INTERACTION LAYER
+   ADDITION ONLY — KEEP EXISTING REFLECTION
+========================= */
+
+.cashier-login-card {
+  --halina-pointer-x: 50%;
+  --halina-pointer-y: 50%;
+}
+
+/* Separate overlay; does not replace ::before or ::after */
+.cashier-login-card .halina-glass-interaction {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.cashier-login-card .halina-glass-highlight {
+  position: absolute;
+  inset: -35%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at var(--halina-pointer-x) var(--halina-pointer-y),
+    rgba(255, 255, 255, 0.13) 0%,
+    rgba(232, 190, 105, 0.07) 12%,
+    transparent 34%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cashier-login-card.halina-glass-active
+  .halina-glass-highlight {
+  opacity: 1;
+}
+
+.cashier-login-card .halina-glass-ripple {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  left: var(--ripple-x);
+  top: var(--ripple-y);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.12),
+    rgba(232, 190, 105, 0.06) 40%,
+    transparent 72%
+  );
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0.75;
+  animation: halinaGlassRipple 0.9s ease-out forwards;
+}
+
+@keyframes halinaGlassRipple {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0.75;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(8);
+    opacity: 0;
+  }
+}
 </style>
 <!-- =========================
      POS NAVIGATION
@@ -12715,7 +12784,84 @@ if (cashierLoginForm) {
     }
   });
 }
+/* =========================
+   HALINA LIQUID GLASS — INTERACTION SCRIPT
+   ADDITION ONLY
+========================= */
+(function initHalinaLiquidGlass() {
+  const cards = document.querySelectorAll(".cashier-login-card");
 
+  cards.forEach((card) => {
+    if (card.dataset.halinaGlassReady === "true") return;
+    card.dataset.halinaGlassReady = "true";
+
+    // Build a separate visual layer without replacing existing pseudo-elements.
+    const layer = document.createElement("div");
+    layer.className = "halina-glass-interaction";
+    layer.setAttribute("aria-hidden", "true");
+
+    const highlight = document.createElement("div");
+    highlight.className = "halina-glass-highlight";
+    layer.appendChild(highlight);
+    card.appendChild(layer);
+
+    function moveReflection(event) {
+      const rect = card.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+      const y = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+
+      const xPercent = (x / rect.width) * 100;
+      const yPercent = (y / rect.height) * 100;
+
+      card.style.setProperty("--halina-pointer-x", xPercent + "%");
+      card.style.setProperty("--halina-pointer-y", yPercent + "%");
+
+      // Match the highlight coordinates to the pointer within the card.
+      highlight.style.background =
+        "radial-gradient(circle at " + xPercent + "% " + yPercent + "%, " +
+        "rgba(255,255,255,0.15) 0%, " +
+        "rgba(232,190,105,0.07) 15%, transparent 38%)";
+
+      card.classList.add("halina-glass-active");
+    }
+
+    function stopReflection() {
+      card.classList.remove("halina-glass-active");
+    }
+
+    function createRipple(event) {
+      const rect = card.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const ripple = document.createElement("span");
+      ripple.className = "halina-glass-ripple";
+
+      const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+      const y = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+
+      ripple.style.setProperty("--ripple-x", x + "px");
+      ripple.style.setProperty("--ripple-y", y + "px");
+
+      layer.appendChild(ripple);
+
+      ripple.addEventListener("animationend", () => ripple.remove(), {
+        once: true
+      });
+    }
+
+    // Mouse and touch/pen movement.
+    card.addEventListener("pointermove", moveReflection);
+    card.addEventListener("pointerleave", stopReflection);
+
+    // Ripple starts at the exact pointer-down location.
+    card.addEventListener("pointerdown", (event) => {
+      moveReflection(event);
+      createRipple(event);
+    });
+  });
+})();
 </script>
 </body>
 </html>
