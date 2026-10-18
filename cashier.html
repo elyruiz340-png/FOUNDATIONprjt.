@@ -6292,6 +6292,77 @@ background:
   font-weight: 900;
   text-shadow: 0 0 10px rgba(255, 220, 155, 0.95);
 }
+   /* HALINA: Electric-fan PIN verification animation */
+#cashierPinBoxes.is-verifying .cashier-pin-box {
+  animation: halinaPinFanSpin 700ms ease-in-out infinite;
+  transform-origin: center center;
+}
+
+#cashierPinBoxes.is-verifying .cashier-pin-box:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+#cashierPinBoxes.is-verifying .cashier-pin-box:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+#cashierPinBoxes.is-verifying .cashier-pin-box:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+#cashierPinBoxes.is-verifying .cashier-pin-box:nth-child(4) {
+  animation-delay: 240ms;
+}
+
+#cashierPinBoxes.is-verifying .cashier-pin-box:nth-child(5) {
+  animation-delay: 320ms;
+}
+
+#cashierPinBoxes.is-verifying .cashier-pin-box:nth-child(6) {
+  animation-delay: 400ms;
+}
+
+@keyframes halinaPinFanSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.08);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+   /* HALINA: Strong neon-gold glow during PIN verification */
+#cashierPinBoxes.is-verifying .cashier-pin-box {
+  border: 2px solid #ffe3a0;
+  box-shadow:
+    0 0 6px rgba(255, 204, 92, 0.95),
+    0 0 14px rgba(255, 190, 55, 0.85),
+    0 0 26px rgba(255, 174, 35, 0.65),
+    inset 0 0 10px rgba(255, 210, 120, 0.35);
+  animation:
+    halinaPinFanSpin 700ms ease-in-out infinite,
+    halinaPinNeonPulse 700ms ease-in-out infinite alternate;
+}
+
+@keyframes halinaPinNeonPulse {
+  from {
+    border-color: #e9bd62;
+    box-shadow:
+      0 0 5px rgba(255, 204, 92, 0.65),
+      0 0 12px rgba(255, 190, 55, 0.5),
+      inset 0 0 5px rgba(255, 210, 120, 0.2);
+  }
+  to {
+    border-color: #fff0bd;
+    box-shadow:
+      0 0 10px rgba(255, 224, 145, 1),
+      0 0 22px rgba(255, 190, 55, 0.95),
+      0 0 36px rgba(255, 174, 35, 0.75),
+      inset 0 0 14px rgba(255, 220, 145, 0.5);
+  }
+}
 </style>
 <!-- =========================
      POS NAVIGATION
@@ -12827,6 +12898,12 @@ function setCashierLoginLoading(isLoading) {
       "cashier-verifying",
       isLoading
     );
+  }
+
+  const pinBoxes = document.getElementById("cashierPinBoxes");
+
+  if (pinBoxes) {
+    pinBoxes.classList.toggle("is-verifying", isLoading);
   }
 }
 
