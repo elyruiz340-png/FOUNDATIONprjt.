@@ -12686,12 +12686,7 @@ async function cashierShowPinStep() {
       return;
     }
 
-    const usernamePreviewValue =
-      cashierUsernamePreview.querySelector("strong");
-
-    if (usernamePreviewValue) {
-      usernamePreviewValue.textContent = username;
-    }
+    /* Username preview removed from the PIN screen. */
 
     cashierUsernameStep.hidden = true;
     cashierPinStep.hidden = false;
