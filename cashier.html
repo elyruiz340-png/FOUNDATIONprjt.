@@ -12418,6 +12418,9 @@ const cashierPinInput =
    CASHIER LOGIN SCREEN FLOW
 ========================= */
 
+const CASHIER_USERNAME_VALIDATE_URL =
+  SUPABASE_URL + "/functions/v1/validate-cashier-username";
+
 const cashierUsernameInput =
   document.getElementById("cashierUsername");
 
@@ -12442,6 +12445,8 @@ const cashierLoginSubtitle =
 const cashierUsernamePreview =
   document.getElementById("cashierUsernamePreview");
 
+let cashierUsernameValidationInProgress = false;
+
 function cashierShowUsernameStep() {
   cashierUsernameStep.hidden = false;
   cashierPinStep.hidden = true;
@@ -12453,6 +12458,9 @@ function cashierShowUsernameStep() {
   cashierPinInput.required = false;
   cashierPinInput.value = "";
 
+  cashierContinueButton.disabled = false;
+  cashierContinueButton.textContent = "Continue";
+
   cashierLoginTitle.textContent = "Welcome Back";
   cashierLoginSubtitle.textContent =
     "Enter your cashier username to continue";
@@ -12460,6 +12468,106 @@ function cashierShowUsernameStep() {
   cashierLoginScreen.classList.remove("cashier-verifying");
   cashierLoginMessage.textContent = "";
 }
+
+async function cashierShowPinStep() {
+  if (cashierUsernameValidationInProgress) return;
+
+  const username = cashierUsernameInput.value.trim();
+
+  if (!username) {
+    cashierLoginMessage.textContent =
+      "Please enter your username first.";
+    cashierUsernameInput.focus();
+    return;
+  }
+
+  cashierUsernameValidationInProgress = true;
+  cashierContinueButton.disabled = true;
+  cashierContinueButton.textContent = "Checking...";
+  cashierLoginMessage.textContent = "";
+
+  try {
+    const response = await fetch(
+      CASHIER_USERNAME_VALIDATE_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY
+        },
+        body: JSON.stringify({ username })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        "Unable to verify username. Please try again."
+      );
+    }
+
+    if (result.valid !== true) {
+      cashierLoginMessage.textContent =
+        "Username not recognized. Please check and try again.";
+      cashierUsernameInput.focus();
+      return;
+    }
+
+    const usernamePreviewValue =
+      cashierUsernamePreview.querySelector("strong");
+
+    if (usernamePreviewValue) {
+      usernamePreviewValue.textContent = username;
+    }
+
+    cashierUsernameStep.hidden = true;
+    cashierPinStep.hidden = false;
+
+    cashierUsernameInput.disabled = false;
+    cashierUsernameInput.required = true;
+
+    cashierPinInput.disabled = false;
+    cashierPinInput.required = true;
+
+    cashierLoginTitle.textContent = "Secure Sign In";
+    cashierLoginSubtitle.textContent =
+      "Enter your 6-digit cashier PIN";
+
+    cashierLoginMessage.textContent = "";
+    cashierPinInput.focus();
+
+  } catch (error) {
+    console.error("Cashier username validation failed:", error);
+
+    cashierLoginMessage.textContent =
+      error.message ||
+      "Unable to verify username. Please try again.";
+
+  } finally {
+    cashierUsernameValidationInProgress = false;
+    cashierContinueButton.disabled = false;
+    cashierContinueButton.textContent = "Continue";
+  }
+}
+
+if (cashierContinueButton) {
+  cashierContinueButton.addEventListener(
+    "click",
+    cashierShowPinStep
+  );
+}
+
+if (cashierBackButton) {
+  cashierBackButton.addEventListener("click", () => {
+    cashierShowUsernameStep();
+    cashierUsernameInput.focus();
+  });
+}
+
+/* Begin on the username screen. */
+cashierShowUsernameStep();
 
 function cashierShowPinStep() {
   const username = cashierUsernameInput.value.trim();
