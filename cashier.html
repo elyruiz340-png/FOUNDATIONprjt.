@@ -5617,241 +5617,6 @@ body.pos-other-view .page-section {
 
 </head>
 <body>
-<script>
- /* =========================
-   CASHIER LOGIN + SESSION
-========================= */
-
-const cashierLoginForm =
-  document.getElementById("cashierLoginForm");
-
-const cashierLoginScreen =
-  document.getElementById("cashierLoginScreen");
-
-const cashierLoginMessage =
-  document.getElementById("cashierLoginMessage");
-
-const cashierLoginButton =
-  document.getElementById("cashierLoginButton");
-
-const cashierPinInput =
-  document.getElementById("cashierPin");
-  
-/* =========================
-   CASHIER LOGIN SCREEN FLOW
-========================= */
-
-const cashierUsernameInput =
-  document.getElementById("cashierUsername");
-
-const cashierUsernameStep =
-  document.getElementById("cashierUsernameStep");
-
-const cashierPinStep =
-  document.getElementById("cashierPinStep");
-
-const cashierContinueButton =
-  document.getElementById("cashierContinueButton");
-
-const cashierBackButton =
-  document.getElementById("cashierBackButton");
-
-const cashierLoginTitle =
-  document.getElementById("cashierLoginTitle");
-
-const cashierLoginSubtitle =
-  document.getElementById("cashierLoginSubtitle");
-
-const cashierUsernamePreview =
-  document.getElementById("cashierUsernamePreview");
-
-function cashierShowUsernameStep() {
-  cashierUsernameStep.hidden = false;
-  cashierPinStep.hidden = true;
-
-  cashierUsernameInput.disabled = false;
-  cashierUsernameInput.required = true;
-
-  cashierPinInput.disabled = true;
-  cashierPinInput.required = false;
-  cashierPinInput.value = "";
-
-  cashierLoginTitle.textContent = "Welcome Back";
-  cashierLoginSubtitle.textContent =
-    "Enter your cashier username to continue";
-
-  cashierLoginScreen.classList.remove("cashier-verifying");
-  cashierLoginMessage.textContent = "";
-}
-
-function cashierShowPinStep() {
-  const username = cashierUsernameInput.value.trim();
-
-  if (!username) {
-    cashierLoginMessage.textContent =
-      "Please enter your username first.";
-    cashierUsernameInput.focus();
-    return;
-  }
-
-  cashierUsernamePreview.textContent = username;
-
-  cashierUsernameStep.hidden = true;
-  cashierPinStep.hidden = false;
-
-  cashierUsernameInput.disabled = false;
-  cashierUsernameInput.required = true;
-
-  cashierPinInput.disabled = false;
-  cashierPinInput.required = true;
-
-  cashierLoginTitle.textContent = "Secure Sign In";
-  cashierLoginSubtitle.textContent =
-    "Enter your 6-digit cashier PIN";
-
-  cashierLoginMessage.textContent = "";
-  cashierPinInput.focus();
-}
-
-if (cashierContinueButton) {
-  cashierContinueButton.addEventListener(
-    "click",
-    cashierShowPinStep
-  );
-}
-
-if (cashierBackButton) {
-  cashierBackButton.addEventListener("click", () => {
-    cashierShowUsernameStep();
-    cashierUsernameInput.focus();
-  });
-}
-
-/* Begin on the username screen. */
-cashierShowUsernameStep();
-const CASHIER_LOGIN_URL =
-  SUPABASE_URL + "/functions/v1/cashier-login";
-
-const cashierProtectedElements = document.querySelectorAll(
-  "body > .container, body > header, body > .navigation, body > section"
-);
-
-let cashierAuthClient = null;
-
-function hideCashierPOS() {
-  cashierProtectedElements.forEach((element) => {
-    if (!element.hasAttribute("data-cashier-auth-hidden")) {
-      element.dataset.cashierOriginalDisplay =
-        element.style.display;
-
-      element.dataset.cashierAuthHidden = "true";
-    }
-
-    element.style.display = "none";
-  });
-}
-
-function showCashierPOS() {
-  cashierProtectedElements.forEach((element) => {
-    if (element.dataset.cashierAuthHidden === "true") {
-      element.style.display =
-        element.dataset.cashierOriginalDisplay || "";
-
-      delete element.dataset.cashierAuthHidden;
-      delete element.dataset.cashierOriginalDisplay;
-    }
-  });
-
-  if (cashierLoginScreen) {
-    cashierLoginScreen.style.display = "none";
-  }
-}
-
-function showCashierLogin(message = "") {
-  hideCashierPOS();
-
-  if (cashierLoginScreen) {
-    cashierLoginScreen.style.display = "flex";
-  }
-
-  if (cashierLoginMessage) {
-    cashierLoginMessage.textContent = message;
-  }
-}
-
-function setCashierLoginLoading(isLoading) {
-  if (!cashierLoginButton) return;
-
-  cashierLoginButton.disabled = isLoading;
-  cashierLoginButton.textContent =
-    isLoading ? "Verifying..." : "Sign In";
-
-  if (cashierContinueButton) {
-    cashierContinueButton.disabled = isLoading;
-  }
-
-  if (cashierLoginScreen) {
-    cashierLoginScreen.classList.toggle(
-      "cashier-verifying",
-      isLoading
-    );
-  }
-}
-
-/* Hide the POS immediately while checking the session. */
-showCashierLogin();
-
-try {
-  if (!window.supabase?.createClient) {
-    throw new Error("The authentication library could not load.");
-  }
-
- cashierAuthClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY,
-  {
-    auth: {
-      storageKey: "halina-cashier-auth",
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: false
-    }
-  }
-);
-} catch (error) {
-  console.error("Cashier authentication setup failed:", error);
-  showCashierLogin(
-    "Unable to initialize login. Refresh the page and try again."
-  );
-}
-
-/* Restore an existing authenticated session after refresh. */
-if (cashierAuthClient) {
-  cashierAuthClient.auth.getSession()
-    .then(({ data, error }) => {
-      if (error) throw error;
-
-      if (data.session) {
-        showCashierPOS();
-      } else {
-        showCashierLogin();
-      }
-    })
-    .catch((error) => {
-      console.error("Unable to restore cashier session:", error);
-      showCashierLogin(
-        "Unable to restore your session. Please sign in again."
-      );
-    });
-
-  /* Return to login if the session is signed out. */
-  cashierAuthClient.auth.onAuthStateChange((event) => {
-    if (event === "SIGNED_OUT") {
-      showCashierLogin("Your session has ended. Please sign in again.");
-    }
-  });
-}
-  </script>
   <style>
   #cashierLoginScreen {
     position: fixed;
@@ -6127,6 +5892,41 @@ if (cashierAuthClient) {
 <!-- =========================
      POS NAVIGATION
 ========================= -->
+
+
+<!-- =========================
+     CASHIER LOGIN SCREEN
+========================= -->
+<div id="cashierLoginScreen" role="dialog" aria-modal="true" aria-labelledby="cashierLoginTitle">
+  <div class="cashier-login-card">
+    <div class="cashier-login-brand">HALINA BISTRO CAFE</div>
+    <h1 id="cashierLoginTitle">Welcome Back</h1>
+    <p id="cashierLoginSubtitle">Enter your cashier username to continue</p>
+    <form id="cashierLoginForm" novalidate>
+      <div id="cashierUsernameStep">
+        <label for="cashierUsername">Cashier Username</label>
+        <input id="cashierUsername" name="username" type="text" autocomplete="username" required>
+        <button id="cashierContinueButton" type="button">Continue</button>
+      </div>
+      <div id="cashierPinStep" hidden>
+        <div class="cashier-username-preview" id="cashierUsernamePreview">
+          <span>Signing in as</span>
+          <strong></strong>
+        </div>
+        <label for="cashierPin">6-Digit Cashier PIN</label>
+        <input id="cashierPin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="current-password" disabled required>
+        <div class="cashier-login-actions">
+          <button id="cashierBackButton" class="cashier-back-button" type="button">Back</button>
+          <button id="cashierLoginButton" type="submit">Sign In</button>
+        </div>
+      </div>
+      <div class="cashier-verification-box" aria-hidden="true"><div class="cashier-verification-cube"></div></div>
+      <p class="cashier-verification-caption">Secure cashier verification</p>
+      <p id="cashierLoginMessage" role="alert" aria-live="polite"></p>
+    </form>
+    <p class="cashier-login-footer">Authorized cashier access only</p>
+  </div>
+</div>
 
 <div class="container">
   <!-- =========================
@@ -7034,7 +6834,7 @@ if (cashierAuthClient) {
   id="checkoutOverlay"
   class="checkout-overlay"
   aria-hidden="true"
-
+>
   <div
     class="checkout-modal"
     role="dialog"
@@ -7648,119 +7448,6 @@ if (cashierAuthClient) {
 </style>
     </div>
   </section>
-</div>
-  <!-- =========================
-     PAYMENT SUCCESSFUL POPUP
-========================= -->
-
-<div
-  id="paymentSuccessOverlay"
-  class="payment-success-overlay"
-  aria-hidden="true"
-  hidden
->
-  <div
-    class="payment-success-modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="paymentSuccessTitle"
-  >
-
-    <!-- LEFT: SUCCESS PANEL -->
-    <div class="payment-success-panel">
-
-      <div class="payment-success-check">✓</div>
-
-      <h2 id="paymentSuccessTitle">
-        Payment Successful!
-      </h2>
-
-      <p class="payment-success-message">
-        Payment has been verified successfully.
-      </p>
-
-      <div class="payment-success-details">
-
-        <div class="payment-success-detail">
-          <span>Total Paid</span>
-          <strong id="successTotalPaid">₱0.00</strong>
-        </div>
-
-        <div class="payment-success-detail">
-          <span>Amount Received</span>
-          <strong id="successAmountReceived">₱0.00</strong>
-        </div>
-
-        <div class="payment-success-detail">
-          <span>Change</span>
-          <strong id="successChange">₱0.00</strong>
-        </div>
-
-      </div>
-
-      <!-- ACTION BUTTONS -->
-      <div
-        id="paymentSuccessActions"
-        class="payment-success-actions"
-        hidden
-      >
-        <button type="button" id="acceptOrderBtn">
-          Accept Order
-        </button>
-
-        <button type="button" id="newOrderBtn">
-          New Order
-        </button>
-
-        <button type="button" id="printReceiptBtn">
-          Print Receipt
-        </button>
-      </div>
-
-    </div>
-
-    <!-- RIGHT: PRINTER AND RECEIPT ANIMATION -->
-    <div class="payment-success-receipt-area">
-
-      <div class="receipt-printer">
-        <div class="receipt-printer-top"></div>
-        <div class="receipt-printer-slot"></div>
-
-        <div
-          id="successReceipt"
-          class="success-receipt"
-        >
-          <div class="success-receipt-header">
-            HALINA BISTRO CAFE
-          </div>
-
-          <p>PAYMENT RECEIPT</p>
-          <div class="success-receipt-divider"></div>
-
-          <div id="successReceiptItems">
-            <!-- Receipt items will be added by JavaScript -->
-          </div>
-
-          <div class="success-receipt-divider"></div>
-
-          <div class="success-receipt-total">
-            TOTAL: <strong id="successReceiptTotal">₱0.00</strong>
-          </div>
-
-          <p class="success-receipt-footer">
-            Thank you for dining with us!
-          </p>
-        </div>
-
-        <div class="receipt-printer-body">
-          <div class="receipt-printer-display"></div>
-          <div class="receipt-printer-button"></div>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
 </div>
 <script>
   
@@ -12407,6 +12094,247 @@ document.querySelectorAll("#newOrderBtn").forEach(function(button) {
   });
 });
  
+
+
+/* =========================
+   CASHIER LOGIN + SESSION
+   INITIALIZED AFTER PAGE MARKUP
+========================= */
+/* =========================
+   CASHIER LOGIN + SESSION
+========================= */
+
+const cashierLoginForm =
+  document.getElementById("cashierLoginForm");
+
+const cashierLoginScreen =
+  document.getElementById("cashierLoginScreen");
+
+const cashierLoginMessage =
+  document.getElementById("cashierLoginMessage");
+
+const cashierLoginButton =
+  document.getElementById("cashierLoginButton");
+
+const cashierPinInput =
+  document.getElementById("cashierPin");
+  
+/* =========================
+   CASHIER LOGIN SCREEN FLOW
+========================= */
+
+const cashierUsernameInput =
+  document.getElementById("cashierUsername");
+
+const cashierUsernameStep =
+  document.getElementById("cashierUsernameStep");
+
+const cashierPinStep =
+  document.getElementById("cashierPinStep");
+
+const cashierContinueButton =
+  document.getElementById("cashierContinueButton");
+
+const cashierBackButton =
+  document.getElementById("cashierBackButton");
+
+const cashierLoginTitle =
+  document.getElementById("cashierLoginTitle");
+
+const cashierLoginSubtitle =
+  document.getElementById("cashierLoginSubtitle");
+
+const cashierUsernamePreview =
+  document.getElementById("cashierUsernamePreview");
+
+function cashierShowUsernameStep() {
+  cashierUsernameStep.hidden = false;
+  cashierPinStep.hidden = true;
+
+  cashierUsernameInput.disabled = false;
+  cashierUsernameInput.required = true;
+
+  cashierPinInput.disabled = true;
+  cashierPinInput.required = false;
+  cashierPinInput.value = "";
+
+  cashierLoginTitle.textContent = "Welcome Back";
+  cashierLoginSubtitle.textContent =
+    "Enter your cashier username to continue";
+
+  cashierLoginScreen.classList.remove("cashier-verifying");
+  cashierLoginMessage.textContent = "";
+}
+
+function cashierShowPinStep() {
+  const username = cashierUsernameInput.value.trim();
+
+  if (!username) {
+    cashierLoginMessage.textContent =
+      "Please enter your username first.";
+    cashierUsernameInput.focus();
+    return;
+  }
+
+  const usernamePreviewValue = cashierUsernamePreview.querySelector("strong");
+  if (usernamePreviewValue) usernamePreviewValue.textContent = username;
+
+  cashierUsernameStep.hidden = true;
+  cashierPinStep.hidden = false;
+
+  cashierUsernameInput.disabled = false;
+  cashierUsernameInput.required = true;
+
+  cashierPinInput.disabled = false;
+  cashierPinInput.required = true;
+
+  cashierLoginTitle.textContent = "Secure Sign In";
+  cashierLoginSubtitle.textContent =
+    "Enter your 6-digit cashier PIN";
+
+  cashierLoginMessage.textContent = "";
+  cashierPinInput.focus();
+}
+
+if (cashierContinueButton) {
+  cashierContinueButton.addEventListener(
+    "click",
+    cashierShowPinStep
+  );
+}
+
+if (cashierBackButton) {
+  cashierBackButton.addEventListener("click", () => {
+    cashierShowUsernameStep();
+    cashierUsernameInput.focus();
+  });
+}
+
+/* Begin on the username screen. */
+cashierShowUsernameStep();
+const CASHIER_LOGIN_URL =
+  SUPABASE_URL + "/functions/v1/cashier-login";
+
+const cashierProtectedElements = document.querySelectorAll(
+  "body > .container, body > header, body > .navigation, body > section"
+);
+
+let cashierAuthClient = null;
+
+function hideCashierPOS() {
+  cashierProtectedElements.forEach((element) => {
+    if (!element.hasAttribute("data-cashier-auth-hidden")) {
+      element.dataset.cashierOriginalDisplay =
+        element.style.display;
+
+      element.dataset.cashierAuthHidden = "true";
+    }
+
+    element.style.display = "none";
+  });
+}
+
+function showCashierPOS() {
+  cashierProtectedElements.forEach((element) => {
+    if (element.dataset.cashierAuthHidden === "true") {
+      element.style.display =
+        element.dataset.cashierOriginalDisplay || "";
+
+      delete element.dataset.cashierAuthHidden;
+      delete element.dataset.cashierOriginalDisplay;
+    }
+  });
+
+  if (cashierLoginScreen) {
+    cashierLoginScreen.style.display = "none";
+  }
+}
+
+function showCashierLogin(message = "") {
+  hideCashierPOS();
+
+  if (cashierLoginScreen) {
+    cashierLoginScreen.style.display = "flex";
+  }
+
+  if (cashierLoginMessage) {
+    cashierLoginMessage.textContent = message;
+  }
+}
+
+function setCashierLoginLoading(isLoading) {
+  if (!cashierLoginButton) return;
+
+  cashierLoginButton.disabled = isLoading;
+  cashierLoginButton.textContent =
+    isLoading ? "Verifying..." : "Sign In";
+
+  if (cashierContinueButton) {
+    cashierContinueButton.disabled = isLoading;
+  }
+
+  if (cashierLoginScreen) {
+    cashierLoginScreen.classList.toggle(
+      "cashier-verifying",
+      isLoading
+    );
+  }
+}
+
+/* Hide the POS immediately while checking the session. */
+showCashierLogin();
+
+try {
+  if (!window.supabase?.createClient) {
+    throw new Error("The authentication library could not load.");
+  }
+
+ cashierAuthClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  {
+    auth: {
+      storageKey: "halina-cashier-auth",
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false
+    }
+  }
+);
+} catch (error) {
+  console.error("Cashier authentication setup failed:", error);
+  showCashierLogin(
+    "Unable to initialize login. Refresh the page and try again."
+  );
+}
+
+/* Restore an existing authenticated session after refresh. */
+if (cashierAuthClient) {
+  cashierAuthClient.auth.getSession()
+    .then(({ data, error }) => {
+      if (error) throw error;
+
+      if (data.session) {
+        showCashierPOS();
+      } else {
+        showCashierLogin();
+      }
+    })
+    .catch((error) => {
+      console.error("Unable to restore cashier session:", error);
+      showCashierLogin(
+        "Unable to restore your session. Please sign in again."
+      );
+    });
+
+  /* Return to login if the session is signed out. */
+  cashierAuthClient.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_OUT") {
+      showCashierLogin("Your session has ended. Please sign in again.");
+    }
+  });
+}
+
 /* =========================
    CASHIER LOGOUT / END SHIFT
 ========================= */
@@ -12566,6 +12494,7 @@ if (cashierLoginForm) {
     }
   });
 }
+
 </script>
 </body>
 </html>
