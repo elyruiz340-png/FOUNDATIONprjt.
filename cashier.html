@@ -894,6 +894,37 @@
 
     position: relative;
   }
+  /* =========================
+   CASHIER SIDEBAR LOGOUT
+========================= */
+
+.pos-sidebar-logout {
+  margin-top: auto;
+  padding-top: 12px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.cashier-logout-sidebar-btn {
+  color: #9a5b45;
+  margin-top: auto;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.cashier-logout-sidebar-btn:hover {
+  background: #f3e6df;
+  color: #7f3928;
+  transform: translateY(-2px);
+}
+
+.cashier-logout-sidebar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
   /* =========================
      MOVING SELECTED HIGHLIGHT
@@ -6057,9 +6088,26 @@ body.pos-other-view .page-section {
       <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>
       <path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.9l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.6.9l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8Z" transform="translate(-1 -2) scale(1.08)"/>
     </svg>
+    
   </button>
-
+<!-- CASHIER LOGOUT -->
+  <div class="pos-sidebar-logout">
+    <button
+      type="button"
+      id="cashierLogoutButton"
+      class="pos-sidebar-btn cashier-logout-sidebar-btn"
+      aria-label="Log Out"
+      title="Log Out"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M10 17l5-5-5-5"/>
+        <path d="M15 12H3"/>
+        <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/>
+      </svg>
+    </button>
+  </div>
 </aside>
+
   <!-- =====================
      POS MAIN AREA
 ====================== -->
@@ -7406,6 +7454,59 @@ body.pos-other-view .page-section {
       <p>
         Additional system settings will be added here.
       </p>
+      <div class="cashier-logout-area">
+  <h3>End Cashier Shift</h3>
+  <p>Sign out securely when your shift is finished.</p>
+  <button
+    type="button"
+    id="cashierLogoutButton"
+    class="cashier-logout-button"
+  >
+    Log Out
+  </button>
+</div>
+
+<style>
+  .cashier-logout-area {
+    margin-top: 28px;
+    padding: 22px;
+    border: 1px solid #e5d4bd;
+    border-radius: 12px;
+    background: #fffaf3;
+    text-align: left;
+  }
+
+  .cashier-logout-area h3 {
+    margin: 0 0 8px;
+    color: #513a28;
+  }
+
+  .cashier-logout-area p {
+    color: #8b7968;
+    font-size: 13px;
+  }
+
+  .cashier-logout-button {
+    min-height: 44px;
+    margin-top: 12px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 9px;
+    background: #8f3028;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .cashier-logout-button:hover {
+    background: #70241e;
+  }
+
+  .cashier-logout-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+</style>
     </div>
   </section>
 </div>
@@ -12398,7 +12499,136 @@ if (cashierAuthClient) {
     }
   });
 }
+/* =========================
+   CASHIER LOGOUT / END SHIFT
+========================= */
 
+const cashierLogoutButton =
+  document.getElementById("cashierLogoutButton");
+
+if (cashierLogoutButton) {
+  cashierLogoutButton.addEventListener("click", async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to log out and end your cashier shift?"
+    );
+
+    if (!confirmed) return;
+
+    const checkoutOverlay =
+      document.getElementById("checkoutOverlay");
+
+    if (
+      checkoutOverlay &&
+      (
+        checkoutOverlay.classList.contains("active") ||
+        checkoutOverlay.getAttribute("aria-hidden") === "false"
+      )
+    ) {
+      window.alert(
+        "You have a checkout in progress. Please finish or close checkout before logging out."
+      );
+      return;
+    }
+
+    if (!cashierAuthClient) {
+      showCashierLogin(
+        "Cashier session is unavailable. Please refresh the page."
+      );
+      return;
+    }
+
+    cashierLogoutButton.disabled = true;
+    cashierLogoutButton.textContent = "Logging out...";
+
+    try {
+      const { error } =
+        await cashierAuthClient.auth.signOut({
+          scope: "local"
+        });
+
+      if (error) throw error;
+
+      showCashierLogin(
+        "You have been logged out. Please sign in again."
+      );
+
+      if (cashierUsernameInput) {
+        cashierUsernameInput.value = "";
+      }
+
+      cashierShowUsernameStep();
+
+    } catch (error) {
+      console.error("Cashier logout failed:", error);
+
+      window.alert(
+        "Unable to log out securely. Please try again."
+      );
+
+    } finally {
+      cashierLogoutButton.disabled = false;
+      cashierLogoutButton.textContent = "Log Out";
+    }
+  });
+}
+  /* =========================
+   CASHIER LOGOUT / END SHIFT
+========================= */
+
+const cashierLogoutButton =
+  document.getElementById("cashierLogoutButton");
+
+if (cashierLogoutButton) {
+  cashierLogoutButton.addEventListener("click", async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to log out?"
+    );
+
+    if (!confirmed) return;
+
+    if (!cashierAuthClient) {
+      window.alert(
+        "Cashier authentication is unavailable. Please refresh and try again."
+      );
+      return;
+    }
+
+    cashierLogoutButton.disabled = true;
+
+    try {
+      const { error } =
+        await cashierAuthClient.auth.signOut({
+          scope: "local"
+        });
+
+      if (error) throw error;
+
+      showCashierLogin(
+        "You have been logged out. Please sign in again."
+      );
+
+      if (cashierUsernameInput) {
+        cashierUsernameInput.value = "";
+      }
+
+      if (cashierPinInput) {
+        cashierPinInput.value = "";
+      }
+
+      if (typeof cashierShowUsernameStep === "function") {
+        cashierShowUsernameStep();
+      }
+    } catch (error) {
+      console.error("Cashier logout failed:", error);
+
+      window.alert(
+        "Unable to log out. Please try again."
+      );
+    } finally {
+      cashierLogoutButton.disabled = false;
+    }
+  });
+}
 /* Authenticate with the server-side username + PIN check. */
 if (cashierLoginForm) {
   cashierLoginForm.addEventListener("submit", async (event) => {
