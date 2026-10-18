@@ -681,12 +681,19 @@
     const SUPABASE_KEY =
       "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
 
-    const supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
-
+   const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY,
+    {
+      auth: {
+        storageKey: "halina-owner-auth",
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false
+      }
+    }
+  );
 
     /* =========================================================
        GLOBAL VARIABLES
