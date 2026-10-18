@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -519,50 +520,36 @@
           </div>
         </section>
 
-<section id="securitySection" class="section security-section">
+        <section id="securitySection" class="section security-section">
 
-  <div class="section-header">
-    <h3>Security & Staff</h3>
-  </div>
+          <div class="section-header">
+            <h3>Security & Staff</h3>
+          </div>
 
-  <div class="security-card">
-    <h4>Individual Cashier PINs</h4>
+          <div class="security-card">
 
-    <p>
-      Manage each cashier's 6-digit PIN. Locked cashiers
-      can be unlocked by setting a new PIN.
-    </p>
+            <h4>Cashier PIN</h4>
 
-    <div class="form-group">
-      <label for="cashierStaffSelect">Select Cashier</label>
-      <select id="cashierStaffSelect">
-        <option value="">Loading cashiers...</option>
-      </select>
-    </div>
+            <p>
+              The Cashier Dashboard is protected by a 6-digit PIN.
+              Only the owner can change the Cashier PIN.
+            </p>
 
-    <div id="cashierStaffStatus" class="message"></div>
+            <button
+              id="changeCashierPinBtn"
+              class="refresh-btn"
+              onclick="openCashierPinSettings()"
+            >
+              Change Cashier PIN
+            </button>
 
-    <button
-      id="manageCashierPinBtn"
-      class="refresh-btn"
-      type="button"
-      onclick="openIndividualCashierPinModal()"
-      disabled
-    >
-      Set / Reset Cashier PIN
-    </button>
+            
 
-    <button
-      id="refreshCashiersBtn"
-      class="refresh-btn"
-      type="button"
-      onclick="loadCashierStaff()"
-    >
-      Refresh Cashier List
-    </button>
-  </div>
+          </div>
 
-</section>
+        </section>
+
+      </div>
 
     </div>
 
@@ -681,12 +668,12 @@
     const SUPABASE_KEY =
       "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
 
-   const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY,
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
 
-  );
 
     /* =========================================================
        GLOBAL VARIABLES
@@ -731,11 +718,6 @@
           currentOwnerEmail || "Owner";
 
         await loadUserProfile(session.user);
-
-        if (currentUserRole &&
-    ["owner", "admin"].includes(currentUserRole.toLowerCase())) {
-  await loadCashierStaff();
-}
 
         document.getElementById("loadingScreen").style.display =
           "none";
@@ -1150,192 +1132,264 @@
 
 
     /* =========================================================
-   INDIVIDUAL CASHIER PIN MANAGEMENT
-========================================================= */
+       CASHIER PIN MODAL
+    ========================================================= */
 
-let selectedCashierUserId = null;
-let selectedCashierRecordId = null;
+    function openCashierPinSettings() {
 
-async function loadCashierStaff() {
-  const select = document.getElementById("cashierStaffSelect");
-  const status = document.getElementById("cashierStaffStatus");
-  const manageButton = document.getElementById("manageCashierPinBtn");
+      
 
-  if (!select || !status || !manageButton) return;
+      pinVerificationCompleted =
+        false;
 
-  select.innerHTML = '<option value="">Loading cashiers...</option>';
-  manageButton.disabled = true;
-  status.textContent = "";
+   
+      clearPinMessages();
 
-  try {
-    const { data, error } = await supabaseClient.rpc(
-      "get_restaurant_cashiers"
-    );
+    
 
-    if (error) throw error;
+      document.getElementById(
+        "newCashierPin"
+      ).value = "";
 
-    select.innerHTML = "";
+      document.getElementById(
+        "confirmCashierPin"
+      ).value = "";
 
-    if (!data || data.length === 0) {
-      select.innerHTML = '<option value="">No cashiers found</option>';
-      status.textContent = "No cashier accounts are assigned to this restaurant.";
-      return;
+      showPinStep(1);
+
+      document.getElementById(
+        "cashierPinModal"
+      ).classList.add("show");
+
     }
 
-    data.forEach(cashier => {
-      const option = document.createElement("option");
-      option.value = cashier.id;
-      option.textContent = "Cashier • " + cashier.user_id.slice(0, 8);
-      option.dataset.userId = cashier.user_id;
-      select.appendChild(option);
-    });
 
-    manageButton.disabled = false;
-    status.textContent = data.length + " cashier account(s) found.";
+    function closeCashierPinModal() {
 
-  } catch (error) {
-    console.error("Load cashier list error:", error);
-    select.innerHTML = '<option value="">Unable to load cashiers</option>';
-    status.textContent = error.message || "Unable to load cashier list.";
-  }
-}
-function openIndividualCashierPinModal() {
-  const select = document.getElementById("cashierStaffSelect");
-  const selected = select?.selectedOptions?.[0];
+      document.getElementById(
+        "cashierPinModal"
+      ).classList.remove("show");
 
-  if (!selected || !selected.value) {
-    const status = document.getElementById("cashierStaffStatus");
-    if (status) status.textContent = "Select a cashier first.";
-    return;
-  }
+      clearPinMessages();
 
-  selectedCashierRecordId = selected.value;
-  selectedCashierUserId = selected.dataset.userId;
+      pinVerificationCompleted =
+        false;
 
-  document.getElementById("newCashierPin").value = "";
-  document.getElementById("confirmCashierPin").value = "";
+    
 
-  const modalTitle = document.querySelector("#pinStep3 h2");
-  if (modalTitle) modalTitle.textContent = "Set / Reset Cashier PIN";
+      document.getElementById(
+        "newCashierPin"
+      ).value = "";
 
-  const modalDescription = document.querySelector("#pinStep3 p");
-  if (modalDescription) {
-    modalDescription.textContent =
-      "Set a new 6-digit PIN for " + selected.textContent + ". This also clears the lockout.";
-  }
+      document.getElementById(
+        "confirmCashierPin"
+      ).value = "";
 
-  clearPinMessages();
-  showPinStep(3);
-  document.getElementById("cashierPinModal").classList.add("show");
-}
+      showPinStep(1);
 
-function closeCashierPinModal() {
-  document.getElementById("cashierPinModal").classList.remove("show");
-
-  clearPinMessages();
-
-  document.getElementById("newCashierPin").value = "";
-  document.getElementById("confirmCashierPin").value = "";
-
-  selectedCashierRecordId = null;
-  selectedCashierUserId = null;
-
-  showPinStep(1);
-}
-
-function showPinStep(stepNumber) {
-  document.querySelectorAll(".pin-step").forEach(step => {
-    step.classList.remove("active");
-  });
-
-  const step = document.getElementById("pinStep" + stepNumber);
-  if (step) step.classList.add("active");
-}
-
-function clearPinMessages() {
-  ["pinStep1Message", "pinStep3Message"].forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.className = "message";
-      element.textContent = "";
     }
-  });
-}
 
-function showPinMessage(step, message, type) {
-  const element = document.getElementById("pinStep" + step + "Message");
-  if (!element) return;
 
-  element.textContent = message;
-  element.className = "message show " + type;
-}
+    function showPinStep(stepNumber) {
 
-async function sendPinVerificationCode() {
+      document
+        .querySelectorAll(".pin-step")
+        .forEach(step => {
+
+          step.classList.remove(
+            "active"
+          );
+
+        });
+
+      const step =
+        document.getElementById(
+          "pinStep" +
+          stepNumber
+        );
+
+      if (step) {
+
+        step.classList.add(
+          "active"
+        );
+
+      }
+
+    }
+
+
+    function clearPinMessages() {
+
+      [
+        "pinStep1Message",
+        "pinStep3Message"
+      ].forEach(id => {
+
+        const element =
+          document.getElementById(id);
+
+        element.className =
+          "message";
+
+        element.textContent =
+          "";
+
+      });
+
+    }
+
+
+    function showPinMessage(
+      step,
+      message,
+      type
+    ) {
+
+      const element =
+        document.getElementById(
+          "pinStep" +
+          step +
+          "Message"
+        );
+
+      if (!element) {
+        return;
+      }
+
+      element.textContent =
+        message;
+
+      element.className =
+        "message show " +
+        type;
+
+    }
+
+
+    /* =========================================================
+       SEND VERIFICATION CODE
+    ========================================================= */
+
+   async function sendPinVerificationCode() {
+
+  clearPinMessages();
+
+  pinVerificationCompleted = true;
+
   showPinMessage(
     1,
-    "Use the Individual Cashier PIN section to select a cashier.",
-    "error"
+    "Owner account verified. You may set a new Cashier PIN.",
+    "success"
   );
+
+  setTimeout(() => {
+    showPinStep(3);
+  }, 500);
+
 }
 
-async function saveCashierPin() {
-  if (!selectedCashierRecordId) {
-    showPinMessage(3, "Select a cashier first.", "error");
-    return;
-  }
+    /* =========================================================
+       VERIFY CODE
+    ========================================================= */
 
-  const newPin = document.getElementById("newCashierPin").value.trim();
-  const confirmPin = document.getElementById("confirmCashierPin").value.trim();
+   
+
+    /* =========================================================
+       SAVE NEW CASHIER PIN
+    ========================================================= */
+
+    async function saveCashierPin() {
+
+  const newPin =
+    document.getElementById(
+      "newCashierPin"
+    ).value.trim();
+
+  const confirmPin =
+    document.getElementById(
+      "confirmCashierPin"
+    ).value.trim();
 
   if (!/^[0-9]{6}$/.test(newPin)) {
-    showPinMessage(3, "PIN must be exactly 6 digits.", "error");
+
+    showPinMessage(
+      3,
+      "New PIN must be exactly 6 digits.",
+      "error"
+    );
+
     return;
   }
 
   if (newPin !== confirmPin) {
-    showPinMessage(3, "PIN confirmation does not match.", "error");
+
+    showPinMessage(
+      3,
+      "PIN confirmation does not match.",
+      "error"
+    );
+
     return;
   }
 
-  const button = document.getElementById("saveCashierPinBtn");
+  const button =
+    document.getElementById(
+      "saveCashierPinBtn"
+    );
+
   button.disabled = true;
   button.textContent = "Saving...";
+
   clearPinMessages();
 
   try {
-    const { error } = await supabaseClient.rpc(
-      "set_cashier_pin_for_user",
-      {
-        p_restaurant_user_id: selectedCashierRecordId,
-        p_new_pin: newPin
-      }
-    );
 
-    if (error) throw error;
+    const {
+      error
+    } =
+      await supabaseClient.rpc(
+        "set_cashier_pin",
+        {
+          new_pin: newPin
+        }
+      );
+
+    if (error) {
+      throw error;
+    }
 
     showPinMessage(
       3,
-      "Cashier PIN saved and lockout cleared.",
+      "Cashier PIN changed successfully.",
       "success"
     );
 
-    await loadCashierStaff();
-
-    setTimeout(() => closeCashierPinModal(), 1200);
+    setTimeout(() => {
+      closeCashierPinModal();
+    }, 1200);
 
   } catch (error) {
-    console.error("Save individual cashier PIN error:", error);
+
+    console.error(
+      "Save PIN error:",
+      error
+    );
 
     showPinMessage(
       3,
-      error.message || "Unable to save the cashier PIN.",
+      error.message ||
+      "Unable to save the new Cashier PIN.",
       "error"
     );
 
   } finally {
+
     button.disabled = false;
     button.textContent = "Save New PIN";
+
   }
+
 }
     /* =========================================================
        LOGOUT
@@ -1489,5 +1543,6 @@ async function saveCashierPin() {
       );
 
   </script>
+
 </body>
 </html>
