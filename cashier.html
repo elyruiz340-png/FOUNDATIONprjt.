@@ -13249,15 +13249,60 @@ if (cashierLogoutButton) {
 
       if (error) throw error;
 
-      showCashierLogin(
-        "You have been logged out. Please sign in again."
-      );
-
+      /* Clear the previous username. */
       if (cashierUsernameInput) {
         cashierUsernameInput.value = "";
       }
 
+      /* Clear the PIN and reset its six visual boxes. */
+      if (cashierPinInput) {
+        cashierPinInput.value = "";
+      }
+
+      if (typeof cashierUpdatePinBoxes === "function") {
+        cashierUpdatePinBoxes();
+      }
+
+      /* Stop and reset the PIN verification animation. */
+      if (typeof setCashierLoginLoading === "function") {
+        setCashierLoginLoading(false);
+      }
+
+      /* Return the login form to the username step. */
       cashierShowUsernameStep();
+
+      /* Reset POS navigation to Menu / Ordering. */
+      const posSection = document.getElementById("posSection");
+
+      const sidebarButtons =
+        document.querySelectorAll(".pos-sidebar-btn");
+
+      const pageSections =
+        document.querySelectorAll(".page-section");
+
+      pageSections.forEach((section) => {
+        section.style.display = "none";
+        section.classList.remove("active");
+      });
+
+      if (posSection) {
+        posSection.style.display = "";
+        posSection.classList.add("active");
+      }
+
+      sidebarButtons.forEach((button) => {
+        const isDefault =
+          button.getAttribute("data-pos-section") === "posSection";
+
+        button.classList.toggle("active", isDefault);
+      });
+
+      document.body.classList.remove("pos-other-view");
+
+      /* Show the clean login screen. */
+      showCashierLogin(
+        "You have been logged out. Please sign in again."
+      );
 
     } catch (error) {
       console.error("Cashier logout failed:", error);
@@ -13272,7 +13317,6 @@ if (cashierLogoutButton) {
     }
   });
 }
- 
 /* Authenticate with the server-side username + PIN check. */
 if (cashierLoginForm) {
   cashierLoginForm.addEventListener("submit", async (event) => {
