@@ -12884,9 +12884,23 @@ function showCashierLogin(message = "") {
     cashierLoginMessage.textContent = message;
   }
 }
+/* =========================================
+   HALINA CASHIER PIN FAN ANIMATION
+   Smooth entry + shared-center rotation
+========================================= */
+
 let cashierFanAnimationFrame = null;
 let cashierFanStartedAt = 0;
 let cashierFanEntryAnimations = [];
+
+const CASHIER_FAN_ANGLES = [0, 60, 120, 180, 240, 300];
+const CASHIER_FAN_RADIUS = 47;
+const CASHIER_FAN_ENTRY_DURATION = 650;
+
+
+/* =========================================
+   START FAN ANIMATION
+========================================= */
 
 function startCashierFanAnimation() {
   stopCashierFanAnimation();
@@ -12901,15 +12915,11 @@ function startCashierFanAnimation() {
 
   if (boxes.length !== 6) return;
 
-  const baseAngles = [0, 60, 120, 180, 240, 300];
-  const radius = 47;
-  const entryDuration = 650;
-
   /*
    * STEP 1:
-   * Kunin muna ang original grid positions
-   * bago bumuo ng fan formation.
+   * Kunin ang original positions ng boxes.
    */
+
   container.classList.remove("is-verifying");
 
   boxes.forEach((box) => {
@@ -12922,23 +12932,27 @@ function startCashierFanAnimation() {
 
   /*
    * STEP 2:
-   * Ibalik ang verifying layout.
+   * I-activate ang circular layout.
    */
+
   container.classList.add("is-verifying");
 
-  // Force browser layout calculation.
   container.getBoundingClientRect();
 
   const containerRect = container.getBoundingClientRect();
 
-  const centerX = containerRect.left + containerRect.width / 2;
-  const centerY = containerRect.top + containerRect.height / 2;
+  const centerX =
+    containerRect.left + containerRect.width / 2;
+
+  const centerY =
+    containerRect.top + containerRect.height / 2;
 
   /*
    * STEP 3:
-   * I-position ang bawat box sa original location nito
-   * bago ang smooth transition papunta sa fan formation.
+   * Smooth transition mula horizontal layout
+   * papunta sa circular formation.
    */
+
   const entryPromises = boxes.map((box, index) => {
     const originalRect = originalRects[index];
 
@@ -12951,7 +12965,12 @@ function startCashierFanAnimation() {
     const offsetX = originalCenterX - centerX;
     const offsetY = originalCenterY - centerY;
 
-    const angle = baseAngles[index];
+    const angle = CASHIER_FAN_ANGLES[index];
+
+    /*
+     * Panatilihin ang original orientation
+     * ng bawat box.
+     */
 
     const startTransform = `
       translate(
@@ -12963,13 +12982,12 @@ function startCashierFanAnimation() {
     const targetTransform = `
       translate(-50%, -50%)
       rotate(${angle}deg)
-      translateY(-${radius}px)
+      translateY(-${CASHIER_FAN_RADIUS}px)
       rotate(${-angle}deg)
     `;
 
     box.style.transform = startTransform;
 
-    // Force initial transform to render.
     box.getBoundingClientRect();
 
     const animation = box.animate(
@@ -12982,7 +13000,7 @@ function startCashierFanAnimation() {
         }
       ],
       {
-        duration: entryDuration,
+        duration: CASHIER_FAN_ENTRY_DURATION,
         easing: "cubic-bezier(0.22, 1, 0.36, 1)",
         fill: "forwards"
       }
@@ -12995,15 +13013,16 @@ function startCashierFanAnimation() {
         box.style.transform = targetTransform;
       })
       .catch(() => {
-        // Ignore cancelled animations.
+        // Normal kapag kinansela ang animation.
       });
   });
 
   /*
    * STEP 4:
-   * Pagkatapos mabuo ang fan formation,
-   * simulan ang tuloy-tuloy na pag-ikot.
+   * Kapag nabuo na ang formation,
+   * simulan ang rotation sa paligid ng center.
    */
+
   Promise.all(entryPromises).then(() => {
     if (!container.classList.contains("is-verifying")) {
       return;
@@ -13025,17 +13044,26 @@ function startCashierFanAnimation() {
 
       const elapsed = (now - cashierFanStartedAt) / 1000;
 
-      // Tuloy-tuloy na acceleration.
+      /*
+       * Gradual acceleration.
+       */
+
       const rotation =
         90 * elapsed + 90 * elapsed * elapsed;
 
       boxes.forEach((box, index) => {
-        const angle = baseAngles[index] + rotation;
+        const angle =
+          CASHIER_FAN_ANGLES[index] + rotation;
+
+        /*
+         * Ang posisyon ng box ang umiikot.
+         * Ang orientation nito ay nananatiling tuwid.
+         */
 
         box.style.transform = `
           translate(-50%, -50%)
           rotate(${angle}deg)
-          translateY(-${radius}px)
+          translateY(-${CASHIER_FAN_RADIUS}px)
           rotate(${-angle}deg)
         `;
       });
@@ -13050,19 +13078,24 @@ function startCashierFanAnimation() {
 }
 
 
+/* =========================================
+   STOP FAN ANIMATION
+========================================= */
+
 function stopCashierFanAnimation() {
   /*
    * Ihinto ang continuous rotation.
    */
+
   if (cashierFanAnimationFrame !== null) {
     cancelAnimationFrame(cashierFanAnimationFrame);
     cashierFanAnimationFrame = null;
   }
 
   /*
-   * Kanselahin ang anumang entry animation
-   * na tumatakbo pa.
+   * Kanselahin ang entry animations.
    */
+
   cashierFanEntryAnimations.forEach((animation) => {
     animation.cancel();
   });
@@ -13070,10 +13103,14 @@ function stopCashierFanAnimation() {
   cashierFanEntryAnimations = [];
 
   /*
-   * Ibalik sa normal ang transforms.
+   * Alisin ang inline transforms para bumalik
+   * ang boxes sa normal CSS layout.
    */
+
   document
-    .querySelectorAll("#cashierPinBoxes .cashier-pin-box")
+    .querySelectorAll(
+      "#cashierPinBoxes .cashier-pin-box"
+    )
     .forEach((box) => {
       box.style.removeProperty("transform");
     });
