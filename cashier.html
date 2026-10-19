@@ -12972,13 +12972,31 @@ async function showCashierPOS(options = {}) {
 }
 
 
+/* =========================
+   SHOW CASHIER LOGIN
+   Safe Logout / Login Reset
+========================= */
+
 function showCashierLogin(message = "") {
+  /* Hide the cashier dashboard first. */
   hideCashierPOS();
 
+  /* Clear any leftover login-screen animation effects. */
   if (cashierLoginScreen) {
+    if (typeof cashierLoginScreen.getAnimations === "function") {
+      cashierLoginScreen.getAnimations().forEach((animation) => {
+        animation.cancel();
+      });
+    }
+
+    cashierLoginScreen.style.removeProperty("opacity");
+    cashierLoginScreen.style.removeProperty("transform");
+    cashierLoginScreen.style.removeProperty("visibility");
+
     cashierLoginScreen.style.display = "flex";
   }
 
+  /* Display the login message. */
   if (cashierLoginMessage) {
     cashierLoginMessage.textContent = message;
   }
