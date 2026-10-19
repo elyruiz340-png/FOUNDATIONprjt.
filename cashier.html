@@ -6183,7 +6183,7 @@ background:
   animation: none !important;
   opacity: 0 !important;
 }
- /* =========================
+/* =========================
    HALINA CASHIER PIN BOXES
 ========================= */
 
@@ -6229,12 +6229,8 @@ background:
   font-size: 34px;
   font-weight: 900;
   text-shadow: 0 0 10px rgba(255, 220, 155, 0.95);
+
   transition:
-    left 450ms ease,
-    top 450ms ease,
-    width 450ms ease,
-    height 450ms ease,
-    transform 450ms ease,
     border-color 180ms ease,
     background 180ms ease,
     box-shadow 180ms ease;
@@ -6254,9 +6250,13 @@ background:
   box-shadow: 0 0 0 2px rgba(232, 201, 138, 0.16);
 }
 
+/* =========================
+   VERIFYING FAN FORMATION
+========================= */
+
 .cashier-pin-boxes.is-verifying {
-  height: 176px;
   display: block;
+  height: 176px;
 }
 
 .cashier-pin-boxes.is-verifying .cashier-pin-box {
@@ -6266,17 +6266,31 @@ background:
   width: 46px;
   height: 54px;
   margin: 0;
+
   border: 2px solid #ffe3a0;
+  border-radius: 10px;
   background: rgba(255, 196, 70, 0.16);
+
   box-shadow:
     0 0 8px rgba(255, 204, 92, 1),
     0 0 18px rgba(255, 190, 55, 0.95),
     0 0 34px rgba(255, 174, 35, 0.😎,
     inset 0 0 12px rgba(255, 210, 120, 0.45);
-  animation:
 
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--fan-angle, 0deg))
+    translateY(-47px)
+    rotate(calc(-1 * var(--fan-angle, 0deg)));
+
+  animation:
+    halinaFanOrbit 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite,
     halinaPinNeonPulse 700ms ease-in-out infinite alternate;
+
+  will-change: transform;
 }
+
+/* Six evenly spaced positions around one center */
 
 .cashier-pin-boxes.is-verifying .cashier-pin-box:nth-child(2) {
   --fan-angle: 0deg;
@@ -6302,8 +6316,13 @@ background:
   --fan-angle: 300deg;
 }
 
+/*
+  The boxes orbit the same center.
+  The final counter-rotation keeps each box upright.
+*/
+
 @keyframes halinaFanOrbit {
-  from {
+  0% {
     transform:
       translate(-50%, -50%)
       rotate(var(--fan-angle))
@@ -6311,7 +6330,7 @@ background:
       rotate(calc(-1 * var(--fan-angle)));
   }
 
-  to {
+  100% {
     transform:
       translate(-50%, -50%)
       rotate(calc(var(--fan-angle) + 360deg))
@@ -6341,6 +6360,8 @@ background:
 .cashier-pin-boxes.is-error .cashier-pin-box {
   border-color: #e58b83;
 }
+
+/* Mobile sizing */
 
 @media (max-width: 420px) {
   .cashier-pin-boxes {
