@@ -12857,8 +12857,21 @@ function hideCashierPOS() {
   });
 }
 
-function showCashierPOS() {
-  cashierProtectedElements.forEach((element) => {
+/* =========================
+   CASHIER POS ENTRANCE
+   Smooth Login Transition
+========================= */
+
+async function showCashierPOS(options = {}) {
+  const animateEntrance = options.animate === true;
+  const loginScreen = cashierLoginScreen;
+
+  const protectedElements = Array.from(
+    cashierProtectedElements
+  );
+
+  /* Restore the protected POS elements. */
+  protectedElements.forEach((element) => {
     if (element.dataset.cashierAuthHidden === "true") {
       element.style.display =
         element.dataset.cashierOriginalDisplay || "";
@@ -12868,9 +12881,95 @@ function showCashierPOS() {
     }
   });
 
-  if (cashierLoginScreen) {
-    cashierLoginScreen.style.display = "none";
+  /* Keep the existing instant behavior when animation is not requested. */
+  if (!animateEntrance) {
+    protectedElements.forEach((element) => {
+      element.style.removeProperty("opacity");
+      element.style.removeProperty("transform");
+    });
+
+    if (loginScreen) {
+      loginScreen.style.display = "none";
+    }
+
+    return;
   }
+
+  /* Respect the user's reduced-motion preference. */
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (loginScreen) {
+      loginScreen.style.display = "none";
+    }
+
+    return;
+  }
+
+  /* Animate the login screen out. */
+  let loginAnimation = null;
+
+  if (loginScreen && loginScreen.style.display !== "none") {
+    loginAnimation = loginScreen.animate(
+      [
+        {
+          opacity: 1,
+          transform: "scale(1)"
+        },
+        {
+          opacity: 0,
+          transform: "scale(0.985)"
+        }
+      ],
+      {
+        duration: 260,
+        easing: "ease-in",
+        fill: "forwards"
+      }
+    );
+  }
+
+  /* Animate the POS dashboard in. */
+  const entranceAnimations = [];
+
+  protectedElements.forEach((element, index) => {
+    entranceAnimations.push(
+      element.animate(
+        [
+          {
+            opacity: 0,
+            transform: "translateY(12px) scale(0.99)"
+          },
+          {
+            opacity: 1,
+            transform: "translateY(0) scale(1)"
+          }
+        ],
+        {
+          duration: 480,
+          delay: Math.min(index * 35, 140),
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "both"
+        }
+      )
+    );
+  });
+
+  await Promise.all([
+    ...(loginAnimation ? [loginAnimation.finished] : []),
+    ...entranceAnimations.map((animation) => animation.finished)
+  ]).catch(() => {});
+
+  /* Clean up animation effects after completion. */
+  entranceAnimations.forEach((animation) => animation.cancel());
+
+  protectedElements.forEach((element) => {
+    element.style.removeProperty("opacity");
+    element.style.removeProperty("transform");
+  });
+
+  if (loginScreen) {
+    loginScreen.style.display = "none";
+  }
+}
 }
 
 function showCashierLogin(message = "") {
@@ -13415,13 +13514,15 @@ if (cashierLoginForm) {
 
       setCashierLoginLoading(false);
 
-      if (loginSucceeded) {
-        showCashierPOS();
-      } else {
-        showCashierLogin(
-          loginErrorMessage || "Login failed. Please try again."
-        );
-      }
+     if (loginSucceeded) {
+  await showCashierPOS({
+    animate: true
+  });
+} else {
+  showCashierLogin(
+    loginErrorMessage || "Login failed. Please try again."
+  );
+}
     }
   });
 }
