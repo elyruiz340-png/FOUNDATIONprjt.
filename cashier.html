@@ -12612,25 +12612,97 @@ document.querySelectorAll("#printReceiptBtn").forEach(function(button) {
 });
 /* =========================
    ACCEPT ORDER
-   DISPATCHER INTEGRATION NEXT
+   SAVE TO SUPABASE + DISPATCHER
 ========================= */
 
 if (acceptOrderBtn) {
-  acceptOrderBtn.addEventListener("click", function() {
-    if (acceptOrderBtn.disabled) {
+  acceptOrderBtn.addEventListener("click", async function() {
+    if (acceptOrderBtn.disabled) return;
+
+    if (!Array.isArray(posCart) || posCart.length === 0) {
+      console.error("Cannot accept an empty order.");
       return;
     }
 
-    // Allow Accept Order to trigger only once.
+    const total = getCheckoutTotal();
+
+    if (!Number.isFinite(total) || total <= 0) {
+      console.error("Invalid order total.");
+      return;
+    }
+
+    const originalText = acceptOrderBtn.textContent;
     acceptOrderBtn.disabled = true;
-    acceptOrderBtn.textContent = "Accepted";
+    acceptOrderBtn.textContent = "Saving Order...";
 
-    // Keep the existing receipt animation.
-    showSuccessReceipt();
+    try {
+      const orderItems = posCart.map(function(item) {
+        return {
+          name: item.name,
+          quantity: Number(item.quantity),
+          price: Number(item.price)
+        };
+      });
 
-    console.info(
-      "Payment verified. Connect this button to the existing Dispatcher order workflow next."
-    );
+      const response = await fetch(
+        SUPABASE_URL + "/rest/v1/orders",
+        {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY,
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+          },
+          body: JSON.stringify({
+            restaurant_id: "5e562ca7-38aa-4894-8265-ddca2f4e61b6",
+            order_type: "dine_in",
+            payment_method: "cash",
+            payment_status: "paid",
+            order_status: "pending",
+            status: "accepted",
+            items: orderItems,
+            total: total
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+          result.details ||
+          result.hint ||
+          "Supabase failed to save the order."
+        );
+      }
+
+      if (!Array.isArray(result) || !result.length) {
+        throw new Error("Supabase did not confirm the saved order.");
+      }
+
+      acceptOrderBtn.textContent = "Accepted";
+
+      showSuccessReceipt();
+
+      if (typeof loadOrders === "function") {
+        await loadOrders();
+      }
+
+      console.info("Order saved successfully:", result[0].id);
+
+    } catch (error) {
+      console.error("Accept Order Error:", error);
+
+      acceptOrderBtn.disabled = false;
+      acceptOrderBtn.textContent = originalText;
+
+      alert(
+        "Hindi na-save ang order sa Supabase.\n\n" +
+        error.message
+      );
+    }
   });
 }
 /* =========================
