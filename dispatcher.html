@@ -36,7 +36,7 @@ function safe(v){return String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 function normalizeStatus(order){return String(order.status || order.order_status || 'pending').trim().toLowerCase();}
 function isOpen(order){return !terminalStatuses.includes(normalizeStatus(order));}
 function isNew(status){return ['pending','new','accepted','confirmed'].includes(status);}
-function function prettyStatus(status) {
+function  prettyStatus(status) {
   if (
     status === "pending" ||
     status === "new" ||
