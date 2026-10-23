@@ -12480,6 +12480,11 @@ function showSuccessReceipt() {
     return;
   }
 
+  // Restore the parent container hidden after payment.
+  if (checkoutPaymentOptions) {
+    checkoutPaymentOptions.hidden = false;
+  }
+
   receiptArea.hidden = false;
 
   if (checkoutModal) {
