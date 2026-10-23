@@ -150,7 +150,8 @@ function renderCard(o) {
       <footer class="cardfoot">${action}</footer>
     </article>
   `;
-}async function updateStatus(id,status,button){if(!id||busyIds.has(id))return;const label=button.textContent;busyIds.add(id);button.disabled=true;button.textContent='Updating…';try{const updated=await api('orders?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({status})});if(!Array.isArray(updated)||!updated.length)throw new Error('No order was updated. Check the Supabase UPDATE policy.');await loadOrders();}catch(e){setNotice('Could not update order status: '+e.message);button.disabled=false;button.textContent=label;}finally{busyIds.delete(id);}}
+}
+  async function updateStatus(id,status,button){if(!id||busyIds.has(id))return;const label=button.textContent;busyIds.add(id);button.disabled=true;button.textContent='Updating…';try{const updated=await api('orders?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({status})});if(!Array.isArray(updated)||!updated.length)throw new Error('No order was updated. Check the Supabase UPDATE policy.');await loadOrders();}catch(e){setNotice('Could not update order status: '+e.message);button.disabled=false;button.textContent=label;}finally{busyIds.delete(id);}}
 document.getElementById('refreshBtn').addEventListener('click',loadOrders);document.getElementById('filters').addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;activeFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render();});
 loadOrders();setInterval(loadOrders,10000);
 </script>
