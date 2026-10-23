@@ -8074,6 +8074,95 @@ background:
     opacity: 0.6;
     cursor: wait;
   }
+  /* =========================
+   ORDERS — PAYMENT CENTER SCROLL
+========================= */
+
+#ordersSection .orders-list-column {
+  min-height: 0;
+  overflow: hidden;
+}
+
+#ordersSection #ordersContainer,
+#ordersSection #completedOrdersContainer {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#ordersSection #paymentCenterContainer {
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#ordersSection .payment-center-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#ordersSection .payment-center-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 10px 8px;
+}
+
+#ordersSection .payment-center-orders {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  padding: 4px 6px 16px 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #c7c8bd transparent;
+}
+
+#ordersSection .payment-center-orders .order-card {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+#ordersSection .payment-center-orders::-webkit-scrollbar {
+  width: 5px;
+}
+
+#ordersSection .payment-center-orders::-webkit-scrollbar-thumb {
+  background: #c7c8bd;
+  border-radius: 10px;
+}
+
+@media (max-width: 900px) {
+  #ordersSection #paymentCenterContainer {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+  }
+
+  #ordersSection .payment-center-column {
+    min-height: 260px;
+  }
+
+  #ordersSection .payment-center-orders {
+    overflow-y: auto;
+  }
+}
 </style>
     </div>
   </section>
@@ -11155,10 +11244,18 @@ function renderPaymentCenter(orders) {
     return;
   }
 
+  const isServed = function(order) {
+    const status = String(order.status || "")
+      .trim()
+      .toLowerCase();
+
+    return status === "served" || status === "completed";
+  };
+
   const isPaid = function(order) {
-    const status = String(
-      order.payment_status || "pending"
-    ).trim().toLowerCase();
+    const status = String(order.payment_status || "")
+      .trim()
+      .toLowerCase();
 
     return [
       "paid",
@@ -11168,11 +11265,11 @@ function renderPaymentCenter(orders) {
     ].includes(status);
   };
 
-  const pending = orders.filter(function(order) {
+  const servedOrders = orders.filter(isServed);
+  const pending = servedOrders.filter(function(order) {
     return !isPaid(order);
   });
-
-  const successful = orders.filter(isPaid);
+  const successful = servedOrders.filter(isPaid);
 
   const pendingCount =
     document.getElementById("pendingPaymentCount");
@@ -11224,7 +11321,7 @@ function renderPaymentCenter(orders) {
   fill(
     pendingContainer,
     pending,
-    "No pending payments."
+    "No served orders awaiting payment."
   );
 
   fill(
@@ -11233,7 +11330,6 @@ function renderPaymentCenter(orders) {
     "No successful payments yet."
   );
 }
-
 function renderOrders(orders, newOrderIds) {
   const ordersContainer =
     document.getElementById("ordersContainer");
