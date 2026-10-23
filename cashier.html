@@ -7868,72 +7868,141 @@ background:
     ORDERS SECTION
 ========================= -->
 <section
- id="ordersSection"
- class="page-section"
->
-<div class="top-bar">
-<h2>Incoming Orders</h2>
-</div>
-<div class="orders-filter-tabs" role="tablist" aria-label="Filter orders">
-<button
-     type="button"
-     class="orders-filter-tab active"
-     data-order-filter="new"
-     role="tab"
-     aria-selected="true"
->
-<span>NEW ORDERS</span>
-<span class="orders-filter-count" id="newOrdersCount">0</span>
-</button>
-<button
-     type="button"
-     class="orders-filter-tab"
-     data-order-filter="active"
-     role="tab"
-     aria-selected="false"
->
-<span>ACCEPTED / ACTIVE</span>
-<span class="orders-filter-count" id="activeOrdersCount">0</span>
-</button>
-<button
-     type="button"
-     class="orders-filter-tab"
-     data-order-filter="completed"
-     role="tab"
-     aria-selected="false"
->
-<span>COMPLETED</span>
-<span class="orders-filter-count" id="completedOrdersCount">0</span>
-</button>
-</div>
-<div class="orders-workspace">
-<div class="orders-list-column">
-<div
-       id="ordersContainer"
-       class="orders-container"
->
-<div class="loading">Loading incoming orders...</div>
-</div>
-<div
-       id="completedOrdersContainer"
-       class="orders-container"
-       style="display: none;"
->
-<div class="loading">Loading completed orders...</div>
-</div>
-</div>
-<aside
-     id="orderDetailsPanel"
-     class="order-details-panel"
-     aria-live="polite"
->
-<div class="order-details-empty">
-<div class="order-details-empty-icon">🧾</div>
-<h3>Order Details</h3>
-<p>Select an order card to view its details here.</p>
-</div>
-</aside>
-</div>
+  id="ordersSection"
+  class="page-section"
+
+  <div class="top-bar">
+    <h2>Incoming Orders</h2>
+  </div>
+
+  <div
+    class="orders-filter-tabs"
+    role="tablist"
+    aria-label="Filter orders"
+  >
+    <button
+      type="button"
+      class="orders-filter-tab active"
+      data-order-filter="new"
+      role="tab"
+      aria-selected="true"
+    >
+      <span>NEW ORDERS</span>
+      <span class="orders-filter-count" id="newOrdersCount">0</span>
+    </button>
+
+    <button
+      type="button"
+      class="orders-filter-tab"
+      data-order-filter="active"
+      role="tab"
+      aria-selected="false"
+    >
+      <span>ACCEPTED / ACTIVE</span>
+      <span class="orders-filter-count" id="activeOrdersCount">0</span>
+    </button>
+
+    <button
+      type="button"
+      class="orders-filter-tab"
+      data-order-filter="served"
+      role="tab"
+      aria-selected="false"
+    >
+      <span>SERVED</span>
+      <span class="orders-filter-count" id="servedOrdersCount">0</span>
+    </button>
+
+    <button
+      type="button"
+      class="orders-filter-tab"
+      data-order-filter="payment-center"
+      role="tab"
+      aria-selected="false"
+    >
+      <span>PAYMENT CENTER</span>
+      <span class="orders-filter-count" id="paymentCenterCount">0</span>
+    </button>
+  </div>
+
+  <div class="orders-workspace">
+    <!-- LEFT SIDE: ORDER LISTS -->
+    <div class="orders-list-column">
+
+      <div
+        id="ordersContainer"
+        class="orders-container"
+      >
+        <div class="loading">
+          Loading incoming orders...
+        </div>
+      </div>
+
+      <div
+        id="completedOrdersContainer"
+        class="orders-container"
+        style="display: none;"
+      >
+        <div class="loading">
+          Loading served orders...
+        </div>
+      </div>
+
+      <!-- PAYMENT CENTER: LEFT SIDE ONLY -->
+      <div
+        id="paymentCenterContainer"
+        class="payment-center-container"
+        style="display: none;"
+      >
+        <div class="payment-center-column">
+          <div class="payment-center-heading">
+            <h3>Pending Payment</h3>
+            <span id="pendingPaymentCount">0</span>
+          </div>
+
+          <div
+            id="pendingPaymentOrders"
+            class="payment-center-orders"
+          >
+            <div class="loading">
+              Loading pending payments...
+            </div>
+          </div>
+        </div>
+
+        <div class="payment-center-column">
+          <div class="payment-center-heading">
+            <h3>Payment Successful</h3>
+            <span id="successfulPaymentCount">0</span>
+          </div>
+
+          <div
+            id="successfulPaymentOrders"
+            class="payment-center-orders"
+          >
+            <div class="loading">
+              Loading successful payments...
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDE: KEEP EXISTING ORDER DETAILS PANEL -->
+    <aside
+      id="orderDetailsPanel"
+      class="order-details-panel"
+      aria-live="polite"
+    >
+      <div class="order-details-empty">
+        <div class="order-details-empty-icon">🧾</div>
+        <h3>Order Details</h3>
+        <p>Select an order card to view its details here.</p>
+      </div>
+    </aside>
+
+  </div>
 </section>
   <!-- =========================
        SETTINGS SECTION
@@ -10959,203 +11028,353 @@ async function loadOrders() {
 ========================= */
 
 /* =========================
-  RENDER ORDERS
+   RENDER ORDERS
+   HALINA BISTRO CAFE
 ========================= */
+
 window.cashierOrderFilter =
- window.cashierOrderFilter || "new";
+  window.cashierOrderFilter || "new";
+
 function updateOrderFilterTabs(counts) {
- const tabs = document.querySelectorAll(
-   "#ordersSection .orders-filter-tab"
- );
- tabs.forEach(function(tab) {
-   const filter = tab.dataset.orderFilter;
-   const isActive = filter === window.cashierOrderFilter;
-   tab.classList.toggle("active", isActive);
-   tab.setAttribute(
-     "aria-selected",
-     isActive ? "true" : "false"
-   );
-   const countId = {
-     new: "newOrdersCount",
-     active: "activeOrdersCount",
-     completed: "completedOrdersCount"
-   }[filter];
-   const countElement = document.getElementById(countId);
-   if (countElement) {
-     countElement.textContent = counts[filter] || 0;
-   }
-   if (filter === "new") {
-     tab.classList.toggle(
-       "has-new-orders",
-       (counts.new || 0) > 0
-     );
-   }
- });
+  const countIds = {
+    new: "newOrdersCount",
+    active: "activeOrdersCount",
+    served: "servedOrdersCount",
+    "payment-center": "paymentCenterCount"
+  };
+
+  document.querySelectorAll(
+    "#ordersSection .orders-filter-tab"
+  ).forEach(function(tab) {
+    const filter = tab.dataset.orderFilter;
+    const active =
+      filter === window.cashierOrderFilter;
+
+    tab.classList.toggle("active", active);
+    tab.setAttribute(
+      "aria-selected",
+      active ? "true" : "false"
+    );
+
+    const countElement = document.getElementById(
+      countIds[filter]
+    );
+
+    if (countElement) {
+      countElement.textContent = counts[filter] || 0;
+    }
+
+    if (filter === "new") {
+      tab.classList.toggle(
+        "has-new-orders",
+        (counts.new || 0) > 0
+      );
+    }
+  });
 }
+
 function setupOrderFilterTabs() {
- document.querySelectorAll(
-   "#ordersSection .orders-filter-tab"
- ).forEach(function(tab) {
-   if (tab.dataset.filterBound === "true") {
-     return;
-   }
-   tab.dataset.filterBound = "true";
-   tab.addEventListener("click", function() {
-     window.cashierOrderFilter =
-       tab.dataset.orderFilter || "new";
-     document.querySelectorAll(
-       "#ordersSection .orders-filter-tab"
-     ).forEach(function(item) {
-       const active =
-         item.dataset.orderFilter === window.cashierOrderFilter;
-       item.classList.toggle("active", active);
-       item.setAttribute(
-         "aria-selected",
-         active ? "true" : "false"
-       );
-     });
-     const completedContainer = document.getElementById(
-       "completedOrdersContainer"
-     );
-     const ordersContainer = document.getElementById(
-       "ordersContainer"
-     );
-     if (window.cashierOrderFilter === "completed") {
-       if (ordersContainer) {
-         ordersContainer.style.display = "none";
-       }
-       if (completedContainer) {
-         completedContainer.style.display = "flex";
-       }
-       loadCompletedOrders();
-     } else {
-       if (completedContainer) {
-         completedContainer.style.display = "none";
-       }
-       if (ordersContainer) {
-         ordersContainer.style.display = "flex";
-       }
-       if (window.cashierOrdersCache) {
-         renderOrders(
-           window.cashierOrdersCache,
-           new Set()
-         );
-       }
-     }
-   });
- });
+  document.querySelectorAll(
+    "#ordersSection .orders-filter-tab"
+  ).forEach(function(tab) {
+    if (tab.dataset.filterBound === "true") {
+      return;
+    }
+
+    tab.dataset.filterBound = "true";
+
+    tab.addEventListener("click", function() {
+      window.cashierOrderFilter =
+        tab.dataset.orderFilter || "new";
+
+      const ordersContainer =
+        document.getElementById("ordersContainer");
+      const servedContainer =
+        document.getElementById("completedOrdersContainer");
+      const paymentContainer =
+        document.getElementById("paymentCenterContainer");
+
+      if (ordersContainer) {
+        ordersContainer.style.display = "none";
+      }
+
+      if (servedContainer) {
+        servedContainer.style.display = "none";
+      }
+
+      if (paymentContainer) {
+        paymentContainer.style.display = "none";
+      }
+
+      updateOrderFilterTabs({
+        new: document.getElementById("newOrdersCount")?.textContent || 0,
+        active: document.getElementById("activeOrdersCount")?.textContent || 0,
+        served: document.getElementById("servedOrdersCount")?.textContent || 0,
+        "payment-center": document.getElementById("paymentCenterCount")?.textContent || 0
+      });
+
+      if (window.cashierOrderFilter === "served") {
+        if (servedContainer) {
+          servedContainer.style.display = "flex";
+        }
+
+        loadCompletedOrders();
+        return;
+      }
+
+      if (window.cashierOrderFilter === "payment-center") {
+        if (paymentContainer) {
+          paymentContainer.style.display = "grid";
+        }
+
+        renderPaymentCenter(
+          window.cashierOrdersCache || []
+        );
+        return;
+      }
+
+      if (ordersContainer) {
+        ordersContainer.style.display = "flex";
+      }
+
+      renderOrders(
+        window.cashierOrdersCache || [],
+        new Set()
+      );
+    });
+  });
 }
+
+function renderPaymentCenter(orders) {
+  const pendingContainer =
+    document.getElementById("pendingPaymentOrders");
+  const successfulContainer =
+    document.getElementById("successfulPaymentOrders");
+
+  if (!pendingContainer || !successfulContainer) {
+    return;
+  }
+
+  const isPaid = function(order) {
+    const status = String(
+      order.payment_status || "pending"
+    ).trim().toLowerCase();
+
+    return [
+      "paid",
+      "successful",
+      "succeeded",
+      "verified"
+    ].includes(status);
+  };
+
+  const pending = orders.filter(function(order) {
+    return !isPaid(order);
+  });
+
+  const successful = orders.filter(isPaid);
+
+  const pendingCount =
+    document.getElementById("pendingPaymentCount");
+  const successfulCount =
+    document.getElementById("successfulPaymentCount");
+
+  if (pendingCount) {
+    pendingCount.textContent = pending.length;
+  }
+
+  if (successfulCount) {
+    successfulCount.textContent = successful.length;
+  }
+
+  function fill(container, list, emptyText) {
+    container.innerHTML = "";
+
+    if (!list.length) {
+      const empty = document.createElement("div");
+      empty.className = "loading";
+      empty.textContent = emptyText;
+      container.appendChild(empty);
+      return;
+    }
+
+    list.forEach(function(order) {
+      const card = createOrderCard(order, new Set());
+
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+
+      card.addEventListener("click", function(event) {
+        if (event.target.closest(".accept-order-btn")) {
+          return;
+        }
+
+        window.selectedCashierOrderId = String(order.id);
+
+        renderSelectedOrderDetails(
+          order,
+          document.getElementById("orderDetailsPanel")
+        );
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  fill(
+    pendingContainer,
+    pending,
+    "No pending payments."
+  );
+
+  fill(
+    successfulContainer,
+    successful,
+    "No successful payments yet."
+  );
+}
+
 function renderOrders(orders, newOrderIds) {
- const ordersContainer = document.getElementById(
-   "ordersContainer"
- );
- const detailsPanel = document.getElementById(
-   "orderDetailsPanel"
- );
- if (!ordersContainer) {
-   return;
- }
- window.cashierOrdersCache = orders;
- const newOrders = [];
- const activeOrders = [];
- orders.forEach(function(order) {
-   const status = String(order.status || "new").toLowerCase();
-   if (status === "new") {
-     newOrders.push(order);
-   } else if (
-     status === "accepted" ||
-     status === "preparing" ||
-     status === "now serving"
-   ) {
-     activeOrders.push(order);
-   }
- });
- const counts = {
-   new: newOrders.length,
-   active: activeOrders.length,
-   completed: 0
- };
- updateOrderFilterTabs(counts);
- setupOrderFilterTabs();
- const selectedFilter = window.cashierOrderFilter || "new";
- const filteredOrders =
-   selectedFilter === "active" ? activeOrders : newOrders;
- ordersContainer.innerHTML = "";
- if (filteredOrders.length === 0) {
-   const emptyMessage = document.createElement("div");
-   emptyMessage.className = "loading";
-   emptyMessage.textContent =
-     selectedFilter === "active"
-       ? "📦 No accepted or active orders."
-       : "🧾 No new orders right now.";
-   ordersContainer.appendChild(emptyMessage);
-   if (detailsPanel) {
-     detailsPanel.innerHTML = `
-<div class="order-details-empty">
-<div class="order-details-empty-icon">🧾</div>
-<h3>Order Details</h3>
-<p>Select an order card to view its details here.</p>
-</div>
-     `;
-   }
-   window.selectedCashierOrderId = null;
-   return;
- }
- let selectedOrder = filteredOrders.find(function(order) {
-   return String(order.id) ===
-     String(window.selectedCashierOrderId);
- });
- if (!selectedOrder) {
-   selectedOrder = filteredOrders[0];
-   window.selectedCashierOrderId = String(selectedOrder.id);
- }
- filteredOrders.forEach(function(order) {
-   const card = createOrderCard(
-     order,
-     selectedFilter === "new" ? newOrderIds : new Set()
-   );
-   card.setAttribute("data-select-order-id", String(order.id));
-   card.setAttribute("role", "button");
-   card.setAttribute("tabindex", "0");
-   if (
-     String(order.id) ===
-     String(window.selectedCashierOrderId)
-   ) {
-     card.classList.add("selected-order-card");
-   }
-   card.addEventListener("click", function(event) {
-     if (event.target.closest(".accept-order-btn")) {
-       return;
-     }
-     window.selectedCashierOrderId = String(order.id);
-     ordersContainer.querySelectorAll(".order-card").forEach(
-       function(existingCard) {
-         existingCard.classList.remove("selected-order-card");
-       }
-     );
-     card.classList.add("selected-order-card");
-     renderSelectedOrderDetails(order, detailsPanel);
-   });
-   card.addEventListener("keydown", function(event) {
-     if (event.key === "Enter" || event.key === " ") {
-       if (event.target.closest(".accept-order-btn")) {
-         return;
-       }
-       event.preventDefault();
-       card.click();
-     }
-   });
-   ordersContainer.appendChild(card);
- });
- ordersContainer.querySelectorAll(".accept-order-btn").forEach(
-   function(button) {
-     button.addEventListener("click", function() {
-       acceptOrder(button.dataset.orderId, button);
-     });
-   }
- );
- renderSelectedOrderDetails(selectedOrder, detailsPanel);
+  const ordersContainer =
+    document.getElementById("ordersContainer");
+  const detailsPanel =
+    document.getElementById("orderDetailsPanel");
+
+  if (!ordersContainer) {
+    return;
+  }
+
+  window.cashierOrdersCache = orders;
+
+  const newOrders = [];
+  const activeOrders = [];
+
+  orders.forEach(function(order) {
+    const status = String(
+      order.status || "new"
+    ).trim().toLowerCase();
+
+    if (["new", "pending", "confirmed"].includes(status)) {
+      newOrders.push(order);
+    } else if (
+      ["accepted", "preparing", "now serving", "ready"].includes(status)
+    ) {
+      activeOrders.push(order);
+    }
+  });
+
+  const counts = {
+    new: newOrders.length,
+    active: activeOrders.length,
+    served: 0,
+    "payment-center": orders.length
+  };
+
+  updateOrderFilterTabs(counts);
+  setupOrderFilterTabs();
+
+  const filter = window.cashierOrderFilter;
+
+  if (filter === "served" || filter === "payment-center") {
+    if (filter === "payment-center") {
+      renderPaymentCenter(orders);
+    }
+    return;
+  }
+
+  const filteredOrders =
+    filter === "active" ? activeOrders : newOrders;
+
+  ordersContainer.innerHTML = "";
+
+  if (!filteredOrders.length) {
+    const empty = document.createElement("div");
+    empty.className = "loading";
+    empty.textContent =
+      filter === "active"
+        ? "📦 No accepted or active orders."
+        : "🧾 No new orders right now.";
+
+    ordersContainer.appendChild(empty);
+
+    if (detailsPanel) {
+      detailsPanel.innerHTML = `
+        <div class="order-details-empty">
+          <div class="order-details-empty-icon">🧾</div>
+          <h3>Order Details</h3>
+          <p>Select an order card to view its details here.</p>
+        </div>
+      `;
+    }
+
+    window.selectedCashierOrderId = null;
+    return;
+  }
+
+  let selectedOrder = filteredOrders.find(function(order) {
+    return String(order.id) ===
+      String(window.selectedCashierOrderId);
+  });
+
+  if (!selectedOrder) {
+    selectedOrder = filteredOrders[0];
+    window.selectedCashierOrderId =
+      String(selectedOrder.id);
+  }
+
+  filteredOrders.forEach(function(order) {
+    const card = createOrderCard(
+      order,
+      filter === "new" ? newOrderIds : new Set()
+    );
+
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+
+    if (String(order.id) === String(selectedOrder.id)) {
+      card.classList.add("selected-order-card");
+    }
+
+    card.addEventListener("click", function(event) {
+      if (event.target.closest(".accept-order-btn")) {
+        return;
+      }
+
+      window.selectedCashierOrderId = String(order.id);
+
+      ordersContainer.querySelectorAll(".order-card")
+        .forEach(function(existingCard) {
+          existingCard.classList.remove("selected-order-card");
+        });
+
+      card.classList.add("selected-order-card");
+
+      renderSelectedOrderDetails(order, detailsPanel);
+    });
+
+    card.addEventListener("keydown", function(event) {
+      if (
+        (event.key === "Enter" || event.key === " ") &&
+        !event.target.closest(".accept-order-btn")
+      ) {
+        event.preventDefault();
+        card.click();
+      }
+    });
+
+    ordersContainer.appendChild(card);
+  });
+
+  ordersContainer.querySelectorAll(".accept-order-btn")
+    .forEach(function(button) {
+      button.addEventListener("click", function() {
+        acceptOrder(button.dataset.orderId, button);
+      });
+    });
+
+  renderSelectedOrderDetails(selectedOrder, detailsPanel);
 }
+
 setupOrderFilterTabs();
 /* =========================
   SELECTED ORDER DETAILS
@@ -11426,11 +11645,8 @@ if (orderCard) {
 ========================= */
 
 async function loadCompletedOrders() {
-
   const completedContainer =
-    document.getElementById(
-      "completedOrdersContainer"
-    );
+    document.getElementById("completedOrdersContainer");
 
   if (!completedContainer) {
     return;
@@ -11438,100 +11654,66 @@ async function loadCompletedOrders() {
 
   completedContainer.innerHTML = `
     <div class="loading">
-      Loading completed orders...
+      Loading served orders...
     </div>
   `;
 
   try {
-
-    const response =
-      await fetch(
-        SUPABASE_URL +
-        "/rest/v1/orders" +
-        "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,created_at,completed_at" +
-        "&status=eq.completed" +
-        "&order=completed_at.desc" +
-        "&limit=100",
-        {
-          method: "GET",
-
-          headers: {
-            "apikey":
-              SUPABASE_KEY,
-
-            "Authorization":
-              "Bearer " +
-              SUPABASE_KEY
-          }
+    const response = await fetch(
+      SUPABASE_URL +
+      "/rest/v1/orders" +
+      "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,created_at,completed_at" +
+      "&status=in.(served,completed)" +
+      "&order=created_at.desc" +
+      "&limit=100",
+      {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY
         }
-      );
+      }
+    );
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
     if (!response.ok) {
-
       throw new Error(
         data.message ||
         data.error ||
         data.hint ||
-        "Unable to load completed orders."
+        "Unable to load served orders."
       );
-
     }
 
-    if (
-      !Array.isArray(data) ||
-      data.length === 0
-    ) {
-
+    if (!Array.isArray(data) || data.length === 0) {
       completedContainer.innerHTML = `
         <div class="loading">
-          📋 No completed orders yet.
+          📋 No served orders yet.
         </div>
       `;
-
       return;
     }
 
     completedContainer.innerHTML = "";
 
-    data.forEach(
-      function(order) {
-
-        const card =
-          createCompletedOrderCard(
-            order
-          );
-
-        completedContainer.appendChild(
-          card
-        );
-
-      }
-    );
+    data.forEach(function(order) {
+      const card = createCompletedOrderCard(order);
+      completedContainer.appendChild(card);
+    });
 
   } catch (error) {
-
-    console.error(
-      "Completed orders loading error:",
-      error
-    );
+    console.error("Served orders loading error:", error);
 
     completedContainer.innerHTML = `
       <div class="loading">
-        Unable to load completed orders.
+        Unable to load served orders.
         <br><br>
-        ${escapeHtml(
-          error.message
-        )}
+        ${escapeHtml(error.message)}
       </div>
     `;
-
   }
-
 }
-
 
 /* =========================
    CREATE COMPLETED ORDER CARD
