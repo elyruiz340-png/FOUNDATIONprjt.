@@ -36,7 +36,26 @@ function safe(v){return String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 function normalizeStatus(order){return String(order.status || order.order_status || 'pending').trim().toLowerCase();}
 function isOpen(order){return !terminalStatuses.includes(normalizeStatus(order));}
 function isNew(status){return ['pending','new','accepted','confirmed'].includes(status);}
-function prettyStatus(status){if(status==='pending'||status==='new')return 'NEW ORDER';if(status==='accepted'||status==='confirmed')return 'ACCEPTED';if(status==='preparing')return 'PREPARING';if(status==='ready')return 'READY';return status.replace(/_/g,' ').toUpperCase();}
+function function prettyStatus(status) {
+  if (
+    status === "pending" ||
+    status === "new" ||
+    status === "accepted" ||
+    status === "confirmed"
+  ) {
+    return "NEW ORDER";
+  }
+
+  if (status === "preparing") {
+    return "PREPARING";
+  }
+
+  if (status === "ready") {
+    return "READY";
+  }
+
+  return status.replace(/_/g, " ").toUpperCase();
+}
 function timeLabel(value){if(!value)return 'Time unavailable';const d=new Date(value);if(Number.isNaN(d.getTime()))return 'Time unavailable';return d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}
 function orderItems(order){let items=order.items;if(typeof items==='string'){try{items=JSON.parse(items)}catch{items=[]}}if(items && !Array.isArray(items) && Array.isArray(items.items))items=items.items;if(!Array.isArray(items))items=[];return items.map(it=>({name:it.item_name||it.name||it.title||it.product_name||'Menu item',qty:Number(it.quantity??it.qty??1)||1,instructions:it.special_instructions||it.instructions||''}));}
 function setNotice(message){notice.textContent=message;notice.classList.toggle('show',Boolean(message));}
