@@ -69,8 +69,88 @@ async function loadOrders(){document.getElementById('updatedText').textContent='
   allOrders=open;render();document.getElementById('updatedText').textContent='Updated '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});setNotice('');
  }catch(e){console.error('Dispatcher load error:',e);document.getElementById('updatedText').textContent='Connection issue';setNotice('Could not load orders: '+e.message+'. Check that the Supabase API key and SELECT policies allow this dashboard to read orders and order_items.');if(!allOrders.length)grid.innerHTML='<div class="empty"><strong>Orders could not be loaded.</strong>Check the connection and Supabase Row Level Security (RLS) policies.</div>';}}
 function render(){const newN=allOrders.filter(o=>isNew(normalizeStatus(o))).length;const prepN=allOrders.filter(o=>normalizeStatus(o)==='preparing').length;const readyN=allOrders.filter(o=>normalizeStatus(o)==='ready').length;document.getElementById('newCount').textContent=newN;document.getElementById('preparingCount').textContent=prepN;document.getElementById('readyCount').textContent=readyN;let list=allOrders;if(activeFilter==='new')list=list.filter(o=>isNew(normalizeStatus(o)));else if(activeFilter==='preparing'||activeFilter==='ready')list=list.filter(o=>normalizeStatus(o)===activeFilter);else if(activeFilter==='active')list=list.filter(o=>normalizeStatus(o)!=='ready');if(!list.length){grid.innerHTML='<div class="empty"><strong>No orders in this view</strong>New accepted orders will appear here when available.</div>';return;}grid.innerHTML=list.map(renderCard).join('');grid.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',()=>updateStatus(btn.dataset.id,btn.dataset.action,btn)));}
-function renderCard(o){const status=normalizeStatus(o);const items=o._fallbackItems||orderItems(o);const table=o.table_number||o.table_id||'Table not assigned';const number=o.order_number!=null?'#'+o.order_number:'#'+String(o.id||'').slice(0,8);const type=String(o.order_type||'dine_in').replace(/_/g,' ').replace(/^\w/,c=>c.toUpperCase());const instructions=o.special_instructions?`<div class="instructions"><strong>Order note:</strong> ${safe(o.special_instructions)}</div>`:'';const itemHtml=items.length?items.map(it=>`<div class="item"><div class="qty">${safe(it.qty)}×</div><div class="itemname">${safe(it.name)}${it.instructions?`<div class="instructions"><strong>Item note:</strong> ${safe(it.instructions)}</div>`:''}</div></div>`).join(''):'<div class="item"><div class="itemname">No item details found for this order.</div></div>';let action='';if(isNew(status))action=`<button class="action primary" data-action="preparing" data-id="${safe(o.id)}">Start Preparing</button>`;else if(status==='preparing')action=`<button class="action primary" data-action="ready" data-id="${safe(o.id)}">Mark Ready</button>`;else if(status==='ready')action='<span class="status ready">READY FOR DISPATCH</span>';return `<article class="card"><header class="cardhead"><div><div class="tablelabel">${safe(table)}</div><div class="order-meta"><span>${safe(number)}</span><span>·</span><span>${safe(timeLabel(o.created_at))}</span><span>·</span><span>${safe(type)}</span></div></div><span class="status ${safe(status)}">${safe(prettyStatus(status))}</span></header><div class="cardbody"><div class="items-title">Order items · ${items.length}</div>${itemHtml}${instructions}</div><footer class="cardfoot">${action}</footer></article>`;}
-async function updateStatus(id,status,button){if(!id||busyIds.has(id))return;const label=button.textContent;busyIds.add(id);button.disabled=true;button.textContent='Updating…';try{const updated=await api('orders?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({status})});if(!Array.isArray(updated)||!updated.length)throw new Error('No order was updated. Check the Supabase UPDATE policy.');await loadOrders();}catch(e){setNotice('Could not update order status: '+e.message);button.disabled=false;button.textContent=label;}finally{busyIds.delete(id);}}
+function renderCard(o) {
+  const status = normalizeStatus(o);
+  const items = o._fallbackItems || orderItems(o);
+  const table = o.table_number || o.table_id || 'Table not assigned';
+
+  const number = o.order_number != null
+    ? '#' + o.order_number
+    : '#' + String(o.id || '').slice(0, 8);
+
+  const type = String(o.order_type || 'dine_in')
+    .replace(/_/g, ' ')
+    .replace(/^\w/, c => c.toUpperCase());
+
+  const instructions = o.special_instructions
+    ? <div class="instructions"><strong>Order note:</strong> ${safe(o.special_instructions)}</div>
+    : '';
+
+  const itemHtml = items.length
+    ? items.map(it => `
+        <div class="item">
+          <div class="qty">${safe(it.qty)}×</div>
+          <div class="itemname">
+            ${safe(it.name)}
+            ${it.instructions
+              ? <div class="instructions"><strong>Item note:</strong> ${safe(it.instructions)}</div>
+              : ''}
+          </div>
+        </div>
+      `).join('')
+    : '<div class="item"><div class="itemname">No item details found for this order.</div></div>';
+
+  let action = '';
+
+  if (isNew(status)) {
+    action = `
+      <button class="action primary"
+        data-action="preparing"
+        data-id="${safe(o.id)}">
+        Start Preparing
+      </button>`;
+  } else if (status === 'preparing') {
+    action = `
+      <button class="action primary"
+        data-action="ready"
+        data-id="${safe(o.id)}">
+        Mark Ready
+      </button>`;
+  } else if (status === 'ready') {
+    action = `
+      <button class="action primary"
+        data-action="served"
+        data-id="${safe(o.id)}">
+        Mark Served
+      </button>`;
+  }
+
+  return `
+    <article class="card">
+      <header class="cardhead">
+        <div>
+          <div class="tablelabel">${safe(table)}</div>
+          <div class="order-meta">
+            <span>${safe(number)}</span>
+            <span>·</span>
+            <span>${safe(timeLabel(o.created_at))}</span>
+            <span>·</span>
+            <span>${safe(type)}</span>
+          </div>
+        </div>
+        <span class="status ${safe(status)}">${safe(prettyStatus(status))}</span>
+      </header>
+
+      <div class="cardbody">
+        <div class="items-title">Order items · ${items.length}</div>
+        ${itemHtml}
+        ${instructions}
+      </div>
+
+      <footer class="cardfoot">${action}</footer>
+    </article>
+  `;
+}
 document.getElementById('refreshBtn').addEventListener('click',loadOrders);document.getElementById('filters').addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;activeFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render();});
 loadOrders();setInterval(loadOrders,10000);
 </script>
