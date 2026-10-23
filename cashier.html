@@ -10235,60 +10235,120 @@ if (posSearch) {
 }
 /* =========================
    ADD MENU ITEM
+   HALINA STOCK ID MAPPING
+========================= */
+
+const HALINA_STOCK_PRODUCT_IDS = {
+  "Tapsilog": "tapsilog",
+  "Lechon Kawali Silog": "lechon-kawali-silog",
+  "Pork Silog": "pork-silog",
+  "Bang Silog": "bang-silog",
+
+  "Whole Fried Chicken": "whole-fried-chicken",
+  "Half Fried Chicken": "half-fried-chicken",
+  "Shanghai": "shanghai",
+  "Chicken Barbecue": "chicken-barbecue",
+  "Lechon Kawali": "lechon-kawali",
+  "Crispy Bangus": "crispy-bangus",
+  "Pork Sinigang": "pork-sinigang",
+  "Beef Sinigang": "beef-sinigang",
+  "Beef Caldereta": "beef-caldereta",
+  "Kare-Kare": "kare-kare",
+
+  "Endamame": "endamame",
+  "CG Endamame": "cg-endamame",
+  "Classic Fries": "classic-fries",
+  "Fish & Fries": "fish-fries",
+  "Fries Overload": "fries-overload",
+  "Chichabu": "chichabu",
+  "Chicken Fingers": "chicken-fingers",
+  "Calamari": "calamari",
+  "Tokwa't Baboy": "tokwat-baboy",
+  "Pork Sisig": "pork-sisig",
+  "Nachos": "nachos",
+  "Buffalo Wings": "buffalo-wings",
+
+  "Kiddie Spaghetti": "kiddie-spaghetti",
+  "Creamy Carbonara": "creamy-carbonara",
+  "Classic Spaghetti Marinara": "classic-spaghetti-marinara",
+
+  "Ham & Egg Sandwich": "ham-egg-sandwich",
+  "Clubhouse Sandwich": "clubhouse-sandwich",
+
+  "White Rice": "white-rice",
+  "Garlic Rice": "garlic-rice",
+  "White Rice Platter": "white-rice-platter",
+  "Garlic Rice Platter": "garlic-rice-platter",
+
+  "SM Pale Pilsen": "sm-pale-pilsen",
+  "San Mig Light": "san-mig-light",
+  "San Mig Apple": "san-mig-apple",
+  "Bed Horse Stallion": "red-horse-stallion",
+  "Bucket": "beer-bucket",
+
+  "Jinro Grapefruit": "jinro-grapefruit",
+  "Jinro Green Grape": "jinro-green-grape",
+  "Jinro Strawberry": "jinro-strawberry",
+
+  "Coke 320ml": "coke-320ml",
+  "Coke Zero 320ml": "coke-zero-320ml",
+  "Royal 320ml": "royal-320ml",
+  "Sprite 320ml": "sprite-320ml",
+  "Coke 1.5L": "coke-1-5l",
+  "Sprite 1.5L": "sprite-1-5l",
+
+  "Bottled Water": "bottled-water",
+  "Pitcher Iced Tea": "pitcher-iced-tea"
+};
+
+
+/* =========================
+   ADD MENU ITEM
 ========================= */
 
 if (posMenuGrid) {
-
   posMenuGrid
     .querySelectorAll(".pos-menu-card")
     .forEach(function(card) {
-
-      const addButton =
-        card.querySelector("button");
+      const addButton = card.querySelector("button");
 
       if (!addButton) {
         return;
       }
 
-      addButton.addEventListener(
-        "click",
-        function() {
+      addButton.addEventListener("click", function() {
+        const nameElement = card.querySelector("h3");
+        const priceElements = card.querySelectorAll("p");
 
-          const nameElement =
-            card.querySelector("h3");
-
-          const priceElement =
-            card.querySelector("p");
-
-          if (
-            !nameElement ||
-            !priceElement
-          ) {
-            return;
-          }
-
-          const name =
-            nameElement.textContent.trim();
-
-          const price =
-            Number(
-              priceElement.textContent
-                .replace("₱", "")
-                .replace(/,/g, "")
-                .trim()
-            ) || 0;
-
-
-          addToPosCart(
-            name,
-            price
-          );
-
+        if (!nameElement || !priceElements.length) {
+          return;
         }
-      );
 
+        const name = nameElement.textContent.trim();
+
+        // Read the first displayed price.
+        // Whiskey and tequila size selection remains separate work.
+        const priceText = priceElements[0].textContent;
+        const priceMatch = priceText.match(/₱\s*([\d,]+(?:\.\d{1,2})?)/);
+
+        if (!priceMatch) {
+          console.error("Unable to read menu price:", name);
+          return;
+        }
+
+        const price = Number(priceMatch[1].replace(/,/g, ""));
+
+        if (!Number.isFinite(price) || price <= 0) {
+          console.error("Invalid menu price:", name, priceText);
+          return;
+        }
+
+        const productId =
+          HALINA_STOCK_PRODUCT_IDS[name] || null;
+
+        addToPosCart(name, price, productId);
+      });
     });
-
 }
 
 
@@ -10296,43 +10356,29 @@ if (posMenuGrid) {
    ADD TO CART
 ========================= */
 
-function addToPosCart(
-  name,
-  price
-) {
-
-  const existingItem =
-    posCart.find(function(item) {
-
-      return item.name === name;
-
-    });
-
+function addToPosCart(name, price, productId = null) {
+  const existingItem = posCart.find(function(item) {
+    return item.name === name;
+  });
 
   if (existingItem) {
-
     existingItem.quantity += 1;
 
+    // Keep a known product ID if one is available.
+    if (!existingItem.product_id && productId) {
+      existingItem.product_id = productId;
+    }
   } else {
-
     posCart.push({
-
       name: name,
-
       price: price,
-
+      product_id: productId,
       quantity: 1
-
     });
-
   }
 
-
   renderPosCart();
-
 }
-
-
 /* =========================
    RENDER CART
 ========================= */
