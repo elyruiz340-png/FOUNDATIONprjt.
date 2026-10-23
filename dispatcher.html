@@ -83,7 +83,7 @@ function renderCard(o) {
     .replace(/^\w/, c => c.toUpperCase());
 
   const instructions = o.special_instructions
-    ? <div class="instructions"><strong>Order note:</strong> ${safe(o.special_instructions)}</div>
+    ? `<div class="instructions"><strong>Order note:</strong> ${safe(o.special_instructions)}</div>`
     : '';
 
   const itemHtml = items.length
@@ -93,7 +93,7 @@ function renderCard(o) {
           <div class="itemname">
             ${safe(it.name)}
             ${it.instructions
-              ? <div class="instructions"><strong>Item note:</strong> ${safe(it.instructions)}</div>
+              ? `<div class="instructions"><strong>Item note:</strong> ${safe(it.instructions)}</div>`
               : ''}
           </div>
         </div>
