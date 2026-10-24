@@ -7232,8 +7232,7 @@ background:
      CURRENT ORDER
 ====================== -->
 <aside class="pos-cart">
-
-  <!-- =====================
+<!-- =====================
        ORDER TYPE
   ====================== -->
   <div class="pos-order-types">
@@ -7241,6 +7240,8 @@ background:
     <button
       type="button"
       class="pos-order-type active"
+      data-order-type="dine_in"
+      aria-pressed="true"
     >
       DINE IN
     </button>
@@ -7248,6 +7249,8 @@ background:
     <button
       type="button"
       class="pos-order-type"
+      data-order-type="takeout"
+      aria-pressed="false"
     >
       TAKEOUT
     </button>
@@ -7255,68 +7258,91 @@ background:
     <button
       type="button"
       class="pos-order-type"
+      data-order-type="delivery"
+      aria-pressed="false"
     >
       DELIVERY
     </button>
 
   </div>
 
+  <!-- =====================
+       ORDER DETAILS
+  ====================== -->
+  <div id="posOrderDetails">
 
-  <!-- CURRENT ORDER HEADER -->
-  <div class="pos-cart-header">
+    <!-- DINE IN TABLE SELECTOR -->
+    <div class="pos-table-select" id="posDineInDetails">
 
-    <div>
-      <h2>Current Order</h2>
+      <label for="posTableNumber">
+        Table
+      </label>
 
-      <span>
-        New Order
-      </span>
+      <select id="posTableNumber">
+        <option value="">Loading tables...</option>
+      </select>
+
     </div>
 
-    <strong class="payment-status unpaid">
-      UNPAID
-    </strong>
+    <!-- TAKEOUT DETAILS -->
+    <div id="posTakeoutDetails" hidden>
+
+      <div class="pos-table-select">
+        <label for="posTakeoutCustomerName">
+          Customer Name (Optional)
+        </label>
+
+        <input
+          type="text"
+          id="posTakeoutCustomerName"
+          placeholder="Enter customer name"
+        />
+      </div>
+
+    </div>
+
+    <!-- DELIVERY DETAILS -->
+    <div id="posDeliveryDetails" hidden>
+
+      <div class="pos-table-select">
+        <label for="posDeliveryCustomerName">
+          Customer Name
+        </label>
+
+        <input
+          type="text"
+          id="posDeliveryCustomerName"
+          placeholder="Enter customer name"
+        />
+      </div>
+
+      <div class="pos-table-select">
+        <label for="posDeliveryAddress">
+          Delivery Address
+        </label>
+
+        <textarea
+          id="posDeliveryAddress"
+          placeholder="Enter delivery address"
+          rows="2"
+        ></textarea>
+      </div>
+
+      <div class="pos-table-select">
+        <label for="posDeliveryPhone">
+          Contact Number
+        </label>
+
+        <input
+          type="tel"
+          id="posDeliveryPhone"
+          placeholder="Enter contact number"
+        />
+      </div>
+
+    </div>
 
   </div>
-
-
-  <!-- TABLE -->
-  <div class="pos-table-select">
-
-    <label for="posTableNumber">
-      Table
-    </label>
-
-    <select id="posTableNumber">
-
-      <option value="">
-        Select Table
-      </option>
-
-      <option value="1">
-        Table 1
-      </option>
-
-      <option value="2">
-        Table 2
-      </option>
-
-      <option value="3">
-        Table 3
-      </option>
-
-      <option value="4">
-        Table 4
-      </option>
-
-      <option value="5">
-        Table 5
-      </option>
-
-    </select>
-
-  </div>
-
 
   <!-- CART ITEMS ONLY WILL SCROLL -->
   <div
