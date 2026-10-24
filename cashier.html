@@ -1637,6 +1637,7 @@
 
   box-sizing: border-box;
 }
+  
   /* =========================
      TABLE SELECT
   ========================= */
@@ -1674,7 +1675,10 @@
 
     font-size: 14px;
   }
-
+/* Keep hidden order details hidden even when styled with flex */
+#posOrderDetails [hidden] {
+  display: none !important;
+}
   /* =========================
      CURRENT ORDER ITEMS
   ========================= */
