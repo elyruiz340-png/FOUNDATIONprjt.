@@ -1722,6 +1722,77 @@
 #posOrderDetails [hidden] {
   display: none !important;
 }
+  /* HALINA — DELIVERY DETAILS DROPDOWN */
+.pos-delivery-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(100% - 24px);
+  min-height: 44px;
+  margin: 8px 12px;
+  padding: 0 14px;
+
+  border: 1px solid #d8e0db;
+  border-radius: 10px;
+  background: #f7f4ec;
+  color: #34433b;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+
+  transition:
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.pos-delivery-toggle:hover {
+  background: #eee9dc;
+  border-color: #b8c8bc;
+}
+
+.pos-delivery-arrow {
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 220ms ease;
+}
+
+.pos-delivery-toggle[aria-expanded="true"] .pos-delivery-arrow {
+  transform: rotate(180deg);
+}
+
+.pos-delivery-fields {
+  overflow: hidden;
+  animation: halinaDeliveryOpen 220ms ease both;
+}
+
+.pos-delivery-fields[hidden] {
+  display: none !important;
+}
+
+@keyframes halinaDeliveryOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pos-delivery-arrow,
+  .pos-delivery-toggle {
+    transition: none;
+  }
+
+  .pos-delivery-fields {
+    animation: none;
+  }
+}
   /* =========================
      CURRENT ORDER ITEMS
   ========================= */
@@ -7419,49 +7490,57 @@ background:
 
     </div>
 
-    <!-- DELIVERY DETAILS -->
+   <!-- DELIVERY DETAILS DROPDOWN -->
     <div id="posDeliveryDetails" hidden>
 
-      <div class="pos-table-select">
-        <label for="posDeliveryCustomerName">
-          Customer Name
-        </label>
+      <button
+        type="button"
+        id="posDeliveryToggle"
+        class="pos-delivery-toggle"
+        aria-expanded="false"
+        aria-controls="posDeliveryFields"
+      >
+        <span>Delivery Details</span>
+        <span class="pos-delivery-arrow" aria-hidden="true">⌄</span>
+      </button>
 
-        <input
-          type="text"
-          id="posDeliveryCustomerName"
-          placeholder="Enter customer name"
-        />
+      <div id="posDeliveryFields" class="pos-delivery-fields" hidden>
+
+        <div class="pos-table-select">
+          <label for="posDeliveryCustomerName">
+            Customer Name
+          </label>
+          <input
+            type="text"
+            id="posDeliveryCustomerName"
+            placeholder="Enter customer name"
+          />
+        </div>
+
+        <div class="pos-table-select">
+          <label for="posDeliveryAddress">
+            Delivery Address
+          </label>
+          <textarea
+            id="posDeliveryAddress"
+            placeholder="Enter delivery address"
+            rows="2"
+          ></textarea>
+        </div>
+
+        <div class="pos-table-select">
+          <label for="posDeliveryPhone">
+            Contact Number
+          </label>
+          <input
+            type="tel"
+            id="posDeliveryPhone"
+            placeholder="Enter contact number"
+          />
+        </div>
+
       </div>
-
-      <div class="pos-table-select">
-        <label for="posDeliveryAddress">
-          Delivery Address
-        </label>
-
-        <textarea
-          id="posDeliveryAddress"
-          placeholder="Enter delivery address"
-          rows="2"
-        ></textarea>
-      </div>
-
-      <div class="pos-table-select">
-        <label for="posDeliveryPhone">
-          Contact Number
-        </label>
-
-        <input
-          type="tel"
-          id="posDeliveryPhone"
-          placeholder="Enter contact number"
-        />
-      </div>
-
     </div>
-
-  </div>
-
   <!-- CART ITEMS ONLY WILL SCROLL -->
   <div
     id="posCartItems"
@@ -14382,123 +14461,210 @@ if (cashierLoginForm) {
   });
 })();
 </script>
-  <!-- ==============================
+ <!-- ==============================
     HALINA ORDER TYPE + TABLE SELECTOR
 ============================== -->
 <script>
 (function () {
- "use strict";
- const typeButtons = document.querySelectorAll(
-   ".pos-order-type[data-order-type]"
- );
- const tableSelect = document.getElementById("posTableNumber");
- const dineInDetails = document.getElementById("posDineInDetails");
- const takeoutDetails = document.getElementById("posTakeoutDetails");
- const deliveryDetails = document.getElementById("posDeliveryDetails");
- const takeoutName = document.getElementById("posTakeoutCustomerName");
- const deliveryName = document.getElementById("posDeliveryCustomerName");
- const deliveryAddress = document.getElementById("posDeliveryAddress");
- const deliveryPhone = document.getElementById("posDeliveryPhone");
- window.halinaSelectedOrderType = "dine_in";
- function showDetails(type) {
-   window.halinaSelectedOrderType = type;
-   typeButtons.forEach(function (button) {
-     const active = button.dataset.orderType === type;
-     button.classList.toggle("active", active);
-     button.setAttribute("aria-pressed", String(active));
-   });
-   if (dineInDetails) dineInDetails.hidden = type !== "dine_in";
-   if (takeoutDetails) takeoutDetails.hidden = type !== "takeout";
-   if (deliveryDetails) deliveryDetails.hidden = type !== "delivery";
- }
- typeButtons.forEach(function (button) {
-   button.addEventListener("click", function () {
-     showDetails(button.dataset.orderType);
-   });
- });
- window.halinaLoadOrderTables = async function () {
-   if (!tableSelect) return;
-   tableSelect.innerHTML = '<option value="">Loading tables...</option>';
-   try {
-     const response = await fetch(
-       "https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/T%20A%20B%20L%20E%20S?select=table_number,status",
-       {
-         headers: {
-           apikey: "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4",
-           Authorization: "Bearer sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4"
-         }
-       }
-     );
-     const tables = await response.json();
-     if (!response.ok) {
-       throw new Error("Hindi ma-load ang tables mula sa Supabase.");
-     }
-     if (!Array.isArray(tables) || tables.length === 0) {
-       tableSelect.innerHTML = '<option value="">No tables found</option>';
-       return;
-     }
-     tables.sort(function (a, b) {
-       return String(a.table_number).localeCompare(
-         String(b.table_number),
-         undefined,
-         { numeric: true }
-       );
-     });
-     tableSelect.innerHTML = '<option value="">Select a table</option>';
-     tables.forEach(function (table) {
-       const originalNumber = String(table.table_number || "");
-       const displayNumber = originalNumber.trim();
-       const isOpen = String(table.status || "").trim().toLowerCase() === "open";
-       const option = document.createElement("option");
-       option.value = originalNumber;
-       option.textContent = displayNumber + (isOpen ? " — Available" : " — Unavailable");
-       option.disabled = !isOpen;
-       tableSelect.appendChild(option);
-     });
-   } catch (error) {
-     console.error("HALINA table selector:", error);
-     tableSelect.innerHTML = '<option value="">Unable to load tables</option>';
-   }
- };
- window.halinaGetOrderDetails = function () {
-   const type = window.halinaSelectedOrderType;
-   const details = {
-     orderType: type,
-     tableNumber: null,
-     customerName: null,
-     customerPhone: null,
-     deliveryAddress: null
-   };
-   if (type === "dine_in") {
-     if (!tableSelect || !tableSelect.value) {
-       throw new Error("Pumili muna ng available table para sa Dine In.");
-     }
-     if (tableSelect.selectedOptions[0]?.disabled) {
-       throw new Error("Hindi available ang napiling table.");
-     }
-     details.tableNumber = tableSelect.value;
-   }
-   if (type === "takeout") {
-     details.customerName = takeoutName?.value.trim() || null;
-   }
-   if (type === "delivery") {
-     details.customerName = deliveryName?.value.trim() || null;
-     details.deliveryAddress = deliveryAddress?.value.trim() || null;
-     details.customerPhone = deliveryPhone?.value.trim() || null;
-     if (!details.customerName) {
-       throw new Error("Ilagay ang customer name para sa Delivery.");
-     }
-     if (!details.deliveryAddress) {
-       throw new Error("Ilagay ang delivery address.");
-     }
-     if (!details.customerPhone) {
-       throw new Error("Ilagay ang contact number.");
-     }
-   }
-   return details;
- };
- showDetails("dine_in");
- window.halinaLoadOrderTables();
+  "use strict";
+
+  const typeButtons = document.querySelectorAll(
+    ".pos-order-type[data-order-type]"
+  );
+
+  const tableSelect = document.getElementById("posTableNumber");
+  const dineInDetails = document.getElementById("posDineInDetails");
+  const takeoutDetails = document.getElementById("posTakeoutDetails");
+  const deliveryDetails = document.getElementById("posDeliveryDetails");
+
+  const deliveryToggle = document.getElementById("posDeliveryToggle");
+  const deliveryFields = document.getElementById("posDeliveryFields");
+
+  const takeoutName = document.getElementById("posTakeoutCustomerName");
+  const deliveryName = document.getElementById("posDeliveryCustomerName");
+  const deliveryAddress = document.getElementById("posDeliveryAddress");
+  const deliveryPhone = document.getElementById("posDeliveryPhone");
+
+  window.halinaSelectedOrderType = "dine_in";
+
+  function setDeliveryDropdown(open) {
+    if (!deliveryToggle || !deliveryFields) return;
+
+    deliveryToggle.setAttribute("aria-expanded", String(open));
+    deliveryFields.hidden = !open;
+  }
+
+  if (deliveryToggle && deliveryFields) {
+    deliveryToggle.addEventListener("click", function () {
+      const isOpen =
+        deliveryToggle.getAttribute("aria-expanded") === "true";
+
+      setDeliveryDropdown(!isOpen);
+    });
+  }
+
+  function showDetails(type) {
+    window.halinaSelectedOrderType = type;
+
+    typeButtons.forEach(function (button) {
+      const active = button.dataset.orderType === type;
+
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+
+    if (dineInDetails) {
+      dineInDetails.hidden = type !== "dine_in";
+    }
+
+    if (takeoutDetails) {
+      takeoutDetails.hidden = type !== "takeout";
+    }
+
+    if (deliveryDetails) {
+      deliveryDetails.hidden = type !== "delivery";
+    }
+
+    // Close the dropdown when switching order types.
+    // Typed information remains in the input fields.
+    setDeliveryDropdown(false);
+  }
+
+  typeButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      showDetails(button.dataset.orderType);
+    });
+  });
+
+  window.halinaLoadOrderTables = async function () {
+    if (!tableSelect) return;
+
+    tableSelect.innerHTML =
+      '<option value="">Loading tables...</option>';
+
+    try {
+      const response = await fetch(
+        "https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/T%20A%20B%20L%20E%20S?select=table_number,status",
+        {
+          headers: {
+            apikey: "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4",
+            Authorization: "Bearer sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4"
+          }
+        }
+      );
+
+      const tables = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          "Hindi ma-load ang tables mula sa Supabase."
+        );
+      }
+
+      if (!Array.isArray(tables) || tables.length === 0) {
+        tableSelect.innerHTML =
+          '<option value="">No tables found</option>';
+        return;
+      }
+
+      tables.sort(function (a, b) {
+        return String(a.table_number).localeCompare(
+          String(b.table_number),
+          undefined,
+          { numeric: true }
+        );
+      });
+
+      tableSelect.innerHTML =
+        '<option value="">Select a table</option>';
+
+      tables.forEach(function (table) {
+        const originalNumber = String(table.table_number || "");
+        const displayNumber = originalNumber.trim();
+
+        const isOpen =
+          String(table.status || "").trim().toLowerCase() === "open";
+
+        const option = document.createElement("option");
+
+        option.value = originalNumber;
+        option.textContent =
+          displayNumber +
+          (isOpen ? " — Available" : " — Unavailable");
+
+        option.disabled = !isOpen;
+
+        tableSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error("HALINA table selector:", error);
+
+      tableSelect.innerHTML =
+        '<option value="">Unable to load tables</option>';
+    }
+  };
+
+  window.halinaGetOrderDetails = function () {
+    const type = window.halinaSelectedOrderType;
+
+    const details = {
+      orderType: type,
+      tableNumber: null,
+      customerName: null,
+      customerPhone: null,
+      deliveryAddress: null
+    };
+
+    if (type === "dine_in") {
+      if (!tableSelect || !tableSelect.value) {
+        throw new Error(
+          "Pumili muna ng available table para sa Dine In."
+        );
+      }
+
+      if (tableSelect.selectedOptions[0]?.disabled) {
+        throw new Error("Hindi available ang napiling table.");
+      }
+
+      details.tableNumber = tableSelect.value;
+    }
+
+    if (type === "takeout") {
+      details.customerName =
+        takeoutName?.value.trim() || null;
+    }
+
+    if (type === "delivery") {
+      details.customerName =
+        deliveryName?.value.trim() || null;
+
+      details.deliveryAddress =
+        deliveryAddress?.value.trim() || null;
+
+      details.customerPhone =
+        deliveryPhone?.value.trim() || null;
+
+      if (!details.customerName) {
+        throw new Error(
+          "Ilagay ang customer name para sa Delivery."
+        );
+      }
+
+      if (!details.deliveryAddress) {
+        throw new Error("Ilagay ang delivery address.");
+      }
+
+      if (!details.customerPhone) {
+        throw new Error("Ilagay ang contact number.");
+      }
+    }
+
+    return details;
+  };
+
+  setDeliveryDropdown(false);
+  showDetails("dine_in");
+  window.halinaLoadOrderTables();
 })();
 </script>
 </body>
