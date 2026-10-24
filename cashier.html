@@ -1162,68 +1162,71 @@
   border-color: #527563;
   box-shadow: 0 0 0 3px rgba(82,117,99,0.08);
 }
-  /* =========================
+/* =========================
    ORDER TYPES
 ========================= */
 
 .pos-order-types {
   display: flex;
-
-  gap: 6px;
-
-  margin-bottom: 10px;
-
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 12px;
   flex-wrap: nowrap;
-
   width: 100%;
-
   box-sizing: border-box;
 }
 
 .pos-order-type {
   flex: 1 1 0;
-
   min-width: 0;
-
-  min-height: 34px;
-
-  height: 34px;
-
-  padding: 0 6px;
-
+  min-height: 40px;
+  height: 40px;
+  padding: 0 8px;
   box-sizing: border-box;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   border: 1px solid #d8e0db;
-
-  border-radius: 8px;
-
+  border-radius: 10px;
   background: #ffffff;
-
-  color: #34433b;
+  color: #46534c;
 
   font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 
   cursor: pointer;
 
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .pos-order-type:hover {
   background: #f4f7f5;
-
   border-color: #b9c9bf;
+}
+
+.pos-order-type:focus-visible {
+  outline: 2px solid #8ba995;
+  outline-offset: 2px;
 }
 
 .pos-order-type.active {
   background: #315143;
-
   color: #ffffff;
-
   border-color: #315143;
+  box-shadow: 0 2px 5px rgba(49, 81, 67, 0.16);
+}
+
+.pos-order-type:active {
+  transform: scale(0.98);
 }
  /* =========================
    CATEGORIES
