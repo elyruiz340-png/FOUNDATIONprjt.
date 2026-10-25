@@ -120,17 +120,18 @@ input,select{background:var(--s);border:1px solid var(--bd);border-radius:10px;p
 </head>
 <body>
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
-<section id="authGate">
-  <form class="auth-card" id="loginForm">
+<section id="authGate" style="display:grid!important;min-height:100vh;place-items:center;padding:22px;position:relative;z-index:2;color:var(--tx);">
+  <form class="auth-card" id="loginForm" style="display:block;width:min(440px,100%);padding:28px;border:1px solid var(--bd);border-radius:24px;background:var(--bg2);color:var(--tx);box-shadow:var(--sh);">
     <div class="brand" style="margin-bottom:16px"><b>H</b><span style="opacity:1;width:auto">HALINA BISTRO CAFE</span></div>
     <h1>Owner / Admin Login</h1>
     <p>Sign in with your existing Supabase account. This dashboard reads live restaurant data and respects the database access rules.</p>
-    <label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="you@example.com">
-    <label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Your password">
-    <button class="btn pri" id="loginButton" type="submit">Sign in securely</button>
+    <label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="you@example.com" style="display:block;width:100%;background:var(--bg2);color:var(--tx);">
+    <label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Your password" style="display:block;width:100%;background:var(--bg2);color:var(--tx);">
+    <button class="btn pri" id="loginButton" type="submit" style="display:block;width:100%;margin-top:16px;padding:12px;background:#285d3f;color:#fff;">Sign in securely</button>
     <div id="authError" role="alert" aria-live="polite"></div>
     <div class="note">No demo account is provided here. Use an account already created in Supabase Auth and linked to a restaurant.</div>
   </form>
+  <noscript><p style="color:#fff;background:#8b2525;padding:12px;border-radius:8px;max-width:440px">JavaScript is disabled. Enable JavaScript to use the HALINA Admin Dashboard.</p></noscript>
 </section>
 <div class="app" id="app">
 <aside id="sb" aria-label="Main navigation"><div class="brand"><b>E</b><span>EDMEL</span></div><nav id="nav"></nav><button class="tg" id="tg" aria-label="Expand or collapse sidebar"></button></aside>
