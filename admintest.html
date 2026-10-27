@@ -367,6 +367,139 @@ try{const{data,error}=await sb.from('orders').select('id,order_number,order_type
 const r=await sb.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,stock_total,stock_remaining,category,image_url,is_available,is_archived,created_at').order('id',{ascending:true});INV.length=0;S.stockErr=r.error?r.error.message:'';if(!r.error)INV.push(...r.data.map(x=>({id:x.id,pid:x.product_id||'',n:x.product_name||'',c:x.category||'',total:Number(x.stock_total)||0,q:Number(x.stock_remaining)||0,u:'',th:3,b:1,image:x.image_url||'',available:x.is_available!==false,archived:x.is_archived===true,upd:x.created_at||'',log:[]})));
 render();if(manual)toast('Data refreshed')}
 catch(err){$('#pg').innerHTML=`<div class="card"><span class="bd er">● Could not load orders</span><p>${esc(err.message||String(err))}</p><div class="tb"><button class="btn" data-a="refresh">Try again</button><button class="btn" data-a="signout">Sign out</button></div></div>`}}
+
+/* HALINA MENU & CATEGORIES — Supabase-backed */
+const HALINA_RESTAURANT_ID='5e562ca7-38aa-4894-8265-ddca2f4e61b6';
+let MENU_ROWS=[], CATEGORY_ROWS=[], MENU_STOCK_ROWS=[], menuLoadError='';
+const menuEsc=v=>esc(String(v??''));
+async function loadMenuData(){
+  const [cr,mr,sr]=await Promise.all([
+    sb.from('menu_categories').select('id,restaurant_id,name,description,image_url,sort_order,is_active,created_at').eq('restaurant_id',HALINA_RESTAURANT_ID).order('sort_order').order('name'),
+    sb.from('menu_items').select('id,restaurant_id,category_id,name,description,price,image_url,is_available,sort_order,stock_product_id,created_at').eq('restaurant_id',HALINA_RESTAURANT_ID).order('sort_order').order('name'),
+    sb.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,is_available,is_archived').not('product_id','is',null).order('product_name')
+  ]);
+  if(cr.error) throw cr.error;
+  if(mr.error) throw mr.error;
+  CATEGORY_ROWS=cr.data||[]; MENU_ROWS=mr.data||[];
+  MENU_STOCK_ROWS=(sr.error?[]:(sr.data||[])).filter(x=>x.product_id && x.is_archived!==true);
+  menuLoadError=sr.error?('Menu loaded, but stock links could not be loaded: '+sr.error.message):'';
+}
+function menuImageUploadField(id,label,current){
+  return `<div class="fl"><label for="${id}">${label} (JPG, PNG, WebP; max 5 MB)</label><input id="${id}" type="file" accept="image/jpeg,image/png,image/webp"></div>${current?`<p class="note">Current image: <a href="${menuEsc(current)}" target="_blank" rel="noopener">View image</a></p>`:''}`;
+}
+async function uploadMenuImage(file,kind){
+  if(!file)return null;
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024) throw new Error('Photo must be JPG, PNG, or WebP and no larger than 5 MB.');
+  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+  const path=HALINA_RESTAURANT_ID+'/'+kind+'/'+crypto.randomUUID()+'.'+ext;
+  const up=await sb.storage.from('halina-menu-images').upload(path,file,{contentType:file.type,upsert:false});
+  if(up.error)throw up.error;
+  return sb.storage.from('halina-menu-images').getPublicUrl(path).data.publicUrl;
+}
+function menuPage(){
+  const q=(S.f.q||'').trim().toLowerCase(),cat=S.f.mcat||'';
+  const rows=MENU_ROWS.filter(m=>(!q||(m.name+' '+(m.description||'')).toLowerCase().includes(q))&&(!cat||m.category_id===cat));
+  const catName=id=>CATEGORY_ROWS.find(c=>c.id===id)?.name||'No category';
+  return `<div class="tb"><input data-c="q" value="${menuEsc(S.f.q||'')}" placeholder="Search menu items…" aria-label="Search menu items"><select data-c="mcat" aria-label="Filter by category"><option value="">All categories</option>${CATEGORY_ROWS.map(c=>`<option value="${c.id}"${cat===c.id?' selected':''}>${menuEsc(c.name)}${c.is_active?'':' (inactive)'}</option>`).join('')}</select><button class="btn pri" data-a="menuadd">+ Add menu item</button><button class="btn" data-a="catmanage">Manage categories</button><button class="btn" data-a="menurefresh">Refresh</button></div>
+  <p class="mu">${CATEGORY_ROWS.length} categories · ${MENU_ROWS.length} menu items · HALINA BISTRO CAFE · Supabase</p>
+  ${menuLoadError?`<p class="note">${menuEsc(menuLoadError)}</p>`:''}
+  <div class="g g2">${rows.map(m=>`<div class="card"><div class="row" style="align-items:flex-start;gap:12px">${m.image_url?`<img src="${menuEsc(m.image_url)}" alt="" style="width:76px;height:76px;object-fit:cover;border-radius:10px">`:`<div style="width:76px;height:76px;border-radius:10px;background:var(--sf);display:grid;place-items:center;color:var(--mu)">No photo</div>`}<div style="flex:1;min-width:0"><div class="row"><b>${menuEsc(m.name)}</b>${bdg(m.is_available?'Available':'Unavailable')}</div><div class="mu">${menuEsc(catName(m.category_id))}</div><div class="big">${M(Number(m.price)||0)}</div></div></div>${m.description?`<p class="mu">${menuEsc(m.description)}</p>`:''}<div class="tb"><button class="btn" data-a="menuedit" data-i="${m.id}">Edit item</button><button class="btn" data-a="menutoggle" data-i="${m.id}">${m.is_available?'Make unavailable':'Make available'}</button></div></div>`).join('')||`<div class="card">${empty(q||cat?'No menu items match this filter.':'No HALINA menu items yet. Add a category first, then create your first menu item.')}</div>`}</div>`;
+}
+async function refreshMenu(){
+  try{await loadMenuData();render();}catch(e){toast('Could not load Menu & Categories: '+(e.message||e),1);menuLoadError=e.message||String(e);render();}
+}
+function menuItemForm(id){
+  const old=id?MENU_ROWS.find(x=>x.id===id):null;
+  if(id&&!old){toast('Menu item not found. Refresh and try again.',1);return;}
+  const cats=CATEGORY_ROWS.filter(c=>c.is_active || (old&&c.id===old.category_id));
+  const stock=MENU_STOCK_ROWS;
+  L.innerHTML=`<div class="bk" data-a="close"></div><form id="menuItemForm" class="md" role="dialog" aria-modal="true" aria-label="${old?'Edit':'Add'} menu item"><h3>${old?'Edit menu item':'Add menu item'}</h3><p class="note">Changes save to HALINA's Supabase records only. Stock quantities are not edited here.</p>
+  <div class="fl"><label for="miName">Menu item name *</label><input id="miName" required maxlength="120" value="${menuEsc(old?.name||'')}"></div>
+  <div class="fl"><label for="miDesc">Description</label><textarea id="miDesc" rows="2" maxlength="1000">${menuEsc(old?.description||'')}</textarea></div>
+  <div class="fl"><label for="miPrice">Price (₱) *</label><input id="miPrice" type="number" min="0" step="0.01" required value="${old?Number(old.price):''}"></div>
+  <div class="fl"><label for="miCat">Category *</label><select id="miCat" required><option value="">Choose category…</option>${cats.map(c=>`<option value="${c.id}"${old?.category_id===c.id?' selected':''}>${menuEsc(c.name)}</option>`).join('')}<option value="__new__">＋ Add new category…</option></select></div>
+  <div id="miNewCatWrap" class="fl" hidden><label for="miNewCat">New category name *</label><input id="miNewCat" maxlength="80" placeholder="Enter a new category name"><label for="miNewCatDesc">Category description</label><input id="miNewCatDesc" maxlength="300" placeholder="Optional description"><label for="miNewCatPhoto">Category photo (optional)</label><input id="miNewCatPhoto" type="file" accept="image/jpeg,image/png,image/webp"></div>
+  <div class="fl"><label for="miStock">Link existing inventory item (optional)</label><select id="miStock"><option value="">No stock link</option>${stock.map(x=>`<option value="${menuEsc(x.product_id)}"${old?.stock_product_id===x.product_id?' selected':''}>${menuEsc(x.product_name)} · ${menuEsc(x.product_id)}${x.is_available===false?' (unavailable)':''}</option>`).join('')}</select><p class="note">Only existing stock records appear here. Linking does not change stock quantity. Automatic deduction for new menu IDs still requires the ordering workflow to use this mapping.</p></div>
+  ${menuImageUploadField('miPhoto','Menu item photo',old?.image_url)}
+  <div class="fl"><label><input id="miAvailable" type="checkbox"${old?.is_available!==false?' checked':''}> Available for ordering</label></div>
+  <div class="tb"><button class="btn pri" type="submit" id="miSave">${old?'Save item':'Create item'}</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="miErr" class="er" role="alert"></p></form>`;
+  const catSel=$('#miCat'),newWrap=$('#miNewCatWrap');
+  catSel.onchange=()=>{newWrap.hidden=catSel.value!=='__new__';if(!newWrap.hidden)$('#miNewCat').focus();};
+  $('#menuItemForm').onsubmit=async e=>{
+    e.preventDefault();const btn=$('#miSave'),err=$('#miErr');err.textContent='';
+    const name=$('#miName').value.trim(),description=$('#miDesc').value.trim(),price=Number($('#miPrice').value),file=$('#miPhoto').files[0];
+    if(!name||!Number.isFinite(price)||price<0){err.textContent='Enter a valid name and non-negative price.';return;}
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      let categoryId=catSel.value;
+      if(categoryId==='__new__'){
+        const cn=$('#miNewCat').value.trim();
+        if(!cn)throw new Error('Enter the new category name.');
+        const dup=CATEGORY_ROWS.find(c=>c.name.trim().toLowerCase()===cn.toLowerCase());
+        if(dup)throw new Error('That category already exists. Choose it from the dropdown instead.');
+        let catImage=null;const cf=$('#miNewCatPhoto').files[0];if(cf)catImage=await uploadMenuImage(cf,'categories');
+        const insCat=await sb.from('menu_categories').insert({restaurant_id:HALINA_RESTAURANT_ID,name:cn,description:$('#miNewCatDesc').value.trim()||null,image_url:catImage,is_active:true}).select('id').single();
+        if(insCat.error)throw insCat.error;categoryId=insCat.data.id;
+      }
+      if(!categoryId)throw new Error('Choose a category.');
+      let imageUrl=old?.image_url||null;if(file)imageUrl=await uploadMenuImage(file,'items');
+      const payload={restaurant_id:HALINA_RESTAURANT_ID,category_id:categoryId,name,description:description||null,price,image_url:imageUrl,is_available:$('#miAvailable').checked,stock_product_id:$('#miStock').value||null};
+      const res=old?await sb.from('menu_items').update(payload).eq('id',old.id).eq('restaurant_id',HALINA_RESTAURANT_ID):await sb.from('menu_items').insert(payload);
+      if(res.error)throw res.error;
+      await loadMenuData();closeL();render();toast(old?'Menu item updated':'Menu item created');
+    }catch(ex){err.textContent=ex.message||'Could not save menu item.';btn.disabled=false;btn.textContent=old?'Save item':'Create item';}
+  };
+  $('#miName').focus();
+}
+function categoryForm(id){
+  const old=id?CATEGORY_ROWS.find(x=>x.id===id):null;
+  if(id&&!old){toast('Category not found. Refresh and try again.',1);return;}
+  L.innerHTML=`<div class="bk" data-a="close"></div><form id="catForm" class="md" role="dialog" aria-modal="true" aria-label="${old?'Edit':'Add'} category"><h3>${old?'Edit category':'Add category'}</h3><div class="fl"><label for="catName">Category name *</label><input id="catName" required maxlength="80" value="${menuEsc(old?.name||'')}"></div><div class="fl"><label for="catDesc">Description</label><textarea id="catDesc" rows="2" maxlength="300">${menuEsc(old?.description||'')}</textarea></div>${menuImageUploadField('catPhoto','Category photo',old?.image_url)}<div class="fl"><label><input id="catActive" type="checkbox"${old?.is_active!==false?' checked':''}> Active category</label></div><div class="tb"><button class="btn pri" id="catSave" type="submit">${old?'Save category':'Create category'}</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="catErr" class="er" role="alert"></p></form>`;
+  $('#catForm').onsubmit=async e=>{e.preventDefault();const btn=$('#catSave'),err=$('#catErr'),name=$('#catName').value.trim(),file=$('#catPhoto').files[0];err.textContent='';if(!name){err.textContent='Category name is required.';return}const dup=CATEGORY_ROWS.find(c=>c.name.trim().toLowerCase()===name.toLowerCase()&&c.id!==old?.id);if(dup){err.textContent='That category already exists.';return}btn.disabled=true;btn.textContent='Saving…';
+    try{let imageUrl=old?.image_url||null;if(file)imageUrl=await uploadMenuImage(file,'categories');const payload={restaurant_id:HALINA_RESTAURANT_ID,name,description:$('#catDesc').value.trim()||null,image_url:imageUrl,is_active:$('#catActive').checked};const res=old?await sb.from('menu_categories').update(payload).eq('id',old.id).eq('restaurant_id',HALINA_RESTAURANT_ID):await sb.from('menu_categories').insert(payload);if(res.error)throw res.error;await loadMenuData();closeL();render();toast(old?'Category updated':'Category created');}
+    catch(ex){err.textContent=ex.message||'Could not save category.';btn.disabled=false;btn.textContent=old?'Save category':'Create category';}
+  };$('#catName').focus();
+}
+function categoryManager(){
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-label="Manage categories"><h3>Manage categories</h3><p class="note">Deactivate categories instead of deleting them to preserve existing menu links.</p><div class="tb"><button class="btn pri" data-a="catadd">+ Add category</button><button class="btn" data-a="close">Close</button></div>${CATEGORY_ROWS.map(c=>`<div class="row" style="padding:10px 0;border-bottom:1px solid var(--bd);gap:10px">${c.image_url?`<img src="${menuEsc(c.image_url)}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px">`:''}<div style="flex:1"><b>${menuEsc(c.name)}</b><div class="mu">${MENU_ROWS.filter(m=>m.category_id===c.id).length} items · ${c.is_active?'Active':'Inactive'}</div></div><button class="btn" data-a="catedit" data-i="${c.id}">Edit</button></div>`).join('')||empty('No categories yet.')}</div>`;
+}
+async function toggleMenuItem(id){
+  const item=MENU_ROWS.find(x=>x.id===id);if(!item)return;
+  const res=await sb.from('menu_items').update({is_available:!item.is_available}).eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);
+  if(res.error){toast('Could not update availability: '+res.error.message,1);return}
+  await loadMenuData();render();toast(item.is_available?'Menu item marked unavailable':'Menu item is available');
+}
+A.menuadd=()=>menuItemForm(null);
+A.menuedit=t=>menuItemForm(t.dataset.i);
+A.menutoggle=t=>toggleMenuItem(t.dataset.i);
+A.menurefresh=()=>refreshMenu();
+A.catmanage=()=>categoryManager();
+A.catadd=()=>categoryForm(null);
+A.catedit=t=>categoryForm(t.dataset.i);
+A.addmenu=()=>menuItemForm(null);
+A.editmenu=t=>menuItemForm(t.dataset.i);
+A.addcat=()=>categoryForm(null);
+Object.assign(PG,{menu:menuPage});
+const originalStart=start;
+start=async function(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){showLogin();return;}
+  const {data:ru,error}=await sb.from('restaurant_users').select('role,restaurant_id').eq('user_id',session.user.id).maybeSingle();
+  if(error||!ru||ru.restaurant_id!==HALINA_RESTAURANT_ID||!['owner','admin'].includes(ru.role)){
+    await sb.auth.signOut();
+    showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to a HALINA owner/admin role.');
+    return;
+  }
+  G.hidden=true;S.user=session.user.email;await load();
+};
+const originalLoad=load;
+load=async function(manual){
+  await originalLoad(manual);
+  if(!G.hidden)return;
+  try{await loadMenuData();if(S.page==='menu')render();}
+  catch(e){menuLoadError=e.message||String(e);if(S.page==='menu')render();}
+};
+
 /* 10. THEME + SIDEBAR SETUP */
 function applyTheme(){document.documentElement.dataset.theme=S.theme;$('#th').innerHTML=I(S.theme=='dark'?'sun':'moon')}
 function fillBr(){$('#br').innerHTML=`<option value="0">All Branches</option>`+BS.map((b,i)=>`<option value="${i+1}"${S.br==i+1?' selected':''}>${b}</option>`).join('')}
