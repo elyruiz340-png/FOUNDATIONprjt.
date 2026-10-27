@@ -8816,7 +8816,7 @@ async function loadStocks() {
   try {
     const response = await fetch(
       STOCK_ENDPOINT +
-        "?select=id,product_id,product_name,stock_group,stock_total,stock_remaining&order=id.asc",
+        "?select=id,product_id,product_name,stock_group,stock_total,stock_remaining,category,image_url&order=id.asc",
       {
         method: "GET",
         headers: {
@@ -8858,82 +8858,9 @@ async function loadStocks() {
       others: 12
     };
 
-    const productCategory = {
-      "tapsilog": "all-day-breakfast",
-      "lechon-kawali-silog": "all-day-breakfast",
-      "pork-silog": "all-day-breakfast",
-      "bang-silog": "all-day-breakfast",
-
-      "whole-fried-chicken": "a-la-carte",
-      "half-fried-chicken": "a-la-carte",
-      "shanghai": "a-la-carte",
-      "chicken-barbecue": "a-la-carte",
-      "lechon-kawali": "a-la-carte",
-      "crispy-bangus": "a-la-carte",
-      "pork-sinigang": "a-la-carte",
-      "beef-sinigang": "a-la-carte",
-      "beef-caldereta": "a-la-carte",
-      "kare-kare": "a-la-carte",
-
-      "endamame": "pulutan",
-      "cg-endamame": "pulutan",
-      "classic-fries": "pulutan",
-      "fish-fries": "pulutan",
-      "fries-overload": "pulutan",
-      "chichabu": "pulutan",
-      "chicken-fingers": "pulutan",
-      "calamari": "pulutan",
-      "tokwat-baboy": "pulutan",
-      "pork-sisig": "pulutan",
-      "nachos": "pulutan",
-      "buffalo-wings": "pulutan",
-
-      "kiddie-spaghetti": "pasta",
-      "creamy-carbonara": "pasta",
-      "classic-spaghetti-marinara": "pasta",
-
-      "ham-egg-sandwich": "sandwich",
-      "clubhouse-sandwich": "sandwich",
-
-      "white-rice": "rice",
-      "garlic-rice": "rice",
-      "white-rice-platter": "rice",
-      "garlic-rice-platter": "rice",
-
-      "sm-pale-pilsen": "beers",
-      "san-mig-light": "beers",
-      "san-mig-apple": "beers",
-      "red-horse-stallion": "beers",
-      "beer-bucket": "beers",
-
-      "jameson-45ml": "whiskey",
-      "jameson-1l": "whiskey",
-      "black-label-45ml": "whiskey",
-      "black-label-1l": "whiskey",
-      "jack-daniels-45ml": "whiskey",
-      "jack-daniels-1l": "whiskey",
-
-      "jose-cuervo-45ml": "tequila",
-      "jose-cuervo-1l": "tequila",
-
-      "jinro-grapefruit": "soju",
-      "jinro-green-grape": "soju",
-      "jinro-strawberry": "soju",
-
-      "coke-320ml": "soda",
-      "coke-zero-320ml": "soda",
-      "royal-320ml": "soda",
-      "sprite-320ml": "soda",
-      "coke-1-5l": "soda",
-      "sprite-1-5l": "soda",
-
-      "bottled-water": "others",
-      "pitcher-iced-tea": "others"
-    };
-
     data.forEach(function(item) {
-      item.menuCategory =
-        productCategory[item.product_id] || "others";
+      // Category is stored in Supabase; keep a safe fallback for older rows.
+      item.menuCategory = item.category || "others";
     });
 
     /*
@@ -8956,29 +8883,28 @@ async function loadStocks() {
     });
 
     const sortedGroups = Object.keys(groups)
-      .map(function(group) {
-        return {
-          group: group,
-          items: groups[group]
-        };
-      })
-      .sort(function(a, b) {
-        const categoryA =
-          productCategory[a.items[0].product_id] || "others";
+  .map(function(group) {
+    return {
+      group: group,
+      items: groups[group]
+    };
+  })
+  .sort(function(a, b) {
+    const categoryA =
+      a.items[0].menuCategory || "others";
 
-        const categoryB =
-          productCategory[b.items[0].product_id] || "others";
+    const categoryB =
+      b.items[0].menuCategory || "others";
 
-        const orderA = categoryOrder[categoryA] || 99;
-        const orderB = categoryOrder[categoryB] || 99;
+    const orderA = categoryOrder[categoryA] || 99;
+    const orderB = categoryOrder[categoryB] || 99;
 
-        if (orderA !== orderB) {
-          return orderA - orderB;
-        }
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
 
-        return a.items[0].id - b.items[0].id;
-      });
-
+    return a.items[0].id - b.items[0].id;
+  });
     /*
      * RENDER STOCK CARDS
      * sortedGroups is defined above, inside this function.
@@ -9045,9 +8971,11 @@ function createStockCard(stockGroup, items) {
 
   const imageFile = imageMap[normalizedName];
 
-  const imagePath = imageFile
+  // Prefer the database image URL. Keep existing local photos as fallback
+  // until Admin uploads photos for those stock items.
+  const imagePath = firstItem.image_url || (imageFile
     ? `images/${imageFile}`
-    : "";
+    : "");
 
   let sharedText = "";
 
@@ -9068,7 +8996,7 @@ function createStockCard(stockGroup, items) {
           ? `
             <img
               class="stock-item-image"
-              src="${imagePath}"
+              src="${escapeHtml(imagePath)}"
               alt="${escapeHtml(displayName)}"
               loading="lazy"
               onerror="this.style.display='none';"
