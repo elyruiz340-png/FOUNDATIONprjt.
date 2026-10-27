@@ -76,6 +76,8 @@ input,select{background:var(--s);border:1px solid var(--bd);border-radius:10px;p
 .pn{top:62px;right:16px;width:min(380px,94vw);max-height:70vh;padding:14px;border-radius:16px;animation:up .2s}
 .pn.s{left:50%;right:auto;transform:translateX(-50%);width:min(560px,94vw)}
 .fl{display:grid;gap:4px;margin-bottom:10px}.fl input,.fl select{width:100%}
+/* Ensure the new-category fields stay hidden unless the special option is selected. */
+#miNewCatWrap[hidden]{display:none!important}
 #toast{position:fixed;right:18px;bottom:18px;z-index:60;display:grid;gap:8px}
 .ts{padding:10px 14px;border-radius:12px;background:var(--bg2);border:1px solid var(--bd);box-shadow:var(--sh);animation:up .2s}
 .ln{stroke-dasharray:1400;stroke-dashoffset:1400;animation:dw 1s forwards}
