@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HALINA BISTRO CAFE — Live Admin Dashboard</title>
+<title>EDMEL — Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* 2. THEME TOKENS */
 :root{--bg:#07110c;--bg2:#10211a;--s:rgba(34,58,45,.46);--gs:rgba(22,40,31,.66);--gh:rgba(16,30,23,.55);--gf:rgba(14,28,21,.88);--bd:rgba(150,200,170,.14);--ge:rgba(160,215,185,.24);--hl:rgba(255,255,255,.10);--o1:#2e8a58;--o2:#1b5a3d;--o3:#b59a5a;--oo:.45;--tx:#eef3ef;--mu:#9bb0a3;--ac:#8fd1a8;--ac2:#2f7a54;--ok:#78c796;--wn:#e6ae52;--er:#e2766b;--r:14px;--sh:0 8px 28px rgba(0,0,0,.3);--t:.22s}
@@ -101,47 +102,25 @@ input,select{background:var(--s);border:1px solid var(--bd);border-radius:10px;p
 @media(max-width:1100px){.bento>*{grid-column:span 6}}@media(max-width:640px){.bento>*{grid-column:1/-1}}@media(max-width:820px){.edy{display:none}}
 @supports not (backdrop-filter:blur(1px)){.card,#sb,header{background:var(--bg2)}.dr,.md,.pn{background:var(--bg2)}}
 @media(prefers-reduced-transparency:reduce){.card,#sb,header,.dr,.md,.pn{background:var(--bg2);-webkit-backdrop-filter:none;backdrop-filter:none}}
+body.locked .app{visibility:hidden}#gate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:16px}#gate[hidden]{display:none}.gt{width:min(380px,100%);padding:24px}
 /* 12. RESPONSIVE + PRINT */
 .ov{display:none}
 @media(max-width:820px){.app,.app.exp{--sw:0px}#sb{width:230px;transform:translateX(-100%)}.app.mo #sb{transform:none}.app.mo #nav span,.app.mo .brand span{opacity:1;width:auto}.app.mo .ov{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:25}.mb{display:grid}.tg,#nav button::after{display:none}.srch span,.srch kbd{display:none}.srch{min-width:0}header{padding:10px 12px}.sub{display:none}#pg{padding:12px}}
 @media print{#sb,header,.noprint,#toast{display:none!important}.main{margin:0}body{background:#fff;color:#000}}
-
-/* LIVE AUTH GATE */
-.app{display:none}
-#authGate{min-height:100vh;display:grid;place-items:center;padding:22px;position:relative;z-index:2}
-.auth-card{width:min(440px,100%);padding:28px;border:1px solid var(--bd);border-radius:24px;background:var(--s);backdrop-filter:blur(18px);box-shadow:var(--sh)}
-.auth-card h1{font-size:24px;margin:0 0 6px}.auth-card p{color:var(--mu)}
-.auth-card label{display:block;margin:14px 0 6px;font-size:13px;color:var(--mu)}
-.auth-card input{width:100%;padding:12px}
-.auth-card button{width:100%;margin-top:16px;padding:12px}
-#authError{color:var(--er);min-height:20px;font-size:13px;margin-top:10px}
-.live-note{padding:10px 12px;border:1px solid var(--bd);border-radius:12px;color:var(--mu);margin-bottom:14px}
-
+</style>
 </head>
-<body>
+<body class="locked">
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
-<section id="authGate">
-  <form class="auth-card" id="loginForm">
-    <div class="brand" style="margin-bottom:16px"><b>H</b><span style="opacity:1;width:auto">HALINA BISTRO CAFE</span></div>
-    <h1>Owner / Admin Login</h1>
-    <p>Sign in with your existing Supabase account. This dashboard reads live restaurant data and respects the database access rules.</p>
-    <label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="you@example.com">
-    <label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Your password">
-    <button class="btn pri" id="loginButton" type="submit">Sign in securely</button>
-    <div id="authError" role="alert" aria-live="polite"></div>
-    <div class="note">No demo account is provided here. Use an account already created in Supabase Auth and linked to a restaurant.</div>
-  </form>
-</section>
 <div class="app" id="app">
 <aside id="sb" aria-label="Main navigation"><div class="brand"><b>E</b><span>EDMEL</span></div><nav id="nav"></nav><button class="tg" id="tg" aria-label="Expand or collapse sidebar"></button></aside>
 <div class="ov" id="ov"></div>
 <div class="main">
 <header>
 <button class="ib mb" id="mb" aria-label="Open menu"></button>
-<div><div class="ttl" id="ttl"></div><div class="sub" id="liveSub">HALINA BISTRO CAFE · Connecting to Supabase…</div></div>
+<div><div class="ttl" id="ttl"></div><div class="sub">HALINA BISTRO CAFE</div></div>
 <div class="sp"></div>
-<button class="srch" data-a="search" aria-label="Search (press / or Ctrl+K)"><span id="si"></span><span>Search live restaurant data…</span><kbd>/</kbd></button>
-<select id="br" aria-label="Branch" data-c="br"></select>
+<button class="srch" data-a="search" aria-label="Search (press / or Ctrl+K)"><span id="si"></span><span>Search orders…</span><kbd>/</kbd></button>
+<select id="br" aria-label="Branch" data-c="br" hidden></select>
 <button class="btn edy" data-a="go" data-p="ai">✦ Ask EDY</button>
 <button class="ib" data-a="bell" aria-label="Notifications"><span id="bi"></span><i class="dot" id="dot"></i></button>
 <button class="ib" data-a="theme" id="th" aria-label="Toggle dark or light theme"></button>
@@ -149,82 +128,87 @@ input,select{background:var(--s);border:1px solid var(--bd);border-radius:10px;p
 </header>
 <main id="pg"></main>
 </div></div>
-<div id="layer"></div><div id="toast" role="status" aria-live="polite"></div>
+<div id="layer"></div><div id="gate" hidden></div><div id="toast" role="status" aria-live="polite"></div>
 
-<script type="module">
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-/* 8. LIVE DATA — all illustrative, nothing is real */
+<script>
+/* 8. DEMO DATA — all illustrative, nothing is real */
 const P={home:'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',chart:'M4 20V10M10 20V4M16 20v-7M22 20H2',receipt:'M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6',menu:'M4 3v8a3 3 0 0 0 6 0V3M7 3v18M16 3v18M16 3c4 2 4 7 0 9',box:'M12 3l9 5-9 5-9-5zM3 8v9l9 5 9-5V8M12 13v9',wallet:'M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2',users:'M16 20v-2a4 4 0 0 0-8 0v2M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8',log:'M5 3h14v18H5zM9 8h6M9 12h6M9 16h4',branch:'M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4',pulse:'M3 12h4l3-8 4 16 3-8h4',spark:'M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z',cog:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19 12l2-1-2-4-2 1-2-1V5H9v2l-2 1-2-1-2 4 2 1v2l-2 1 2 4 2-1 2 1v2h6v-2l2-1 2 1 2-4-2-1z',bell:'M6 17v-6a6 6 0 0 1 12 0v6l2 2H4zM10 21h4',search:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14M21 21l-5-5',moon:'M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z',sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',burger:'M4 6h16M4 12h16M4 18h16',x:'M6 6l12 12M18 6L6 18',chev:'M15 6l-6 6 6 6'};
-let BS=[], BASE=[], AO=[], EXB=[];
-let MENU=[], ORD=[], INV=[], EXP=[], STAFF=[], AUD=[], NT=[], HEALTH=[];
+const BS=['HALINA BISTRO CAFE'],BASE=[18400,12900,9800],AO=[420,385,360],EXB=[.26,.29,.27];
+const MENU=[['Tapsilog','Breakfast',219],['Pork Silog','Breakfast',199],['Lechon Kawali','A La Carte',360],['Kare-Kare','A La Carte',399],['Pork Sisig','Pulutan',279],['Buffalo Wings','Pulutan',299],['Classic Fries','Pulutan',149],['Creamy Carbonara','Pasta',149],['Clubhouse Sandwich','Sandwich',199],['Garlic Rice','Rice',39],['San Mig Light','Beers',99],['Pitcher Iced Tea','Others',150]].map((m,i)=>({n:m[0],c:m[1],p:m[2],a:i!==5}));
+const ST=['New','Preparing','Completed','Cancelled'],PM=['Cash','Online (QR/Card)','Card'];
+const ORD=[];
+const INV=[['Chicken Wings','Meat',8,'kg',10],['Pork Belly','Meat',22,'kg',12],['Rice','Dry Goods',45,'kg',20],['Cooking Oil','Dry Goods',6,'L',8],['Spaghetti','Dry Goods',14,'kg',6],['Eggs','Dairy',40,'pcs',30],['San Mig Light','Beverage',72,'btl',48],['Coke 320ml','Beverage',30,'btl',36],['Takeout Boxes','Supplies',90,'pcs',60],['Cheese','Dairy',3,'kg',4]].map((x,i)=>({n:x[0],c:x[1],q:x[2],u:x[3],th:x[4],b:1+i%3,upd:'Oct 24, 09:'+(10+i*4),log:[['Oct 23','Restock','+'+(x[2]+5)],['Oct 24','Used in orders','-5']]}));
+const EXP=[['Oct 01','Rent','Monthly lease',85000,1],['Oct 01','Rent','Monthly lease',62000,2],['Oct 01','Rent','Monthly lease',48000,3],['Oct 15','Salaries and wages','Payroll',148000,1],['Oct 15','Salaries and wages','Payroll',96000,2],['Oct 20','Utilities','Electricity and water',21400,1],['Oct 20','Utilities','Electricity and water',15800,2],['Oct 18','Supplies and packaging','Takeout boxes, cups',9600,3],['Oct 12','Maintenance','Aircon servicing',7500,2],['Oct 22','Other expenses','Permits and fees',5200,1]].map(x=>({d:x[0],c:x[1],ds:x[2],a:x[3],b:x[4]}));
 const ECAT=['Rent','Salaries and wages','Utilities','Supplies and packaging','Maintenance','Other expenses'];
+const STAFF=[['Maria Santos','Owner',0,'Active','Off shift','Today 08:12'],['Jon Reyes','Manager',1,'Active','On shift','Today 09:40'],['Ana Cruz','Cashier',1,'Active','On shift','Today 09:55'],['Leo Garcia','Dispatcher / Kitchen',1,'Active','On shift','Today 09:31'],['Mika Tan','Manager',2,'Active','Off shift','Yesterday 21:02'],['Paolo Lim','Cashier',3,'Suspended','Off shift','Oct 20']].map(x=>({n:x[0],r:x[1],b:x[2],s:x[3],sh:x[4],l:x[5]}));
+const AUD=[['Oct 24 09:41','Jon Reyes','Stock updated','Chicken Wings',2,'Quantity 12 → 8'],['Oct 24 09:12','Ana Cruz','Order cancelled','ORD-1052',1,'Customer request'],['Oct 23 18:20','Maria Santos','Menu price changed','Lechon Kawali',1,'₱350 → ₱360'],['Oct 23 16:05','Maria Santos','Staff permission changed','Mika Tan',2,'Manager: reports enabled'],['Oct 22 08:00','Maria Santos','Business setting updated','Receipt footer',1,'Text edited'],['Oct 22 07:58','Maria Santos','Login','Owner session',0,'Sample login event']].map(x=>({t:x[0],a:x[1],ac:x[2],r:x[3],b:x[4],d:x[5]}));
+const NT=[{ty:'New order',m:'Sample order ORD-1067 received at Branch 1 (illustrative)'},{ty:'Low stock',m:'Chicken Wings is below its threshold at Branch 2'},{ty:'Cancelled order',m:'ORD-1052 was cancelled (sample event)'},{ty:'System',m:'Printer integration shows a simulated warning'},{ty:'Subscription',m:'Sample usage reminder: 62% of the monthly allowance used'}].map(n=>({...n,r:0}));
+const HEALTH=[['Database connection','ok','Sample: OK','No real database is connected. This simulates a healthy link.'],['Order synchronization','ok','Sample: OK','Simulates orders syncing between customer, cashier and dispatcher.'],['Printer integration','wn','Sample: Warning','Simulates a receipt printer with low paper. No printer is used.'],['Payment integration','ok','Sample: OK','Simulated only. No payment system is connected.'],['AI service','wn','Not connected','EDY is not connected yet: no AI service is configured.']];
 const PER={today:['Today',1],yest:['Yesterday',.93],'7d':['Last 7 Days',7],'30d':['Last 30 Days',30],tm:['This Month',24],lm:['Last Month',30],ty:['This Year',298],cu:['Custom Range',14]};
 const WID=[['sales','Sales Today'],['orders','Orders Today'],['monthly','Monthly Sales'],['pending','Pending Orders'],['low','Low Stock Alerts'],['aov','Average Order Value'],['chart','Sales Chart'],['best','Best Sellers'],['recent','Recent Transactions'],['branch','Branch Comparison'],['act','Activity Timeline']];
 const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],['orders','Orders & Transactions','receipt'],['menu','Menu & Categories','menu'],['inv','Inventory & Stock','box'],['exp','Expenses & Profit','wallet'],['staff','Staff & Permissions','users'],['audit','Audit Logs','log'],['branches','Multi-Branch Management','branch'],['health','System Health & Integrations','pulse'],['ai','EDY — AI Assistant','spark'],['settings','Business Settings','cog']];
 
 /* 10. STATE + HELPERS */
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',cu0:new Date(Date.now()-13*86400000).toISOString().slice(0,10),cu1:new Date().toISOString().slice(0,10)};
-let LIVE_CURRENCY='PHP', LIVE_RESTAURANT=null, LIVE_USER=null, LIVE_POLL=null;
-const $=s=>document.querySelector(s),M=n=>new Intl.NumberFormat('en-PH',{style:'currency',currency:LIVE_CURRENCY||'PHP',maximumFractionDigits:2}).format(Number(n)||0);
+const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',cu0:'2026-10-10',cu1:'2026-10-24'};
+const $=s=>document.querySelector(s),M=n=>'₱'+Math.round(n).toLocaleString('en-PH');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const I=(n,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]}"/></svg>`;
-const bl=()=>S.br?[S.br-1]:BS.map((_,i)=>i),vis=a=>S.br?a.filter(x=>x.b==S.br):a,scope=()=>S.br?BS[S.br-1]:'All Branches';
+const bl=()=>S.br?[S.br-1]:BS.map((_,i)=>i),vis=a=>S.br?a.filter(x=>x.b==S.br):a,scope=()=>'HALINA BISTRO CAFE';
 const cls=s=>/Complet|OK|Active|On shift/.test(s)?'ok':/Cancel|Refund|Out|Suspend/.test(s)?'er':'wn';
 const bdg=s=>`<span class="bd ${cls(s)}">● ${s}</span>`;
 const empty=t=>`<div class="empty">${t}</div>`;
-function inPeriod(date,per){const d=new Date(date),now=new Date();if(Number.isNaN(d.getTime()))return false;const start=new Date(now);if(per==='today'){start.setHours(0,0,0,0);return d>=start&&d<=now}if(per==='yest'){start.setDate(start.getDate()-1);start.setHours(0,0,0,0);const end=new Date(start);end.setHours(23,59,59,999);return d>=start&&d<=end}if(per==='7d')start.setDate(start.getDate()-7);else if(per==='30d')start.setDate(start.getDate()-30);else if(per==='tm')start.setDate(1);else if(per==='lm'){start.setMonth(start.getMonth()-1,1);const end=new Date(now.getFullYear(),now.getMonth(),0,23,59,59,999);return d>=start&&d<=end}else if(per==='ty')start.setMonth(0,1);else if(per==='cu'){const a=new Date(S.cu0+'T00:00:00'),b=new Date(S.cu1+'T23:59:59');return d>=a&&d<=b}return d>=start&&d<=now}
-function fin(per=S.per,br=bl()){const rows=ORD.filter(o=>inPeriod(o.rawDate,per)&&br.includes((o.b||1)-1));const gross=rows.filter(o=>o.s!=='Cancelled').reduce((a,o)=>a+o.tot,0);const refunds=rows.filter(o=>o.s==='Refunded').reduce((a,o)=>a+o.tot,0);const ord=rows.filter(o=>!['Cancelled','Refunded'].includes(o.s)).length;return{gross,disc:0,ref:refunds,net:gross-refunds,ord,aov:ord?(gross-refunds)/ord:0}}
+function fin(per=S.per){const a=inR(per).filter(o=>o.s!='Cancelled'),gross=a.reduce((x,o)=>x+o.tot,0),unpaid=a.filter(o=>o.pay!='paid').reduce((x,o)=>x+o.tot,0);return{gross,net:gross,ord:a.length,aov:a.length?gross/a.length:0,unpaid}}
 function toast(m,e){const t=document.createElement('div');t.className='ts'+(e?' er':'');t.textContent=(e?'✕ ':'✓ ')+m;$('#toast').append(t);setTimeout(()=>t.remove(),3200)}
 const tbl=(cols,rows)=>rows.length?`<div class="tw"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr ${r.a||''}>${r.c.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:empty('No records match these filters. Clear a filter to see more.');
 const bars=(rows,f=M)=>{const mx=Math.max(...rows.map(r=>r[1]),1);return rows.map(r=>`<div class="br"><span>${r[0]}</span><i style="--w:${r[1]/mx*100}%"></i><b>${f(r[1])}</b></div>`).join('')};
 const sel=(c,opts,v,l)=>`<select data-c="${c}" aria-label="${l}">${opts.map(o=>`<option value="${o[0]}"${o[0]==v?' selected':''}>${o[1]}</option>`).join('')}</select>`;
 const tbar=(x='')=>`<div class="tb">${sel('per',Object.entries(PER).map(([k,v])=>[k,v[0]]),S.per,'Date range')}${S.per=='cu'?`<input type="date" data-c="cu0" value="${S.cu0}" aria-label="From"><input type="date" data-c="cu1" value="${S.cu1}" aria-label="To">`:''}<span class="mu">${scope()}</span>${x}</div>`;
-function chart(vals,lab){const w=600,h=170,mx=Math.max(...vals)*1.1,x=i=>20+i*(w-40)/(vals.length-1),y=v=>h-20-(v/mx)*(h-36),pts=vals.map((v,i)=>x(i)+','+y(v)).join(' ');return`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="Sales trend from live order records"><polygon points="${x(0)},${h-20} ${pts} ${x(vals.length-1)},${h-20}" fill="var(--ac)" opacity=".16"/><polyline class="ln" points="${pts}" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linejoin="round"/>${vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="var(--ac)"><title>${lab[i]}: ${M(v)}</title></circle>`).join('')}<text x="20" y="${h-4}" fill="var(--mu)" font-size="12">${lab[0]}</text><text x="${w-20}" y="${h-4}" fill="var(--mu)" font-size="12" text-anchor="end">${lab.at(-1)}</text></svg>`}
-function trend(){const days=S.per==='today'?8:14,labels=[],values=[];for(let i=days-1;i>=0;i--){const d=new Date();if(S.per==='today')d.setHours(d.getHours()-i*2,0,0,0);else d.setDate(d.getDate()-i);const key=d.toLocaleDateString('en-CA');labels.push(S.per==='today'?d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('en-PH',{month:'short',day:'numeric'}));const total=ORD.filter(o=>{const od=new Date(o.rawDate);return S.per==='today'?od.toDateString()===d.toDateString()&&od.getHours()===d.getHours():od.toLocaleDateString('en-CA')===key}).reduce((a,o)=>a+o.tot,0);values.push(total)}return chart(values,labels)}
+function chart(vals,lab){const w=600,h=170,mx=(Math.max(...vals)||1)*1.1,x=i=>20+i*(w-40)/(vals.length-1),y=v=>h-20-(v/mx)*(h-36),pts=vals.map((v,i)=>x(i)+','+y(v)).join(' ');return`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="Sales trend chart"><polygon points="${x(0)},${h-20} ${pts} ${x(vals.length-1)},${h-20}" fill="var(--ac)" opacity=".16"/><polyline class="ln" points="${pts}" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linejoin="round"/>${vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="var(--ac)"><title>${lab[i]}: ${M(v)}</title></circle>`).join('')}<text x="20" y="${h-4}" fill="var(--mu)" font-size="12">${lab[0]}</text><text x="${w-20}" y="${h-4}" fill="var(--mu)" font-size="12" text-anchor="end">${lab.at(-1)}</text></svg>`}
+function trend(){const a=inR(S.per).filter(o=>o.s!='Cancelled'),[s0,e0]=rng(S.per),days=Math.round((e0-s0)/864e5),sum=(x,y)=>a.filter(o=>o.dt>=x&&o.dt<y).reduce((t,o)=>t+o.tot,0),lab=[],v=[];
+if(days<=1){for(let h=8;h<=22;h+=2){lab.push(h+':00');v.push(a.filter(o=>o.dt.getHours()>=h&&o.dt.getHours()<h+2&&o.dt>=s0&&o.dt<e0).reduce((t,o)=>t+o.tot,0))}}
+else if(days<=45){for(let i=0;i<days;i++){const x=new Date(+s0+i*864e5);lab.push(x.getDate()+'/'+(x.getMonth()+1));v.push(sum(x,new Date(+x+864e5)))}}
+else{for(let x=new Date(s0.getFullYear(),s0.getMonth(),1);x<e0;x=new Date(x.getFullYear(),x.getMonth()+1,1)){lab.push(x.toLocaleString('en',{month:'short'}));v.push(sum(x,new Date(x.getFullYear(),x.getMonth()+1,1)))}}
+return v.length>1?chart(v,lab):empty('Not enough days in this range to draw a trend.')}
 const kpi=(k,l,v,d,i)=>S.w[k]?'':`<div class="card kp"><div class="mu">${I(i,16)} ${l}</div><div class="big">${v}</div><div class="mu">${d}</div></div>`;
-function tally(){const m={};vis(ORD).filter(o=>!/Cancel|Refund/.test(o.s)).forEach(o=>o.it.forEach(i=>m[i.n]=(m[i.n]||0)+i.q));return Object.entries(m).sort((a,b)=>b[1]-a[1])}
-const ordRows=a=>a.map(o=>({a:`data-a="order" data-i="${o.id}" tabindex="0"`,c:[o.id,o.t,(BS[(o.b||1)-1]||LIVE_RESTAURANT?.name||'Restaurant'),o.ty,bdg(o.s),o.pm,M(o.tot)]}));
+function tally(){const m={};inR(S.per).filter(o=>o.s!='Cancelled').forEach(o=>o.it.forEach(i=>{const k=i.n.trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());m[k]=(m[k]||0)+i.q}));return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+const ordRows=a=>a.map(o=>({a:`data-a="order" data-i="${o.id}" tabindex="0"`,c:[o.id,o.t,BS[o.b-1].split(' —')[0],o.ty,bdg(o.s),o.pm,M(o.tot)]}));
 
 /* 5. PAGES */
 const PG={
-overview(){const t=fin('today'),m=fin('tm'),o=vis(ORD),pend=o.filter(x=>/New|Prep/.test(x.s)).length,low=vis(INV).filter(x=>x.q<=x.th),bt=tally().slice(0,5),W=k=>!S.w[k];
+overview(){const t=fin('today'),m=fin('tm'),o=inR(S.per),pend=ORD.filter(x=>/New|Prep/.test(x.s)).length,low=vis(INV).filter(x=>x.q<=x.th),bt=tally().slice(0,5),W=k=>!S.w[k];
 const K=(k,l,v,d,i,c)=>S.w[k]?'':`<div class="card kp ${c}"><div class="mu">${I(i,16)} ${l}</div><div class="big">${v}</div><div class="mu">${d}</div></div>`;
 const pm={};o.forEach(x=>pm[x.pm]=(pm[x.pm]||0)+1);const pt=Object.values(pm).reduce((a,b)=>a+b,0)||1;
-const hr={};o.forEach(x=>{const h=+x.t.split(', ')[1].slice(0,2);hr[h]=(hr[h]||0)+1});const hm=Math.max(...Object.values(hr),1);
+const hr={};o.forEach(x=>{const h=x.dt.getHours();hr[h]=(hr[h]||0)+1});const hm=Math.max(...Object.values(hr),1);
 const nk=n=>/order/i.test(n.ty)?'order':n.ty=='Low stock'?'stock':'system',nl=NT.filter(n=>S.nt=='all'||nk(n)==S.nt);
 const tab=(v,l)=>`<button data-a="ntab" data-v="${v}" class="${S.nt==v?'on':''}">${l}</button>`;
 return`<div class="bento">
-<div class="card s8"><div class="mu">Today’s service · ${scope()}</div><div class="big" style="font-size:34px">${M(t.net)}</div><div class="mu">${t.ord} orders${W('aov')?' · avg '+M(t.aov):''} · live data</div><div class="tb" style="margin:14px 0 0"><button class="btn pri" data-a="go" data-p="orders">View orders</button><button class="btn" data-a="go" data-p="sales">Sales report</button><button class="btn" data-a="go" data-p="inv">Inventory</button><button class="btn" data-a="cust">Customize widgets</button></div></div>
+<div class="card s8"><div class="mu">Today’s service · ${scope()}</div><div class="big" style="font-size:34px">${M(t.net)}</div><div class="mu">${t.ord} orders${W('aov')?' · avg '+M(t.aov):''}</div><div class="tb" style="margin:14px 0 0"><button class="btn pri" data-a="go" data-p="orders">View orders</button><button class="btn" data-a="go" data-p="sales">Sales report</button><button class="btn" data-a="go" data-p="inv">Inventory</button><button class="btn" data-a="refresh">Refresh data</button><button class="btn" data-a="cust">Customize widgets</button></div></div>
 <div class="card s4"><span class="bd wn">● Not connected yet</span><h3 style="margin:10px 0 4px">EDY</h3><p class="mu">Your EDMEL AI assistant is planned, not active.</p><button class="btn" data-a="go" data-p="ai">See what’s planned</button></div>
 ${K('sales','Sales Today',M(t.net),'Net, '+scope(),'wallet','s3')}${K('monthly','Monthly Sales',M(m.net),'This month, net','chart','s3')}${K('orders','Orders Today',t.ord,'All types','receipt','s2')}${K('pending','Pending',pend,'New + preparing','pulse','s2')}${K('low','Low Stock',low.length,'At/below threshold','box','s2')}
 ${W('chart')?`<div class="card s8"><div class="row"><h3 style="margin:0">Sales trend</h3><span class="seg">${[['7d','Weekly'],['30d','Monthly']].map(x=>`<button data-a="pr" data-v="${x[0]}" class="${S.per==x[0]?'on':''}">${x[1]}</button>`).join('')}</span></div>${trend()}</div>`:''}
-<div class="card s4"><h3>Notifications <span class="mu">(sample)</span></h3><div class="seg" style="margin-bottom:8px">${tab('all','All')}${tab('order','Orders')}${tab('stock','Stock')}${tab('system','System')}</div>${nl.map(n=>`<div class="row"><span>${n.r?'':'● '}${n.ty}<br><span class="mu">${n.m}</span></span></div>`).join('')||empty('Nothing here.')}</div>
+<div class="card s4"><h3>Notifications</h3><span class="bd wn">● Not connected yet</span></div>
 ${W('best')?`<div class="card s4"><h3>Best sellers</h3>${bt.length?bars(bt,v=>v+' sold'):empty('No orders yet.')}</div>`:''}
 <div class="card s4"><h3>Payment mix</h3><div class="sg">${Object.entries(pm).map(([k,v],i)=>`<i style="flex:${v};opacity:${1-i*.2}" title="${k}"></i>`).join('')}</div>${Object.entries(pm).map(([k,v])=>`<div class="row"><span>${k}</span><b>${Math.round(v/pt*100)}%</b></div>`).join('')}</div>
-<div class="card s4"><h3>Orders by hour</h3><div class="cols">${[8,9,10,11,12,13,14,15,16,17,18,19,20].map(h=>`<i style="height:${(hr[h]||0)/hm*100}%" title="${h}:00 — ${hr[h]||0} orders"></i>`).join('')}</div><div class="mu">8:00 → 20:00 · live orders</div></div>
+<div class="card s4"><h3>Orders by hour</h3><div class="cols">${[8,9,10,11,12,13,14,15,16,17,18,19,20].map(h=>`<i style="height:${(hr[h]||0)/hm*100}%" title="${h}:00 — ${hr[h]||0} orders"></i>`).join('')}</div><div class="mu">8:00 → 20:00</div></div>
 ${W('recent')?`<div class="card s7"><h3>Recent transactions</h3>${tbl(['Order','Status','Total'],o.slice(0,5).map(x=>({a:`data-a="order" data-i="${x.id}" tabindex="0"`,c:[x.id,bdg(x.s),M(x.tot)]})))}</div>`:''}
-${W('branch')?`<div class="card s5"><h3>Branch comparison (${PER[S.per][0]})</h3>${bars(BS.map((b,i)=>[b.split(' —')[0],fin(S.per,[i]).net]))}</div>`:''}
-${W('act')?`<div class="card s6"><h3>Recent activity</h3>${vis(AUD).slice(0,5).map(a=>`<div class="row"><span>${a.ac}<br><span class="mu">${a.r} · ${a.a}</span></span><span class="mu">${a.t}</span></div>`).join('')||empty('No activity for this branch.')}</div>`:''}
-<div class="card s6"><h3>Low-stock items</h3>${low.map(x=>`<div class="row"><span>${x.n}</span><span>${bdg(x.q==0?'Out':'Low')} ${x.q} ${x.u}</span></div>`).join('')||empty('No low-stock items.')}</div></div>`},
-sales(){const f=fin(),pr={};vis(ORD).forEach(o=>pr[o.pm]=(pr[o.pm]||0)+o.tot);const cat={};vis(ORD).forEach(o=>o.it.forEach(i=>{const c=(MENU.find(m=>m.n==i.n)||{}).c||'Other';cat[c]=(cat[c]||0)+i.p*i.q}));
+<div class="card s6"><h3>Low-stock items</h3>${low.map(x=>`<div class="row"><span>${x.n}</span><span>${bdg(x.q==0?'Out':'Low')} ${x.q} ${x.u}</span></div>`).join('')||empty(S.stockErr?'Stock data could not be loaded.':'No low-stock items.')}</div></div>`},
+sales(){const f=fin(),a=inR(S.per).filter(o=>o.s!='Cancelled'),pr={},hr={};a.forEach(o=>{pr[o.pm]=(pr[o.pm]||0)+o.tot;const h=o.dt.getHours();hr[h]=(hr[h]||0)+1});const hm=Math.max(...Object.values(hr),1),bt=tally().slice(0,8);
 return`${tbar('<button class="btn" data-a="csv">Download CSV</button><button class="btn" data-a="print">Print / Save as PDF</button>')}
-<div class="g k">${[['Gross sales',f.gross],['Discounts',f.disc],['Refunds',f.ref],['Net sales',f.net]].map(x=>`<div class="card"><div class="mu">${x[0]}</div><div class="big">${M(x[1])}</div></div>`).join('')}<div class="card"><div class="mu">Orders</div><div class="big">${f.ord}</div></div><div class="card"><div class="mu">Avg order value</div><div class="big">${M(f.aov)}</div></div></div>
-<p class="note">Sales figures are revenue, not profit. See Expenses & Profit for estimates.</p>
-<div class="g g2"><div class="card"><h3>Sales trend</h3>${trend()}</div><div class="card"><h3>Payment methods (live orders)</h3>${bars(Object.entries(pr))}</div></div>
-<div class="g g2"><div class="card"><h3>Best-selling products</h3>${bars(tally().slice(0,6),v=>v+' sold')}</div><div class="card"><h3>Best-selling categories</h3>${bars(Object.entries(cat))}</div>
-<div class="card"><h3>Peak ordering hours</h3>${bars([['12–1 PM',86],['1–2 PM',74],['6–7 PM',92],['7–8 PM',98],['8–9 PM',63]],v=>v+' orders')}</div><div class="card"><h3>Branch comparison</h3>${bars(BS.map((b,i)=>[b.split(' —')[0],fin(S.per,[i]).net]))}</div></div>`},
+<div class="g k"><div class="card"><div class="mu">Gross sales</div><div class="big">${M(f.gross)}</div></div><div class="card"><div class="mu">Unpaid (payment pending)</div><div class="big">${M(f.unpaid)}</div></div><div class="card"><div class="mu">Orders</div><div class="big">${f.ord}</div></div><div class="card"><div class="mu">Avg order value</div><div class="big">${M(f.aov)}</div></div><div class="card"><div class="mu">Discounts / refunds</div><div class="big">—</div><div class="mu">Not tracked yet</div></div></div>
+<p class="note">Gross sales exclude cancelled orders and include orders whose payment is still pending. Revenue is not profit.</p>
+<div class="g g2"><div class="card"><h3>Sales trend</h3>${trend()}</div><div class="card"><h3>Payment methods</h3>${a.length?bars(Object.entries(pr)):empty('No orders in this period.')}</div><div class="card"><h3>Best-selling products</h3>${bt.length?bars(bt,v=>v+' sold'):empty('No orders in this period.')}</div><div class="card"><h3>Orders by hour</h3><div class="cols">${Array.from({length:18},(_,i)=>i+6).map(h=>`<i style="height:${(hr[h]||0)/hm*100}%" title="${h}:00 — ${hr[h]||0} orders"></i>`).join('')}</div><div class="mu">6:00 → 23:00</div></div></div>`},
 orders(){const q=(S.f.q||'').toLowerCase(),r=vis(ORD).filter(o=>(!q||(o.id+o.pm+o.ty).toLowerCase().includes(q))&&(!S.f.st||o.s==S.f.st)&&(!S.f.pm||o.pm==S.f.pm));
 return`<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search orders…" aria-label="Search orders">${sel('st',[['','All statuses'],...ST.filter((s,i)=>ST.indexOf(s)==i).map(s=>[s,s])],S.f.st||'','Status')}${sel('pm',[['','All payments'],...PM.map(s=>[s,s])],S.f.pm||'','Payment')}<span class="mu">${scope()} · ${r.length} orders</span><button class="btn" data-a="csv">Download CSV</button></div><div class="card">${tbl(['Order ID','Date','Branch','Type','Status','Payment','Total'],ordRows(r))}</div>`},
 menu(){const cs=[...new Set(MENU.map(m=>m.c))],q=(S.f.q||'').toLowerCase(),r=MENU.map((m,i)=>({...m,i})).filter(m=>(!q||m.n.toLowerCase().includes(q))&&(!S.f.cat||m.c==S.f.cat));
 return`<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search menu…" aria-label="Search menu">${sel('cat',[['','All categories'],...cs.map(c=>[c,c])],S.f.cat||'','Category')}<button class="btn pri" data-a="addmenu">Add item</button><button class="btn" data-a="addcat">Add category</button></div><p>${cs.map(c=>`<span class="chip">${c} (${MENU.filter(m=>m.c==c).length})</span>`).join('')}</p>
 <div class="g g2">${r.map(m=>`<div class="card"><div class="row"><b>${esc(m.n)}</b>${bdg(m.a?'OK':'Out')}</div><div class="mu">${m.c} · image placeholder</div><div class="big">${M(m.p)}</div><label><input type="checkbox" data-c="av" value="${m.i}"${m.a?' checked':''}> Available</label> <button class="btn" data-a="editmenu" data-i="${m.i}">Edit</button></div>`).join('')||empty('No menu items match.')}</div>`},
 inv(){const q=(S.f.q||'').toLowerCase(),r=vis(INV).map(x=>({...x,i:INV.indexOf(x)})).filter(x=>!q||(x.n+x.c).toLowerCase().includes(q));
-return`<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${scope()}</span><span class="note" style="margin:0">Stock adjustments are not connected to live inventory.</span></div><div class="card">${tbl(['Item','Category','Qty','Unit','Threshold','Status','Updated','Branch',''],r.map(x=>({c:[x.n,x.c,x.q,x.u,x.th,bdg(x.q==0?'Out':x.q<=x.th?'Low':'OK'),x.upd,'Branch '+x.b,`<button class="btn" data-a="hist" data-i="${x.i}">History</button> <button class="btn" data-a="adj" data-i="${x.i}">Adjust</button>`]})))}</div>`},
+return`<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${scope()}</span><span class="note" style="margin:0">Stock adjustments are simulated and change sample data only.</span></div><div class="card">${tbl(['Item','Category','Qty','Unit','Threshold','Status','Updated','Branch',''],r.map(x=>({c:[x.n,x.c,x.q,x.u,x.th,bdg(x.q==0?'Out':x.q<=x.th?'Low':'OK'),x.upd,'Branch '+x.b,`<button class="btn" data-a="hist" data-i="${x.i}">History</button> <button class="btn" data-a="adj" data-i="${x.i}">Adjust</button>`]})))}</div>`},
 exp(){const r=vis(EXP).filter(e=>!S.f.ec||e.c==S.f.ec),tot=r.reduce((a,e)=>a+e.a,0),n=fin('tm').net,gp=n*.62,op=gp-tot;
-return`<div class="tb">${sel('ec',[['','All categories'],...ECAT.map(c=>[c,c])],S.f.ec||'','Expense category')}<span class="mu">${scope()} · October</span><button class="btn pri" data-a="addexp">Add expense</button></div>
+return`<div class="tb">${sel('ec',[['','All categories'],...ECAT.map(c=>[c,c])],S.f.ec||'','Expense category')}<span class="mu">${scope()} · October (sample)</span><button class="btn pri" data-a="addexp">Add expense</button></div>
 <div class="g k"><div class="card"><div class="mu">Recorded expenses</div><div class="big">${M(tot)}</div></div><div class="card"><div class="mu">Net sales (this month)</div><div class="big">${M(n)}</div></div><div class="card"><div class="mu">Est. gross profit</div><div class="big">${M(gp)}</div></div><div class="card"><div class="mu">Est. operating profit</div><div class="big">${M(op)}</div></div></div>
-<p class="note">Estimate only, not accounting data. No accounting estimates are generated because expense data is not connected.</p>
+<p class="note">Estimate only, not accounting data. Illustrative method: gross profit = net sales × 62% (assumes 38% menu cost). Operating profit = gross profit − recorded expenses.</p>
 <div class="card">${tbl(['Date','Category','Description','Branch','Amount'],r.map(e=>({c:[e.d,e.c,esc(e.ds),'Branch '+e.b,M(e.a)]})))}</div>`},
 staff(){const R=['Owner','Manager','Cashier','Dispatcher / Kitchen'],pm=[['View reports',1,1,0,0],['Edit menu & prices',1,1,0,0],['Lock / unlock tables',1,1,1,0],['Accept orders',1,1,1,0],['Update order status',1,1,0,1],['Manage staff',1,0,0,0]];
 return`<div class="tb"><button class="btn pri" data-a="addstaff">Add staff</button><span class="mu">${scope()}</span></div><div class="card">${tbl(['Name','Role','Branch','Account','Shift','Last activity',''],vis(STAFF.map(s=>({...s,b:s.b}))).filter(s=>!S.br||s.b==S.br||s.b==0).map(s=>({c:[esc(s.n),s.r,s.b?'Branch '+s.b:'All',bdg(s.s),s.sh,s.l,`<button class="btn" data-a="editstaff" data-i="${STAFF.findIndex(x=>x.n==s.n)}">Edit</button>`]})))}</div>
@@ -247,17 +231,18 @@ return`<p class="note">Changes here update this page only. Nothing is saved or s
 <div class="card"><h3>Notifications</h3>${tg('Order notification sound',1)}${tg('Low-stock alerts',1)}${tg('System alerts',1)}</div>
 <div class="card"><h3>Security & access (preview)</h3><p class="mu">Roles: Owner, Manager, Cashier, Dispatcher / Kitchen.</p><p>Cashier PIN policy preview: 6 digits, owner-managed. No PIN is created or checked here.</p><button class="btn" data-a="go" data-p="staff">View permission matrix</button></div>
 <div class="card"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme">Switch to ${S.theme=='dark'?'light':'dark'} mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>
-<div class="card"><h3>Subscription</h3><p>Package: Full Package</p><p class="mu">No billing is connected.</p></div></div>`}
+<div class="card"><h3>Subscription</h3><p>Package: Full Package (sample)</p><p class="mu">No billing is connected.</p></div></div>`}
 };
 
 /* 6. LAYERS */
 const L=$('#layer');
 const closeL=()=>{L.innerHTML=''};
 const drawer=(t,h)=>{L.innerHTML=`<div class="bk" data-a="close"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="${esc(t)}"><div class="row"><h3 style="margin:0">${t}</h3><button class="ib" data-a="close" aria-label="Close">${I('x')}</button></div>${h}</aside>`;L.querySelector('.ib').focus()};
-function modal(t,fields,ok,label='Save'){L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-label="${esc(t)}"><h3>${t}</h3><p class="note">This action is disabled unless an authorized live database write is configured.</p>${fields.map((f,i)=>`<div class="fl"><label for="m${i}">${f[0]}</label>${f[3]?`<select id="m${i}">${f[3].map(o=>`<option${o==f[2]?' selected':''}>${o}</option>`).join('')}</select>`:`<input id="m${i}" type="${f[1]}" value="${esc(f[2]??'')}"${f[1]=='checkbox'&&f[2]?' checked':''}>`}</div>`).join('')}<div class="tb"><button class="btn pri" id="mok">${label}</button><button class="btn" data-a="close">Cancel</button></div></div>`;L.querySelector('input,select').focus();$('#mok').onclick=()=>{const v=fields.map((_,i)=>$('#m'+i).value);if(ok(v)!==false)closeL()}}
-function orderDrawer(id){const o=ORD.find(x=>x.id==id);if(!o){toast('Order not found in the current live data.',1);return}const h=`<p>${bdg(o.s)} · ${esc(o.t)} · ${esc(LIVE_RESTAURANT?.name||'Restaurant')}</p><div class="row"><span>Order type</span><b>${esc(o.ty)}</b></div><div class="row"><span>Payment method</span><b>${esc(o.pm)}</b></div><div class="row"><span>Payment status</span><b>${esc(o.paymentStatus||'—')}</b></div><h3 style="margin-top:16px">Items recorded on order</h3>${o.it.map(i=>`<div class="row"><span>${esc(i.n)} × ${i.q}</span><b>${M(i.p*i.q)}</b></div>`).join('')||empty('No item details were stored in the order record.')}<div class="row"><span>Total stored in Supabase</span><b>${M(o.tot)}</b></div><p class="note">Read-only detail. No order status or payment was changed.</p>`;drawer(o.id,h)}
+function modal(t,fields,ok,label='Save'){L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-label="${esc(t)}"><h3>${t}</h3><p class="note">Sample data — changes are not saved.</p>${fields.map((f,i)=>`<div class="fl"><label for="m${i}">${f[0]}</label>${f[3]?`<select id="m${i}">${f[3].map(o=>`<option${o==f[2]?' selected':''}>${o}</option>`).join('')}</select>`:`<input id="m${i}" type="${f[1]}" value="${esc(f[2]??'')}"${f[1]=='checkbox'&&f[2]?' checked':''}>`}</div>`).join('')}<div class="tb"><button class="btn pri" id="mok">${label}</button><button class="btn" data-a="close">Cancel</button></div></div>`;L.querySelector('input,select').focus();$('#mok').onclick=()=>{const v=fields.map((_,i)=>$('#m'+i).value);if(ok(v)!==false)closeL()}}
+function orderDrawer(id){const o=ORD.find(x=>x.id==id),h=['Placed','Accepted','Preparing','Completed'],k=o.s=='New'?1:o.s=='Preparing'?3:4,hist=/Cancel/.test(o.s)?['Placed','Cancelled']:/Refund/.test(o.s)?[...h,'Refunded']:h.slice(0,k);
+drawer(o.id,`<p>${bdg(o.s)} · ${o.t} · ${BS[o.b-1]}</p>${o.it.map(i=>`<div class="row"><span>${i.n} × ${i.q}</span><b>${M(i.p*i.q)}</b></div>`).join('')}<div class="row"><span>Discount</span><span class="mu">Not tracked yet</span></div><div class="row"><span>Total</span><b>${M(o.tot)}</b></div><p>Payment: ${o.pm} · ${o.pay}</p><h3>Timeline</h3><div class="row"><span>Placed</span><span class="mu">${o.dt.toLocaleString('en-PH')}</span></div><p class="note">Status history is not recorded yet.</p>`)}
 function search(){L.innerHTML=`<div class="bk" data-a="close"></div><div class="pn s" role="dialog" aria-modal="true" aria-label="Search"><input id="q" style="width:100%" placeholder="Search orders, menu, staff, branches, inventory…" aria-label="Search"><div id="res" style="margin-top:10px"></div></div>`;const r=$('#res'),go=()=>{const q=$('#q').value.trim().toLowerCase();if(!q){r.innerHTML='<p class="mu">Type to search demo data. Press Esc to close.</p>';return}
-const hits=[...ORD.filter(o=>o.id.toLowerCase().includes(q)).map(o=>['Order',o.id,'order',o.id]),...MENU.filter(m=>m.n.toLowerCase().includes(q)).map(m=>['Menu',m.n,'go','menu']),...STAFF.filter(s=>s.n.toLowerCase().includes(q)).map(s=>['Staff',s.n,'go','staff']),...BS.filter(b=>b.toLowerCase().includes(q)).map(b=>['Branch',b,'go','branches']),...INV.filter(x=>x.n.toLowerCase().includes(q)).map(x=>['Inventory',x.n,'go','inv'])].slice(0,8);
+const hits=[...ORD.filter(o=>o.id.toLowerCase().includes(q)).map(o=>['Order',o.id,'order',o.id]),...MENU.filter(m=>m.n.toLowerCase().includes(q)).map(m=>['Menu',m.n,'go','menu']),...STAFF.filter(s=>s.n.toLowerCase().includes(q)).map(s=>['Staff',s.n,'go','staff'])].slice(0,8);
 r.innerHTML=hits.length?hits.map(h=>`<div class="row" style="cursor:pointer" tabindex="0" data-a="${h[2]=='order'?'order':'go'}" data-i="${h[3]}" data-p="${h[3]}"><span>${h[1]}</span><span class="mu">${h[0]}</span></div>`).join(''):empty('No results. Try an order ID, menu item or staff name.')};$('#q').oninput=go;go();$('#q').focus()}
 function bell(){L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b> <span class="mu">(sample)</span><span><button class="btn" data-a="readall">Mark all read</button> <button class="btn" data-a="clrn">Clear</button></span></div>${NT.slice(0,4).map((n,i)=>`<div class="row" tabindex="0" data-a="nt" data-i="${i}"><span>${n.r?'':'● '}${n.ty}<br><span class="mu">${n.m}</span></span></div>`).join('')||empty('You’re all caught up.')}<button class="btn" style="margin-top:8px" data-a="allnt">View all notifications</button></div>`}
 const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
@@ -271,72 +256,31 @@ theme:()=>{S.theme=S.theme=='dark'?'light':'dark';ss('th',S.theme);applyTheme();
 sbt:()=>{S.exp=!S.exp;ss('exp',S.exp);$('#app').classList.toggle('exp',S.exp);if(S.page=='settings')render()},
 order:t=>orderDrawer(t.dataset.i),
 cust:()=>modal('Customize Overview',WID.map(w=>[w[1],'checkbox',!S.w[w[0]]]),()=>true,'Done'),
-profile:()=>drawer('Account',`<p><b>${esc(LIVE_USER?.email||'Signed-in user')}</b><br><span class="mu">${esc(LIVE_RESTAURANT?.name||'Restaurant')}</span></p><p class="note">Authenticated by Supabase. Dashboard access is checked against restaurant_users.</p><button class="btn pri" id="signOutButton">Sign out</button>`),
-csv:()=>{const r=['Order ID,Date,Branch,Type,Status,Payment,Total',...vis(ORD).map(o=>[o.id,'"'+o.t+'"','Branch '+o.b,o.ty,o.s,o.pm,o.tot].join(','))].join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([r],{type:'text/csv'}));a.download='halina-live-orders.csv';a.click();toast('Downloaded visible live orders')},
+profile:()=>drawer('Account',`<p><b>${esc(S.user||'')}</b><br><span class="mu">Owner dashboard</span></p><button class="btn pri" data-a="signout">Sign out</button>`),
+signout:async()=>{await sb.auth.signOut();ORD.length=0;closeL();showLogin()},
+refresh:()=>load(true),
+csv:()=>{const r=['Order ID,Date,Branch,Type,Status,Payment,Total',...vis(ORD).map(o=>[o.id,'"'+o.t+'"','HALINA BISTRO CAFE',o.ty,o.s,o.pm,o.tot].join(','))].join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([r],{type:'text/csv'}));a.download='halina-orders.csv';a.click();toast('Downloaded halina-orders.csv')},
 print:()=>window.print(),
 addmenu:()=>modal('Add menu item',[['Name','text',''],['Price','number',100],['Category','text','Others']],v=>{if(!v[0].trim()){toast('Enter an item name.',1);return false}MENU.push({n:v[0],c:v[2]||'Others',p:+v[1]||0,a:true});render();toast('Item added')}),
 editmenu:t=>{const m=MENU[t.dataset.i];modal('Edit '+esc(m.n),[['Name','text',m.n],['Price','number',m.p]],v=>{m.n=v[0]||m.n;m.p=+v[1]||m.p;render();toast('Item updated')})},
 addcat:()=>modal('Add category',[['Category name','text','']],v=>{if(!v[0].trim()){toast('Enter a category name.',1);return false}MENU.push({n:'New '+v[0]+' item',c:v[0],p:0,a:false});render();toast('Category added with a placeholder item')}),
-adj:t=>{const x=INV[t.dataset.i];modal('Adjust '+esc(x.n)+' (simulated)',[['Change in quantity (+/−)','number',0]],v=>{x.q=Math.max(0,x.q+(+v[0]||0));x.upd='Just now';x.log.push(['Today','Manual adjustment',(+v[0]>=0?'+':'')+(+v[0]||0)]);render();toast('Stock adjusted — not saved')})},
+adj:t=>{const x=INV[t.dataset.i];modal('Adjust '+esc(x.n)+' (simulated)',[['Change in quantity (+/−)','number',0]],v=>{x.q=Math.max(0,x.q+(+v[0]||0));x.upd='Just now';x.log.push(['Today','Manual adjustment',(+v[0]>=0?'+':'')+(+v[0]||0)]);render();toast('Stock adjusted — sample data, not saved')})},
 hist:t=>{const x=INV[t.dataset.i];drawer(x.n+' — stock history',tbl(['Date','Reason','Change'],x.log.map(l=>({c:l}))))},
-addexp:()=>modal('Add expense',[['Category','text','Utilities',ECAT],['Description','text',''],['Amount (₱)','number',1000]],v=>{if(!(+v[2]>0)){toast('Enter an amount above zero.',1);return false}EXP.unshift({d:'Today',c:v[0],ds:v[1]||'—',a:+v[2],b:S.br||1});render();toast('Expense added — not saved')},'Add expense'),
+addexp:()=>modal('Add expense',[['Category','text','Utilities',ECAT],['Description','text',''],['Amount (₱)','number',1000]],v=>{if(!(+v[2]>0)){toast('Enter an amount above zero.',1);return false}EXP.unshift({d:'Today',c:v[0],ds:v[1]||'—',a:+v[2],b:S.br||1});render();toast('Expense added — sample data, not saved')},'Add expense'),
 addstaff:()=>modal('Add staff',[['Name','text',''],['Role','text','Cashier',['Owner','Manager','Cashier','Dispatcher / Kitchen']]],v=>{if(!v[0].trim()){toast('Enter a name.',1);return false}STAFF.push({n:v[0],r:v[1],b:S.br||1,s:'Active',sh:'Off shift',l:'Never'});render();toast('Staff added')}),
 editstaff:t=>{const s=STAFF[t.dataset.i];modal('Edit '+esc(s.n),[['Role','text',s.r,['Owner','Manager','Cashier','Dispatcher / Kitchen']],['Account status','text',s.s,['Active','Suspended']]],v=>{s.r=v[0];s.s=v[1];render();toast('Staff updated')})},
 addbr:()=>modal('Add branch',[['Branch name','text','']],v=>{if(!v[0].trim()){toast('Enter a branch name.',1);return false}BS.push('Branch '+(BS.length+1)+' — '+v[0]);BASE.push(7000);AO.push(350);EXB.push(.28);fillBr();render();toast('Branch added')}),
-brd:t=>{const i=+t.dataset.i,f=fin('tm',[i]);drawer(BS[i],`<div class="big">${M(f.net)}</div><p class="mu">Net sales this month</p><div class="row"><span>Orders</span><b>${f.ord}</b></div><div class="row"><span>Recorded expenses</span><b>${M(EXP.filter(e=>e.b==i+1).reduce((a,e)=>a+e.a,0))}</b></div><div class="row"><span>Staff assigned</span><b>${STAFF.filter(s=>s.b==i+1).length}</b></div><div class="row"><span>Low-stock items</span><b>${INV.filter(x=>x.b==i+1&&x.q<=x.th).length}</b></div><button class="btn" style="margin-top:12px" data-a="close">Close</button>`)},
+brd:t=>{const i=+t.dataset.i,f=fin('tm',[i]);drawer(BS[i],`<div class="big">${M(f.net)}</div><p class="mu">Net sales this month (sample)</p><div class="row"><span>Orders</span><b>${f.ord}</b></div><div class="row"><span>Recorded expenses</span><b>${M(EXP.filter(e=>e.b==i+1).reduce((a,e)=>a+e.a,0))}</b></div><div class="row"><span>Staff assigned</span><b>${STAFF.filter(s=>s.b==i+1).length}</b></div><div class="row"><span>Low-stock items</span><b>${INV.filter(x=>x.b==i+1&&x.q<=x.th).length}</b></div><button class="btn" style="margin-top:12px" data-a="close">Close</button>`)},
 hl:t=>{const h=HEALTH[t.dataset.i];drawer(h[0],`<p><span class="bd ${h[1]}">● ${h[2]}</span></p><p>${h[3]}</p>`)},
 test:()=>{toast('Simulated test passed for 4 of 5 services');setTimeout(()=>toast('AI service is offline in this demo. No AI API is connected.',1),500)},
 pr:t=>{S.per=t.dataset.v;render()},ntab:t=>{S.nt=t.dataset.v;render()},
 readall:()=>{NT.forEach(n=>n.r=1);bell();dotU()},clrn:()=>{NT.length=0;bell();dotU()},
 nt:t=>{NT[t.dataset.i].r=1;bell();dotU()},
-allnt:()=>drawer('All notifications',NT.map(n=>`<div class="row"><span>${n.r?'':'● '}${n.ty}<br><span class="mu">${n.m}</span></span></div>`).join('')||empty('You’re all caught up.'))
+allnt:()=>drawer('All notifications',NT.map(n=>`<div class="row"><span>${n.r?'':'● '}${n.ty}<br><span class="mu">${n.m}</span></span></div>`).join('')||empty('You’re all caught up.')),
+invrefresh:()=>load(true),
+invadd:()=>inventoryAddForm(),
+invadjust:t=>inventoryAdjustForm(t.dataset.i)
 };
-
-/* Actions without a matching, authorized live write path are deliberately read-only. */
-for(const action of ['addmenu','editmenu','addcat','adj','addexp','addstaff','editstaff','addbr','brd','hl','test'])A[action]=()=>toast('This action is not connected to an authorized database write yet. No changes were made.',1);
-A.addstock=async()=>{
- const name=$('#stockName')?.value.trim(),category=$('#stockCategory')?.value.trim();
- const total=Number($('#stockTotal')?.value),remaining=Number($('#stockRemaining')?.value),file=$('#stockPhoto')?.files?.[0];
- if(!name||!category){toast('Enter an item name and category.',1);return}
- if(!Number.isInteger(total)||total<0||!Number.isInteger(remaining)||remaining<0){toast('Stock quantities must be whole numbers of 0 or more.',1);return}
- if(file&&(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024)){toast('Choose a JPG, PNG, or WebP image up to 5 MB.',1);return}
- const slug=name.toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
- if(!slug){toast('Could not generate a product ID from that name.',1);return}
- const button=document.querySelector('[data-a="addstock"]');if(button){button.disabled=true;button.textContent='Saving…'}
- try{
-  const productId=slug;
-  if(INV.some(x=>x.product_id===productId))throw new Error('This product ID already exists. Choose a different item name.');
-  let imageUrl=null;
-  if(file){
-   const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
-   const path=`${LIVE_RESTAURANT.id}/${productId}-${Date.now()}.${ext}`;
-   const {error:uploadError}=await supabase.storage.from('halina-stock-images').upload(path,file,{contentType:file.type,upsert:false});
-   if(uploadError)throw uploadError;
-   imageUrl=supabase.storage.from('halina-stock-images').getPublicUrl(path).data.publicUrl;
-  }
-  const {error}=await supabase.from('PRODUCT_STOCK').insert({product_id:productId,product_name:name,stock_group:productId,stock_total:total,stock_remaining:remaining,category:category.toLowerCase().replace(/\\s+/g,'-'),image_url:imageUrl});
-  if(error)throw error;
-  await loadLiveData(LIVE_RESTAURANT.id);render();toast('Stock item added successfully.');
- }catch(err){console.error(err);toast(err.message||'Could not save stock item.',1)}
- finally{if(button){button.disabled=false;button.textContent='Add stock item'}}
-};
-A.profile=()=>drawer('Account',`<p><b>${esc(LIVE_USER?.email||'Signed-in user')}</b><br><span class="mu">${esc(LIVE_RESTAURANT?.name||'Restaurant')}</span></p><p class="note">Authenticated by Supabase. Dashboard access is checked against restaurant_users.</p><button class="btn pri" id="signOutButton">Sign out</button>`);
-
-/* Live-only overview and sales pages; no synthetic orders, expenses, or branch estimates. */
-PG.overview=()=>{const t=fin('today'),m=fin('tm'),pending=ORD.filter(o=>['New','Accepted','Preparing'].includes(o.s)).length,recent=ORD.slice(0,7),payments={};ORD.filter(o=>inPeriod(o.rawDate,S.per)).forEach(o=>payments[o.pm]=(payments[o.pm]||0)+o.tot);return `<div class="live-note">Live figures from Supabase · refreshed automatically every 30 seconds. Inventory is hidden when existing RLS rules do not permit this account to read it.</div><div class="g k"><div class="card"><div class="mu">Sales Today</div><div class="big">${M(t.net)}</div><div class="mu">Based on stored order totals</div></div><div class="card"><div class="mu">Orders Today</div><div class="big">${t.ord}</div><div class="mu">Excludes cancelled/refunded orders</div></div><div class="card"><div class="mu">Sales This Month</div><div class="big">${M(m.net)}</div><div class="mu">Net of recorded refunds</div></div><div class="card"><div class="mu">Pending / In Progress</div><div class="big">${pending}</div><div class="mu">New, accepted, preparing</div></div><div class="card"><div class="mu">Available Menu Items</div><div class="big">${MENU.length}</div><div class="mu">Visible under current access policies</div></div></div><div class="g g2"><div class="card"><h3>Sales trend</h3>${trend()}</div><div class="card"><h3>Payment methods · live order totals</h3>${Object.keys(payments).length?bars(Object.entries(payments)):empty('No orders in this date range.')}</div></div><div class="card"><div class="row"><h3 style="margin:0">Recent orders</h3><button class="btn" data-a="go" data-p="orders">View all</button></div>${tbl(['Order','Placed','Restaurant','Type','Status','Payment','Total'],ordRows(recent))}</div>`};
-PG.sales=()=>{const f=fin(),payments={},products={};ORD.filter(o=>inPeriod(o.rawDate,S.per)&&!['Cancelled'].includes(o.s)).forEach(o=>{payments[o.pm]=(payments[o.pm]||0)+o.tot;o.it.forEach(i=>products[i.n]=(products[i.n]||0)+i.p*i.q)});return `${tbar()}<div class="live-note">All figures are calculated from live order records and their stored totals. Expense/profit reporting is unavailable because no expense table exists in the current schema.</div><div class="g k"><div class="card"><div class="mu">Gross order totals</div><div class="big">${M(f.gross)}</div></div><div class="card"><div class="mu">Recorded refunds</div><div class="big">${M(f.ref)}</div></div><div class="card"><div class="mu">Net sales</div><div class="big">${M(f.net)}</div></div><div class="card"><div class="mu">Completed/non-cancelled orders</div><div class="big">${f.ord}</div></div><div class="card"><div class="mu">Average order value</div><div class="big">${M(f.aov)}</div></div></div><div class="g g2"><div class="card"><h3>Sales trend</h3>${trend()}</div><div class="card"><h3>Payment methods</h3>${Object.keys(payments).length?bars(Object.entries(payments)):empty('No orders in this date range.')}</div><div class="card"><h3>Top items by stored item total</h3>${Object.keys(products).length?bars(Object.entries(products).sort((a,b)=>b[1]-a[1]).slice(0,8)):empty('No item details in this date range.')}</div><div class="card"><h3>Data source</h3><p class="mu">Restaurant: ${esc(LIVE_RESTAURANT?.name||'—')}</p><p class="mu">Currency: ${esc(LIVE_CURRENCY)}</p><p class="mu">Range: ${esc(PER[S.per]?.[0]||'Selected range')}</p></div></div>`};
-/* Honest live-data views for modules not backed by the current schema. */
-PG.exp=()=>`<div class="live-note">Expense tracking is not connected: the current database has no expense table. No sample expenses or estimated profit are shown.</div><div class="card"><h3>Expenses & Profit</h3>${empty('No live expense records are available in the current database schema.')}</div>`;
-PG.audit=()=>`<div class="live-note">Audit logging is not connected: there is no audit-log table in the current schema.</div><div class="card"><h3>Audit Logs</h3>${empty('No live audit records are available.')}</div>`;
-PG.staff=()=>`<div class="live-note">Showing only restaurant-user records that the signed-in account is permitted to read. Staff creation, role changes, and permission enforcement are not connected in this prototype.</div><div class="card">${tbl(['User reference','Role','Account'],STAFF.map(u=>({c:[esc(u.n),esc(u.r),bdg('Linked')]})))}</div>`;
-PG.branches=()=>`<div class="live-note">This view is limited to the restaurant linked to your account. It does not create or simulate branches.</div><div class="card"><h3>Connected restaurant</h3><div class="big">${esc(LIVE_RESTAURANT?.name||'—')}</div><div class="mu">Slug: ${esc(LIVE_RESTAURANT?.slug||'—')}</div><div class="mu">Currency: ${esc(LIVE_CURRENCY)}</div></div>`;
-PG.health=()=>`<div class="g g2"><div class="card"><div class="row"><b>Supabase authentication</b>${bdg('Connected')}</div><p class="mu">Signed in as ${esc(LIVE_USER?.email||'—')}</p></div><div class="card"><div class="row"><b>Restaurant data</b>${bdg('Live')}</div><p class="mu">${ORD.length} orders loaded; ${MENU.length} available menu items loaded.</p></div><div class="card"><div class="row"><b>Printer</b>${bdg('Not connected')}</div><p class="mu">No printer integration is configured in this HTML.</p></div><div class="card"><div class="row"><b>Payment gateway</b>${bdg('Not connected')}</div><p class="mu">Payment status is read from stored order records; this page does not process payments.</p></div><div class="card"><div class="row"><b>AI assistant</b>${bdg('Not connected')}</div><p class="mu">No AI API is configured.</p></div></div>`;
-PG.ai=()=>`<div class="card"><span class="bd wn">● Not connected</span><h3 style="font-size:20px;margin:10px 0 6px">EDY — AI assistant</h3><p class="mu">EDY is not connected to an AI service yet. No simulated answers are shown.</p></div>`;
-PG.settings=()=>`<div class="live-note">Restaurant details below are read from Supabase. Settings are read-only until the database has an approved save path.</div><div class="g g2"><div class="card"><h3>Business profile</h3><div class="fl"><label>Restaurant name</label><input readonly value="${esc(LIVE_RESTAURANT?.name||'')}"></div><div class="fl"><label>Slug</label><input readonly value="${esc(LIVE_RESTAURANT?.slug||'')}"></div><div class="fl"><label>Currency</label><input readonly value="${esc(LIVE_CURRENCY)}"></div><div class="fl"><label>Time zone</label><input readonly value="${esc(LIVE_RESTAURANT?.timezone||'')}"></div><div class="fl"><label>Tax rate (stored)</label><input readonly value="${Number(LIVE_RESTAURANT?.tax_rate||0)}"></div></div><div class="card"><h3>Connections</h3><p>Supabase: ${bdg('Connected')}</p><p>Printer: ${bdg('Not connected')}</p><p>Payment gateway: ${bdg('Not connected')}</p><p>AI: ${bdg('Not connected')}</p><div class="tb"><button class="btn" data-a="theme">Switch to ${S.theme==='dark'?'light':'dark'} mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div></div>`;
-PG.menu=()=>{const q=(S.f.q||'').toLowerCase(),r=MENU.filter(m=>(!q||m.n.toLowerCase().includes(q))&&(!S.f.cat||m.c===S.f.cat));const cs=[...new Set(MENU.map(m=>m.c))];return `<div class="live-note">Live menu items from Supabase. The current database permissions expose available items for viewing; menu edits are disabled here.</div><div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search menu…">${sel('cat',[['','All categories'],...cs.map(c=>[c,c])],S.f.cat||'','Category')}<span class="mu">${r.length} items</span></div><div class="card">${tbl(['Item','Category','Price','Availability'],r.map(m=>({c:[esc(m.n),esc(m.c),M(m.p),bdg(m.a?'Available':'Unavailable')]})))}</div>`};
-PG.inv=()=>`<div class="live-note">Live inventory from Supabase. Signed-in owners/admins can add stock items and photos. Cashier quantities remain managed in the Cashier screen.</div><div class="card"><h3>Add stock item</h3><div class="g g2"><div class="fl"><label>Item name</label><input id="stockName" maxlength="120" placeholder="e.g. Chicken Breast"></div><div class="fl"><label>Category</label><input id="stockCategory" maxlength="80" list="stockCategoryOptions" placeholder="Choose or type a category"><datalist id="stockCategoryOptions">${[...new Set(INV.map(x=>x.category).filter(Boolean))].sort().map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist></div><div class="fl"><label>Total stock</label><input id="stockTotal" type="number" min="0" step="1" value="0"></div><div class="fl"><label>Remaining stock</label><input id="stockRemaining" type="number" min="0" step="1" value="0"></div><div class="fl"><label>Item photo (JPG, PNG, WebP · max 5 MB)</label><input id="stockPhoto" type="file" accept="image/jpeg,image/png,image/webp"></div></div><button class="btn pri" data-a="addstock">Add stock item</button><p class="mu">New items get a generated product ID. Existing stock rows are not duplicated.</p></div><div class="card"><div class="row"><h3 style="margin:0">Inventory & Stock</h3><span class="mu">${INV.length} items</span></div>${tbl(['Item','Category','Total','Remaining','Photo'],INV.map(x=>({c:[esc(x.name),esc(x.category||'Others'),String(x.total),String(x.remaining),x.image_url?`<a href="${esc(x.image_url)}" target="_blank" rel="noopener">View photo</a>`:'—']})))}</div>`;
-PG.orders=()=>{const q=(S.f.q||'').toLowerCase(),r=ORD.filter(o=>(!q||(o.id+o.pm+o.ty+o.s).toLowerCase().includes(q))&&(!S.f.st||o.s===S.f.st)&&(!S.f.pm||o.pm===S.f.pm));return `<div class="live-note">Live order records from Supabase. This dashboard currently displays orders; status-changing actions are not enabled until the correct authenticated write policy is verified.</div><div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search order…">${sel('st',[['','All statuses'],...['New','Accepted','Preparing','Ready','Served','Completed','Cancelled','Refunded'].map(x=>[x,x])],S.f.st||'','Status')}${sel('pm',[['','All payments'],...['Cash','Card','Online'].map(x=>[x,x])],S.f.pm||'','Payment method')}<button class="btn" data-a="csv">Export visible CSV</button></div><div class="card">${tbl(['Order','Placed','Restaurant','Type','Status','Payment','Total'],ordRows(r))}</div>`};
-
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
 if(e.key=='Escape'){if(L.innerHTML)closeL();else $('#app').classList.remove('mo')}
@@ -352,69 +296,69 @@ else if(t.type=='checkbox'&&t.closest('.md')){return}
 else if(c!='q')S.f[c]=t.value;render()});
 document.addEventListener('change',e=>{const t=e.target;if(t.type=='checkbox'&&t.closest('.md')){const k=WID[[...t.closest('.md').querySelectorAll('input[type=checkbox]')].indexOf(t)][0];S.w[k]=!t.checked;ss('w',S.w);if(S.page=='overview')render()}});
 
+/* INVENTORY CONNECTION — limited to the Inventory section */
+function inventoryAddForm(){
+ L.innerHTML=`<div class="bk" data-a="close"></div><form id="invForm" class="md" role="dialog" aria-modal="true" aria-label="Add stock item"><h3>Add stock item</h3><p class="note">Saved to Supabase and available to the Cashier inventory.</p>
+ <div class="fl"><label for="invName">Item name *</label><input id="invName" required maxlength="120"></div>
+ <div class="fl"><label for="invCat">Category *</label><input id="invCat" required maxlength="80" placeholder="e.g. Meat, Dry Goods, Beverage"></div>
+ <div class="fl"><label for="invTotal">Total stock *</label><input id="invTotal" type="number" min="0" step="any" required value="0"></div>
+ <div class="fl"><label for="invRemaining">Remaining stock *</label><input id="invRemaining" type="number" min="0" step="any" required value="0"></div>
+ <div class="fl"><label for="invGroup">Shared stock group (optional)</label><input id="invGroup" maxlength="120" placeholder="Leave blank to use this item's ID"></div>
+ <div class="fl"><label for="invPhoto">Item photo (JPG, PNG, WebP; max 5 MB)</label><input id="invPhoto" type="file" accept="image/jpeg,image/png,image/webp"></div>
+ <div class="tb"><button class="btn pri" type="submit" id="invSubmit">Save stock item</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="invFormErr" class="er" role="alert"></p></form>`;
+ const form=$('#invForm');form.onsubmit=async e=>{e.preventDefault();const btn=$('#invSubmit'),name=$('#invName').value.trim(),category=$('#invCat').value.trim(),total=Number($('#invTotal').value),remaining=Number($('#invRemaining').value),file=$('#invPhoto').files[0],group=$('#invGroup').value.trim();const err=$('#invFormErr');err.textContent='';
+ if(!name||!category||!Number.isFinite(total)||!Number.isFinite(remaining)||total<0||remaining<0){err.textContent='Please enter valid item details and non-negative quantities.';return}
+ if(file&&(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024)){err.textContent='Photo must be JPG, PNG, or WebP and no larger than 5 MB.';return}
+ btn.disabled=true;btn.textContent='Saving…';
+ try{const slug=name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'stock-item';const productId=slug+'-'+Date.now().toString(36);let imageUrl='';
+ if(file){const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=productId+'/'+Date.now()+'.'+ext;const up=await sb.storage.from('halina-stock-images').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;imageUrl=sb.storage.from('halina-stock-images').getPublicUrl(path).data.publicUrl}
+ const payload={product_id:productId,product_name:name,category,stock_total:Math.round(total),stock_remaining:Math.round(remaining),stock_group:group||productId,image_url:imageUrl||null};
+ const ins=await sb.from('PRODUCT_STOCK').insert(payload);if(ins.error)throw ins.error;
+ closeL();await load(true);toast('Stock item saved to Supabase');
+ }catch(ex){err.textContent=ex.message||'Could not save stock item.';btn.disabled=false;btn.textContent='Save stock item'}
+ };
+ $('#invName').focus();
+}
+function inventoryAdjustForm(id){
+ const x=INV.find(v=>String(v.id)===String(id));if(!x){toast('Stock item not found. Refresh and try again.',1);return}
+ L.innerHTML=`<div class="bk" data-a="close"></div><form id="invAdjustForm" class="md" role="dialog" aria-modal="true" aria-label="Edit stock quantities"><h3>Edit stock quantities</h3><p class="note">${esc(x.n)} · ${esc(x.c||'Uncategorized')}</p><div class="fl"><label for="invEditTotal">Total stock</label><input id="invEditTotal" type="number" min="0" step="any" required value="${x.total}"></div><div class="fl"><label for="invEditRemaining">Remaining stock</label><input id="invEditRemaining" type="number" min="0" step="any" required value="${x.q}"></div><div class="tb"><button class="btn pri" id="invEditSubmit" type="submit">Save changes</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="invEditErr" class="er" role="alert"></p></form>`;
+ $('#invAdjustForm').onsubmit=async e=>{e.preventDefault();const total=Number($('#invEditTotal').value),remaining=Number($('#invEditRemaining').value),btn=$('#invEditSubmit'),err=$('#invEditErr');if(!Number.isFinite(total)||!Number.isFinite(remaining)||total<0||remaining<0){err.textContent='Enter non-negative quantities.';return}btn.disabled=true;btn.textContent='Saving…';const res=await sb.from('PRODUCT_STOCK').update({stock_total:Math.round(total),stock_remaining:Math.round(remaining)}).eq('id',x.id);if(res.error){err.textContent=res.error.message;btn.disabled=false;btn.textContent='Save changes';return}closeL();await load(true);toast('Stock quantities updated')};
+ $('#invEditTotal').focus();
+}
+
+/* SUPABASE CONNECTION (read-only: SELECT only, publishable key only) */
+const SB_URL='https://isqcuycjrbjtmqhzckvb.supabase.co',SB_KEY='sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
+const sb=window.supabase.createClient(SB_URL,SB_KEY),sbA=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+[MENU,EXP,STAFF,AUD,NT,HEALTH].forEach(a=>a.length=0);INV.length=0;
+const mapO=o=>{let it=[];try{it=Array.isArray(o.items)?o.items:JSON.parse(o.items||'[]')}catch(e){}const st=String(o.status||'').toLowerCase(),dt=new Date(o.created_at);
+return{id:'#'+o.order_number,t:dt.toLocaleString('en-PH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),dt,b:1,ty:o.order_type=='takeout'?'Takeout':o.order_type=='delivery'?'Delivery':'Dine In',s:st=='cancelled'?'Cancelled':/^(served|completed)$/.test(st)?'Completed':(st==''||st=='new')?'New':'Preparing',pm:o.payment_method=='cash'?'Cash':o.payment_method=='online'?'Online (QR/Card)':'Card',pay:o.payment_status||'pending',it:it.map(i=>({n:String(i.name||'Item'),q:+(i.quantity??i.qty??1)||1,p:+i.price||0})),d:0,tot:+o.total||0}};
+const day0=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
+function rng(per){const n=new Date(),t=day0(n),D=864e5;switch(per){case'today':return[t,new Date(+t+D)];case'yest':return[new Date(+t-D),t];case'7d':return[new Date(+t-6*D),new Date(+t+D)];case'30d':return[new Date(+t-29*D),new Date(+t+D)];case'tm':return[new Date(n.getFullYear(),n.getMonth(),1),new Date(+t+D)];case'lm':return[new Date(n.getFullYear(),n.getMonth()-1,1),new Date(n.getFullYear(),n.getMonth(),1)];case'ty':return[new Date(n.getFullYear(),0,1),new Date(+t+D)];default:{const a=new Date(S.cu0+'T00:00'),b=new Date(S.cu1+'T00:00');return[a,new Date(+b+D)]}}}
+const inR=per=>{const[a,b]=rng(per);return ORD.filter(o=>o.dt>=a&&o.dt<b)};
+const NC=n=>`<div class="card"><span class="bd wn">● Not connected yet</span><h3 style="margin:10px 0 4px">${n}</h3><p class="mu">This section isn’t connected to your restaurant data yet, so nothing is shown here.</p></div>`;
+Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>{const q=(S.f.q||'').toLowerCase();const rows=INV.filter(x=>!q||[x.n,x.c,x.pid].join(' ').toLowerCase().includes(q));return `<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${INV.length} stock items · Supabase live data</span><button class="btn pri" data-a="invadd">+ Add stock item</button><button class="btn" data-a="invrefresh">Refresh</button></div>${S.stockErr?`<div class="card"><span class="bd er">● Inventory load error</span><p>${esc(S.stockErr)}</p></div>`:''}<div class="card">${tbl(['Item','Category','Total stock','Remaining','Status','Photo',''],rows.map(x=>({c:[esc(x.n),esc(x.c||'Uncategorized'),x.total,x.q,bdg(x.q<=0?'Out':x.q<=x.th?'Low':'OK'),x.image?`<a href="${esc(x.image)}" target="_blank" rel="noopener">View photo</a>`:'—',`<button class="btn" data-a="invadjust" data-i="${x.id}">Edit stock</button>`]})))}</div><p class="note">Inventory items and quantities are loaded from Supabase. Changes here are saved to the database.</p>`},exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>NC('Multi-Branch Management'),health:()=>NC('System Health & Integrations'),
+settings:()=>`<div class="g g2"><div class="card"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme">Switch to ${S.theme=='dark'?'light':'dark'} mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>${NC('Business settings')}</div>`});
+A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
+const G=$('#gate');
+function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.innerHTML=`<form id="lf" class="card gt"><div class="brand" style="padding:0"><b>E</b><span style="opacity:1;width:auto">EDMEL</span></div><h3 style="margin-top:14px">Sign in</h3><p class="mu">HALINA BISTRO CAFE · Owner dashboard</p><div class="fl"><label for="le">Email</label><input id="le" type="email" autocomplete="username" required></div><div class="fl"><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" required></div>${err?`<p class="er" role="alert">● ${esc(err)}</p>`:''}<button class="btn pri" id="lb" style="width:100%">Sign in</button></form>`;
+$('#lf').onsubmit=async e=>{e.preventDefault();$('#lb').disabled=true;const{error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});if(error){showLogin('Sign-in failed: '+error.message);return}start()}}
+async function start(){const{data:{session}}=await sb.auth.getSession();if(!session){showLogin();return}
+const{data:ru,error}=await sb.from('restaurant_users').select('role,restaurant_id').eq('user_id',session.user.id).maybeSingle();
+if(error||!ru||!['owner','admin'].includes(ru.role)){await sb.auth.signOut();showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to an owner or admin role.');return}
+G.hidden=true;S.user=session.user.email;await load()}
+async function load(manual){document.body.classList.remove('locked');$('#pg').innerHTML='<div class="card">Loading your restaurant data…</div>';
+try{const{data,error}=await sb.from('orders').select('id,order_number,order_type,payment_method,payment_status,status,total,items,table_number,created_at').order('created_at',{ascending:false}).limit(5000);if(error)throw error;ORD.length=0;ORD.push(...data.map(mapO));
+const r=await sb.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,stock_total,stock_remaining,category,image_url,created_at').order('id',{ascending:true});INV.length=0;S.stockErr=r.error?r.error.message:'';if(!r.error)INV.push(...r.data.map(x=>({id:x.id,pid:x.product_id||'',n:x.product_name||'',c:x.category||'',total:Number(x.stock_total)||0,q:Number(x.stock_remaining)||0,u:'',th:3,b:1,image:x.image_url||'',upd:x.created_at||'',log:[]})));
+render();if(manual)toast('Data refreshed')}
+catch(err){$('#pg').innerHTML=`<div class="card"><span class="bd er">● Could not load orders</span><p>${esc(err.message||String(err))}</p><div class="tb"><button class="btn" data-a="refresh">Try again</button><button class="btn" data-a="signout">Sign out</button></div></div>`}}
 /* 10. THEME + SIDEBAR SETUP */
 function applyTheme(){document.documentElement.dataset.theme=S.theme;$('#th').innerHTML=I(S.theme=='dark'?'sun':'moon')}
-function fillBr(){$('#br').innerHTML=`<option value="0">${esc(LIVE_RESTAURANT?.name||'Restaurant')}</option>`}
+function fillBr(){$('#br').innerHTML=`<option value="0">All Branches</option>`+BS.map((b,i)=>`<option value="${i+1}"${S.br==i+1?' selected':''}>${b}</option>`).join('')}
 $('#nav').innerHTML=NAV.map(n=>`<button data-p="${n[0]}" data-a="go" data-tip="${n[1]}" aria-label="${n[1]}">${I(n[2])}<span>${n[1]}</span></button>`).join('');
 $('#tg').innerHTML=I('chev')+'<span>Collapse</span>';$('#tg').onclick=A.sbt;
 $('#mb').innerHTML=I('burger');$('#mb').onclick=()=>$('#app').classList.add('mo');$('#ov').onclick=()=>$('#app').classList.remove('mo');
 $('#si').innerHTML=I('search',16);$('#bi').innerHTML=I('bell');
-$('#app').classList.toggle('exp',S.exp);applyTheme();
-
-/* 11. SUPABASE LIVE CONNECTION — no schema changes or data writes performed here. */
-const SUPABASE_URL='https://isqcuycjrbjtmqhzckvb.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY='sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
-const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const authGate=$('#authGate'),app=$('#app'),loginForm=$('#loginForm'),loginButton=$('#loginButton'),authError=$('#authError');
-function showLogin(message=''){authGate.style.display='grid';app.style.display='none';authError.textContent=message;loginButton.disabled=false;loginButton.textContent='Sign in securely';if(LIVE_POLL){clearInterval(LIVE_POLL);LIVE_POLL=null}}
-function normalizeStatus(row){const raw=String(row.status||row.order_status||'pending').toLowerCase();return ({new:'New',pending:'New',accepted:'Accepted',confirmed:'Accepted',preparing:'Preparing',ready:'Ready',served:'Served',completed:'Completed',cancelled:'Cancelled',refunded:'Refunded'})[raw]||raw.replace(/_/g,' ').replace(/^./,c=>c.toUpperCase())}
-function dateLabel(v){const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString('en-PH',{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
-function replaceArray(target,items){target.splice(0,target.length,...items)}
-async function loadLiveData(restaurantId){
- const [ordersRes,menuRes,catsRes,staffRes,stockRes]=await Promise.all([
-  supabase.from('orders').select('id,restaurant_id,order_number,table_number,order_type,payment_method,payment_status,order_status,subtotal,tax,tip,total,created_at,items,status').eq('restaurant_id',restaurantId).order('created_at',{ascending:false}).limit(500),
-  supabase.from('menu_items').select('id,restaurant_id,category_id,name,price,is_available,sort_order').eq('restaurant_id',restaurantId).eq('is_available',true).order('sort_order'),
-  supabase.from('menu_categories').select('id,name,sort_order').eq('restaurant_id',restaurantId).eq('is_active',true).order('sort_order'),
-  supabase.from('restaurant_users').select('user_id,restaurant_id,role,cashier_username').eq('restaurant_id',restaurantId),
-  supabase.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,stock_total,stock_remaining,category,image_url').order('id')
- ]);
- if(ordersRes.error)throw new Error('Orders could not be read: '+ordersRes.error.message);
- if(menuRes.error)throw new Error('Menu could not be read: '+menuRes.error.message);
- if(stockRes.error)throw new Error('Inventory could not be read: '+stockRes.error.message);
- const categories=new Map((catsRes.data||[]).map(c=>[c.id,c.name]));
- replaceArray(ORD,(ordersRes.data||[]).map(o=>({id:'ORD-'+o.order_number,dbId:o.id,rawDate:o.created_at,t:dateLabel(o.created_at),b:1,ty:({dine_in:'Dine In',takeout:'Takeout',delivery:'Delivery'})[o.order_type]||o.order_type||'—',s:normalizeStatus(o),pm:({cash:'Cash',card:'Card',online:'Online'})[o.payment_method]||o.payment_method||'—',paymentStatus:o.payment_status||'pending',tot:Number(o.total||0),d:0,it:(Array.isArray(o.items)?o.items:[]).map(i=>({n:i.name||i.item_name||'Item',q:Number(i.quantity||i.qty||1),p:Number(i.price||i.unit_price||0)})),raw:o})));
- replaceArray(MENU,(menuRes.data||[]).map(m=>({id:m.id,n:m.name,c:categories.get(m.category_id)||'Uncategorized',p:Number(m.price||0),a:!!m.is_available})));
- replaceArray(STAFF,(staffRes.data||[]).map(u=>({n:u.cashier_username||('User '+String(u.user_id||'').slice(0,8)),r:u.role||'staff',b:1,s:'Linked',sh:'—',l:'—'})));
- replaceArray(INV,(stockRes.data||[]).map(x=>({id:x.id,product_id:x.product_id,name:x.product_name,stock_group:x.stock_group,total:Number(x.stock_total||0),remaining:Number(x.stock_remaining||0),category:x.category||'others',image_url:x.image_url||''})));
- replaceArray(EXP,[]);replaceArray(AUD,[]);
- replaceArray(NT,ORD.filter(o=>['New','Accepted','Preparing'].includes(o.s)).slice(0,5).map(o=>({ty:'Order update',m:`${o.id} · ${o.s} · ${M(o.tot)}`,r:0})));
- BASE.splice(0,BASE.length,0);AO.splice(0,AO.length,1);EXB.splice(0,EXB.length,0);
-}
-async function enterDashboard(user){
- LIVE_USER=user;authError.textContent='';
- const linkRes=await supabase.from('restaurant_users').select('restaurant_id,role,cashier_username').eq('user_id',user.id);
- if(linkRes.error)throw new Error('Could not verify restaurant access: '+linkRes.error.message);
- const links=(linkRes.data||[]).filter(x=>x.restaurant_id&&['owner','admin'].includes(String(x.role||'').toLowerCase()));
- if(!links.length)throw new Error('This Supabase account has no Owner/Admin restaurant link. Ask the project owner to assign access in restaurant_users.');
- const restIds=[...new Set(links.map(x=>x.restaurant_id))];
- const restRes=await supabase.from('restaurants').select('id,name,slug,currency,timezone,tax_rate,tip_enabled,online_payment_enabled').in('id',restIds);
- if(restRes.error)throw new Error('Could not load restaurant profile: '+restRes.error.message);
- LIVE_RESTAURANT=(restRes.data||[]).find(r=>r.slug==='halina-bistro-cafe')||(restRes.data||[])[0];
- if(!LIVE_RESTAURANT)throw new Error('No restaurant profile is linked to this account.');
- LIVE_CURRENCY=LIVE_RESTAURANT.currency||'PHP';
- replaceArray(BS,[LIVE_RESTAURANT.name]);S.br=0;
- await loadLiveData(LIVE_RESTAURANT.id);
- authGate.style.display='none';app.style.display='block';
- $('#liveSub').textContent=`${LIVE_RESTAURANT.name} · Live Supabase data`;
- document.querySelector('.av').textContent=(user.email||'U').slice(0,2).toUpperCase();
- fillBr();render();
- if(LIVE_POLL)clearInterval(LIVE_POLL);
- LIVE_POLL=setInterval(async()=>{try{await loadLiveData(LIVE_RESTAURANT.id);if(!L.innerHTML)render();}catch(e){console.error('Live refresh failed:',e);}},30000);
-}
-loginForm.addEventListener('submit',async e=>{e.preventDefault();loginButton.disabled=true;loginButton.textContent='Signing in…';authError.textContent='';try{const {data,error}=await supabase.auth.signInWithPassword({email:$('#loginEmail').value.trim(),password:$('#loginPassword').value});if(error)throw error;await enterDashboard(data.user)}catch(err){console.error(err);showLogin(err.message||'Sign-in failed. Check your credentials and access.')}});
-document.addEventListener('click',async e=>{if(e.target.closest('#signOutButton')){try{await supabase.auth.signOut();LIVE_USER=null;LIVE_RESTAURANT=null;showLogin('You have signed out.')}catch(err){toast('Sign out failed: '+err.message,1)}}});
-try{const {data,error}=await supabase.auth.getSession();if(error)throw error;if(data.session?.user){try{await enterDashboard(data.session.user)}catch(err){console.error(err);showLogin(err.message||'Could not load your restaurant.')}}else showLogin()}catch(err){console.error(err);showLogin('Supabase connection could not start: '+(err.message||'Check network and project configuration.'))}
-
+$('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();
 </script>
 </body>
 </html>
