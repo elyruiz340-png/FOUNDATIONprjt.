@@ -276,7 +276,10 @@ test:()=>{toast('Simulated test passed for 4 of 5 services');setTimeout(()=>toas
 pr:t=>{S.per=t.dataset.v;render()},ntab:t=>{S.nt=t.dataset.v;render()},
 readall:()=>{NT.forEach(n=>n.r=1);bell();dotU()},clrn:()=>{NT.length=0;bell();dotU()},
 nt:t=>{NT[t.dataset.i].r=1;bell();dotU()},
-allnt:()=>drawer('All notifications',NT.map(n=>`<div class="row"><span>${n.r?'':'● '}${n.ty}<br><span class="mu">${n.m}</span></span></div>`).join('')||empty('You’re all caught up.'))
+allnt:()=>drawer('All notifications',NT.map(n=>`<div class="row"><span>${n.r?'':'● '}${n.ty}<br><span class="mu">${n.m}</span></span></div>`).join('')||empty('You’re all caught up.')),
+invrefresh:()=>load(true),
+invadd:()=>inventoryAddForm(),
+invadjust:t=>inventoryAdjustForm(t.dataset.i)
 };
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
@@ -293,6 +296,36 @@ else if(t.type=='checkbox'&&t.closest('.md')){return}
 else if(c!='q')S.f[c]=t.value;render()});
 document.addEventListener('change',e=>{const t=e.target;if(t.type=='checkbox'&&t.closest('.md')){const k=WID[[...t.closest('.md').querySelectorAll('input[type=checkbox]')].indexOf(t)][0];S.w[k]=!t.checked;ss('w',S.w);if(S.page=='overview')render()}});
 
+/* INVENTORY CONNECTION — limited to the Inventory section */
+function inventoryAddForm(){
+ L.innerHTML=`<div class="bk" data-a="close"></div><form id="invForm" class="md" role="dialog" aria-modal="true" aria-label="Add stock item"><h3>Add stock item</h3><p class="note">Saved to Supabase and available to the Cashier inventory.</p>
+ <div class="fl"><label for="invName">Item name *</label><input id="invName" required maxlength="120"></div>
+ <div class="fl"><label for="invCat">Category *</label><input id="invCat" required maxlength="80" placeholder="e.g. Meat, Dry Goods, Beverage"></div>
+ <div class="fl"><label for="invTotal">Total stock *</label><input id="invTotal" type="number" min="0" step="any" required value="0"></div>
+ <div class="fl"><label for="invRemaining">Remaining stock *</label><input id="invRemaining" type="number" min="0" step="any" required value="0"></div>
+ <div class="fl"><label for="invGroup">Shared stock group (optional)</label><input id="invGroup" maxlength="120" placeholder="Leave blank to use this item's ID"></div>
+ <div class="fl"><label for="invPhoto">Item photo (JPG, PNG, WebP; max 5 MB)</label><input id="invPhoto" type="file" accept="image/jpeg,image/png,image/webp"></div>
+ <div class="tb"><button class="btn pri" type="submit" id="invSubmit">Save stock item</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="invFormErr" class="er" role="alert"></p></form>`;
+ const form=$('#invForm');form.onsubmit=async e=>{e.preventDefault();const btn=$('#invSubmit'),name=$('#invName').value.trim(),category=$('#invCat').value.trim(),total=Number($('#invTotal').value),remaining=Number($('#invRemaining').value),file=$('#invPhoto').files[0],group=$('#invGroup').value.trim();const err=$('#invFormErr');err.textContent='';
+ if(!name||!category||!Number.isFinite(total)||!Number.isFinite(remaining)||total<0||remaining<0){err.textContent='Please enter valid item details and non-negative quantities.';return}
+ if(file&&(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024)){err.textContent='Photo must be JPG, PNG, or WebP and no larger than 5 MB.';return}
+ btn.disabled=true;btn.textContent='Saving…';
+ try{const slug=name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'stock-item';const productId=slug+'-'+Date.now().toString(36);let imageUrl='';
+ if(file){const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=productId+'/'+Date.now()+'.'+ext;const up=await sb.storage.from('halina-stock-images').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;imageUrl=sb.storage.from('halina-stock-images').getPublicUrl(path).data.publicUrl}
+ const payload={product_id:productId,product_name:name,category,stock_total:Math.round(total),stock_remaining:Math.round(remaining),stock_group:group||productId,image_url:imageUrl||null};
+ const ins=await sb.from('PRODUCT_STOCK').insert(payload);if(ins.error)throw ins.error;
+ closeL();await load(true);toast('Stock item saved to Supabase');
+ }catch(ex){err.textContent=ex.message||'Could not save stock item.';btn.disabled=false;btn.textContent='Save stock item'}
+ };
+ $('#invName').focus();
+}
+function inventoryAdjustForm(id){
+ const x=INV.find(v=>String(v.id)===String(id));if(!x){toast('Stock item not found. Refresh and try again.',1);return}
+ L.innerHTML=`<div class="bk" data-a="close"></div><form id="invAdjustForm" class="md" role="dialog" aria-modal="true" aria-label="Edit stock quantities"><h3>Edit stock quantities</h3><p class="note">${esc(x.n)} · ${esc(x.c||'Uncategorized')}</p><div class="fl"><label for="invEditTotal">Total stock</label><input id="invEditTotal" type="number" min="0" step="any" required value="${x.total}"></div><div class="fl"><label for="invEditRemaining">Remaining stock</label><input id="invEditRemaining" type="number" min="0" step="any" required value="${x.q}"></div><div class="tb"><button class="btn pri" id="invEditSubmit" type="submit">Save changes</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="invEditErr" class="er" role="alert"></p></form>`;
+ $('#invAdjustForm').onsubmit=async e=>{e.preventDefault();const total=Number($('#invEditTotal').value),remaining=Number($('#invEditRemaining').value),btn=$('#invEditSubmit'),err=$('#invEditErr');if(!Number.isFinite(total)||!Number.isFinite(remaining)||total<0||remaining<0){err.textContent='Enter non-negative quantities.';return}btn.disabled=true;btn.textContent='Saving…';const res=await sb.from('PRODUCT_STOCK').update({stock_total:Math.round(total),stock_remaining:Math.round(remaining)}).eq('id',x.id);if(res.error){err.textContent=res.error.message;btn.disabled=false;btn.textContent='Save changes';return}closeL();await load(true);toast('Stock quantities updated')};
+ $('#invEditTotal').focus();
+}
+
 /* SUPABASE CONNECTION (read-only: SELECT only, publishable key only) */
 const SB_URL='https://isqcuycjrbjtmqhzckvb.supabase.co',SB_KEY='sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
 const sb=window.supabase.createClient(SB_URL,SB_KEY),sbA=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -303,7 +336,7 @@ const day0=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
 function rng(per){const n=new Date(),t=day0(n),D=864e5;switch(per){case'today':return[t,new Date(+t+D)];case'yest':return[new Date(+t-D),t];case'7d':return[new Date(+t-6*D),new Date(+t+D)];case'30d':return[new Date(+t-29*D),new Date(+t+D)];case'tm':return[new Date(n.getFullYear(),n.getMonth(),1),new Date(+t+D)];case'lm':return[new Date(n.getFullYear(),n.getMonth()-1,1),new Date(n.getFullYear(),n.getMonth(),1)];case'ty':return[new Date(n.getFullYear(),0,1),new Date(+t+D)];default:{const a=new Date(S.cu0+'T00:00'),b=new Date(S.cu1+'T00:00');return[a,new Date(+b+D)]}}}
 const inR=per=>{const[a,b]=rng(per);return ORD.filter(o=>o.dt>=a&&o.dt<b)};
 const NC=n=>`<div class="card"><span class="bd wn">● Not connected yet</span><h3 style="margin:10px 0 4px">${n}</h3><p class="mu">This section isn’t connected to your restaurant data yet, so nothing is shown here.</p></div>`;
-Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>NC('Inventory & Stock'),exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>NC('Multi-Branch Management'),health:()=>NC('System Health & Integrations'),
+Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>{const q=(S.f.q||'').toLowerCase();const rows=INV.filter(x=>!q||[x.n,x.c,x.pid].join(' ').toLowerCase().includes(q));return `<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${INV.length} stock items · Supabase live data</span><button class="btn pri" data-a="invadd">+ Add stock item</button><button class="btn" data-a="invrefresh">Refresh</button></div>${S.stockErr?`<div class="card"><span class="bd er">● Inventory load error</span><p>${esc(S.stockErr)}</p></div>`:''}<div class="card">${tbl(['Item','Category','Total stock','Remaining','Status','Photo',''],rows.map(x=>({c:[esc(x.n),esc(x.c||'Uncategorized'),x.total,x.q,bdg(x.q<=0?'Out':x.q<=x.th?'Low':'OK'),x.image?`<a href="${esc(x.image)}" target="_blank" rel="noopener">View photo</a>`:'—',`<button class="btn" data-a="invadjust" data-i="${x.id}">Edit stock</button>`]})))}</div><p class="note">Inventory items and quantities are loaded from Supabase. Changes here are saved to the database.</p>`},exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>NC('Multi-Branch Management'),health:()=>NC('System Health & Integrations'),
 settings:()=>`<div class="g g2"><div class="card"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme">Switch to ${S.theme=='dark'?'light':'dark'} mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>${NC('Business settings')}</div>`});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
 const G=$('#gate');
@@ -315,7 +348,7 @@ if(error||!ru||!['owner','admin'].includes(ru.role)){await sb.auth.signOut();sho
 G.hidden=true;S.user=session.user.email;await load()}
 async function load(manual){document.body.classList.remove('locked');$('#pg').innerHTML='<div class="card">Loading your restaurant data…</div>';
 try{const{data,error}=await sb.from('orders').select('id,order_number,order_type,payment_method,payment_status,status,total,items,table_number,created_at').order('created_at',{ascending:false}).limit(5000);if(error)throw error;ORD.length=0;ORD.push(...data.map(mapO));
-const r=await sbA.from('PRODUCT_STOCK').select('product_name,stock_remaining');INV.length=0;S.stockErr=r.error?r.error.message:'';if(!r.error)INV.push(...r.data.map(x=>({n:x.product_name,q:+x.stock_remaining||0,u:'',th:3,c:'',b:1,upd:'',log:[]})));
+const r=await sb.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,stock_total,stock_remaining,category,image_url,created_at').order('id',{ascending:true});INV.length=0;S.stockErr=r.error?r.error.message:'';if(!r.error)INV.push(...r.data.map(x=>({id:x.id,pid:x.product_id||'',n:x.product_name||'',c:x.category||'',total:Number(x.stock_total)||0,q:Number(x.stock_remaining)||0,u:'',th:3,b:1,image:x.image_url||'',upd:x.created_at||'',log:[]})));
 render();if(manual)toast('Data refreshed')}
 catch(err){$('#pg').innerHTML=`<div class="card"><span class="bd er">● Could not load orders</span><p>${esc(err.message||String(err))}</p><div class="tb"><button class="btn" data-a="refresh">Try again</button><button class="btn" data-a="signout">Sign out</button></div></div>`}}
 /* 10. THEME + SIDEBAR SETUP */
