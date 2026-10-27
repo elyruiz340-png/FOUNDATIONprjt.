@@ -1500,20 +1500,9 @@ function changeQtyById(id, change) {
   }
 
 
-  const qtyElement =
-    document.getElementById(
-      "qty-" + id
-    );
-
-
-  if (qtyElement) {
-
-    qtyElement.textContent =
-      item.qty;
-
-  }
-
-
+  // Re-render the menu so the +/- buttons' disabled states
+  // stay in sync with the updated quantity and stock limit.
+  renderMenu();
   updateOrder();
 
 }
