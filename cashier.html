@@ -8883,29 +8883,28 @@ async function loadStocks() {
     });
 
     const sortedGroups = Object.keys(groups)
-      .map(function(group) {
-        return {
-          group: group,
-          items: groups[group]
-        };
-      })
-      .sort(function(a, b) {
-        const categoryA =
-          productCategory[a.items[0].product_id] || "others";
+  .map(function(group) {
+    return {
+      group: group,
+      items: groups[group]
+    };
+  })
+  .sort(function(a, b) {
+    const categoryA =
+      a.items[0].menuCategory || "others";
 
-        const categoryB =
-          productCategory[b.items[0].product_id] || "others";
+    const categoryB =
+      b.items[0].menuCategory || "others";
 
-        const orderA = categoryOrder[categoryA] || 99;
-        const orderB = categoryOrder[categoryB] || 99;
+    const orderA = categoryOrder[categoryA] || 99;
+    const orderB = categoryOrder[categoryB] || 99;
 
-        if (orderA !== orderB) {
-          return orderA - orderB;
-        }
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
 
-        return a.items[0].id - b.items[0].id;
-      });
-
+    return a.items[0].id - b.items[0].id;
+  });
     /*
      * RENDER STOCK CARDS
      * sortedGroups is defined above, inside this function.
