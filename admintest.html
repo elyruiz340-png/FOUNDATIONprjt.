@@ -592,25 +592,21 @@ function staffAddForm(){
         aria-labelledby="staffFormTitle">
 <h3 id="staffFormTitle">Add Staff Member</h3>
 <p class="note">
-       Create the staff profile first. Account creation and saving
-       will be enabled after the secure backend is ready.
+       Enter the staff details and set an initial cashier PIN.
+       Account creation will be enabled after secure backend setup.
 </p>
-<form id="staffAddForm">
+<form id="staffAddForm" autocomplete="off">
 <div class="fl">
 <label for="staffFullName">Full Name *</label>
-<input id="staffFullName"
-                name="full_name"
-                autocomplete="name"
-                required
-                maxlength="100"
+<input id="staffFullName" name="full_name"
+                required maxlength="100"
                 placeholder="Enter full name">
 </div>
 <div class="fl">
 <label for="staffDisplayName">Display Name</label>
-<input id="staffDisplayName"
-                name="display_name"
+<input id="staffDisplayName" name="display_name"
                 maxlength="60"
-                placeholder="Optional name shown in the dashboard">
+                placeholder="Optional display name">
 </div>
 <div class="fl">
 <label for="staffPosition">Position *</label>
@@ -623,27 +619,43 @@ function staffAddForm(){
 </div>
 <div class="fl">
 <label for="staffUsername">Username *</label>
-<input id="staffUsername"
-                name="username"
+<input id="staffUsername" name="username"
                 autocomplete="off"
                 autocapitalize="none"
                 spellcheck="false"
-                required
-                minlength="3"
-                maxlength="40"
+                required minlength="3" maxlength="40"
                 pattern="[A-Za-z0-9._-]+"
                 placeholder="Create a unique username">
 <p class="mu">
-           Letters, numbers, periods, underscores, and hyphens only.
-           Username availability must be verified by the backend.
+           Username availability must be checked by the backend.
 </p>
 </div>
 <div class="fl">
 <label>Account Role</label>
-<input value="Staff" disabled aria-label="Account role">
+<input value="Staff" disabled>
 <p class="mu">
-           The database role remains staff. Position is a separate field.
+           Role is Staff. Position and permissions are separate.
 </p>
+</div>
+<div class="fl">
+<label for="staffPin">Initial Cashier PIN *</label>
+<input id="staffPin" name="pin"
+                type="password"
+                inputmode="numeric"
+                autocomplete="new-password"
+                required minlength="6" maxlength="6"
+                pattern="[0-9]{6}"
+                placeholder="Enter six-digit PIN">
+</div>
+<div class="fl">
+<label for="staffPinConfirm">Confirm Cashier PIN *</label>
+<input id="staffPinConfirm" name="pin_confirm"
+                type="password"
+                inputmode="numeric"
+                autocomplete="new-password"
+                required minlength="6" maxlength="6"
+                pattern="[0-9]{6}"
+                placeholder="Re-enter six-digit PIN">
 </div>
 <div class="fl">
 <label>Permissions</label>
@@ -669,12 +681,11 @@ function staffAddForm(){
 </label>
 </div>
 <p class="mu">
-         No personal email is required. No PIN is requested in this form.
+         No personal email is required. PIN values must never be
+         stored in plain text or included in logs.
 </p>
-<div id="staffFormMsg"
-            class="note"
-            role="status"
-            aria-live="polite"></div>
+<div id="staffFormMsg" class="note"
+            role="status" aria-live="polite"></div>
 <div class="tb">
 <button class="btn pri" type="submit">
            Validate Staff Details
@@ -694,15 +705,24 @@ function staffAddForm(){
    if(!form.reportValidity())return;
    const fullName=L.querySelector('#staffFullName').value.trim();
    const username=L.querySelector('#staffUsername').value.trim();
+   const pin=L.querySelector('#staffPin').value;
+   const confirmPin=L.querySelector('#staffPinConfirm').value;
+   const message=L.querySelector('#staffFormMsg');
    if(!fullName||!username){
-     L.querySelector('#staffFormMsg').textContent=
-       'Please complete all required fields.';
+     message.textContent='Please complete all required fields.';
      return;
    }
-   const message=L.querySelector('#staffFormMsg');
+   if(!/^[0-9]{6}$/.test(pin)){
+     message.textContent='The PIN must contain exactly six digits.';
+     return;
+   }
+   if(pin!==confirmPin){
+     message.textContent='The PIN entries do not match.';
+     return;
+   }
    message.textContent=
-     'Validation passed. No account has been created or saved yet. '+
-     'Secure backend setup is required before this form can create staff accounts.';
+     'Form validation passed. No account has been created and '+
+     'the PIN has not been saved. Secure backend setup is required.';
  };
 }
 PG.staff=staffPage;
