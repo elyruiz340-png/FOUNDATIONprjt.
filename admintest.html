@@ -483,6 +483,7 @@ A.editmenu=t=>menuItemForm(t.dataset.i);
 A.addcat=()=>categoryForm(null);
 Object.assign(PG,{menu:menuPage});
 const originalStart=start;
+let CURRENT_AUTH_USER_ID='';
 start=async function(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){showLogin();return;}
@@ -492,6 +493,7 @@ start=async function(){
     showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to a HALINA owner/admin role.');
     return;
   }
+  CURRENT_AUTH_USER_ID=session.user.id;
   G.hidden=true;S.user=session.user.email;await load();
 };
 const originalLoad=load;
@@ -509,15 +511,23 @@ async function loadStaffData(){
 }
 
 function staffPage(){
-  const rows=STAFF_ROWS.map(u=>({c:[
-    esc(u.cashier_username||'Username not set'),
-    esc(u.role||'Unassigned'),
-    bdg('Linked'),
-    u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—'
-  ]}));
+  const rows=STAFF_ROWS.map(u=>{
+    const isCurrentUser=!!CURRENT_AUTH_USER_ID&&u.user_id===CURRENT_AUTH_USER_ID;
+    const accountLabel=u.cashier_username||(
+      isCurrentUser&&S.user ? S.user :
+      String(u.role||'').toLowerCase()==='owner' ? 'Owner account · username not required' :
+      'Username not set'
+    );
+    return {c:[
+      esc(accountLabel),
+      esc(u.role||'Unassigned'),
+      bdg('Linked'),
+      u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—'
+    ]};
+  });
   return `<div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn" data-a="staffrefresh">Refresh</button></div>
   ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p><p class="mu">Check the existing Supabase access policies. No changes were made to staff records.</p></div>`:
-    STAFF_ROWS.length?`<div class="card">${tbl(['Username','Role','Account link','Date added'],rows)}</div>`:
+    STAFF_ROWS.length?`<div class="card">${tbl(['Account identifier','Role','Account link','Date added'],rows)}</div>`:
     `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant. Existing Supabase access policies may limit what this account can see.</p></div>`}
   <div class="card" style="margin-top:14px"><h3>Permissions</h3><p class="mu">The database currently supports Owner, Admin, and Staff roles. Role editing and permission enforcement are not enabled here yet; we will implement them only after confirming a secure workflow.</p></div>`;
 }
