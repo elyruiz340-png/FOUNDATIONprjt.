@@ -603,35 +603,7 @@
         Menu
       </div>
 
-      <div class="category-menu">
-
-        <button type="button" data-category="all" class="active">🍽️ <span>All</span></button>
-
-        <button type="button" data-category="all-day-breakfast">🍳 <span>Breakfast</span></button>
-
-        <button type="button" data-category="a-la-carte">🍗 <span>A La Carte</span></button>
-
-        <button type="button" data-category="pulutan">🍟 <span>Pulutan</span></button>
-
-        <button type="button" data-category="pasta">🍝 <span>Pasta</span></button>
-
-        <button type="button" data-category="sandwich">🥪 <span>Sandwich</span></button>
-
-        <button type="button" data-category="rice">🍚 <span>Rice</span></button>
-
-        <button type="button" data-category="beers">🍺 <span>Beers</span></button>
-
-        <button type="button" data-category="whiskey">🥃 <span>Whiskey</span></button>
-
-        <button type="button" data-category="tequila">🍹 <span>Tequila</span></button>
-
-        <button type="button" data-category="soju">🍶 <span>Soju</span></button>
-
-        <button type="button" data-category="soda">🥤 <span>Soda</span></button>
-
-        <button type="button" data-category="others">💧 <span>Others</span></button>
-
-      </div>
+      <div class="category-menu" id="categoryMenu"></div>
 
       <div class="menu-grid" id="menuGrid"></div>
 
@@ -779,491 +751,81 @@ document.getElementById("tableNumber").textContent =
 
 /* MENU */
 
-const menu = [
+let menu = [];
+let categories = [];
 
-  {
-    id:"tapsilog",
-    name:"TAPSILOG",
-    price:219,
-    image:"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
-    category:"all-day-breakfast"
-  },
 
-  {
-    id:"lechon-kawali-silog",
-    name:"LECHON KAWALI SILOG",
-    price:219,
-    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-    category:"all-day-breakfast"
-  },
+/* SUPABASE MENU CATALOG — categories and items come from Admin */
+const MENU_ITEMS_ENDPOINT = SUPABASE_URL + "/rest/v1/menu_items";
+const MENU_CATEGORIES_ENDPOINT = SUPABASE_URL + "/rest/v1/menu_categories";
 
-  {
-    id:"pork-silog",
-    name:"PORK SILOG",
-    price:199,
-    image:"https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-    category:"all-day-breakfast"
-  },
+async function loadMenuCatalog() {
+  const menuGrid = document.getElementById("menuGrid");
+  const categoryMenu = document.getElementById("categoryMenu");
+  menuGrid.innerHTML = '<p class="empty-order">Loading menu…</p>';
+  categoryMenu.innerHTML = "";
 
-  {
-    id:"bang-silog",
-    name:"BANG SILOG",
-    price:199,
-    image:"https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
-    category:"all-day-breakfast"
-  },
+  const headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + SUPABASE_KEY
+  };
 
-  {
-    id:"whole-fried-chicken",
-    name:"Whole Fried Chicken",
-    price:499,
-    image:"https://images.unsplash.com/photo-1562967916-eb82221df92?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
+  const [catResponse, itemResponse] = await Promise.all([
+    fetch(MENU_CATEGORIES_ENDPOINT + "?select=id,name,sort_order,is_active,image_url&restaurant_id=eq." + encodeURIComponent(RESTAURANT_ID) + "&is_active=eq.true&order=sort_order.asc,name.asc", { headers }),
+    fetch(MENU_ITEMS_ENDPOINT + "?select=id,restaurant_id,category_id,name,description,price,image_url,is_available,sort_order,stock_product_id&restaurant_id=eq." + encodeURIComponent(RESTAURANT_ID) + "&is_available=eq.true&order=sort_order.asc,name.asc", { headers })
+  ]);
 
-  {
-    id:"half-fried-chicken",
-    name:"Half Fried Chicken",
-    price:299,
-    image:"https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
+  const catData = await catResponse.json();
+  const itemData = await itemResponse.json();
+  if (!catResponse.ok) throw new Error(catData.message || catData.details || "Could not load menu categories.");
+  if (!itemResponse.ok) throw new Error(itemData.message || itemData.details || "Could not load menu items.");
 
-  {
-    id:"shanghai",
-    name:"Shanghai",
-    price:200,
-    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
+  categories = Array.isArray(catData) ? catData : [];
+  const activeCategoryIds = new Set(categories.map(c => c.id));
+  menu = (Array.isArray(itemData) ? itemData : [])
+    .filter(item => activeCategoryIds.has(item.category_id))
+    .map(item => ({
+      id: item.id,
+      name: item.name || "Menu item",
+      description: item.description || "",
+      price: Number(item.price) || 0,
+      image: item.image_url || "",
+      category: item.category_id,
+      stockProductId: item.stock_product_id || ""
+    }));
 
-  {
-    id:"chicken-barbecue",
-    name:"Chicken Barbecue",
-    price:350,
-    image:"https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
+  cart = menu.map(item => ({ ...item, qty: 0 }));
+  activeCategory = "all";
+  renderCategories();
+  renderMenu();
+  updateOrder();
+}
 
-  {
-    id:"lechon-kawali",
-    name:"Lechon Kawali",
-    price:360,
-    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
+function renderCategories() {
+  const categoryMenu = document.getElementById("categoryMenu");
+  const buttons = [{ id: "all", name: "All" }].concat(
+    categories.map(c => ({ id: c.id, name: c.name }))
+  );
+  categoryMenu.innerHTML = buttons.map((category, index) =>
+    '<button type="button" data-category="' + category.id + '" class="' +
+    (index === 0 ? 'active' : '') + '">' +
+    (index === 0 ? '🍽️' : '🥘') + ' <span>' + escapeHtml(category.name) + '</span></button>'
+  ).join("");
 
-  {
-    id:"crispy-bangus",
-    name:"Crispy Bangus",
-    price:360,
-    image:"https://images.unsplash.com/photo-1516685018646-549198525c1b?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
+  categoryMenu.querySelectorAll("button").forEach(button => {
+    button.addEventListener("click", () => setCategory(button.getAttribute("data-category")));
+  });
+}
 
-  {
-    id:"pork-sinigang",
-    name:"Pork Sinigang",
-    price:360,
-    image:"https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
-
-  {
-    id:"beef-sinigang",
-    name:"Beef Sinigang",
-    price:390,
-    image:"https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
-
-  {
-    id:"beef-caldereta",
-    name:"Beef Caldereta",
-    price:399,
-    image:"https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
-
-  {
-    id:"kare-kare",
-    name:"Kare-Kare",
-    price:399,
-    image:"https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
-    category:"a-la-carte"
-  },
-
-  {
-    id:"endamame",
-    name:"Endamame",
-    price:79,
-    image:"https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"cg-endamame",
-    name:"CG Endamame",
-    price:99,
-    image:"https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"classic-fries",
-    name:"Classic Fries",
-    price:149,
-    image:"https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"fish-fries",
-    name:"Fish & Fries",
-    price:219,
-    image:"https://images.unsplash.com/photo-1579208030886-b937da0925b5?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"fries-overload",
-    name:"Fries Overload",
-    price:249,
-    image:"https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"chichabu",
-    name:"Chichabu",
-    price:249,
-    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"chicken-fingers",
-    name:"Chicken Fingers",
-    price:259,
-    image:"https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"calamari",
-    name:"Calamari",
-    price:259,
-    image:"https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"tokwat-baboy",
-    name:"Tokwa't Baboy",
-    price:279,
-    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"pork-sisig",
-    name:"Pork Sisig",
-    price:279,
-    image:"https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"nachos",
-    name:"Nachos",
-    price:299,
-    image:"https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"buffalo-wings",
-    name:"Buffalo Wings",
-    price:299,
-    image:"https://images.unsplash.com/photo-1527477396000-e27163b481c2?auto=format&fit=crop&w=900&q=80",
-    category:"pulutan"
-  },
-
-  {
-    id:"kiddie-spaghetti",
-    name:"Kiddie Spaghetti",
-    price:129,
-    image:"https://images.unsplash.com/photo-1551892374-ecf8754cf8b0?auto=format&fit=crop&w=900&q=80",
-    category:"pasta"
-  },
-
-  {
-    id:"creamy-carbonara",
-    name:"Creamy Carbonara",
-    price:149,
-    image:"https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=80",
-    category:"pasta"
-  },
-
-  {
-    id:"classic-spaghetti-marinara",
-    name:"Classic Spaghetti Marinara",
-    price:179,
-    image:"https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=900&q=80",
-    category:"pasta"
-  },
-
-  {
-    id:"ham-egg-sandwich",
-    name:"Ham & Egg Sandwich",
-    price:119,
-    image:"https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=900&q=80",
-    category:"sandwich"
-  },
-
-  {
-    id:"clubhouse-sandwich",
-    name:"Clubhouse Sandwich",
-    price:199,
-    image:"https://images.unsplash.com/photo-1553909489-cd47e0907980?auto=format&fit=crop&w=900&q=80",
-    category:"sandwich"
-  },
-
-  {
-    id:"white-rice",
-    name:"White Rice",
-    price:35,
-    image:"https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
-    category:"rice"
-  },
-
-  {
-    id:"garlic-rice",
-    name:"Garlic Rice",
-    price:39,
-    image:"https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
-    category:"rice"
-  },
-
-  {
-    id:"white-rice-platter",
-    name:"White Rice Platter",
-    price:150,
-    image:"https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=900&q=80",
-    category:"rice"
-  },
-
-  {
-    id:"garlic-rice-platter",
-    name:"Garlic Rice Platter",
-    price:200,
-    image:"https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
-    category:"rice"
-  },
-
-  {
-    id:"sm-pale-pilsen",
-    name:"SM Pale Pilsen",
-    price:95,
-    image:"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
-    category:"beers"
-  },
-
-  {
-    id:"san-mig-light",
-    name:"San Mig Light",
-    price:99,
-    image:"https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-    category:"beers"
-  },
-
-  {
-    id:"san-mig-apple",
-    name:"San Mig Apple",
-    price:99,
-    image:"https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=900&q=80",
-    category:"beers"
-  },
-
-  {
-    id:"red-horse-stallion",
-    name:"Red Horse Stallion",
-    price:99,
-    image:"https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80",
-    category:"beers"
-  },
-
-  {
-    id:"beer-bucket",
-    name:"Bucket",
-    price:545,
-    image:"https://images.unsplash.com/photo-1535958636474-b021ee887b13?auto=format&fit=crop&w=900&q=80",
-    category:"beers"
-  },
-
-  {
-    id:"jameson-45ml",
-    name:"Jameson — 45ml",
-    price:170,
-    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-    category:"whiskey"
-  },
-
-  {
-    id:"jameson-1l",
-    name:"Jameson — 1L",
-    price:1999,
-    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-    category:"whiskey"
-  },
-
-  {
-    id:"black-label-45ml",
-    name:"Black Label — 45ml",
-    price:190,
-    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-    category:"whiskey"
-  },
-
-  {
-    id:"black-label-1l",
-    name:"Black Label — 1L",
-    price:2599,
-    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-    category:"whiskey"
-  },
-
-  {
-    id:"jack-daniels-45ml",
-    name:"Jack Daniels — 45ml",
-    price:200,
-    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-    category:"whiskey"
-  },
-
-  {
-    id:"jack-daniels-1l",
-    name:"Jack Daniels — 1L",
-    price:2699,
-    image:"https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=900&q=80",
-    category:"whiskey"
-  },
-
-  {
-    id:"jose-cuervo-45ml",
-    name:"Jose Cuervo — 45ml",
-    price:190,
-    image:"https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-    category:"tequila"
-  },
-
-  {
-    id:"jose-cuervo-1l",
-    name:"Jose Cuervo — 1L",
-    price:2499,
-    image:"https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
-    category:"tequila"
-  },
-
-  {
-    id:"jinro-grapefruit",
-    name:"Jinro Grapefruit",
-    price:220,
-    image:"https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
-    category:"soju"
-  },
-
-  {
-    id:"jinro-green-grape",
-    name:"Jinro Green Grape",
-    price:220,
-    image:"https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
-    category:"soju"
-  },
-
-  {
-    id:"jinro-strawberry",
-    name:"Jinro Strawberry",
-    price:220,
-    image:"https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=900&q=80",
-    category:"soju"
-  },
-
-  {
-    id:"coke-320ml",
-    name:"Coke 320ml",
-    price:65,
-    image:"https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-    category:"soda"
-  },
-
-  {
-    id:"coke-zero-320ml",
-    name:"Coke Zero 320ml",
-    price:65,
-    image:"https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-    category:"soda"
-  },
-
-  {
-    id:"royal-320ml",
-    name:"Royal 320ml",
-    price:65,
-    image:"https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-    category:"soda"
-  },
-
-  {
-    id:"sprite-320ml",
-    name:"Sprite 320ml",
-    price:65,
-    image:"https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
-    category:"soda"
-  },
-
-  {
-    id:"coke-1-5l",
-    name:"Coke 1.5L",
-    price:160,
-    image:"https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=900&q=80",
-    category:"soda"
-  },
-
-  {
-    id:"sprite-1-5l",
-    name:"Sprite 1.5L",
-    price:160,
-    image:"https://images.unsplash.com/photo-1629203849820-fdd70d49c38e?auto=format&fit=crop&w=900&q=80",
-    category:"soda"
-  },
-
-  {
-    id:"bottled-water",
-    name:"Bottled Water",
-    price:25,
-    image:"https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=900&q=80",
-    category:"others"
-  },
-
-  {
-    id:"pitcher-iced-tea",
-    name:"Pitcher Iced Tea",
-    price:150,
-    image:"https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=900&q=80",
-    category:"others"
-  }
-
-];
-
+function escapeHtml(value) {
+  return String(value == null ? "" : value).replace(/[&<>\"']/g, function(ch) {
+    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[ch] || ch;
+  });
+}
 
 /* CART */
 
-let cart = menu.map(function(item) {
-  return {
-    ...item,
-    qty: 0
-  };
-});
+let cart = [];
 
 let activeCategory = "all";
 let orderType = "";
@@ -1572,6 +1134,11 @@ function renderMenu() {
         });
 
 
+  if (!filteredMenu.length) {
+    menuGrid.innerHTML = '<p class="empty-order">No available menu items in this category yet.</p>';
+    return;
+  }
+
   filteredMenu.forEach(function(item) {
 
     const cartItem =
@@ -1585,7 +1152,7 @@ function renderMenu() {
 
 
     const stock =
-      productStocks[item.id];
+      item.stockProductId ? productStocks[item.stockProductId] : null;
 
 
     const remaining =
@@ -1594,8 +1161,11 @@ function renderMenu() {
         : null;
 
 
+    const needsStockLink = !item.stockProductId;
+    const stockMissing = !!item.stockProductId && !stock;
+
     const isOutOfStock =
-      remaining === 0;
+      remaining === 0 || needsStockLink || stockMissing;
 
 
     const showLowStock =
@@ -1621,8 +1191,8 @@ function renderMenu() {
         <div class="menu-image-wrapper">
 
           <img
-            src="${item.image}"
-            alt="${item.name}"
+            src="${item.image || 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80'}"
+            alt="${escapeHtml(item.name)}"
             class="${
               isOutOfStock
                 ? "menu-image-unavailable"
@@ -1646,7 +1216,7 @@ function renderMenu() {
         <div class="menu-info">
 
           <div class="menu-name">
-            ${item.name}
+            ${escapeHtml(item.name)}
           </div>
 
 
@@ -1654,6 +1224,14 @@ function renderMenu() {
             ₱${item.price.toLocaleString()}
           </div>
 
+
+          ${
+            needsStockLink
+              ? `<div class="low-stock-warning">Inventory link required</div>`
+              : stockMissing
+                ? `<div class="low-stock-warning">Stock record unavailable</div>`
+                : ""
+          }
 
           ${
             showLowStock
@@ -1857,13 +1435,19 @@ function changeQtyById(id, change) {
   if (change > 0) {
 
     const stock =
-      productStocks[id];
+      item.stockProductId ? productStocks[item.stockProductId] : null;
 
+
+    if (!item.stockProductId) {
+
+      alert("This menu item needs an inventory link. Please ask the restaurant staff.");
+      return;
+    }
 
     if (!stock) {
 
       alert(
-        "Stock information is still loading. Please try again."
+        "Stock information is still loading or not configured. Please try again."
       );
 
       return;
@@ -1916,20 +1500,9 @@ function changeQtyById(id, change) {
   }
 
 
-  const qtyElement =
-    document.getElementById(
-      "qty-" + id
-    );
-
-
-  if (qtyElement) {
-
-    qtyElement.textContent =
-      item.qty;
-
-  }
-
-
+  // Re-render the menu so the +/- buttons' disabled states
+  // stay in sync with the updated quantity and stock limit.
+  renderMenu();
   updateOrder();
 
 }
@@ -2283,12 +1856,9 @@ async function sendOrder() {
       .map(function(item) {
 
         return {
-          // Keep the legacy stock product ID for existing stock deduction.
           id: item.id,
-          product_id: item.id,
-          // Only send this when the cart was populated with a real menu_items.id.
-          // Do not treat a legacy stock product string as a menu UUID.
-          menu_item_id: item.menu_item_id || null,
+          menu_item_id: item.id,
+          product_id: item.stockProductId,
           name: item.name,
           price: item.price,
           qty: item.qty,
@@ -2594,35 +2164,19 @@ document
   );
 
 
-document
-  .querySelectorAll(".category-menu button")
-  .forEach(function(button) {
-
-    button.addEventListener(
-      "click",
-      function() {
-
-        setCategory(
-          button.getAttribute(
-            "data-category"
-          )
-        );
-
-      }
-    );
-
-  });
-
-/* INITIALIZE */
-
-loadProductStocks()
-  .then(function() {
-
+/* INITIALIZE — load inventory and Admin menu before enabling ordering */
+(async function initializeCustomerMenu() {
+  const menuGrid = document.getElementById("menuGrid");
+  try {
+    await Promise.all([loadProductStocks(), loadMenuCatalog()]);
     renderMenu();
-
     updateOrder();
-
-  });
+  } catch (error) {
+    console.error("Customer menu initialization failed:", error);
+    menuGrid.innerHTML = '<p class="empty-order">Could not load the menu from Supabase. Please refresh or contact staff.</p>';
+    document.getElementById("categoryMenu").innerHTML = "";
+  }
+})();
 </script>
 </body>
 </html>
