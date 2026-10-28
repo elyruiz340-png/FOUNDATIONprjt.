@@ -498,30 +498,34 @@ start=async function(){
 };
 const originalLoad=load;
 let STAFF_ROWS=[], staffLoadError='';
-async function loadStaffData(){
- const {data,error}=await sb
-   .from('restaurant_users')
-   .select('id,user_id,restaurant_id,role,cashier_username,created_at')
-   .eq('restaurant_id',HALINA_RESTAURANT_ID)
-   .order('created_at',{ascending:true});
- if(error)throw error;
- STAFF_ROWS=data||[];
- staffLoadError='';
-}
 function staffPage(){
+ const permissionNames={
+   orders:'Orders',
+   tables:'Tables',
+   stocks:'Stocks',
+   dispatcher:'Dispatcher',
+   settings:'Settings'
+ };
  const rows=STAFF_ROWS.map(u=>{
    const isCurrentUser=
      !!CURRENT_AUTH_USER_ID &&
      u.user_id===CURRENT_AUTH_USER_ID;
-   const accountLabel=u.cashier_username||(
-     isCurrentUser&&S.user ? S.user :
-     String(u.role||'').toLowerCase()==='owner'
-       ? 'Owner account'
-       : 'Username not set'
-   );
+   const accountLabel=
+     u.display_name ||
+     u.full_name ||
+     u.cashier_username ||
+     (isCurrentUser&&S.user ? S.user : 'Owner account');
+   const permissions=u.permissions||{};
+   const permissionLabel=Object.keys(permissionNames)
+     .filter(key=>permissions[key]===true)
+     .map(key=>permissionNames[key])
+     .join(', ')||'None assigned';
    return {c:[
      esc(accountLabel),
+     esc(u.position||'—'),
+     esc(u.cashier_username||'—'),
      esc(u.role||'Unassigned'),
+     esc(permissionLabel),
      bdg('Linked'),
      u.created_at
        ? esc(new Date(u.created_at).toLocaleDateString('en-PH'))
@@ -533,27 +537,19 @@ function staffPage(){
 <span class="mu">
        ${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE
 </span>
-<button class="btn pri" data-a="addstaff">
-       + Add Staff
-</button>
-<button class="btn" data-a="staffrefresh">
-       Refresh
-</button>
+<button class="btn pri" data-a="addstaff">+ Add Staff</button>
+<button class="btn" data-a="staffrefresh">Refresh</button>
 </div>
    ${
      staffLoadError
        ? `<div class="card">
 <span class="bd er">● Could not load staff</span>
 <p>${esc(staffLoadError)}</p>
-<p class="mu">
-             Check the existing Supabase access policies.
-             No staff records were changed.
-</p>
 </div>`
        : STAFF_ROWS.length
          ? `<div class="card">
              ${tbl(
-               ['Account identifier','Role','Account link','Date added'],
+               ['Staff Name','Position','Username','Role','Permissions','Account Link','Date Added'],
                rows
              )}
 </div>`
@@ -561,25 +557,93 @@ function staffPage(){
 <h3>No staff records returned</h3>
 <p class="mu">
                No staff records were returned for this restaurant.
-               Existing access policies may limit what this account can see.
 </p>
 </div>`
    }
 <div class="card" style="margin-top:14px">
-<h3>Staff Permissions</h3>
+<h3>Security Policy</h3>
+<p>• Staff accounts do not require a personal email.</p>
+<p>• Initial PINs are hashed by the backend.</p>
+<p>• Five incorrect PIN attempts trigger the existing lockout.</p>
+<p>• Existing PIN reset still requires the planned Owner/Admin OTP workflow.</p>
 <p class="mu">
-       Permissions are being prepared for Orders, Tables, Stocks,
-       Dispatcher, and Settings. They will not grant access until
-       backend enforcement is implemented and tested.
+       Permission selections are stored, but access enforcement still
+       needs to be implemented and tested in the relevant workflows.
 </p>
 </div>
+ `;
+}
+function staffPage(){
+ const permissionNames={
+   orders:'Orders',
+   tables:'Tables',
+   stocks:'Stocks',
+   dispatcher:'Dispatcher',
+   settings:'Settings'
+ };
+ const rows=STAFF_ROWS.map(u=>{
+   const isCurrentUser=
+     !!CURRENT_AUTH_USER_ID &&
+     u.user_id===CURRENT_AUTH_USER_ID;
+   const accountLabel=
+     u.display_name ||
+     u.full_name ||
+     u.cashier_username ||
+     (isCurrentUser&&S.user ? S.user : 'Owner account');
+   const permissions=u.permissions||{};
+   const permissionLabel=Object.keys(permissionNames)
+     .filter(key=>permissions[key]===true)
+     .map(key=>permissionNames[key])
+     .join(', ')||'None assigned';
+   return {c:[
+     esc(accountLabel),
+     esc(u.position||'—'),
+     esc(u.cashier_username||'—'),
+     esc(u.role||'Unassigned'),
+     esc(permissionLabel),
+     bdg('Linked'),
+     u.created_at
+       ? esc(new Date(u.created_at).toLocaleDateString('en-PH'))
+       : '—'
+   ]};
+ });
+ return `
+<div class="tb">
+<span class="mu">
+       ${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE
+</span>
+<button class="btn pri" data-a="addstaff">+ Add Staff</button>
+<button class="btn" data-a="staffrefresh">Refresh</button>
+</div>
+   ${
+     staffLoadError
+       ? `<div class="card">
+<span class="bd er">● Could not load staff</span>
+<p>${esc(staffLoadError)}</p>
+</div>`
+       : STAFF_ROWS.length
+         ? `<div class="card">
+             ${tbl(
+               ['Staff Name','Position','Username','Role','Permissions','Account Link','Date Added'],
+               rows
+             )}
+</div>`
+         : `<div class="card">
+<h3>No staff records returned</h3>
+<p class="mu">
+               No staff records were returned for this restaurant.
+</p>
+</div>`
+   }
 <div class="card" style="margin-top:14px">
 <h3>Security Policy</h3>
 <p>• Staff accounts do not require a personal email.</p>
-<p>• Cashier PIN setup and reset require Owner/Admin verification.</p>
-<p>• Five incorrect PIN attempts trigger the existing lockout policy.</p>
+<p>• Initial PINs are hashed by the backend.</p>
+<p>• Five incorrect PIN attempts trigger the existing lockout.</p>
+<p>• Existing PIN reset still requires the planned Owner/Admin OTP workflow.</p>
 <p class="mu">
-       No PIN is collected or displayed on this page.
+       Permission selections are stored, but access enforcement still
+       needs to be implemented and tested in the relevant workflows.
 </p>
 </div>
  `;
@@ -587,30 +651,27 @@ function staffPage(){
 function staffAddForm(){
  L.innerHTML=`
 <div class="bk" data-a="close"></div>
-<div class="md" role="dialog"
-        aria-modal="true"
+<div class="md" role="dialog" aria-modal="true"
         aria-labelledby="staffFormTitle">
 <h3 id="staffFormTitle">Add Staff Member</h3>
 <p class="note">
-       Enter the staff details and set an initial cashier PIN.
-       Account creation will be enabled after secure backend setup.
+       Create a staff account with a username and initial cashier PIN.
+       No personal email is required.
 </p>
 <form id="staffAddForm" autocomplete="off">
 <div class="fl">
 <label for="staffFullName">Full Name *</label>
-<input id="staffFullName" name="full_name"
-                required maxlength="100"
+<input id="staffFullName" required maxlength="100"
                 placeholder="Enter full name">
 </div>
 <div class="fl">
 <label for="staffDisplayName">Display Name</label>
-<input id="staffDisplayName" name="display_name"
-                maxlength="60"
+<input id="staffDisplayName" maxlength="60"
                 placeholder="Optional display name">
 </div>
 <div class="fl">
 <label for="staffPosition">Position *</label>
-<select id="staffPosition" name="position" required>
+<select id="staffPosition" required>
 <option value="Cashier">Cashier</option>
 <option value="Manager">Manager</option>
 <option value="Kitchen Staff">Kitchen Staff</option>
@@ -619,42 +680,29 @@ function staffAddForm(){
 </div>
 <div class="fl">
 <label for="staffUsername">Username *</label>
-<input id="staffUsername" name="username"
-                autocomplete="off"
-                autocapitalize="none"
-                spellcheck="false"
-                required minlength="3" maxlength="40"
+<input id="staffUsername" required minlength="3"
+                maxlength="40" autocomplete="off"
+                autocapitalize="none" spellcheck="false"
                 pattern="[A-Za-z0-9._-]+"
                 placeholder="Create a unique username">
-<p class="mu">
-           Username availability must be checked by the backend.
-</p>
 </div>
 <div class="fl">
 <label>Account Role</label>
 <input value="Staff" disabled>
-<p class="mu">
-           Role is Staff. Position and permissions are separate.
-</p>
 </div>
 <div class="fl">
 <label for="staffPin">Initial Cashier PIN *</label>
-<input id="staffPin" name="pin"
-                type="password"
-                inputmode="numeric"
-                autocomplete="new-password"
+<input id="staffPin" type="password" inputmode="numeric"
                 required minlength="6" maxlength="6"
-                pattern="[0-9]{6}"
+                pattern="[0-9]{6}" autocomplete="new-password"
                 placeholder="Enter six-digit PIN">
 </div>
 <div class="fl">
 <label for="staffPinConfirm">Confirm Cashier PIN *</label>
-<input id="staffPinConfirm" name="pin_confirm"
-                type="password"
-                inputmode="numeric"
+<input id="staffPinConfirm" type="password"
+                inputmode="numeric" required minlength="6"
+                maxlength="6" pattern="[0-9]{6}"
                 autocomplete="new-password"
-                required minlength="6" maxlength="6"
-                pattern="[0-9]{6}"
                 placeholder="Re-enter six-digit PIN">
 </div>
 <div class="fl">
@@ -681,14 +729,14 @@ function staffAddForm(){
 </label>
 </div>
 <p class="mu">
-         No personal email is required. PIN values must never be
-         stored in plain text or included in logs.
+         PIN values are sent only for secure account creation and
+         must never be stored as plain text or logged.
 </p>
 <div id="staffFormMsg" class="note"
             role="status" aria-live="polite"></div>
 <div class="tb">
-<button class="btn pri" type="submit">
-           Validate Staff Details
+<button id="staffCreateBtn" class="btn pri" type="submit">
+           Create Staff Account
 </button>
 <button class="btn" type="button" data-a="close">
            Cancel
@@ -698,34 +746,77 @@ function staffAddForm(){
 </div>
  `;
  const form=L.querySelector('#staffAddForm');
- const firstInput=L.querySelector('#staffFullName');
- if(firstInput)firstInput.focus();
- form.onsubmit=(event)=>{
+ const submitBtn=L.querySelector('#staffCreateBtn');
+ const message=L.querySelector('#staffFormMsg');
+ L.querySelector('#staffFullName').focus();
+ form.onsubmit=async(event)=>{
    event.preventDefault();
    if(!form.reportValidity())return;
    const fullName=L.querySelector('#staffFullName').value.trim();
+   const displayName=L.querySelector('#staffDisplayName').value.trim();
+   const position=L.querySelector('#staffPosition').value;
    const username=L.querySelector('#staffUsername').value.trim();
    const pin=L.querySelector('#staffPin').value;
    const confirmPin=L.querySelector('#staffPinConfirm').value;
-   const message=L.querySelector('#staffFormMsg');
-   if(!fullName||!username){
-     message.textContent='Please complete all required fields.';
-     return;
-   }
-   if(!/^[0-9]{6}$/.test(pin)){
-     message.textContent='The PIN must contain exactly six digits.';
-     return;
-   }
    if(pin!==confirmPin){
      message.textContent='The PIN entries do not match.';
      return;
    }
-   message.textContent=
-     'Form validation passed. No account has been created and '+
-     'the PIN has not been saved. Secure backend setup is required.';
+   const permissions={
+     orders:L.querySelector('#staffPermOrders').checked,
+     tables:L.querySelector('#staffPermTables').checked,
+     stocks:L.querySelector('#staffPermStocks').checked,
+     dispatcher:L.querySelector('#staffPermDispatcher').checked,
+     settings:L.querySelector('#staffPermSettings').checked
+   };
+   submitBtn.disabled=true;
+   message.textContent='Creating staff account securely…';
+   try{
+     const {data,error}=await sb.functions.invoke('create-staff',{
+       body:{
+         restaurant_id:HALINA_RESTAURANT_ID,
+         full_name:fullName,
+         display_name:displayName,
+         position,
+         username,
+         permissions,
+         pin
+       }
+     });
+     if(error){
+       let errorMessage=error.message||'Unable to create staff account.';
+       if(error.context&&typeof error.context.json==='function'){
+         try{
+           const detail=await error.context.json();
+           if(detail&&detail.error)errorMessage=detail.error;
+         }catch(_){}
+       }
+       throw new Error(errorMessage);
+     }
+     if(!data||data.success!==true){
+       throw new Error(data?.error||'Staff account creation was not confirmed.');
+     }
+     L.querySelector('#staffPin').value='';
+     L.querySelector('#staffPinConfirm').value='';
+     message.textContent='Staff account created. Refreshing staff list…';
+     try{
+       await loadStaffData();
+       render();
+       toast('Staff account created');
+     }catch(refreshError){
+       staffLoadError=refreshError.message||String(refreshError);
+       render();
+       toast('Staff created, but the list could not refresh');
+     }
+   }catch(error){
+     L.querySelector('#staffPin').value='';
+     L.querySelector('#staffPinConfirm').value='';
+     message.textContent=error.message||'Unable to create staff account. Please try again.';
+     submitBtn.disabled=false;
+   }
  };
 }
-PG.staff=staffPage;
+ PG.staff=staffPage;
 A.addstaff=()=>staffAddForm();
 A.staffrefresh=async()=>{
  try{
