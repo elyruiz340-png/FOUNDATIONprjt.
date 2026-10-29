@@ -5861,87 +5861,51 @@ body.pos-other-view .page-section {
 
 
 <style id="edmel-modern-notifications">
+  /* Do not show floating generic stock reminders. Guidance is attached to Save. */
   #message.message {
-    position: fixed;
-    z-index: 99999;
-    top: auto;
-    right: 24px;
-    bottom: 24px;
-    left: auto;
-    width: min(390px, calc(100vw - 32px));
-    box-sizing: border-box;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin: 0;
-    padding: 15px 18px 15px 16px;
-    border: 1px solid rgba(255,255,255,.45);
-    border-radius: 16px;
-    background: rgba(255,255,255,.94);
-    color: #26352a;
-    box-shadow: 0 16px 44px rgba(27, 39, 28, .18), 0 2px 8px rgba(27,39,28,.08);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.45;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(12px) scale(.98);
+    display: none !important;
+  }
+  #stockEditSaveBtn {
+    position: relative;
+  }
+  #stockEditSaveBtn.stock-save-reminder::after {
+    content: "Save changes";
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    padding: 8px 11px;
+    border-radius: 9px;
+    background: #f0f7ec;
+    border: 1px solid #b8d5ad;
+    color: #315b32;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .1px;
+    box-shadow: 0 5px 16px rgba(60, 105, 49, .12);
     pointer-events: none;
-    transition: opacity .22s ease, transform .22s ease, visibility .22s ease;
+    animation: stockSaveLabelIn .2s ease-out both;
   }
-  #message.message::before {
-    content: "i";
-    display: grid;
-    place-items: center;
-    flex: 0 0 24px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #e8efe5;
-    color: #41623d;
-    font-size: 14px;
-    font-weight: 800;
+  #stockEditSaveBtn.stock-save-reminder {
+    animation: stockSaveReminderPulse 1.15s ease-in-out infinite;
+    box-shadow: 0 0 0 3px rgba(93, 139, 78, .16),
+                0 0 18px rgba(93, 139, 78, .48);
+    border-color: #789b6b;
   }
-  #message.message.error {
-    background: rgba(255,250,249,.96);
-    border-color: rgba(183,72,62,.18);
-    color: #8f3028;
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
+  @keyframes stockSaveLabelIn {
+    from { opacity: 0; transform: translate(5px, -50%); }
+    to { opacity: 1; transform: translate(0, -50%); }
   }
-  #message.message.error::before {
-    content: "!";
-    color: #a13c32;
-    background: #fde8e5;
-  }
-  #message.message.success {
-    background: rgba(249,253,247,.96);
-    border-color: rgba(79,125,67,.2);
-    color: #315a30;
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
-  }
-  #message.message.success::before {
-    content: "✓";
-    color: #386d38;
-    background: #e5f3e1;
-  }
-  #message.message:not(.error):not(.success) {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(12px) scale(.98);
+  @keyframes stockSaveReminderPulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(93,139,78,.12), 0 0 8px rgba(93,139,78,.25); }
+    50% { box-shadow: 0 0 0 4px rgba(93,139,78,.22), 0 0 20px rgba(93,139,78,.55); }
   }
   @media (max-width: 600px) {
-    #message.message {
-      right: 12px;
-      bottom: 12px;
-      width: calc(100vw - 24px);
+    #stockEditSaveBtn.stock-save-reminder::after {
+      left: 50%;
+      top: calc(100% + 8px);
+      transform: translateX(-50%);
     }
   }
 </style>
@@ -8070,6 +8034,7 @@ reminderStyle.id = "stockSaveReminderStyles";
        stockEditSaveBtn &&
        stockEditSaveBtn.getAttribute("aria-pressed") === "true";
      if (isStockEditing && sectionId !== "stocksSection") {
+       if (typeof clearMessage === "function") clearMessage();
        stockEditSaveBtn.classList.add("stock-save-reminder");
        return;
      }
@@ -9040,9 +9005,8 @@ style.id = "stockEditWorkflowStyles";
      // Update the stock card only after Submit.
      updateCardPreview(card, nextValue);
      closeFocusMode();
-     showSuccess(
-       "Stock changes are ready. Select Save to apply them."
-     );
+     clearMessage();
+     // Save guidance appears beside the Save button only when navigation is attempted.
    }
    backBtn.addEventListener("click", returnToInventory);
    submitBtn.addEventListener("click", submitAdjustment);
