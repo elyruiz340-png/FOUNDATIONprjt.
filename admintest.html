@@ -520,11 +520,14 @@ function staffPage(){
     );
     const permissions=u.permissions||{};
     const permissionLabel=Object.keys(permissionNames).filter(key=>permissions[key]===true).map(key=>permissionNames[key]).join(', ')||'None assigned';
-    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),esc(permissionLabel),bdg('Linked'),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—']};
+    const resetAction=String(u.role||'').toLowerCase()==='staff'
+      ? `<button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" data-name="${esc(accountLabel)}" style="white-space:nowrap">Reset PIN</button>`
+      : '<span class="mu">—</span>';
+    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),esc(permissionLabel),bdg('Linked'),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',resetAction]};
   });
   return `<div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
   ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p><p class="mu">Check the existing Supabase access policies. No changes were made to staff records.</p></div>`:
-    STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Permissions','Account Link','Date Added'],rows)}</div>`:
+    STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Permissions','Account Link','Date Added','PIN Actions'],rows)}</div>`:
     `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant. Existing Supabase access policies may limit what this account can see.</p></div>`}
   <div class="card" style="margin-top:14px"><h3>Security Policy</h3><p>• Staff accounts do not require a personal email.</p><p>• Initial PINs are hashed by the backend.</p><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• OTP-protected PIN reset is a separate step and still needs end-to-end verification.</p><p class="mu">Permission selections are stored, but access enforcement still needs to be implemented and tested in the relevant workflows.</p></div>`;
 }
@@ -533,6 +536,55 @@ A.addstaff=()=>staffAddForm();
 A.staffrefresh=async()=>{
   try{await loadStaffData();render();toast('Staff list refreshed');}
   catch(e){staffLoadError=e.message||String(e);render();}
+};
+
+A.staffresetpin=(button)=>{
+  const staffId=button.dataset.id;
+  const staff=STAFF_ROWS.find(row=>row.id===staffId);
+  if(!staff||String(staff.role||'').toLowerCase()!=='staff'){
+    toast('That staff account could not be verified');return;
+  }
+  const staffName=staff.display_name||staff.full_name||staff.cashier_username||'this staff account';
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="resetPinTitle">
+    <h3 id="resetPinTitle">Reset Staff PIN</h3>
+    <p class="note">Set a new six-digit PIN for <strong>${esc(staffName)}</strong> (${esc(staff.cashier_username||'username not set')}). This action changes the PIN immediately and clears the existing failed-attempt lockout.</p>
+    <form id="staffResetPinForm" autocomplete="off">
+      <div class="fl"><label for="staffNewPin">New six-digit PIN *</label><input id="staffNewPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter new six-digit PIN"></div>
+      <div class="fl"><label for="staffNewPinConfirm">Confirm new PIN *</label><input id="staffNewPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter new PIN"></div>
+      <p class="mu">The PIN is sent to the existing authenticated database function and stored as a hash, not plain text. This form does not provide OTP verification.</p>
+      <p id="staffResetPinMsg" class="note" role="status" aria-live="polite"></p>
+      <div class="tb"><button id="staffResetPinBtn" class="btn pri" type="submit">Save New PIN</button><button class="btn" type="button" data-a="close">Cancel</button></div>
+    </form>
+  </div>`;
+  const form=L.querySelector('#staffResetPinForm');
+  const submitBtn=L.querySelector('#staffResetPinBtn');
+  const message=L.querySelector('#staffResetPinMsg');
+  L.querySelector('#staffNewPin').focus();
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    if(!form.reportValidity())return;
+    const pin=L.querySelector('#staffNewPin').value;
+    const confirmPin=L.querySelector('#staffNewPinConfirm').value;
+    if(!/^[0-9]{6}$/.test(pin)){message.textContent='PIN must contain exactly six digits.';return;}
+    if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
+    if(!CURRENT_AUTH_USER_ID){message.textContent='Your session could not be verified. Sign in again and retry.';return;}
+    submitBtn.disabled=true;
+    message.textContent='Updating PIN securely…';
+    try{
+      const {error}=await sb.rpc('reset_cashier_pin_for_user',{
+        p_restaurant_user_id:staffId,
+        p_new_pin:pin
+      });
+      if(error)throw error;
+      L.querySelector('#staffNewPin').value='';
+      L.querySelector('#staffNewPinConfirm').value='';
+      closeL();
+      toast('Staff PIN reset successfully');
+    }catch(error){
+      message.textContent=error?.message||'Unable to reset this staff PIN. No success was confirmed.';
+      submitBtn.disabled=false;
+    }
+  };
 };
 
 function staffAddForm(){
