@@ -285,14 +285,16 @@ invedit:t=>inventoryEditForm(t.dataset.i),
 invavailability:t=>inventorySetAvailability(t.dataset.i),
 invarchive:t=>inventoryArchive(t.dataset.i),
 invarchived:()=>{S.showArchived=!S.showArchived;render()},
-invadjust:t=>inventoryAdjustForm(t.dataset.i)
+invadjust:t=>inventoryAdjustForm(t.dataset.i),
+  auditrefresh:async()=>{try{await loadAuditLogs();render();toast('Audit logs refreshed')}catch(e){auditLoadError=e.message||String(e);render();toast('Could not refresh audit logs',1)}},
+  auditdetail:t=>auditDetail(t.dataset.id)
 };
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
 if(e.key=='Escape'){if(L.innerHTML)closeL();else $('#app').classList.remove('mo')}
 else if((e.key=='/'&&!f)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='k')){e.preventDefault();search()}
 else if(e.key=='Enter'&&document.activeElement.dataset.a&&document.activeElement.tagName!='BUTTON')document.activeElement.click()});
-document.addEventListener('input',e=>{const t=e.target;if(t.dataset.c=='q'){S.f.q=t.value;render()}});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.c=='q'){S.f.q=t.value;render()}else if(t.dataset.c==='auditQ'){S.f.auditQ=t.value;render()}});
 document.addEventListener('change',e=>{const t=e.target,c=t.dataset.c;if(!c)return;
 if(c=='br')S.br=+t.value;else if(c=='per')S.per=t.value;
 else if(c=='cu0'||c=='cu1'){S[c]=t.value;const d=(new Date(S.cu1)-new Date(S.cu0))/864e5+1;PER.cu[1]=d>0?Math.round(d):1}
@@ -355,7 +357,7 @@ function rng(per){const n=new Date(),t=day0(n),D=864e5;switch(per){case'today':r
 const inR=per=>{const[a,b]=rng(per);return ORD.filter(o=>o.dt>=a&&o.dt<b)};
 const NC=n=>`<div class="card"><span class="bd wn">● Not connected yet</span><h3 style="margin:10px 0 4px">${n}</h3><p class="mu">This section isn’t connected to your restaurant data yet, so nothing is shown here.</p></div>`;
 Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>{const q=(S.f.q||'').toLowerCase();const active=INV.filter(x=>!x.archived||S.showArchived);const rows=active.filter(x=>!q||[x.n,x.c,x.pid].join(' ').toLowerCase().includes(q));const activeCount=INV.filter(x=>!x.archived).length,archivedCount=INV.filter(x=>x.archived).length;return `<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${activeCount} active items · ${archivedCount} archived · Supabase live data</span><button class="btn pri" data-a="invadd">+ Add stock item</button><button class="btn" data-a="invarchived">${S.showArchived?'Hide archived':'Show archived'}</button><button class="btn" data-a="invrefresh">Refresh</button></div>${S.stockErr?`<div class="card"><span class="bd er">● Inventory load error</span><p>${esc(S.stockErr)}</p></div>`:''}<div class="card">${tbl(['Item','Category','Total stock','Remaining','Availability','Photo','Actions'],rows.map(x=>({c:[esc(x.n),esc(x.c||'Uncategorized'),x.total,x.q,x.archived?bdg('Archived'):bdg(x.available?'Available':'Unavailable'),x.image?`<a href="${esc(x.image)}" target="_blank" rel="noopener">View photo</a>`:'No photo',`${!x.archived?`<button class="btn" data-a="invedit" data-i="${x.id}">Edit item</button> <button class="btn" data-a="invavailability" data-i="${x.id}">${x.available?'Make unavailable':'Make available'}</button> <button class="btn" data-a="invadjust" data-i="${x.id}">Edit stock</button> <button class="btn" data-a="invarchive" data-i="${x.id}">Archive</button>`:`<button class="btn" data-a="invavailability" data-i="${x.id}">Restore available</button>`}`]})))}</div><p class="note">Unavailable items remain in Supabase with their quantities preserved. Archived items are hidden from this default list; use Show archived to review them. Availability must also be filtered in Cashier and customer-ordering code before it is enforced across the whole system.</p>`},exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>NC('Multi-Branch Management'),health:()=>NC('System Health & Integrations'),
-settings:()=>`<div class="g g2"><div class="card"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme">Switch to ${S.theme=='dark'?'light':'dark'} mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>${NC('Business settings')}</div>`});
+settings:()=>`<div class="g g2"><div class="card"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme">Switch to ${S.theme=='dark'?'light':'dark'} mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>${NC('Business settings')}</div>`,audit:auditPage});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
 const G=$('#gate');
 function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.innerHTML=`<form id="lf" class="card gt"><div class="brand" style="padding:0"><b>E</b><span style="opacity:1;width:auto">EDMEL</span></div><h3 style="margin-top:14px">Sign in</h3><p class="mu">HALINA BISTRO CAFE · Owner dashboard</p><div class="fl"><label for="le">Email</label><input id="le" type="email" autocomplete="username" required></div><div class="fl"><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" required></div>${err?`<p class="er" role="alert">● ${esc(err)}</p>`:''}<button class="btn pri" id="lb" style="width:100%">Sign in</button></form>`;
@@ -500,6 +502,62 @@ const originalLoad=load;
 let STAFF_ROWS=[], staffLoadError='';
 
 let STAFF_SESSIONS=[], staffHistoryError='';
+let AUDIT_ROWS=[], auditLoadError='';
+
+async function loadAuditLogs(){
+  const {data,error}=await sb.from('audit_logs')
+    .select('id,restaurant_id,actor_user_id,actor_name,actor_role,action_category,action,record_type,record_id,result,details,created_at')
+    .eq('restaurant_id',HALINA_RESTAURANT_ID)
+    .order('created_at',{ascending:false}).limit(1000);
+  if(error) throw error;
+  AUDIT_ROWS=data||[];
+  auditLoadError='';
+}
+function auditPage(){
+  const q=(S.f.auditQ||'').trim().toLowerCase(), category=S.f.auditCategory||'';
+  const result=S.f.auditResult||'', actor=S.f.auditActor||'', from=S.f.auditFrom||'', to=S.f.auditTo||'';
+  const rows=AUDIT_ROWS.filter(a=>{
+    const hay=[a.actor_name,a.actor_role,a.action_category,a.action,a.record_type,a.record_id,JSON.stringify(a.details||{})].join(' ').toLowerCase();
+    const day=String(a.created_at||'').slice(0,10);
+    return (!q||hay.includes(q))&&(!category||a.action_category===category)&&(!result||a.result===result)&&(!actor||String(a.actor_user_id||'')===actor)&&(!from||day>=from)&&(!to||day<=to);
+  });
+  const actors=[...new Map(AUDIT_ROWS.map(a=>[a.actor_user_id||('system:'+a.actor_name),{id:a.actor_user_id||'',name:a.actor_name||'System'}])).values()];
+  const cats=[...new Set(AUDIT_ROWS.map(a=>a.action_category).filter(Boolean))].sort();
+  const opt=(value,label,selected)=>`<option value="${esc(value)}"${selected===value?' selected':''}>${esc(label)}</option>`;
+  return `<div class="tb">
+    <input data-c="auditQ" value="${esc(S.f.auditQ||'')}" placeholder="Search actor, action, record…" aria-label="Search audit logs">
+    <select data-c="auditCategory" aria-label="Filter category">${opt('','All categories',category)}${cats.map(c=>opt(c,c,category)).join('')}</select>
+    <select data-c="auditResult" aria-label="Filter result">${opt('','All results',result)}${opt('success','Success',result)}${opt('failed','Failed',result)}</select>
+    <select data-c="auditActor" aria-label="Filter staff">${opt('','All actors',actor)}${actors.map(a=>opt(a.id,a.name,actor)).join('')}</select>
+    <input type="date" data-c="auditFrom" value="${esc(from)}" aria-label="From date">
+    <input type="date" data-c="auditTo" value="${esc(to)}" aria-label="To date">
+    <button class="btn" data-a="auditrefresh">Refresh</button>
+  </div>
+  <p class="note">${rows.length} record(s) shown · ${AUDIT_ROWS.length} loaded · newest first · HALINA BISTRO CAFE</p>
+  ${auditLoadError?`<div class="card"><span class="bd er">● Audit logs could not load</span><p>${esc(auditLoadError)}</p><p class="note">Check Supabase table access and owner/admin permissions.</p></div>`:
+  `<div class="card">${tbl(['Time','Actor','Role','Category','Action','Record','Result',''],rows.map(a=>({c:[
+    esc(a.created_at?new Date(a.created_at).toLocaleString('en-PH'):'—'),
+    esc(a.actor_name||'System'),esc(a.actor_role||'system'),esc(a.action_category||'—'),
+    esc(a.action||'—'),esc((a.record_type||'')+(a.record_id?' · '+a.record_id:'' )||'—'),
+    bdg(a.result==='failed'?'Failed':'Success'),
+    `<button class="btn" data-a="auditdetail" data-id="${esc(a.id)}">Details</button>`
+  ]})))}</div>`}
+  <p class="note" style="margin-top:10px">Read-only audit history. Database triggers currently record changes to orders, payments, menu items/categories, staff links, and inventory. Failed login attempts and actions not wired to these tables are not included yet.</p>`;
+}
+function auditDetail(id){
+  const a=AUDIT_ROWS.find(x=>String(x.id)===String(id));
+  if(!a){toast('Audit record not found. Refresh and try again.',1);return;}
+  drawer('Audit log details',`<div class="row"><span class="mu">Time</span><b>${esc(a.created_at?new Date(a.created_at).toLocaleString('en-PH'):'—')}</b></div>
+  <div class="row"><span class="mu">Actor</span><b>${esc(a.actor_name||'System')}</b></div>
+  <div class="row"><span class="mu">Role</span><b>${esc(a.actor_role||'system')}</b></div>
+  <div class="row"><span class="mu">Category</span><b>${esc(a.action_category||'—')}</b></div>
+  <div class="row"><span class="mu">Action</span><b>${esc(a.action||'—')}</b></div>
+  <div class="row"><span class="mu">Record</span><b>${esc(a.record_type||'—')} ${esc(a.record_id||'')}</b></div>
+  <div class="row"><span class="mu">Result</span>${bdg(a.result==='failed'?'Failed':'Success')}</div>
+  <h3 style="margin-top:14px">Before / after details</h3>
+  <pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:var(--s);padding:12px;border-radius:10px;font:12px/1.5 ui-monospace,monospace">${esc(JSON.stringify(a.details||{},null,2))}</pre>
+  <p class="note">PINs, passwords, OTPs, and secret credentials are not intentionally included.</p>`);
+}
 async function loadStaffData(){
   const {data,error}=await sb
     .from('restaurant_users')
@@ -720,6 +778,8 @@ load=async function(manual){
   catch(e){menuLoadError=e.message||String(e);if(S.page==='menu')render();}
   try{await loadStaffData();if(S.page==='staff')render();}
   catch(e){staffLoadError=e.message||String(e);if(S.page==='staff')render();}
+  try{await loadAuditLogs();if(S.page==='audit')render();}
+  catch(e){auditLoadError=e.message||String(e);if(S.page==='audit')render();}
 };
 
 /* 10. THEME + SIDEBAR SETUP */
