@@ -5859,6 +5859,93 @@ body.pos-other-view .page-section {
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+
+<style id="edmel-modern-notifications">
+  #message.message {
+    position: fixed;
+    z-index: 99999;
+    top: auto;
+    right: 24px;
+    bottom: 24px;
+    left: auto;
+    width: min(390px, calc(100vw - 32px));
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0;
+    padding: 15px 18px 15px 16px;
+    border: 1px solid rgba(255,255,255,.45);
+    border-radius: 16px;
+    background: rgba(255,255,255,.94);
+    color: #26352a;
+    box-shadow: 0 16px 44px rgba(27, 39, 28, .18), 0 2px 8px rgba(27,39,28,.08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px) scale(.98);
+    pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease, visibility .22s ease;
+  }
+  #message.message::before {
+    content: "i";
+    display: grid;
+    place-items: center;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e8efe5;
+    color: #41623d;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  #message.message.error {
+    background: rgba(255,250,249,.96);
+    border-color: rgba(183,72,62,.18);
+    color: #8f3028;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  #message.message.error::before {
+    content: "!";
+    color: #a13c32;
+    background: #fde8e5;
+  }
+  #message.message.success {
+    background: rgba(249,253,247,.96);
+    border-color: rgba(79,125,67,.2);
+    color: #315a30;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  #message.message.success::before {
+    content: "✓";
+    color: #386d38;
+    background: #e5f3e1;
+  }
+  #message.message:not(.error):not(.success) {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px) scale(.98);
+  }
+  @media (max-width: 600px) {
+    #message.message {
+      right: 12px;
+      bottom: 12px;
+      width: calc(100vw - 24px);
+    }
+  }
+</style>
+
 </head>
 <body>
  <style>
@@ -8954,7 +9041,7 @@ style.id = "stockEditWorkflowStyles";
      updateCardPreview(card, nextValue);
      closeFocusMode();
      showSuccess(
-       "Pending stock adjustment updated. Press Save to send it to Supabase."
+       "Stock changes are ready. Select Save to apply them."
      );
    }
    backBtn.addEventListener("click", returnToInventory);
@@ -13059,6 +13146,101 @@ const cashierProtectedElements = document.querySelectorAll(
 
 let cashierAuthClient = null;
 
+/* =========================
+   STAFF PRESENCE / LOGIN HISTORY
+   Sends an authenticated heartbeat to staff-session-action.
+========================= */
+let halinaStaffSessionId = null;
+let halinaStaffHeartbeatTimer = null;
+let halinaStaffPresenceUserId = null;
+let halinaStaffPresenceStarting = false;
+
+async function callStaffSessionAction(action, sessionId) {
+  if (!cashierAuthClient) throw new Error("Cashier authentication is unavailable.");
+  const { data: sessionData, error: sessionError } = await cashierAuthClient.auth.getSession();
+  const session = sessionData && sessionData.session;
+  if (sessionError || !session || !session.access_token) {
+    throw new Error("No active authenticated session is available.");
+  }
+  const response = await fetch(SUPABASE_URL + "/functions/v1/staff-session-action", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + session.access_token
+    },
+    body: JSON.stringify({ action, ...(sessionId ? { session_id: sessionId } : {}) })
+  });
+  let result = {};
+  try { result = await response.json(); } catch (_) {}
+  if (!response.ok || result.success !== true) {
+    throw new Error(result.error || "Could not update staff presence.");
+  }
+  return result;
+}
+
+function stopStaffHeartbeat() {
+  if (halinaStaffHeartbeatTimer) clearInterval(halinaStaffHeartbeatTimer);
+  halinaStaffHeartbeatTimer = null;
+}
+
+async function sendStaffHeartbeat() {
+  if (!halinaStaffSessionId) return;
+  try {
+    await callStaffSessionAction("heartbeat", halinaStaffSessionId);
+  } catch (error) {
+    console.warn("Staff presence heartbeat failed:", error.message || error);
+  }
+}
+
+async function startStaffPresence() {
+  if (halinaStaffPresenceStarting || !cashierAuthClient) return;
+  const { data, error } = await cashierAuthClient.auth.getSession();
+  if (error || !data?.session?.user?.id) return;
+  const userId = data.session.user.id;
+  if (halinaStaffSessionId && halinaStaffPresenceUserId === userId) {
+    await sendStaffHeartbeat();
+    if (!halinaStaffHeartbeatTimer) {
+      halinaStaffHeartbeatTimer = setInterval(sendStaffHeartbeat, 45000);
+    }
+    return;
+  }
+  halinaStaffPresenceStarting = true;
+  try {
+    stopStaffHeartbeat();
+    const result = await callStaffSessionAction("start");
+    halinaStaffSessionId = result.session_id;
+    halinaStaffPresenceUserId = userId;
+    await sendStaffHeartbeat();
+    stopStaffHeartbeat();
+    halinaStaffHeartbeatTimer = setInterval(sendStaffHeartbeat, 45000);
+  } catch (error) {
+    console.warn("Could not start staff session tracking:", error.message || error);
+  } finally {
+    halinaStaffPresenceStarting = false;
+  }
+}
+
+async function endStaffPresence() {
+  stopStaffHeartbeat();
+  if (!halinaStaffSessionId) return;
+  const sessionId = halinaStaffSessionId;
+  halinaStaffSessionId = null;
+  halinaStaffPresenceUserId = null;
+  try {
+    await callStaffSessionAction("end", sessionId);
+  } catch (error) {
+    console.warn("Could not record staff logout:", error.message || error);
+  }
+}
+
+window.addEventListener("focus", () => {
+  if (halinaStaffSessionId) sendStaffHeartbeat();
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && halinaStaffSessionId) sendStaffHeartbeat();
+});
+
 function hideCashierPOS() {
   cashierProtectedElements.forEach((element) => {
     if (!element.hasAttribute("data-cashier-auth-hidden")) {
@@ -13078,6 +13260,7 @@ function hideCashierPOS() {
 ========================= */
 
 async function showCashierPOS(options = {}) {
+  await startStaffPresence();
   const animateEntrance = options.animate === true;
   const loginScreen = cashierLoginScreen;
 
@@ -13527,6 +13710,7 @@ if (cashierAuthClient) {
   /* Return to login if the session is signed out. */
   cashierAuthClient.auth.onAuthStateChange((event) => {
     if (event === "SIGNED_OUT") {
+      stopStaffHeartbeat();
       showCashierLogin("Your session has ended. Please sign in again.");
     }
   });
@@ -13574,6 +13758,7 @@ if (cashierLogoutButton) {
     cashierLogoutButton.textContent = "Logging out...";
 
     try {
+      await endStaffPresence();
       const { error } =
         await cashierAuthClient.auth.signOut({
           scope: "local"
