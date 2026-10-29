@@ -529,7 +529,7 @@ function staffPage(){
   ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p><p class="mu">Check the existing Supabase access policies. No changes were made to staff records.</p></div>`:
     STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Permissions','Account Link','Date Added','PIN Actions'],rows)}</div>`:
     `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant. Existing Supabase access policies may limit what this account can see.</p></div>`}
-  <div class="card" style="margin-top:14px"><h3>Security Policy</h3><p>• Staff accounts do not require a personal email.</p><p>• Initial PINs are hashed by the backend.</p><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• OTP-protected PIN reset is a separate step and still needs end-to-end verification.</p><p class="mu">Permission selections are stored, but access enforcement still needs to be implemented and tested in the relevant workflows.</p></div>`;
+  <div class="card" style="margin-top:14px"><h3>Security Policy</h3><p>• Staff accounts do not require a personal email.</p><p>• Initial PINs are hashed by the backend.</p><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Staff PIN reset requires a verified, unexpired, one-time OTP.</p><p class="mu">Permission selections are stored, but access enforcement still needs to be implemented and tested in the relevant workflows.</p></div>`;
 }
 PG.staff=staffPage;
 A.addstaff=()=>staffAddForm();
@@ -545,45 +545,77 @@ A.staffresetpin=(button)=>{
     toast('That staff account could not be verified');return;
   }
   const staffName=staff.display_name||staff.full_name||staff.cashier_username||'this staff account';
+  let challengeId='',otpVerified=false;
   L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="resetPinTitle">
     <h3 id="resetPinTitle">Reset Staff PIN</h3>
-    <p class="note">Set a new six-digit PIN for <strong>${esc(staffName)}</strong> (${esc(staff.cashier_username||'username not set')}). This action changes the PIN immediately and clears the existing failed-attempt lockout.</p>
+    <p class="note">Reset PIN for <strong>${esc(staffName)}</strong> (${esc(staff.cashier_username||'username not set')}). Verify the one-time code before choosing a new PIN.</p>
+    <div class="card" style="padding:12px;margin:10px 0">
+      <strong>Step 1 — Email verification</strong>
+      <p class="note" style="margin:5px 0 10px">Testing mode: the code is sent to the email configured in RESEND_TEST_EMAIL. This may differ from the Owner/Admin login email.</p>
+      <button id="staffSendOtpBtn" class="btn pri" type="button">Send OTP</button>
+      <div id="staffOtpArea" hidden style="margin-top:12px">
+        <div class="fl"><label for="staffOtpCode">Six-digit verification code</label><input id="staffOtpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter OTP"></div>
+        <button id="staffVerifyOtpBtn" class="btn" type="button">Verify OTP</button>
+      </div>
+    </div>
     <form id="staffResetPinForm" autocomplete="off">
-      <div class="fl"><label for="staffNewPin">New six-digit PIN *</label><input id="staffNewPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter new six-digit PIN"></div>
-      <div class="fl"><label for="staffNewPinConfirm">Confirm new PIN *</label><input id="staffNewPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter new PIN"></div>
-      <p class="mu">The PIN is sent to the existing authenticated database function and stored as a hash, not plain text. This form does not provide OTP verification.</p>
-      <p id="staffResetPinMsg" class="note" role="status" aria-live="polite"></p>
-      <div class="tb"><button id="staffResetPinBtn" class="btn pri" type="submit">Save New PIN</button><button class="btn" type="button" data-a="close">Cancel</button></div>
+      <strong>Step 2 — Set a new PIN</strong>
+      <div class="fl" style="margin-top:10px"><label for="staffNewPin">New six-digit PIN *</label><input id="staffNewPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter new six-digit PIN" disabled></div>
+      <div class="fl"><label for="staffNewPinConfirm">Confirm new PIN *</label><input id="staffNewPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter new PIN" disabled></div>
+      <p id="staffResetPinMsg" class="note" role="status" aria-live="polite">Send and verify the OTP first. PIN reset remains locked until verification succeeds.</p>
+      <div class="tb"><button id="staffResetPinBtn" class="btn pri" type="submit" disabled>Save New PIN</button><button class="btn" type="button" data-a="close">Cancel</button></div>
     </form>
   </div>`;
+  const sendBtn=L.querySelector('#staffSendOtpBtn');
+  const otpArea=L.querySelector('#staffOtpArea');
+  const verifyBtn=L.querySelector('#staffVerifyOtpBtn');
   const form=L.querySelector('#staffResetPinForm');
   const submitBtn=L.querySelector('#staffResetPinBtn');
   const message=L.querySelector('#staffResetPinMsg');
-  L.querySelector('#staffNewPin').focus();
+  const otpInput=L.querySelector('#staffOtpCode');
+  const pinInput=L.querySelector('#staffNewPin');
+  const confirmInput=L.querySelector('#staffNewPinConfirm');
+  sendBtn.onclick=async()=>{
+    sendBtn.disabled=true;message.textContent='Requesting verification code…';
+    try{
+      const {data,error}=await sb.functions.invoke('staff-pin-reset-otp',{body:{action:'request',restaurant_user_id:staffId}});
+      if(error)throw error;
+      if(!data?.success||!data?.challenge_id)throw new Error(data?.error||'Could not request OTP.');
+      challengeId=data.challenge_id;otpVerified=false;otpArea.hidden=false;
+      pinInput.disabled=true;confirmInput.disabled=true;submitBtn.disabled=true;
+      message.textContent='OTP sent to the configured Resend test inbox. It expires in 10 minutes.';
+      otpInput.focus();sendBtn.textContent='Request another code';
+    }catch(error){message.textContent=error?.message||'Unable to send OTP.';}
+    finally{sendBtn.disabled=false;}
+  };
+  verifyBtn.onclick=async()=>{
+    const code=otpInput.value.trim();
+    if(!challengeId){message.textContent='Request an OTP first.';return;}
+    if(!/^\d{6}$/.test(code)){message.textContent='Enter the six-digit code.';otpInput.focus();return;}
+    verifyBtn.disabled=true;message.textContent='Verifying code…';
+    try{
+      const {data,error}=await sb.functions.invoke('staff-pin-reset-otp',{body:{action:'verify',challenge_id:challengeId,otp:code}});
+      if(error)throw error;
+      if(!data?.success)throw new Error(data?.error||'OTP verification failed.');
+      otpVerified=true;otpInput.disabled=true;verifyBtn.disabled=true;sendBtn.disabled=true;
+      pinInput.disabled=false;confirmInput.disabled=false;submitBtn.disabled=false;
+      message.textContent='OTP verified. You may now set the new PIN.';pinInput.focus();
+    }catch(error){message.textContent=error?.message||'Unable to verify OTP.';verifyBtn.disabled=false;}
+  };
   form.onsubmit=async event=>{
     event.preventDefault();
     if(!form.reportValidity())return;
-    const pin=L.querySelector('#staffNewPin').value;
-    const confirmPin=L.querySelector('#staffNewPinConfirm').value;
+    if(!otpVerified||!challengeId){message.textContent='Verify the OTP before resetting the PIN.';return;}
+    const pin=pinInput.value,confirmPin=confirmInput.value;
     if(!/^[0-9]{6}$/.test(pin)){message.textContent='PIN must contain exactly six digits.';return;}
     if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
     if(!CURRENT_AUTH_USER_ID){message.textContent='Your session could not be verified. Sign in again and retry.';return;}
-    submitBtn.disabled=true;
-    message.textContent='Updating PIN securely…';
+    submitBtn.disabled=true;message.textContent='Updating PIN securely…';
     try{
-      const {error}=await sb.rpc('reset_cashier_pin_for_user',{
-        p_restaurant_user_id:staffId,
-        p_new_pin:pin
-      });
+      const {error}=await sb.rpc('reset_cashier_pin_with_otp',{p_challenge_id:challengeId,p_new_pin:pin});
       if(error)throw error;
-      L.querySelector('#staffNewPin').value='';
-      L.querySelector('#staffNewPinConfirm').value='';
-      closeL();
-      toast('Staff PIN reset successfully');
-    }catch(error){
-      message.textContent=error?.message||'Unable to reset this staff PIN. No success was confirmed.';
-      submitBtn.disabled=false;
-    }
+      pinInput.value='';confirmInput.value='';closeL();toast('Staff PIN reset successfully after OTP verification');
+    }catch(error){message.textContent=error?.message||'Unable to reset this staff PIN. No success was confirmed.';submitBtn.disabled=false;}
   };
 };
 
