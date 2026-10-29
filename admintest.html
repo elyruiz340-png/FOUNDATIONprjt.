@@ -499,17 +499,32 @@ start=async function(){
 const originalLoad=load;
 let STAFF_ROWS=[], staffLoadError='';
 
+let STAFF_SESSIONS=[], staffHistoryError='';
 async function loadStaffData(){
   const {data,error}=await sb
     .from('restaurant_users')
-    .select('id,user_id,restaurant_id,role,cashier_username,full_name,display_name,position,permissions,created_at')
+    .select('id,user_id,restaurant_id,role,cashier_username,full_name,display_name,position,permissions,created_at,is_active,deactivated_at')
     .eq('restaurant_id',HALINA_RESTAURANT_ID)
     .order('created_at',{ascending:true});
   if(error)throw error;
   STAFF_ROWS=data||[];
+  const {data:sessions,error:sessionError}=await sb.from('staff_sessions')
+    .select('id,restaurant_id,restaurant_user_id,user_id,login_at,logout_at,last_seen_at,end_reason')
+    .eq('restaurant_id',HALINA_RESTAURANT_ID)
+    .order('login_at',{ascending:false}).limit(1000);
+  if(sessionError){STAFF_SESSIONS=[];staffHistoryError=sessionError.message||'Could not load session history';}
+  else {STAFF_SESSIONS=sessions||[];staffHistoryError='';}
   staffLoadError='';
 }
-
+function staffDuration(start,end){
+  if(!start)return '—';
+  const ms=Math.max(0,new Date(end||Date.now())-new Date(start));
+  const mins=Math.floor(ms/60000), days=Math.floor(mins/1440), hours=Math.floor((mins%1440)/60), rem=mins%60;
+  return days?`${days}d ${hours}h ${rem}m`:hours?`${hours}h ${rem}m`:`${rem}m`;
+}
+function staffLatestSession(u){
+  return STAFF_SESSIONS.find(s=>s.restaurant_user_id===u.id && !s.logout_at && Date.now()-new Date(s.last_seen_at).getTime()<120000);
+}
 function staffPage(){
   const permissionNames={orders:'Orders',tables:'Tables',stocks:'Stocks',dispatcher:'Dispatcher',settings:'Settings'};
   const rows=STAFF_ROWS.map(u=>{
@@ -520,22 +535,52 @@ function staffPage(){
     );
     const permissions=u.permissions||{};
     const permissionLabel=Object.keys(permissionNames).filter(key=>permissions[key]===true).map(key=>permissionNames[key]).join(', ')||'None assigned';
-    const resetAction=String(u.role||'').toLowerCase()==='staff'
-      ? `<button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" data-name="${esc(accountLabel)}" style="white-space:nowrap">Reset PIN</button>`
+    const active=u.is_active!==false;
+    const online=active&&!!staffLatestSession(u);
+    const status=active?(online?'<span class="bd">● Online</span>':'<span class="bd">● Offline</span>'):'<span class="bd er">Deactivated</span>';
+    const actions=String(u.role||'').toLowerCase()==='staff'
+      ? `<button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" style="white-space:nowrap">Reset PIN</button> ${active?`<button class="btn" type="button" data-a="staffdeactivate" data-id="${esc(u.id)}" style="white-space:nowrap">Deactivate</button>`:'<span class="mu">Inactive</span>'}`
       : '<span class="mu">—</span>';
-    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),esc(permissionLabel),bdg('Linked'),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',resetAction]};
+    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
   });
-  return `<div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
-  ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p><p class="mu">Check the existing Supabase access policies. No changes were made to staff records.</p></div>`:
-    STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Permissions','Account Link','Date Added','PIN Actions'],rows)}</div>`:
-    `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant. Existing Supabase access policies may limit what this account can see.</p></div>`}
-  <div class="card" style="margin-top:14px"><h3>Security Policy</h3><p>• Staff accounts do not require a personal email.</p><p>• Initial PINs are hashed by the backend.</p><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Staff PIN reset requires a verified, unexpired, one-time OTP.</p><p class="mu">Permission selections are stored, but access enforcement still needs to be implemented and tested in the relevant workflows.</p></div>`;
+  return `<div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
+  ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p></div>`:
+    STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Status','Permissions','Date Added','Actions'],rows)}</div>`:
+    `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant.</p></div>`}
+  ${staffHistoryError?`<div class="card" style="margin-top:12px"><p class="mu">Login history unavailable: ${esc(staffHistoryError)}</p></div>`:''}
+  <div class="card" style="margin-top:14px"><h3>Account & Session Security</h3><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Deactivated staff accounts are retained with their session history.</p><p>• Online means an active session heartbeat was received within the last 2 minutes.</p></div>`;
 }
 PG.staff=staffPage;
 A.addstaff=()=>staffAddForm();
 A.staffrefresh=async()=>{
   try{await loadStaffData();render();toast('Staff list refreshed');}
   catch(e){staffLoadError=e.message||String(e);render();}
+};
+A.staffhistory=()=>{
+  const names=new Map(STAFF_ROWS.map(u=>[u.id,u.display_name||u.full_name||u.cashier_username||u.role||'Staff']));
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" style="max-width:980px;width:min(980px,96vw)"><h3>Staff Login History</h3><p class="note">Saved login/logout times and calculated session duration.</p><div class="fl"><label for="staffHistoryUser">Staff account</label><select id="staffHistoryUser"><option value="">All staff</option>${STAFF_ROWS.map(u=>`<option value="${esc(u.id)}">${esc(names.get(u.id))}</option>`).join('')}</select></div><div class="fl"><label for="staffHistoryDate">Date (login date)</label><input id="staffHistoryDate" type="date"></div><div id="staffHistoryRows" style="max-height:55vh;overflow:auto;margin-top:12px"></div><div class="tb"><button class="btn" type="button" data-a="close">Close</button></div></div>`;
+  const renderHistory=()=>{
+    const userId=L.querySelector('#staffHistoryUser').value,date=L.querySelector('#staffHistoryDate').value;
+    const records=STAFF_SESSIONS.filter(s=>(!userId||s.restaurant_user_id===userId)&&(!date||String(s.login_at||'').slice(0,10)===date));
+    const html=records.length?`<div class="card">${tbl(['Staff','Login','Logout','Duration','End Reason'],records.map(s=>({c:[esc(names.get(s.restaurant_user_id)||'Staff'),esc(s.login_at?new Date(s.login_at).toLocaleString('en-PH'):'—'),esc(s.logout_at?new Date(s.logout_at).toLocaleString('en-PH'):'Still active / timed out'),esc(staffDuration(s.login_at,s.logout_at||s.last_seen_at)),esc(s.end_reason|| (s.logout_at?'logout':'active/unknown'))]})))}</div>`:'<p class="mu">No sessions match these filters.</p>';
+    L.querySelector('#staffHistoryRows').innerHTML=html;
+  };
+  L.querySelector('#staffHistoryUser').addEventListener('change',renderHistory);
+  L.querySelector('#staffHistoryDate').addEventListener('change',renderHistory);
+  renderHistory();
+};
+A.staffdeactivate=async(button)=>{
+  const id=button.dataset.id,staff=STAFF_ROWS.find(u=>u.id===id);
+  if(!staff||String(staff.role||'').toLowerCase()!=='staff'||staff.is_active===false){toast('Staff account could not be verified');return;}
+  const name=staff.display_name||staff.full_name||staff.cashier_username||'this staff account';
+  if(!confirm(`Deactivate ${name}? They will no longer be able to log in. Their session history will be retained.`))return;
+  button.disabled=true;
+  try{
+    const {data,error}=await sb.functions.invoke('staff-session-action',{body:{action:'deactivate',restaurant_user_id:id}});
+    if(error)throw new Error(error.message||'Deactivation request failed');
+    if(!data?.success)throw new Error(data?.error||'Deactivation was not confirmed');
+    await loadStaffData();render();toast('Staff account deactivated; history retained');
+  }catch(e){button.disabled=false;toast(e.message||'Unable to deactivate staff account');}
 };
 
 A.staffresetpin=(button)=>{
