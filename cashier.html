@@ -5861,7 +5861,7 @@ body.pos-other-view .page-section {
 
 
 <style id="edmel-modern-notifications">
-  /* Do not show floating generic stock reminders. Guidance is attached to Save. */
+  /* Keep guidance attached to the existing Save button, without a second button or page overflow. */
   #message.message {
     display: none !important;
   }
@@ -5869,21 +5869,21 @@ body.pos-other-view .page-section {
     position: relative;
   }
   #stockEditSaveBtn.stock-save-reminder::after {
-    content: "Save changes";
+    content: "← Save changes";
     position: absolute;
-    left: calc(100% + 12px);
+    right: calc(100% + 10px);
+    left: auto;
     top: 50%;
     transform: translateY(-50%);
     white-space: nowrap;
-    padding: 8px 11px;
-    border-radius: 9px;
-    background: #f0f7ec;
-    border: 1px solid #b8d5ad;
+    padding: 0;
+    background: transparent;
+    border: 0;
     color: #315b32;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: .1px;
-    box-shadow: 0 5px 16px rgba(60, 105, 49, .12);
+    box-shadow: none;
     pointer-events: none;
     animation: stockSaveLabelIn .2s ease-out both;
   }
@@ -5894,19 +5894,12 @@ body.pos-other-view .page-section {
     border-color: #789b6b;
   }
   @keyframes stockSaveLabelIn {
-    from { opacity: 0; transform: translate(5px, -50%); }
+    from { opacity: 0; transform: translate(-5px, -50%); }
     to { opacity: 1; transform: translate(0, -50%); }
   }
   @keyframes stockSaveReminderPulse {
     0%, 100% { box-shadow: 0 0 0 2px rgba(93,139,78,.12), 0 0 8px rgba(93,139,78,.25); }
     50% { box-shadow: 0 0 0 4px rgba(93,139,78,.22), 0 0 20px rgba(93,139,78,.55); }
-  }
-  @media (max-width: 600px) {
-    #stockEditSaveBtn.stock-save-reminder::after {
-      left: 50%;
-      top: calc(100% + 8px);
-      transform: translateX(-50%);
-    }
   }
 </style>
 
