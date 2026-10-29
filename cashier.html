@@ -5856,6 +5856,136 @@ body.pos-other-view .page-section {
   display: block !important;
 }
 
+
+
+/* =========================================================
+   HALINA POS — FIXED VIEWPORT + PREMIUM PERMISSION TOAST
+   Keep document fixed; retain internal scrolling in lists.
+========================================================= */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+body:not(.pos-other-view) .container {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body:not(.pos-other-view) #posSection.active {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body:not(.pos-other-view) #posSection .pos-layout,
+body:not(.pos-other-view) #posSection .pos-main {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body.pos-other-view {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body.pos-other-view .container {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body.pos-other-view #ordersSection.active {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+/* Permission messages become an elegant toast instead of a generic banner. */
+#message.halina-permission-toast {
+  position: fixed !important;
+  top: auto !important;
+  right: 22px !important;
+  bottom: 22px !important;
+  left: auto !important;
+  z-index: 100000 !important;
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  width: min(390px, calc(100vw - 36px));
+  max-width: calc(100vw - 36px);
+  margin: 0 !important;
+  padding: 15px 18px 15px 16px !important;
+  border: 1px solid rgba(111, 145, 111, .38) !important;
+  border-left: 4px solid #537b58 !important;
+  border-radius: 14px !important;
+  background: rgba(255, 253, 247, .97) !important;
+  color: #304b37 !important;
+  box-shadow: 0 12px 34px rgba(28, 47, 34, .19), 0 2px 8px rgba(28, 47, 34, .08) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.45;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: halinaToastEnter .28s cubic-bezier(.2,.8,.2,1) both;
+}
+
+#message.halina-permission-toast::before {
+  content: "!";
+  display: inline-flex;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e8f0e5;
+  color: #426b49;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+#message.halina-permission-toast.halina-toast-leave {
+  animation: halinaToastExit .2s ease both;
+}
+
+@keyframes halinaToastEnter {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes halinaToastExit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(7px) scale(.99); }
+}
+
+@media (max-width: 600px) {
+  #message.halina-permission-toast {
+    right: 12px !important;
+    bottom: 12px !important;
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+  }
+}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -13071,13 +13201,35 @@ window.halinaCashierCanAccessSection = function(sectionId) {
   return halinaCashierPermissions[permissionKey] === true;
 };
 
+let halinaPermissionToastTimer = null;
+let halinaPermissionToastExitTimer = null;
+
 window.halinaShowPermissionNotice = function() {
-  if (typeof clearMessage === "function") clearMessage();
   const message = document.getElementById("message");
-  if (message) {
-    message.textContent = "Your staff account does not have permission to open that section.";
-    message.style.display = "block";
-  }
+  if (!message) return;
+
+  if (halinaPermissionToastTimer) clearTimeout(halinaPermissionToastTimer);
+  if (halinaPermissionToastExitTimer) clearTimeout(halinaPermissionToastExitTimer);
+
+  message.className = "message halina-permission-toast";
+  message.textContent = "Access restricted. Your staff account does not have permission to open this section.";
+  message.style.display = "flex";
+  message.setAttribute("role", "status");
+  message.setAttribute("aria-live", "polite");
+  message.classList.remove("halina-toast-leave");
+
+  halinaPermissionToastTimer = setTimeout(() => {
+    message.classList.add("halina-toast-leave");
+    halinaPermissionToastExitTimer = setTimeout(() => {
+      if (message.classList.contains("halina-toast-leave")) {
+        message.textContent = "";
+        message.className = "message";
+        message.style.display = "none";
+        message.removeAttribute("role");
+        message.removeAttribute("aria-live");
+      }
+    }, 220);
+  }, 3600);
 };
 
 async function loadCashierStaffPermissions() {
