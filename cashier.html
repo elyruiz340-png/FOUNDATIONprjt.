@@ -10142,7 +10142,8 @@ if (posMenuGrid && !posMenuGrid.dataset.supabaseMenuBound) {
       return;
     }
 
-    addToPosCart(name, price, productId);
+    const menuItemId = String(card.dataset.menuItemId || "").trim();
+    addToPosCart(name, price, productId, menuItemId);
   });
 }
 
@@ -10153,23 +10154,21 @@ loadCashierMenuFromSupabase();
    ADD TO CART
 ========================= */
 
-function addToPosCart(name, price, productId = null) {
+function addToPosCart(name, price, productId = null, menuItemId = null) {
   const existingItem = posCart.find(function(item) {
-    return item.name === name;
+    return item.name === name && item.menu_item_id === menuItemId;
   });
 
   if (existingItem) {
     existingItem.quantity += 1;
-
-    // Keep a known product ID if one is available.
-    if (!existingItem.product_id && productId) {
-      existingItem.product_id = productId;
-    }
+    if (!existingItem.product_id && productId) existingItem.product_id = productId;
+    if (!existingItem.menu_item_id && menuItemId) existingItem.menu_item_id = menuItemId;
   } else {
     posCart.push({
       name: name,
       price: price,
       product_id: productId,
+      menu_item_id: menuItemId,
       quantity: 1
     });
   }
@@ -12576,6 +12575,7 @@ if (acceptOrderBtn) {
 
       items.push({
         product_id: productId,
+        menu_item_id: item.menu_item_id || null,
         name: name,
         quantity: quantity,
         price: price
