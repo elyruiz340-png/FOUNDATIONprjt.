@@ -9265,6 +9265,14 @@ if (
 
     try {
 
+      const { data: sessionData, error: sessionError } =
+        await cashierAuthClient.auth.getSession();
+      if (sessionError) throw sessionError;
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error("Your cashier session has expired. Please sign in again.");
+      }
+
       /*
        * Update every product belonging
        * to the same stock group.
@@ -9298,7 +9306,7 @@ if (
 
                 "Authorization":
                   "Bearer " +
-                  SUPABASE_KEY,
+                  accessToken,
 
                 "Prefer":
                   "return=representation"
