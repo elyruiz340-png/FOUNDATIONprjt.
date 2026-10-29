@@ -483,6 +483,7 @@ A.editmenu=t=>menuItemForm(t.dataset.i);
 A.addcat=()=>categoryForm(null);
 Object.assign(PG,{menu:menuPage});
 const originalStart=start;
+let CURRENT_AUTH_USER_ID='';
 start=async function(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){showLogin();return;}
@@ -492,14 +493,104 @@ start=async function(){
     showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to a HALINA owner/admin role.');
     return;
   }
+  CURRENT_AUTH_USER_ID=session.user.id;
   G.hidden=true;S.user=session.user.email;await load();
 };
 const originalLoad=load;
+let STAFF_ROWS=[], staffLoadError='';
+
+async function loadStaffData(){
+  const {data,error}=await sb
+    .from('restaurant_users')
+    .select('id,user_id,restaurant_id,role,cashier_username,full_name,display_name,position,permissions,created_at')
+    .eq('restaurant_id',HALINA_RESTAURANT_ID)
+    .order('created_at',{ascending:true});
+  if(error)throw error;
+  STAFF_ROWS=data||[];
+  staffLoadError='';
+}
+
+function staffPage(){
+  const permissionNames={orders:'Orders',tables:'Tables',stocks:'Stocks',dispatcher:'Dispatcher',settings:'Settings'};
+  const rows=STAFF_ROWS.map(u=>{
+    const isCurrentUser=!!CURRENT_AUTH_USER_ID&&u.user_id===CURRENT_AUTH_USER_ID;
+    const accountLabel=u.display_name||u.full_name||u.cashier_username||(
+      isCurrentUser&&S.user ? S.user :
+      String(u.role||'').toLowerCase()==='owner' ? 'Owner account' : 'Username not set'
+    );
+    const permissions=u.permissions||{};
+    const permissionLabel=Object.keys(permissionNames).filter(key=>permissions[key]===true).map(key=>permissionNames[key]).join(', ')||'None assigned';
+    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),esc(permissionLabel),bdg('Linked'),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—']};
+  });
+  return `<div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
+  ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p><p class="mu">Check the existing Supabase access policies. No changes were made to staff records.</p></div>`:
+    STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Permissions','Account Link','Date Added'],rows)}</div>`:
+    `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant. Existing Supabase access policies may limit what this account can see.</p></div>`}
+  <div class="card" style="margin-top:14px"><h3>Security Policy</h3><p>• Staff accounts do not require a personal email.</p><p>• Initial PINs are hashed by the backend.</p><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• OTP-protected PIN reset is a separate step and still needs end-to-end verification.</p><p class="mu">Permission selections are stored, but access enforcement still needs to be implemented and tested in the relevant workflows.</p></div>`;
+}
+PG.staff=staffPage;
+A.addstaff=()=>staffAddForm();
+A.staffrefresh=async()=>{
+  try{await loadStaffData();render();toast('Staff list refreshed');}
+  catch(e){staffLoadError=e.message||String(e);render();}
+};
+
+function staffAddForm(){
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="staffFormTitle">
+    <h3 id="staffFormTitle">Add Staff Member</h3><p class="note">Create a staff account with a username and initial six-digit PIN. No personal email is required.</p>
+    <form id="staffAddForm" autocomplete="off">
+      <div class="fl"><label for="staffFullName">Full Name *</label><input id="staffFullName" required maxlength="100" placeholder="Enter full name"></div>
+      <div class="fl"><label for="staffDisplayName">Display Name</label><input id="staffDisplayName" maxlength="60" placeholder="Optional display name"></div>
+      <div class="fl"><label for="staffPosition">Position *</label><select id="staffPosition" required><option value="Cashier">Cashier</option><option value="Manager">Manager</option><option value="Kitchen Staff">Kitchen Staff</option><option value="Dispatcher">Dispatcher</option></select></div>
+      <div class="fl"><label for="staffUsername">Username *</label><input id="staffUsername" required minlength="3" maxlength="40" autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9._-]+" placeholder="Create a unique username"></div>
+      <div class="fl"><label for="staffRole">Account Role</label><input id="staffRole" value="Staff" disabled></div>
+      <div class="fl"><label for="staffPin">Initial Cashier PIN *</label><input id="staffPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter six-digit PIN"></div>
+      <div class="fl"><label for="staffPinConfirm">Confirm Cashier PIN *</label><input id="staffPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter six-digit PIN"></div>
+      <div class="fl"><label>Permissions</label>
+        <label class="row" for="staffPermOrders"><span>Orders</span><input id="staffPermOrders" type="checkbox" checked></label>
+        <label class="row" for="staffPermTables"><span>Tables</span><input id="staffPermTables" type="checkbox" checked></label>
+        <label class="row" for="staffPermStocks"><span>Stocks</span><input id="staffPermStocks" type="checkbox" checked></label>
+        <label class="row" for="staffPermDispatcher"><span>Dispatcher</span><input id="staffPermDispatcher" type="checkbox"></label>
+        <label class="row" for="staffPermSettings"><span>Settings</span><input id="staffPermSettings" type="checkbox"></label>
+      </div>
+      <p class="mu">PIN values are sent only to the secure account-creation endpoint and must not be logged or stored as plain text.</p>
+      <p id="staffFormMsg" class="note" role="status" aria-live="polite"></p>
+      <div class="tb"><button id="staffCreateBtn" class="btn pri" type="submit">Create Staff Account</button><button class="btn" type="button" data-a="close">Cancel</button></div>
+    </form>
+  </div>`;
+  const form=L.querySelector('#staffAddForm'),submitBtn=L.querySelector('#staffCreateBtn'),message=L.querySelector('#staffFormMsg');
+  L.querySelector('#staffFullName').focus();
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    if(!form.reportValidity())return;
+    const fullName=L.querySelector('#staffFullName').value.trim();
+    const displayName=L.querySelector('#staffDisplayName').value.trim();
+    const position=L.querySelector('#staffPosition').value;
+    const username=L.querySelector('#staffUsername').value.trim();
+    const pin=L.querySelector('#staffPin').value;
+    const confirmPin=L.querySelector('#staffPinConfirm').value;
+    if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
+    const permissions={orders:L.querySelector('#staffPermOrders').checked,tables:L.querySelector('#staffPermTables').checked,stocks:L.querySelector('#staffPermStocks').checked,dispatcher:L.querySelector('#staffPermDispatcher').checked,settings:L.querySelector('#staffPermSettings').checked};
+    submitBtn.disabled=true;message.textContent='Creating staff account securely…';
+    try{
+      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:HALINA_RESTAURANT_ID,full_name:fullName,display_name:displayName,position,username,permissions,pin}});
+      if(error){let errorMessage=error.message||'Unable to create staff account.';if(error.context&&typeof error.context.json==='function'){try{const detail=await error.context.json();if(detail&&detail.error)errorMessage=detail.error;}catch(_){}}throw new Error(errorMessage);}
+      if(!data||data.success!==true)throw new Error(data?.error||'Staff account creation was not confirmed.');
+      L.querySelector('#staffPin').value='';L.querySelector('#staffPinConfirm').value='';
+      message.textContent='Staff account created. Refreshing staff list…';
+      try{await loadStaffData();closeL();render();toast('Staff account created');}
+      catch(refreshError){staffLoadError=refreshError.message||String(refreshError);closeL();render();toast('Staff created, but the list could not refresh');}
+    }catch(error){L.querySelector('#staffPin').value='';L.querySelector('#staffPinConfirm').value='';message.textContent=error.message||'Unable to create staff account. Please try again.';submitBtn.disabled=false;}
+  };
+}
+
 load=async function(manual){
   await originalLoad(manual);
   if(!G.hidden)return;
   try{await loadMenuData();if(S.page==='menu')render();}
   catch(e){menuLoadError=e.message||String(e);if(S.page==='menu')render();}
+  try{await loadStaffData();if(S.page==='staff')render();}
+  catch(e){staffLoadError=e.message||String(e);if(S.page==='staff')render();}
 };
 
 /* 10. THEME + SIDEBAR SETUP */
