@@ -9000,6 +9000,14 @@ async function saveAllChanges() {
         );
       }
 
+      const { data: cashierSessionData, error: cashierSessionError } =
+        await cashierAuthClient.auth.getSession();
+      if (cashierSessionError) throw cashierSessionError;
+      const cashierAccessToken = cashierSessionData?.session?.access_token;
+      if (!cashierAccessToken) {
+        throw new Error("Your cashier session has expired. Please sign in again.");
+      }
+
       for (const item of items) {
         const response = await fetch(
           STOCK_ENDPOINT + "?id=eq." + encodeURIComponent(item.id),
@@ -9008,7 +9016,7 @@ async function saveAllChanges() {
             headers: {
               "Content-Type": "application/json",
               "apikey": SUPABASE_KEY,
-              "Authorization": "Bearer " + SUPABASE_KEY,
+              "Authorization": "Bearer " + cashierAccessToken,
               "Prefer": "return=representation"
             },
             body: JSON.stringify({
@@ -13489,94 +13497,14 @@ try {
   );
 }
 
-/* =========================
-   PERSISTENT STAFF SESSION HISTORY
-========================= */
-const STAFF_SESSION_STORAGE_KEY = "halina-staff-session-id";
-let staffSessionHeartbeatTimer = null;
-
-async function startStaffSessionHistory() {
-  if (!cashierAuthClient) return;
-  try {
-    const { data: sessionData } = await cashierAuthClient.auth.getSession();
-    if (!sessionData?.session?.access_token) return;
-    let sessionId = sessionStorage.getItem(STAFF_SESSION_STORAGE_KEY);
-    if (sessionId) {
-      const { data: heartbeatData, error: heartbeatError } =
-        await cashierAuthClient.functions.invoke("staff-session-action", {
-          body: { action: "heartbeat", session_id: sessionId }
-        });
-      if (!heartbeatError && heartbeatData?.success) {
-        startStaffSessionHeartbeat();
-        return;
-      }
-      sessionStorage.removeItem(STAFF_SESSION_STORAGE_KEY);
-    }
-    const { data, error } = await cashierAuthClient.functions.invoke(
-      "staff-session-action",
-      { body: { action: "start" } }
-    );
-    if (error || !data?.success || !data.session_id) {
-      console.error("Could not record staff login history:", error || data?.error);
-      return;
-    }
-    sessionStorage.setItem(STAFF_SESSION_STORAGE_KEY, data.session_id);
-    startStaffSessionHeartbeat();
-  } catch (error) {
-    console.error("Could not start staff session history:", error);
-  }
-}
-
-function startStaffSessionHeartbeat() {
-  if (staffSessionHeartbeatTimer) clearInterval(staffSessionHeartbeatTimer);
-  staffSessionHeartbeatTimer = setInterval(async () => {
-    const sessionId = sessionStorage.getItem(STAFF_SESSION_STORAGE_KEY);
-    if (!sessionId || !cashierAuthClient) return;
-    try {
-      const { data, error } = await cashierAuthClient.functions.invoke(
-        "staff-session-action",
-        { body: { action: "heartbeat", session_id: sessionId } }
-      );
-      if (error || !data?.success) {
-        console.warn("Staff session heartbeat was not recorded:", error || data?.error);
-      }
-    } catch (error) {
-      console.warn("Staff session heartbeat failed:", error);
-    }
-  }, 30000);
-}
-
-async function endStaffSessionHistory() {
-  if (staffSessionHeartbeatTimer) {
-    clearInterval(staffSessionHeartbeatTimer);
-    staffSessionHeartbeatTimer = null;
-  }
-  const sessionId = sessionStorage.getItem(STAFF_SESSION_STORAGE_KEY);
-  if (!sessionId || !cashierAuthClient) return;
-  try {
-    const { data, error } = await cashierAuthClient.functions.invoke(
-      "staff-session-action",
-      { body: { action: "end", session_id: sessionId } }
-    );
-    if (error || !data?.success) {
-      console.warn("Could not record staff logout:", error || data?.error);
-    }
-  } catch (error) {
-    console.warn("Could not record staff logout:", error);
-  } finally {
-    sessionStorage.removeItem(STAFF_SESSION_STORAGE_KEY);
-  }
-}
-
 /* Restore an existing authenticated session after refresh. */
 if (cashierAuthClient) {
   cashierAuthClient.auth.getSession()
-    .then(async ({ data, error }) => {
+    .then(({ data, error }) => {
       if (error) throw error;
 
       if (data.session) {
         showCashierPOS();
-        await startStaffSessionHistory();
       } else {
         showCashierLogin();
       }
@@ -13638,7 +13566,6 @@ if (cashierLogoutButton) {
     cashierLogoutButton.textContent = "Logging out...";
 
     try {
-      await endStaffSessionHistory();
       const { error } =
         await cashierAuthClient.auth.signOut({
           scope: "local"
@@ -13790,7 +13717,6 @@ if (cashierLoginForm) {
         cashierPinInput.value = "";
       }
 
-      await startStaffSessionHistory();
       loginSucceeded = true;
 
     } catch (error) {
