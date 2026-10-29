@@ -7972,6 +7972,13 @@ reminderStyle.id = "stockSaveReminderStyles";
    button.addEventListener("click", function(event) {
      event.preventDefault();
      const sectionId = button.getAttribute("data-pos-section");
+     if (!window.halinaCashierCanAccessSection ||
+         !window.halinaCashierCanAccessSection(sectionId)) {
+       if (typeof window.halinaShowPermissionNotice === "function") {
+         window.halinaShowPermissionNotice();
+       }
+       return;
+     }
      if (!sectionId) {
        console.error(
          "POS sidebar button has no data-pos-section:",
@@ -13042,6 +13049,97 @@ const cashierProtectedElements = document.querySelectorAll(
 );
 
 let cashierAuthClient = null;
+let halinaCashierPermissions = null;
+let halinaCashierRole = null;
+
+const HALINA_SECTION_PERMISSION = {
+  posSection: "orders",
+  ordersSection: "orders",
+  tablesSection: "tables",
+  stocksSection: "stocks",
+  settingsSection: "settings",
+  dispatcherSection: "dispatcher"
+};
+
+window.halinaCashierCanAccessSection = function(sectionId) {
+  if (!sectionId) return false;
+  if (halinaCashierRole === "owner" || halinaCashierRole === "admin") {
+    return true;
+  }
+  const permissionKey = HALINA_SECTION_PERMISSION[sectionId];
+  if (!permissionKey || !halinaCashierPermissions) return false;
+  return halinaCashierPermissions[permissionKey] === true;
+};
+
+window.halinaShowPermissionNotice = function() {
+  if (typeof clearMessage === "function") clearMessage();
+  const message = document.getElementById("message");
+  if (message) {
+    message.textContent = "Your staff account does not have permission to open that section.";
+    message.style.display = "block";
+  }
+};
+
+async function loadCashierStaffPermissions() {
+  if (!cashierAuthClient) throw new Error("Cashier authentication is unavailable.");
+
+  const { data: userData, error: userError } = await cashierAuthClient.auth.getUser();
+  if (userError || !userData?.user?.id) {
+    throw new Error("Could not verify the signed-in staff account.");
+  }
+
+  const { data: staffRows, error: staffError } = await cashierAuthClient
+    .from("restaurant_users")
+    .select("role, permissions")
+    .eq("user_id", userData.user.id)
+    .limit(2);
+
+  if (staffError || !Array.isArray(staffRows) || staffRows.length !== 1) {
+    console.error("Staff permission lookup failed:", staffError?.message || "No unique staff profile found");
+    throw new Error("Unable to verify staff permissions. Please contact the owner/admin.");
+  }
+
+  const staff = staffRows[0];
+  if (!["owner", "admin", "staff"].includes(staff.role)) {
+    throw new Error("This account is not authorized to use the Cashier POS.");
+  }
+
+  halinaCashierRole = staff.role;
+  halinaCashierPermissions = staff.role === "owner" || staff.role === "admin"
+    ? { orders: true, tables: true, stocks: true, dispatcher: true, settings: true }
+    : {
+        orders: staff.permissions?.orders === true,
+        tables: staff.permissions?.tables === true,
+        stocks: staff.permissions?.stocks === true,
+        dispatcher: staff.permissions?.dispatcher === true,
+        settings: staff.permissions?.settings === true
+      };
+
+  document.querySelectorAll(".pos-sidebar-btn[data-pos-section]").forEach((button) => {
+    const sectionId = button.getAttribute("data-pos-section");
+    const allowed = window.halinaCashierCanAccessSection(sectionId);
+    button.hidden = !allowed;
+    button.setAttribute("aria-hidden", String(!allowed));
+    button.tabIndex = allowed ? 0 : -1;
+  });
+
+  const activeButton = document.querySelector(".pos-sidebar-btn.active");
+  if (!activeButton || activeButton.hidden || !window.halinaCashierCanAccessSection(activeButton.getAttribute("data-pos-section"))) {
+    const firstAllowed = Array.from(document.querySelectorAll(".pos-sidebar-btn[data-pos-section]"))
+      .find((button) => !button.hidden);
+    if (firstAllowed) firstAllowed.click();
+  }
+}
+
+function clearCashierStaffPermissions() {
+  halinaCashierPermissions = null;
+  halinaCashierRole = null;
+  document.querySelectorAll(".pos-sidebar-btn[data-pos-section]").forEach((button) => {
+    button.hidden = false;
+    button.removeAttribute("aria-hidden");
+    button.tabIndex = 0;
+  });
+}
 
 function hideCashierPOS() {
   cashierProtectedElements.forEach((element) => {
@@ -13065,11 +13163,21 @@ async function showCashierPOS(options = {}) {
   const animateEntrance = options.animate === true;
   const loginScreen = cashierLoginScreen;
 
+  try {
+    await loadCashierStaffPermissions();
+  } catch (permissionError) {
+    console.error("Cashier access check failed:", permissionError);
+    clearCashierStaffPermissions();
+    hideCashierPOS();
+    showCashierLogin(permissionError.message || "Unable to verify staff permissions.");
+    return;
+  }
+
   const protectedElements = Array.from(
     cashierProtectedElements
   );
 
-  /* Restore the protected POS elements. */
+  /* Restore the protected POS elements only after permissions are verified. */
   protectedElements.forEach((element) => {
     if (element.dataset.cashierAuthHidden === "true") {
       element.style.display =
@@ -13177,6 +13285,9 @@ async function showCashierPOS(options = {}) {
 ========================= */
 
 function showCashierLogin(message = "") {
+  /* Clear cached staff access whenever returning to the login screen. */
+  clearCashierStaffPermissions();
+
   /* Hide the cashier dashboard first. */
   hideCashierPOS();
 
