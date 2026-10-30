@@ -152,7 +152,7 @@ const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],
 
 /* 10. STATE + HELPERS */
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,cu0:'2026-10-10',cu1:'2026-10-24'};
+const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
 const $=s=>document.querySelector(s),M=n=>'₱'+Math.round(n).toLocaleString('en-PH');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const I=(n,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]}"/></svg>`;
@@ -287,7 +287,9 @@ invarchive:t=>inventoryArchive(t.dataset.i),
 invarchived:()=>{S.showArchived=!S.showArchived;render()},
 invadjust:t=>inventoryAdjustForm(t.dataset.i),
   auditrefresh:async()=>{try{await loadAuditLogs();render();toast('Audit logs refreshed')}catch(e){auditLoadError=e.message||String(e);render();toast('Could not refresh audit logs',1)}},
-  auditdetail:t=>auditDetail(t.dataset.id)
+  auditdetail:t=>auditDetail(t.dataset.id),
+  settingsection:t=>{S.settingsSection=t.dataset.v;render()},
+  settingsback:()=>{S.settingsSection=null;render()}
 };
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
@@ -357,7 +359,25 @@ function rng(per){const n=new Date(),t=day0(n),D=864e5;switch(per){case'today':r
 const inR=per=>{const[a,b]=rng(per);return ORD.filter(o=>o.dt>=a&&o.dt<b)};
 const NC=n=>`<div class="card"><span class="bd wn">● Not connected yet</span><h3 style="margin:10px 0 4px">${n}</h3><p class="mu">This section isn’t connected to your restaurant data yet, so nothing is shown here.</p></div>`;
 Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>{const q=(S.f.q||'').toLowerCase();const active=INV.filter(x=>!x.archived||S.showArchived);const rows=active.filter(x=>!q||[x.n,x.c,x.pid].join(' ').toLowerCase().includes(q));const activeCount=INV.filter(x=>!x.archived).length,archivedCount=INV.filter(x=>x.archived).length;return `<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${activeCount} active items · ${archivedCount} archived · Supabase live data</span><button class="btn pri" data-a="invadd">+ Add stock item</button><button class="btn" data-a="invarchived">${S.showArchived?'Hide archived':'Show archived'}</button><button class="btn" data-a="invrefresh">Refresh</button></div>${S.stockErr?`<div class="card"><span class="bd er">● Inventory load error</span><p>${esc(S.stockErr)}</p></div>`:''}<div class="card">${tbl(['Item','Category','Total stock','Remaining','Availability','Photo','Actions'],rows.map(x=>({c:[esc(x.n),esc(x.c||'Uncategorized'),x.total,x.q,x.archived?bdg('Archived'):bdg(x.available?'Available':'Unavailable'),x.image?`<a href="${esc(x.image)}" target="_blank" rel="noopener">View photo</a>`:'No photo',`${!x.archived?`<button class="btn" data-a="invedit" data-i="${x.id}">Edit item</button> <button class="btn" data-a="invavailability" data-i="${x.id}">${x.available?'Make unavailable':'Make available'}</button> <button class="btn" data-a="invadjust" data-i="${x.id}">Edit stock</button> <button class="btn" data-a="invarchive" data-i="${x.id}">Archive</button>`:`<button class="btn" data-a="invavailability" data-i="${x.id}">Restore available</button>`}`]})))}</div><p class="note">Unavailable items remain in Supabase with their quantities preserved. Archived items are hidden from this default list; use Show archived to review them. Availability must also be filtered in Cashier and customer-ordering code before it is enforced across the whole system.</p>`},exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>NC('Multi-Branch Management'),health:()=>NC('System Health & Integrations'),
-settings:()=>`<div class="g g2"><div class="card"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme">Switch to ${S.theme=='dark'?'light':'dark'} mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>${NC('Business settings')}</div>`,audit:auditPage});
+settings:()=>{
+ const sections=[
+  ['profile','Restaurant Profile','Business name, address, contact details and operating hours'],
+  ['orders','Orders & Transactions','Order types, order statuses and checkout rules'],
+  ['menu','Menu & Categories','Menu visibility, category rules and item settings'],
+  ['inventory','Inventory & Stock','Stock units, low-stock thresholds and availability rules'],
+  ['tables','Table Management & QR Codes','Tables, table status and customer QR ordering'],
+  ['discounts','Discounts & Vouchers','Senior Citizen, PWD, promotional discounts and vouchers'],
+  ['payments','Payment Methods & Integrations','Cash, QR payments, bank and online payment integrations'],
+  ['receipt','Receipt & Tax','Receipt details, tax settings and invoice preferences'],
+  ['notifications','Notifications','Order alerts, low-stock alerts and system notifications'],
+  ['devices','Devices & Printers','Receipt printers, kitchen displays and connected devices'],
+  ['access','Staff Access Control','Staff permissions, access restrictions and security rules']
+ ];
+ const selected=sections.find(x=>x[0]===S.settingsSection);
+ const appearance=`<div class="card" style="margin-bottom:14px"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme">Switch to ${S.theme=='dark'?'light':'dark'} mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>`;
+ if(selected)return `${appearance}<div class="tb"><button class="btn" data-a="settingsback">← All settings</button><span class="mu">Business Settings / ${selected[1]}</span></div><div class="card"><h3>${selected[1]}</h3><p class="mu">${selected[2]}</p><div class="card" style="margin-top:14px"><span class="bd wn">● Configuration not connected</span><h3 style="margin-top:12px">Configuration workspace</h3><p class="mu">This section is being prepared. Restaurant settings will be connected here after the configuration design is finalized.</p></div></div>`;
+ return `${appearance}<div class="card" style="margin-bottom:14px"><h3>Business Settings</h3><p class="mu">Manage your restaurant's operating rules, ordering preferences, payments, devices and security in one place.</p></div><div class="g g2">${sections.map(x=>`<button class="card" data-a="settingsection" data-v="${x[0]}" style="text-align:left;color:var(--tx);cursor:pointer"><div class="row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">${x[1]}</h3><span class="mu">→</span></div><p class="mu" style="margin:8px 0 0">${x[2]}</p></button>`).join('')}</div>`;
+},audit:auditPage});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
 const G=$('#gate');
 function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.innerHTML=`<form id="lf" class="card gt"><div class="brand" style="padding:0"><b>E</b><span style="opacity:1;width:auto">EDMEL</span></div><h3 style="margin-top:14px">Sign in</h3><p class="mu">HALINA BISTRO CAFE · Owner dashboard</p><div class="fl"><label for="le">Email</label><input id="le" type="email" autocomplete="username" required></div><div class="fl"><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" required></div>${err?`<p class="er" role="alert">● ${esc(err)}</p>`:''}<button class="btn pri" id="lb" style="width:100%">Sign in</button></form>`;
