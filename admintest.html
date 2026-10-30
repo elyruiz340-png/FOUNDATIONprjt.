@@ -109,6 +109,31 @@ body.locked .app{visibility:hidden}#gate{position:fixed;inset:0;z-index:100;disp
 .ov{display:none}
 @media(max-width:820px){.app,.app.exp{--sw:0px}#sb{width:230px;transform:translateX(-100%)}.app.mo #sb{transform:none}.app.mo #nav span,.app.mo .brand span{opacity:1;width:auto}.app.mo .ov{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:25}.mb{display:grid}.tg,#nav button::after{display:none}.srch span,.srch kbd{display:none}.srch{min-width:0}header{padding:10px 12px}.sub{display:none}#pg{padding:12px}}
 @media print{#sb,header,.noprint,#toast{display:none!important}.main{margin:0}body{background:#fff;color:#000}}
+
+/* BUSINESS SETTINGS — compact forest-glass layout */
+.bs-page{display:flex;flex-direction:column;gap:14px;min-width:0}
+.bs-title{padding:2px 3px 0}.bs-title h2{font-size:25px;letter-spacing:-.5px;margin:0 0 4px}.bs-title p,.bs-head-copy p{margin:0;color:var(--mu);font-size:13px}
+.bs-layout{display:grid;grid-template-columns:minmax(270px,340px) minmax(0,1fr);gap:12px;align-items:stretch;min-width:0}
+.bs-sidebar,.bs-content{min-width:0;border:1px solid var(--bd);border-radius:19px;background:linear-gradient(145deg,rgba(30,57,42,.42),rgba(9,25,18,.62));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:14px}
+.bs-sidebar{display:flex;flex-direction:column;gap:14px}
+.bs-group{display:flex;flex-direction:column;gap:3px}.bs-group-title{font-size:10px;font-weight:800;letter-spacing:1.15px;color:var(--mu);padding:3px 8px 6px}
+.bs-nav-item{display:flex;align-items:center;gap:10px;width:100%;min-height:51px;padding:7px 9px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--tx);text-align:left;cursor:pointer;transition:background .18s,border-color .18s}
+.bs-nav-item:hover{background:rgba(130,190,150,.08);border-color:var(--bd)}.bs-nav-item.active{background:linear-gradient(110deg,rgba(40,145,86,.25),rgba(31,83,53,.19));border-color:rgba(86,190,125,.55)}
+.bs-nav-icon,.bs-head-icon{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;border-radius:11px;background:rgba(135,190,150,.09);color:var(--ac)}
+.bs-nav-copy{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}.bs-nav-copy b{font-size:12px;font-weight:700;line-height:1.25}.bs-nav-copy small{font-size:10px;color:var(--mu);line-height:1.25}.bs-arrow{font-size:22px;color:var(--mu);line-height:1}
+.bs-content{display:flex;flex-direction:column;gap:12px}.bs-content-head{display:flex;align-items:center;gap:12px;padding:2px 2px 5px}.bs-content-head .bs-head-icon{width:44px;height:44px;flex-basis:44px;border:1px solid var(--ge);border-radius:50%}.bs-head-copy{min-width:0;flex:1}.bs-head-copy h2{font-size:19px;margin:0 0 4px;letter-spacing:-.3px}.bs-content-head .btn{white-space:nowrap;display:flex;align-items:center;gap:7px}
+.bs-panel{border:1px solid var(--bd);border-radius:14px;background:rgba(255,255,255,.025);padding:14px;min-width:0}
+.bs-panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}.bs-panel-head .bs-head-icon{width:34px;height:34px;flex-basis:34px;border-radius:50%}.bs-panel-head h3{font-size:13px;margin:0 0 3px}.bs-panel-head p{font-size:11px;color:var(--mu);margin:0}
+.bs-profile-grid{display:grid;grid-template-columns:1fr 1fr 150px;gap:10px 14px;align-items:start}.bs-field{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:650;color:var(--tx);min-width:0}.bs-field small{font-weight:400;color:var(--mu)}
+.bs-field input,.bs-field textarea,.bs-field select,.bs-hour-row input[type=time]{width:100%;min-width:0;border:1px solid var(--bd);border-radius:9px;background:rgba(4,17,11,.28);color:var(--tx);padding:9px 10px;font:inherit;font-size:12px;outline:none}.bs-field input:focus,.bs-field textarea:focus,.bs-field select:focus,.bs-hour-row input:focus{border-color:var(--ac)}.bs-field textarea{resize:vertical;min-height:56px}.bs-field input[readonly]{opacity:.8}
+.bs-address{grid-column:1}.bs-logo{grid-column:3;grid-row:1/ span 3;display:flex;flex-direction:column;align-items:center;gap:7px;border:1px solid var(--bd);border-radius:12px;padding:10px}.bs-logo-mark{width:92px;height:92px;border-radius:12px;background:rgba(1,18,10,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#b8dfc1;gap:2px}.bs-logo-mark b{font-family:Georgia,serif;font-size:17px;letter-spacing:1px}.bs-logo-mark small{font-size:7px;letter-spacing:1.4px}.bs-logo>small{font-size:9px;color:var(--mu);text-align:center}.bs-logo .btn{font-size:10px;padding:6px 9px}
+.bs-hours-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}.bs-hour-row{display:grid;grid-template-columns:72px minmax(75px,1fr) 18px minmax(75px,1fr) 20px;gap:6px;align-items:center;font-size:11px}.bs-hour-row b{font-weight:600}.bs-hour-row span{text-align:center;color:var(--mu)}.bs-hour-row input[type=time]{padding:7px 6px;font-size:10px}.bs-hour-row label{display:flex;justify-content:center}.bs-hour-row input[type=checkbox]{accent-color:var(--ac);width:15px;height:15px}
+.bs-extra-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}.bs-extra-grid .bs-field input,.bs-extra-grid .bs-field select{padding:8px 9px}
+.bs-coming{min-height:240px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:8px}.bs-coming h3{margin:0;font-size:17px}.bs-coming>p{margin:0;color:var(--mu);font-size:12px}.bs-coming-note{display:flex;flex-direction:column;gap:9px;margin-top:16px;padding:15px;border:1px solid var(--bd);border-radius:12px;background:rgba(255,255,255,.025);width:100%;font-size:12px}.bs-coming-note>span:last-child{color:var(--mu);line-height:1.5}
+@media(max-width:1050px){.bs-layout{grid-template-columns:minmax(230px,285px) minmax(0,1fr)}.bs-profile-grid{grid-template-columns:1fr 1fr}.bs-logo{grid-column:2;grid-row:3}.bs-address{grid-column:1}.bs-hours-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.bs-layout{grid-template-columns:1fr}.bs-sidebar{display:grid;grid-template-columns:1fr 1fr;gap:10px}.bs-group-title{font-size:9px}.bs-nav-item{min-height:48px}.bs-content-head{flex-wrap:wrap}.bs-content-head .btn{margin-left:auto}.bs-profile-grid,.bs-extra-grid{grid-template-columns:1fr}.bs-logo{grid-column:1;grid-row:auto;max-width:180px}.bs-address{grid-column:auto}.bs-hours-grid{grid-template-columns:1fr}.bs-hour-row{grid-template-columns:66px minmax(70px,1fr) 14px minmax(70px,1fr) 18px}}
+@media(max-width:430px){.bs-sidebar{grid-template-columns:1fr}.bs-content-head .bs-head-copy h2{font-size:16px}.bs-nav-copy small{font-size:9px}}
+
 </style>
 </head>
 <body class="locked">
@@ -361,22 +386,42 @@ const NC=n=>`<div class="card"><span class="bd wn">● Not connected yet</span><
 Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>{const q=(S.f.q||'').toLowerCase();const active=INV.filter(x=>!x.archived||S.showArchived);const rows=active.filter(x=>!q||[x.n,x.c,x.pid].join(' ').toLowerCase().includes(q));const activeCount=INV.filter(x=>!x.archived).length,archivedCount=INV.filter(x=>x.archived).length;return `<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${activeCount} active items · ${archivedCount} archived · Supabase live data</span><button class="btn pri" data-a="invadd">+ Add stock item</button><button class="btn" data-a="invarchived">${S.showArchived?'Hide archived':'Show archived'}</button><button class="btn" data-a="invrefresh">Refresh</button></div>${S.stockErr?`<div class="card"><span class="bd er">● Inventory load error</span><p>${esc(S.stockErr)}</p></div>`:''}<div class="card">${tbl(['Item','Category','Total stock','Remaining','Availability','Photo','Actions'],rows.map(x=>({c:[esc(x.n),esc(x.c||'Uncategorized'),x.total,x.q,x.archived?bdg('Archived'):bdg(x.available?'Available':'Unavailable'),x.image?`<a href="${esc(x.image)}" target="_blank" rel="noopener">View photo</a>`:'No photo',`${!x.archived?`<button class="btn" data-a="invedit" data-i="${x.id}">Edit item</button> <button class="btn" data-a="invavailability" data-i="${x.id}">${x.available?'Make unavailable':'Make available'}</button> <button class="btn" data-a="invadjust" data-i="${x.id}">Edit stock</button> <button class="btn" data-a="invarchive" data-i="${x.id}">Archive</button>`:`<button class="btn" data-a="invavailability" data-i="${x.id}">Restore available</button>`}`]})))}</div><p class="note">Unavailable items remain in Supabase with their quantities preserved. Archived items are hidden from this default list; use Show archived to review them. Availability must also be filtered in Cashier and customer-ordering code before it is enforced across the whole system.</p>`},exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>NC('Multi-Branch Management'),health:()=>NC('System Health & Integrations'),
 settings:()=>{
  const sections=[
-  ['profile','Restaurant Profile','Business name, address, contact details and operating hours'],
-  ['orders','Orders & Transactions','Order types, order statuses and checkout rules'],
-  ['menu','Menu & Categories','Menu visibility, category rules and item settings'],
-  ['inventory','Inventory & Stock','Stock units, low-stock thresholds and availability rules'],
-  ['tables','Table Management & QR Codes','Tables, table status and customer QR ordering'],
-  ['discounts','Discounts & Vouchers','Senior Citizen, PWD, promotional discounts and vouchers'],
-  ['payments','Payment Methods & Integrations','Cash, QR payments, bank and online payment integrations'],
-  ['receipt','Receipt & Tax','Receipt details, tax settings and invoice preferences'],
-  ['notifications','Notifications','Order alerts, low-stock alerts and system notifications'],
-  ['devices','Devices & Printers','Receipt printers, kitchen displays and connected devices'],
-  ['access','Staff Access Control','Staff permissions, access restrictions and security rules']
+  {id:'profile',name:'Restaurant Profile',desc:'Business information & operating hours',group:'BUSINESS',icon:'home'},
+  {id:'orders',name:'Orders & Transactions',desc:'Order types, statuses & checkout rules',group:'BUSINESS',icon:'receipt'},
+  {id:'menu',name:'Menu & Categories',desc:'Menu visibility & item settings',group:'BUSINESS',icon:'menu'},
+  {id:'inventory',name:'Inventory & Stock',desc:'Stock units & availability rules',group:'BUSINESS',icon:'box'},
+  {id:'tables',name:'Table Management & QR Codes',desc:'Tables, status & customer QR ordering',group:'BUSINESS',icon:'branch'},
+  {id:'discounts',name:'Discounts & Vouchers',desc:'Senior, PWD & promotional discounts',group:'PAYMENTS & OPERATIONS',icon:'spark'},
+  {id:'payments',name:'Payment Methods',desc:'Cash, QR, bank & online payments',group:'PAYMENTS & OPERATIONS',icon:'wallet'},
+  {id:'receipt',name:'Receipt & Tax',desc:'Receipt details & tax settings',group:'PAYMENTS & OPERATIONS',icon:'log'},
+  {id:'notifications',name:'Notifications',desc:'Order alerts & system notifications',group:'PAYMENTS & OPERATIONS',icon:'bell'},
+  {id:'devices',name:'Devices & Printers',desc:'Receipt printers & kitchen displays',group:'PAYMENTS & OPERATIONS',icon:'pulse'},
+  {id:'access',name:'Staff Access Control',desc:'Permissions & security rules',group:'SECURITY',icon:'users'}
  ];
- const selected=sections.find(x=>x[0]===S.settingsSection);
- const appearance=`<div class="card" style="margin-bottom:14px"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme">Switch to ${S.theme=='dark'?'light':'dark'} mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>`;
- if(selected)return `${appearance}<div class="tb"><button class="btn" data-a="settingsback">← All settings</button><span class="mu">Business Settings / ${selected[1]}</span></div><div class="card"><h3>${selected[1]}</h3><p class="mu">${selected[2]}</p><div class="card" style="margin-top:14px"><span class="bd wn">● Configuration not connected</span><h3 style="margin-top:12px">Configuration workspace</h3><p class="mu">This section is being prepared. Restaurant settings will be connected here after the configuration design is finalized.</p></div></div>`;
- return `${appearance}<div class="card" style="margin-bottom:14px"><h3>Business Settings</h3><p class="mu">Manage your restaurant's operating rules, ordering preferences, payments, devices and security in one place.</p></div><div class="g g2">${sections.map(x=>`<button class="card" data-a="settingsection" data-v="${x[0]}" style="text-align:left;color:var(--tx);cursor:pointer"><div class="row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">${x[1]}</h3><span class="mu">→</span></div><p class="mu" style="margin:8px 0 0">${x[2]}</p></button>`).join('')}</div>`;
+ const active=sections.find(x=>x.id===S.settingsSection)||sections[0];
+ const groups=['BUSINESS','PAYMENTS & OPERATIONS','SECURITY'];
+ const nav=groups.map(g=>`<div class="bs-group"><div class="bs-group-title">${g}</div>${sections.filter(x=>x.group===g).map(x=>`<button class="bs-nav-item ${active.id===x.id?'active':''}" data-a="settingsection" data-v="${x.id}"><span class="bs-nav-icon">${I(x.icon,21)}</span><span class="bs-nav-copy"><b>${x.name}</b><small>${x.desc}</small></span><span class="bs-arrow">›</span></button>`).join('')}</div>`).join('');
+ const profile=active.id==='profile'?`<section class="bs-panel">
+  <div class="bs-panel-head"><div class="bs-head-icon">${I('home',22)}</div><div class="bs-head-copy"><h3>Basic Information</h3><p>Your restaurant's name, address and contact details.</p></div></div>
+  <div class="bs-profile-grid">
+   <label class="bs-field">Business Name<input value="HALINA BISTRO CAFE" readonly></label>
+   <label class="bs-field">Contact Number<input placeholder="Add contact number"></label>
+   <label class="bs-field bs-address">Address<textarea placeholder="Add restaurant address" rows="2"></textarea></label>
+   <label class="bs-field">Email Address<input placeholder="Add business email"></label>
+   <label class="bs-field">Website <small>(Optional)</small><input placeholder="https://"></label>
+   <div class="bs-logo"><div class="bs-logo-mark">${I('spark',34)}<b>HALINA</b><small>BISTRO CAFE</small></div><button class="btn" disabled>Change Logo</button><small>Logo upload will be connected later</small></div>
+  </div>
+ </section>
+ <section class="bs-panel">
+  <div class="bs-panel-head"><div class="bs-head-icon">${I('pulse',22)}</div><div class="bs-head-copy"><h3>Operating Hours</h3><p>Set your restaurant's regular operating hours.</p></div></div>
+  <div class="bs-hours-grid">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d=>`<div class="bs-hour-row"><b>${d}</b><input aria-label="${d} opening time" type="time" value="10:00"><span>to</span><input aria-label="${d} closing time" type="time" value="22:00"><label><input type="checkbox" checked aria-label="${d} open"></label></div>`).join('')}</div>
+ </section>
+ <section class="bs-panel">
+  <div class="bs-panel-head"><div class="bs-head-icon">${I('cog',22)}</div><div class="bs-head-copy"><h3>Additional Settings</h3><p>Other business preferences.</p></div></div>
+  <div class="bs-extra-grid"><label class="bs-field">Default Currency<select><option>PHP - Philippine Peso (₱)</option><option>USD - US Dollar ($)</option></select></label><label class="bs-field">Default Tax Rate (%)<input type="number" min="0" max="100" placeholder="Not configured"></label><label class="bs-field">Time Zone<select><option value="">Select time zone</option><option>(GMT+8) Manila, Philippines</option></select></label><label class="bs-field">Default Service Charge (%)<input type="number" min="0" max="100" placeholder="Not configured"></label></div>
+ </section>`:
+ `<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>Controls for this section will be connected after its rules and data requirements are finalized. No settings are being saved yet.</span></div></section>`;
+ return `<div class="bs-page"><div class="bs-title"><h2>Business Settings</h2><p>Manage your restaurant's configuration, operations and system preferences.</p></div><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div><button class="btn pri" disabled>${I('log',16)} Save Changes</button></div>${profile}</main></div></div>`;
 },audit:auditPage});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
 const G=$('#gate');
