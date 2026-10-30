@@ -134,6 +134,119 @@ body.locked .app{visibility:hidden}#gate{position:fixed;inset:0;z-index:100;disp
 @media(max-width:760px){.bs-layout{grid-template-columns:1fr}.bs-sidebar{display:grid;grid-template-columns:1fr 1fr;gap:10px}.bs-group-title{font-size:9px}.bs-nav-item{min-height:48px}.bs-content-head{flex-wrap:wrap}.bs-content-head .btn{margin-left:auto}.bs-profile-grid,.bs-extra-grid{grid-template-columns:1fr}.bs-logo{grid-column:1;grid-row:auto;max-width:180px}.bs-address{grid-column:auto}.bs-hours-grid{grid-template-columns:1fr}.bs-hour-row{grid-template-columns:66px minmax(70px,1fr) 14px minmax(70px,1fr) 18px}}
 @media(max-width:430px){.bs-sidebar{grid-template-columns:1fr}.bs-content-head .bs-head-copy h2{font-size:16px}.bs-nav-copy small{font-size:9px}}
 
+
+/* EDMEL UI POLISH — spacing, adaptive themes, minimal scrollbars */
+:root{
+  --scroll-thumb:rgba(143,209,168,.34);
+  --scroll-thumb-hover:rgba(143,209,168,.62);
+  --panel-soft:rgba(255,255,255,.035);
+  --field-bg:rgba(4,17,11,.28);
+}
+[data-theme="light"]{
+  --scroll-thumb:rgba(48,105,73,.28);
+  --scroll-thumb-hover:rgba(48,105,73,.52);
+  --panel-soft:rgba(255,255,255,.72);
+  --field-bg:rgba(255,255,255,.78);
+}
+/* Slim, quiet scrollbars across the dashboard */
+*{
+  scrollbar-width:thin;
+  scrollbar-color:var(--scroll-thumb) transparent;
+}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{
+  background:var(--scroll-thumb);
+  border-radius:20px;
+  border:2px solid transparent;
+  background-clip:padding-box;
+}
+*::-webkit-scrollbar-thumb:hover{
+  background:var(--scroll-thumb-hover);
+  border:1px solid transparent;
+  background-clip:padding-box;
+}
+*::-webkit-scrollbar-corner{background:transparent}
+/* More balanced page rhythm */
+#pg{padding:18px 20px 24px}
+.bs-page{gap:12px}
+.bs-title h2{font-size:23px}
+.bs-layout{grid-template-columns:minmax(255px,300px) minmax(0,1fr);gap:14px;align-items:start}
+.bs-sidebar,.bs-content{padding:13px;border-radius:17px}
+.bs-sidebar{gap:11px;max-height:calc(100vh - 166px);overflow-y:auto;overscroll-behavior:contain;position:sticky;top:94px}
+.bs-group{gap:2px}
+.bs-group-title{padding:3px 8px 5px}
+.bs-nav-item{min-height:47px;padding:6px 8px;gap:9px;border-radius:10px}
+.bs-nav-icon{width:32px;height:32px;flex-basis:32px;border-radius:9px}
+.bs-nav-copy{gap:2px}
+.bs-nav-copy b{font-size:11.5px}
+.bs-nav-copy small{font-size:9.5px}
+.bs-content{gap:10px}
+.bs-content-head{gap:10px;padding:1px 1px 4px}
+.bs-content-head .bs-head-icon{width:40px;height:40px;flex-basis:40px}
+.bs-content-head .bs-head-copy h2{font-size:18px}
+.bs-panel{padding:13px;border-radius:13px;background:var(--panel-soft)}
+.bs-panel-head{margin-bottom:10px}
+.bs-profile-grid{gap:9px 12px}
+.bs-field{gap:4px}
+.bs-field input,.bs-field textarea,.bs-field select,.bs-hour-row input[type=time]{background:var(--field-bg);padding:8px 9px}
+.bs-hours-grid{gap:7px 14px}
+.bs-hour-row{grid-template-columns:66px minmax(70px,1fr) 14px minmax(70px,1fr) 18px;gap:5px}
+.bs-hour-row input[type=time]{padding:6px 5px}
+.bs-extra-grid{gap:9px 14px}
+.bs-coming-note{margin-top:12px;padding:13px}
+/* Light mode: warm ivory surfaces with readable sage/charcoal contrast */
+[data-theme="light"] .bs-sidebar,
+[data-theme="light"] .bs-content{
+  background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(242,247,238,.94));
+  border-color:rgba(66,105,75,.20);
+  box-shadow:0 8px 24px rgba(48,65,42,.08);
+}
+[data-theme="light"] .bs-panel{
+  background:rgba(255,255,255,.78);
+  border-color:rgba(66,105,75,.17);
+}
+[data-theme="light"] .bs-nav-item{color:#25372b}
+[data-theme="light"] .bs-nav-item:hover{background:rgba(67,125,83,.08);border-color:rgba(66,105,75,.18)}
+[data-theme="light"] .bs-nav-item.active{
+  background:linear-gradient(110deg,rgba(65,145,91,.16),rgba(121,171,126,.12));
+  border-color:rgba(57,125,76,.38);
+}
+[data-theme="light"] .bs-nav-icon,
+[data-theme="light"] .bs-head-icon{background:rgba(62,125,78,.10);color:#326b45}
+[data-theme="light"] .bs-field input,
+[data-theme="light"] .bs-field textarea,
+[data-theme="light"] .bs-field select,
+[data-theme="light"] .bs-hour-row input[type=time]{
+  color:#26352a;background:#fff;border-color:rgba(61,91,66,.22);
+}
+[data-theme="light"] .bs-field input::placeholder,
+[data-theme="light"] .bs-field textarea::placeholder{color:#879287}
+[data-theme="light"] .bs-logo{background:rgba(244,248,239,.9);border-color:rgba(61,91,66,.2)}
+[data-theme="light"] .bs-logo-mark{background:#173d2b;color:#d8f0dc}
+[data-theme="light"] .bs-coming-note{background:rgba(246,249,242,.9);border-color:rgba(61,91,66,.18)}
+[data-theme="light"] .bs-coming-note b{color:#26352a}
+/* Keep scrolling natural on the document; avoid nested content scrollbars */
+html{scrollbar-gutter:stable}
+body{overflow-y:auto}
+.bs-content{overflow:visible}
+@media(max-width:1050px){
+  .bs-layout{grid-template-columns:minmax(225px,270px) minmax(0,1fr);gap:11px}
+  .bs-sidebar{top:88px}
+}
+@media(max-width:760px){
+  #pg{padding:12px}
+  .bs-layout{grid-template-columns:minmax(0,1fr)}
+  .bs-sidebar{position:static;max-height:260px;overflow-y:auto}
+  .bs-sidebar{display:flex;gap:9px}
+  .bs-group{min-width:0}
+  .bs-content{padding:11px}
+}
+@media(max-width:430px){
+  .bs-title h2{font-size:20px}
+  .bs-nav-item{min-height:45px}
+}
+
 </style>
 </head>
 <body class="locked">
