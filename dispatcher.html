@@ -158,68 +158,80 @@ loadOrders();setInterval(loadOrders,10000);
 
 <!-- CENTRAL RESTAURANT PROFILE CONNECTION -->
 <script>
-/* CENTRAL RESTAURANT BRANDING — reads the single public restaurant profile */
+/* CENTRAL RESTAURANT BRANDING — restaurants is the single source of truth. */
 (function () {
   const API = 'https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/restaurants';
   const KEY = 'sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
   const RESTAURANT_ID = '5e562ca7-38aa-4894-8265-ddca2f4e61b6';
-  const selectors = {
-    customer: ['.hero h1'],
-    cashier: ['.cashier-login-brand', '.pos-brand', '.success-receipt-header'],
-    dispatcher: ['.brand h1'],
-    admin: ['.topbar .sub', '.sub']
-  };
-  function addLogo(el, url, mode) {
-    if (!el || !url || el.querySelector(':scope > img[data-restaurant-logo]')) return;
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = 'Restaurant logo';
-    img.dataset.restaurantLogo = 'true';
-    img.loading = 'eager';
-    img.style.cssText = mode === 'dispatcher'
-      ? 'width:34px;height:34px;object-fit:contain;border-radius:9px;display:block'
-      : 'width:30px;height:30px;object-fit:contain;border-radius:8px;vertical-align:middle;margin-right:9px';
-    if (mode === 'dispatcher') {
-      const mark = document.querySelector('.brand .logo');
-      if (mark) { mark.textContent = ''; mark.appendChild(img); }
-    } else {
+  const NAME_SELECTORS = ['.brand h1'];
+  const LOGO_MODE = 'dispatcher';
+  function setName(el, name) {
+    if (!el || !name) return;
+    let img = el.querySelector(':scope > img[data-restaurant-logo]');
+    el.textContent = '';
+    if (img) el.appendChild(img);
+    el.appendChild(document.createTextNode(name));
+  }
+  function setInlineLogo(el, url) {
+    if (!el || !url) return;
+    let img = el.querySelector(':scope > img[data-restaurant-logo]');
+    if (!img) {
+      img = document.createElement('img');
+      img.dataset.restaurantLogo = 'true';
+      img.alt = 'Restaurant logo';
+      img.loading = 'eager';
+      img.style.cssText = 'width:30px;height:30px;object-fit:contain;border-radius:8px;vertical-align:middle;margin-right:9px';
       el.insertBefore(img, el.firstChild);
     }
+    img.src = url;
   }
+  function setDispatcherLogo(url) {
+    const mark = document.querySelector('.brand .logo');
+    if (!mark || !url) return;
+    let img = mark.querySelector(':scope > img[data-restaurant-logo]');
+    if (!img) {
+      mark.textContent = '';
+      img = document.createElement('img');
+      img.dataset.restaurantLogo = 'true';
+      img.alt = 'Restaurant logo';
+      img.loading = 'eager';
+      img.style.cssText = 'width:34px;height:34px;object-fit:contain;border-radius:9px;display:block';
+      mark.appendChild(img);
+    }
+    img.src = url;
+  }
+  function applyProfile(profile) {
+    if (!profile) return;
+    const name = String(profile.name || '').trim();
+    if (name) {
+      document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
+      document.title = document.title.replace(/HALINA BISTRO CAFE/gi, name);
+    }
+    if (profile.logo_url) {
+      if (LOGO_MODE === 'dispatcher') setDispatcherLogo(profile.logo_url);
+      else document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setInlineLogo(el, profile.logo_url));
+    }
+    window.HALINA_RESTAURANT_PROFILE = profile;
+  }
+  window.applyRestaurantBranding = applyProfile;
   async function connect() {
     try {
       const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate', {
-        headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }
+        headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }, cache: 'no-store'
       });
       if (!response.ok) throw new Error('Profile request failed: ' + response.status);
       const rows = await response.json();
       const profile = rows && rows[0];
       if (!profile) return;
-      const name = String(profile.name || '').trim();
-      if (name) {
-        document.querySelectorAll(selectors.customer.concat(selectors.cashier, selectors.dispatcher, selectors.admin).join(',')).forEach(el => {
-          const img = el.querySelector(':scope > img[data-restaurant-logo]');
-          el.textContent = '';
-          if (img) el.appendChild(img);
-          el.appendChild(document.createTextNode(name));
-        });
-        document.title = document.title.replace(/HALINA BISTRO CAFE/gi, name);
-        document.querySelectorAll('.brand .logo').forEach(el => {
-          if (profile.logo_url) addLogo(el, profile.logo_url, 'dispatcher');
-        });
-      }
-      if (profile.logo_url) {
-        const mode = document.querySelector('.brand .logo') ? 'dispatcher' : 'inline';
-        const targets = selectors.customer.concat(selectors.cashier, selectors.admin)
-          .flatMap(sel => Array.from(document.querySelectorAll(sel)));
-        targets.forEach(el => addLogo(el, profile.logo_url, mode));
-      }
-      window.HALINA_RESTAURANT_PROFILE = profile;
+      applyProfile(profile);
       window.dispatchEvent(new CustomEvent('restaurantprofileloaded', { detail: profile }));
     } catch (error) {
       console.warn('Could not load centralized restaurant profile:', error);
     }
   }
+  window.addEventListener('restaurantprofilechanged', e => applyProfile(e.detail));
+  window.addEventListener('focus', connect);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) connect(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', connect, { once: true });
   else connect();
 })();
