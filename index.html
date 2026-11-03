@@ -2225,6 +2225,25 @@ document
     }
     img.src = url;
   }
+  function replaceRestaurantNameInTextNodes(name, root = document.body) {
+    if (!name || !root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent || /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|INPUT)$/i.test(parent.tagName)) return NodeFilter.FILTER_REJECT;
+        return /HALINA BISTRO CAFE/i.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => { node.nodeValue = node.nodeValue.replace(/HALINA BISTRO CAFE/gi, name); });
+  }
+  let restaurantNameObserver;
+  function watchRestaurantName(name) {
+    if (!name || !document.body || restaurantNameObserver) return;
+    restaurantNameObserver = new MutationObserver(() => replaceRestaurantNameInTextNodes(name));
+    restaurantNameObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
   function applyProfile(profile) {
     if (!profile) return;
     const appearance = profile.appearance_settings || {};
@@ -2239,6 +2258,8 @@ document
     if (name) {
       document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
       document.title = document.title.replace(/HALINA BISTRO CAFE/gi, name);
+      replaceRestaurantNameInTextNodes(name);
+      watchRestaurantName(name);
     }
     if (profile.logo_url) {
       if (LOGO_MODE === 'dispatcher') setDispatcherLogo(profile.logo_url);
