@@ -5858,6 +5858,9 @@ body.pos-other-view .page-section {
   display: block !important;
 }
 
+
+/* Prevent demo restaurant branding from flashing before the saved profile loads. */
+body:not(.restaurant-profile-ready) .cashier-login-brand, body:not(.restaurant-profile-ready) .pos-brand, body:not(.restaurant-profile-ready) .success-receipt-header{visibility:hidden!important}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -14264,6 +14267,7 @@ if (cashierLoginForm) {
     document.documentElement.style.setProperty('--restaurant-logo-scale', String(logoScale));
     const name = String(profile.name || '').trim();
     if (name) {
+      document.body.classList.add('restaurant-profile-ready');
       document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
       document.title = `Cashier | ${name}`;
       replaceRestaurantNameInTextNodes(name);
