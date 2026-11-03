@@ -425,6 +425,7 @@ const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],
 
 /* 10. STATE + HELPERS */
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',website:'',logo_url:'',operating_hours:{}};
 const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
 const $=s=>document.querySelector(s),M=n=>'₱'+Math.round(n).toLocaleString('en-PH');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -562,6 +563,8 @@ invadjust:t=>inventoryAdjustForm(t.dataset.i),
   auditrefresh:async()=>{try{await loadAuditLogs();render();toast('Audit logs refreshed')}catch(e){auditLoadError=e.message||String(e);render();toast('Could not refresh audit logs',1)}},
   auditdetail:t=>auditDetail(t.dataset.id),
   settingsection:t=>{S.settingsSection=t.dataset.v;render()},
+  profilepick:()=>$('#profileLogoFile')?.click(),
+  profilesave:()=>saveRestaurantProfile(),
   settingsback:()=>{S.settingsSection=null;render()}
 };
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
@@ -652,12 +655,12 @@ settings:()=>{
  const profile=active.id==='profile'?`<section class="bs-panel">
   <div class="bs-panel-head"><div class="bs-head-icon">${I('home',22)}</div><div class="bs-head-copy"><h3>Basic Information</h3><p>Your restaurant's name, address and contact details.</p></div></div>
   <div class="bs-profile-grid">
-   <label class="bs-field">Business Name<input value="HALINA BISTRO CAFE" readonly></label>
-   <label class="bs-field">Contact Number<input placeholder="Add contact number"></label>
-   <label class="bs-field bs-address">Address<textarea placeholder="Add restaurant address" rows="2"></textarea></label>
-   <label class="bs-field">Email Address<input placeholder="Add business email"></label>
-   <label class="bs-field">Website <small>(Optional)</small><input placeholder="https://"></label>
-   <div class="bs-logo"><div class="bs-logo-mark">${I('spark',34)}<b>HALINA</b><small>BISTRO CAFE</small></div><button class="btn" disabled>Change Logo</button><small>Logo upload will be connected later</small></div>
+   <label class="bs-field">Business Name<input id="profileName" maxlength="120" value="${esc(PROFILE.name)}" required></label>
+   <label class="bs-field">Contact Number<input id="profilePhone" maxlength="40" value="${esc(PROFILE.contact_number)}" placeholder="Add contact number"></label>
+   <label class="bs-field bs-address">Address<textarea id="profileAddress" maxlength="500" placeholder="Add restaurant address" rows="2">${esc(PROFILE.address)}</textarea></label>
+   <label class="bs-field">Email Address<input id="profileEmail" type="email" maxlength="254" value="${esc(PROFILE.email)}" placeholder="Add business email"></label>
+   <label class="bs-field">Website <small>(Optional)</small><input id="profileWebsite" type="url" maxlength="255" value="${esc(PROFILE.website)}" placeholder="https://"></label>
+   <div class="bs-logo"><div class="bs-logo-mark" id="profileLogoPreview">${PROFILE.logo_url?`<img src="${esc(PROFILE.logo_url)}" alt="Restaurant logo" style="width:100%;height:100%;object-fit:contain;border-radius:12px">`:`${I('spark',34)}<b>${esc(PROFILE.name)}</b>`}</div><input id="profileLogoFile" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="btn" type="button" data-a="profilepick">Change Logo</button><small>PNG, JPG or WebP · Max 5 MB</small></div>
   </div>
  </section>
  <section class="bs-panel">
@@ -669,7 +672,7 @@ settings:()=>{
   <div class="bs-extra-grid"><label class="bs-field">Default Currency<select><option>PHP - Philippine Peso (₱)</option><option>USD - US Dollar ($)</option></select></label><label class="bs-field">Default Tax Rate (%)<input type="number" min="0" max="100" placeholder="Not configured"></label><label class="bs-field">Time Zone<select><option value="">Select time zone</option><option>(GMT+8) Manila, Philippines</option></select></label><label class="bs-field">Default Service Charge (%)<input type="number" min="0" max="100" placeholder="Not configured"></label></div>
  </section>`:
  `<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>Controls for this section will be connected after its rules and data requirements are finalized. No settings are being saved yet.</span></div></section>`;
- return `<div class="bs-page"><div class="bs-title"><h2>Business Settings</h2><p>Manage your restaurant's configuration, operations and system preferences.</p></div><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div><button class="btn pri" disabled>${I('log',16)} Save Changes</button></div>${profile}</main></div></div>`;
+ return `<div class="bs-page"><div class="bs-title"><h2>Business Settings</h2><p>Manage your restaurant's configuration, operations and system preferences.</p></div><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div><button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button></div>${profile}</main></div></div>`;
 },audit:auditPage});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
 const G=$('#gate');
@@ -1160,9 +1163,41 @@ function staffAddForm(){
   };
 }
 
+async function loadRestaurantProfile(){
+  const {data,error}=await sb.from('restaurants').select('name,address,contact_number,email,website,logo_url,operating_hours').eq('id',HALINA_RESTAURANT_ID).single();
+  if(error)throw error;
+  Object.assign(PROFILE,data||{});
+}
+async function saveRestaurantProfile(){
+  const name=$('#profileName')?.value.trim()||'';
+  const email=$('#profileEmail')?.value.trim()||'';
+  const website=$('#profileWebsite')?.value.trim()||'';
+  if(!name){toast('Business name is required.',1);return;}
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast('Enter a valid business email.',1);return;}
+  if(website && !/^https?:\/\//i.test(website)){toast('Website must start with http:// or https://.',1);return;}
+  const payload={name,address:$('#profileAddress')?.value.trim()||null,contact_number:$('#profilePhone')?.value.trim()||null,email:email||null,website:website||null};
+  const btn=$('#pg [data-a="profilesave"]');if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const {data,error}=await sb.from('restaurants').update(payload).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
+  if(error||!data){if(btn){btn.disabled=false;btn.textContent='Save Changes';}toast(error?.message||'No restaurant profile was updated. Check your owner/admin access.',1);return;}
+  Object.assign(PROFILE,payload);render();toast('Restaurant profile saved.');
+}
+$('#pg').addEventListener('change',async e=>{
+  if(e.target.id!=='profileLogoFile')return;
+  const file=e.target.files?.[0];if(!file)return;
+  if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024){toast('Choose a PNG, JPG or WebP image up to 5 MB.',1);e.target.value='';return;}
+  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+  const path=HALINA_RESTAURANT_ID+'/restaurant-logo.'+ext;
+  const {error:uploadError}=await sb.storage.from('halina-menu-images').upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});
+  if(uploadError){toast('Logo upload failed: '+uploadError.message,1);e.target.value='';return;}
+  const {data:{publicUrl}}=sb.storage.from('halina-menu-images').getPublicUrl(path);
+  const {data,error}=await sb.from('restaurants').update({logo_url:publicUrl}).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
+  if(error||!data){toast(error?.message||'Logo uploaded but profile could not be updated. Please retry Save.',1);e.target.value='';return;}
+  PROFILE.logo_url=publicUrl;render();toast('Restaurant logo updated.');
+});
 load=async function(manual){
   await originalLoad(manual);
   if(!G.hidden)return;
+  try{await loadRestaurantProfile();if(S.page==='settings')render();}catch(e){toast('Could not load restaurant profile: '+(e.message||String(e)),1);}
   try{await loadMenuData();if(S.page==='menu')render();}
   catch(e){menuLoadError=e.message||String(e);if(S.page==='menu')render();}
   try{await loadStaffData();if(S.page==='staff')render();}
