@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cashier | HALINA BISTRO CAFE</title>
+  <title>Cashier</title>
 <style>
 :root{--restaurant-font-family:Inter,Arial,sans-serif;--restaurant-font-scale:1;--restaurant-logo-scale:1.15}body{font-family:var(--restaurant-font-family)!important;font-size:calc(16px * var(--restaurant-font-scale))}img[data-restaurant-logo]{width:calc(30px * var(--restaurant-logo-scale))!important;height:calc(30px * var(--restaurant-logo-scale))!important;max-width:none;object-fit:contain}
 
@@ -14265,7 +14265,7 @@ if (cashierLoginForm) {
     const name = String(profile.name || '').trim();
     if (name) {
       document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
-      document.title = document.title.replace(/HALINA BISTRO CAFE/gi, name);
+      document.title = `Cashier | ${name}`;
       replaceRestaurantNameInTextNodes(name);
       watchRestaurantName(name);
     }
