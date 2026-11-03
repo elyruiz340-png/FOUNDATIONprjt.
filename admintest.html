@@ -1305,7 +1305,7 @@ $('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();
     const name = String(profile.name || '').trim();
     if (name) {
       document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
-      document.title = document.title.replace(/HALINA BISTRO CAFE/gi, name);
+      document.title = `${name} — Admin Dashboard`;
       replaceRestaurantNameInTextNodes(name);
       watchRestaurantName(name);
     }
