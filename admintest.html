@@ -40,8 +40,14 @@ header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px
 .av{width:38px;height:38px;border-radius:50%;border:0;background:var(--ac2);color:#fff;font-weight:700}
 .srch{display:flex;align-items:center;gap:8px;min-width:210px;padding:8px 12px;border-radius:11px;border:1px solid var(--bd);background:var(--s);color:var(--mu)}
 kbd{font:12px monospace;border:1px solid var(--bd);border-radius:6px;padding:0 6px;margin-left:auto}
-#pg{padding:20px;max-width:1360px}
-#pg>*{animation:up .25s}
+#pg{padding:20px;max-width:1360px;view-transition-name:admin-content;min-height:220px}
+/* Keep page content stable; avoid replaying entrance animations on every render. */
+#pg>*{animation:none!important}
+#pg.is-loading:before{content:"Refreshing data…";display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 11px;width:max-content;max-width:100%;border:1px solid var(--bd);border-radius:9px;background:var(--s);color:var(--mu);font-size:11px}
+#pg.is-loading:before{box-shadow:0 0 0 1px rgba(143,209,168,.04)}
+@media (prefers-reduced-motion:no-preference){::view-transition-old(admin-content){animation:adminFadeOut .12s ease both}::view-transition-new(admin-content){animation:adminFadeIn .18s ease both}}
+@keyframes adminFadeOut{to{opacity:0;transform:translateY(-2px)}}
+@keyframes adminFadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
 /* 4. COMPONENTS */
 .g{display:grid;gap:14px;margin-bottom:14px}.k{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
 .card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:16px;backdrop-filter:blur(12px);box-shadow:var(--sh);min-width:0}
@@ -529,8 +535,8 @@ function bell(){L.innerHTML=`<div class="bk" data-a="close" style="background:no
 const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
-function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;$('#ttl').textContent=NAV.find(n=>n[0]==S.page)[1];$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));$('#pg').innerHTML=PG[S.page]();dotU();if(id){const e=$('#pg [data-c="'+id+'"]');if(e){e.focus();if(e.type=='text')e.setSelectionRange(1e3,1e3)}}}
-function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render();window.scrollTo(0,0)}
+function render(options={}){const commit=()=>{const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;$('#ttl').textContent=NAV.find(n=>n[0]==S.page)[1];$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));$('#pg').innerHTML=PG[S.page]();dotU();if(id){const e=$('#pg [data-c=\"'+id+'\"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}};if(options.transition&&document.startViewTransition&&!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){document.startViewTransition(commit)}else commit()}
+function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render({transition:true});window.scrollTo({top:0,behavior:'smooth'})}
 const A={
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
 theme:()=>{S.theme=S.theme=='dark'?'light':'dark';ss('th',S.theme);applyTheme();if(S.page=='settings')render()},
@@ -554,7 +560,7 @@ addbr:()=>modal('Add branch',[['Branch name','text','']],v=>{if(!v[0].trim()){to
 brd:t=>{const i=+t.dataset.i,f=fin('tm',[i]);drawer(BS[i],`<div class="big">${M(f.net)}</div><p class="mu">Net sales this month (sample)</p><div class="row"><span>Orders</span><b>${f.ord}</b></div><div class="row"><span>Recorded expenses</span><b>${M(EXP.filter(e=>e.b==i+1).reduce((a,e)=>a+e.a,0))}</b></div><div class="row"><span>Staff assigned</span><b>${STAFF.filter(s=>s.b==i+1).length}</b></div><div class="row"><span>Low-stock items</span><b>${INV.filter(x=>x.b==i+1&&x.q<=x.th).length}</b></div><button class="btn" style="margin-top:12px" data-a="close">Close</button>`)},
 hl:t=>{const h=HEALTH[t.dataset.i];drawer(h[0],`<p><span class="bd ${h[1]}">● ${h[2]}</span></p><p>${h[3]}</p>`)},
 test:()=>{toast('Simulated test passed for 4 of 5 services');setTimeout(()=>toast('AI service is offline in this demo. No AI API is connected.',1),500)},
-pr:t=>{S.per=t.dataset.v;render()},ntab:t=>{S.nt=t.dataset.v;render()},
+pr:t=>{S.per=t.dataset.v;render({transition:true})},ntab:t=>{S.nt=t.dataset.v;render()},
 readall:()=>{NT.forEach(n=>n.r=1);bell();dotU()},clrn:()=>{NT.length=0;bell();dotU()},
 nt:t=>{NT[t.dataset.i].r=1;bell();dotU()},
 allnt:()=>drawer('All notifications',NT.map(n=>`<div class="row"><span>${n.r?'':'● '}${n.ty}<br><span class="mu">${n.m}</span></span></div>`).join('')||empty('You’re all caught up.')),
@@ -567,7 +573,7 @@ invarchived:()=>{S.showArchived=!S.showArchived;render()},
 invadjust:t=>inventoryAdjustForm(t.dataset.i),
   auditrefresh:async()=>{try{await loadAuditLogs();render();toast('Audit logs refreshed')}catch(e){auditLoadError=e.message||String(e);render();toast('Could not refresh audit logs',1)}},
   auditdetail:t=>auditDetail(t.dataset.id),
-  settingsection:t=>{S.settingsSection=t.dataset.v;render();initAppearanceControls()},
+  settingsection:t=>{S.settingsSection=t.dataset.v;render({transition:true});initAppearanceControls()},
   profilepick:()=>$('#profileLogoFile')?.click(),
   profilesave:()=>saveRestaurantProfile(),
   settingsback:()=>{S.settingsSection=null;render()}
@@ -577,14 +583,15 @@ document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(doc
 if(e.key=='Escape'){if(L.innerHTML)closeL();else $('#app').classList.remove('mo')}
 else if((e.key=='/'&&!f)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='k')){e.preventDefault();search()}
 else if(e.key=='Enter'&&document.activeElement.dataset.a&&document.activeElement.tagName!='BUTTON')document.activeElement.click()});
-document.addEventListener('input',e=>{const t=e.target;if(t.dataset.c=='q'){S.f.q=t.value;render()}else if(t.dataset.c==='auditQ'){S.f.auditQ=t.value;render()}});
+function filterVisibleRows(input){const q=(input.value||'').trim().toLocaleLowerCase();const root=$('#pg');if(!root)return;const tables=[...root.querySelectorAll('table')];let matched=0,total=0;tables.forEach(table=>{table.querySelectorAll('tbody tr').forEach(row=>{const hit=!q||row.textContent.toLocaleLowerCase().includes(q);row.hidden=!hit;if(hit)matched++;total++})});const count=root.querySelector('.tb .mu');if(count&&total)count.dataset.searchCount=q?`${matched} of ${total} rows`:''}
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.c==='q'){S.f.q=t.value;filterVisibleRows(t)}else if(t.dataset.c==='auditQ'){S.f.auditQ=t.value;filterVisibleRows(t)}});
 document.addEventListener('change',e=>{const t=e.target,c=t.dataset.c;if(!c)return;
 if(c=='br')S.br=+t.value;else if(c=='per')S.per=t.value;
 else if(c=='cu0'||c=='cu1'){S[c]=t.value;const d=(new Date(S.cu1)-new Date(S.cu0))/864e5+1;PER.cu[1]=d>0?Math.round(d):1}
 else if(c=='av'){MENU[t.value].a=t.checked;toast('Availability updated')}
 else if(c=='tg'){toast('Preference changed — not saved in this prototype');return}
 else if(t.type=='checkbox'&&t.closest('.md')){return}
-else if(c!='q')S.f[c]=t.value;render()});
+else if(c!='q')S.f[c]=t.value;render({transition:['br','per','cu0','cu1'].includes(c)})});
 document.addEventListener('change',e=>{const t=e.target;if(t.type=='checkbox'&&t.closest('.md')){const k=WID[[...t.closest('.md').querySelectorAll('input[type=checkbox]')].indexOf(t)][0];S.w[k]=!t.checked;ss('w',S.w);if(S.page=='overview')render()}});
 
 /* INVENTORY CONNECTION — limited to the Inventory section */
@@ -684,7 +691,7 @@ settings:()=>{
  <div class="bs-field"><b>Live Preview</b><div id="appearancePreview" style="padding:18px;border:1px solid var(--line);border-radius:12px;margin-top:8px"><strong>EDMEL Restaurant</strong><p style="margin:8px 0 0">Your dashboard appearance preview</p></div></div>
  </div></section>`:
  `<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>Controls for this section will be connected after its rules and data requirements are finalized. No settings are being saved yet.</span></div></section>`;
- return `<div class="bs-page"><div class="bs-title"><h2>Business Settings</h2><p>Manage your restaurant's configuration, operations and system preferences.</p></div><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div><button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button></div>${profile}</main></div></div>`;
+ return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div><button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button></div>${profile}</main></div></div>`;
 },audit:auditPage});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
 const G=$('#gate');
@@ -694,11 +701,11 @@ async function start(){const{data:{session}}=await sb.auth.getSession();if(!sess
 const{data:ru,error}=await sb.from('restaurant_users').select('role,restaurant_id').eq('user_id',session.user.id).maybeSingle();
 if(error||!ru||!['owner','admin'].includes(ru.role)){await sb.auth.signOut();showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to an owner or admin role.');return}
 G.hidden=true;S.user=session.user.email;await load()}
-async function load(manual){document.body.classList.remove('locked');$('#pg').innerHTML='<div class="card">Loading your restaurant data…</div>';
+async function load(manual){document.body.classList.remove('locked');const pg=$('#pg'),hasContent=!!pg.children.length;if(!hasContent)pg.innerHTML='<div class="card">Loading your restaurant data…</div>';else pg.classList.add('is-loading');
 try{const{data,error}=await sb.from('orders').select('id,order_number,order_type,payment_method,payment_status,status,total,items,table_number,created_at').order('created_at',{ascending:false}).limit(5000);if(error)throw error;ORD.length=0;ORD.push(...data.map(mapO));
 const r=await sb.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,stock_total,stock_remaining,category,image_url,is_available,is_archived,created_at').order('id',{ascending:true});INV.length=0;S.stockErr=r.error?r.error.message:'';if(!r.error)INV.push(...r.data.map(x=>({id:x.id,pid:x.product_id||'',n:x.product_name||'',c:x.category||'',total:Number(x.stock_total)||0,q:Number(x.stock_remaining)||0,u:'',th:3,b:1,image:x.image_url||'',available:x.is_available!==false,archived:x.is_archived===true,upd:x.created_at||'',log:[]})));
 render();if(manual)toast('Data refreshed')}
-catch(err){$('#pg').innerHTML=`<div class="card"><span class="bd er">● Could not load orders</span><p>${esc(err.message||String(err))}</p><div class="tb"><button class="btn" data-a="refresh">Try again</button><button class="btn" data-a="signout">Sign out</button></div></div>`}}
+catch(err){if(hasContent){toast('Could not refresh data: '+(err.message||String(err)),1)}else{$('#pg').innerHTML=`<div class="card"><span class="bd er">● Could not load orders</span><p>${esc(err.message||String(err))}</p><div class="tb"><button class="btn" data-a="refresh">Try again</button><button class="btn" data-a="signout">Sign out</button></div></div>`}}finally{pg.classList.remove('is-loading')}}
 
 /* HALINA MENU & CATEGORIES — Supabase-backed */
 const HALINA_RESTAURANT_ID='5e562ca7-38aa-4894-8265-ddca2f4e61b6';
