@@ -501,7 +501,10 @@
 
   cursor: not-allowed;
 }
-  </style>
+  
+/* Prevent demo restaurant branding from flashing before the saved profile loads. */
+body:not(.restaurant-profile-ready) h1{visibility:hidden!important}
+</style>
 </head>
 
 <body>
@@ -2256,6 +2259,7 @@ document
     document.documentElement.style.setProperty('--restaurant-logo-scale', String(logoScale));
     const name = String(profile.name || '').trim();
     if (name) {
+      document.body.classList.add('restaurant-profile-ready');
       document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
       document.title = name;
       replaceRestaurantNameInTextNodes(name);
