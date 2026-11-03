@@ -9,6 +9,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
+:root{--restaurant-font-family:Inter,Arial,sans-serif;--restaurant-font-scale:1;--restaurant-logo-scale:1.15}body{font-family:var(--restaurant-font-family)!important;font-size:calc(16px * var(--restaurant-font-scale))}img[data-restaurant-logo]{width:calc(30px * var(--restaurant-logo-scale))!important;height:calc(30px * var(--restaurant-logo-scale))!important;max-width:none;object-fit:contain}
+
     * {
       box-sizing: border-box;
     }
@@ -2225,6 +2227,14 @@ document
   }
   function applyProfile(profile) {
     if (!profile) return;
+    const appearance = profile.appearance_settings || {};
+    const fontMap = {Inter:'Inter, Arial, sans-serif',Roboto:'Roboto, Arial, sans-serif',Poppins:'Poppins, Arial, sans-serif',Montserrat:'Montserrat, Arial, sans-serif',Lato:'Lato, Arial, sans-serif'};
+    const font = fontMap[appearance.font_family] || fontMap.Inter;
+    const scale = Math.min(1.15, Math.max(0.9, Number(appearance.font_scale) || 1));
+    const logoScale = Math.min(1.5, Math.max(0.8, Number(appearance.logo_scale) || 1.15));
+    document.documentElement.style.setProperty('--restaurant-font-family', font);
+    document.documentElement.style.setProperty('--restaurant-font-scale', String(scale));
+    document.documentElement.style.setProperty('--restaurant-logo-scale', String(logoScale));
     const name = String(profile.name || '').trim();
     if (name) {
       document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
@@ -2239,7 +2249,7 @@ document
   window.applyRestaurantBranding = applyProfile;
   async function connect() {
     try {
-      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate', {
+      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
         headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }, cache: 'no-store'
       });
       if (!response.ok) throw new Error('Profile request failed: ' + response.status);
