@@ -14186,5 +14186,75 @@ if (cashierLoginForm) {
   window.halinaLoadOrderTables();
 })();
 </script>
+
+<!-- CENTRAL RESTAURANT PROFILE CONNECTION -->
+<script>
+/* CENTRAL RESTAURANT BRANDING — reads the single public restaurant profile */
+(function () {
+  const API = 'https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/restaurants';
+  const KEY = 'sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
+  const RESTAURANT_ID = '5e562ca7-38aa-4894-8265-ddca2f4e61b6';
+  const selectors = {
+    customer: ['.hero h1'],
+    cashier: ['.cashier-login-brand', '.pos-brand', '.success-receipt-header'],
+    dispatcher: ['.brand h1'],
+    admin: ['.topbar .sub', '.sub']
+  };
+  function addLogo(el, url, mode) {
+    if (!el || !url || el.querySelector(':scope > img[data-restaurant-logo]')) return;
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'Restaurant logo';
+    img.dataset.restaurantLogo = 'true';
+    img.loading = 'eager';
+    img.style.cssText = mode === 'dispatcher'
+      ? 'width:34px;height:34px;object-fit:contain;border-radius:9px;display:block'
+      : 'width:30px;height:30px;object-fit:contain;border-radius:8px;vertical-align:middle;margin-right:9px';
+    if (mode === 'dispatcher') {
+      const mark = document.querySelector('.brand .logo');
+      if (mark) { mark.textContent = ''; mark.appendChild(img); }
+    } else {
+      el.insertBefore(img, el.firstChild);
+    }
+  }
+  async function connect() {
+    try {
+      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate', {
+        headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }
+      });
+      if (!response.ok) throw new Error('Profile request failed: ' + response.status);
+      const rows = await response.json();
+      const profile = rows && rows[0];
+      if (!profile) return;
+      const name = String(profile.name || '').trim();
+      if (name) {
+        document.querySelectorAll(selectors.customer.concat(selectors.cashier, selectors.dispatcher, selectors.admin).join(',')).forEach(el => {
+          const img = el.querySelector(':scope > img[data-restaurant-logo]');
+          el.textContent = '';
+          if (img) el.appendChild(img);
+          el.appendChild(document.createTextNode(name));
+        });
+        document.title = document.title.replace(/HALINA BISTRO CAFE/gi, name);
+        document.querySelectorAll('.brand .logo').forEach(el => {
+          if (profile.logo_url) addLogo(el, profile.logo_url, 'dispatcher');
+        });
+      }
+      if (profile.logo_url) {
+        const mode = document.querySelector('.brand .logo') ? 'dispatcher' : 'inline';
+        const targets = selectors.customer.concat(selectors.cashier, selectors.admin)
+          .flatMap(sel => Array.from(document.querySelectorAll(sel)));
+        targets.forEach(el => addLogo(el, profile.logo_url, mode));
+      }
+      window.HALINA_RESTAURANT_PROFILE = profile;
+      window.dispatchEvent(new CustomEvent('restaurantprofileloaded', { detail: profile }));
+    } catch (error) {
+      console.warn('Could not load centralized restaurant profile:', error);
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', connect, { once: true });
+  else connect();
+})();
+</script>
+
 </body>
 </html>
