@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>HALINA BISTRO CAFE</title>
+  <title>Restaurant</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -2257,7 +2257,7 @@ document
     const name = String(profile.name || '').trim();
     if (name) {
       document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
-      document.title = document.title.replace(/HALINA BISTRO CAFE/gi, name);
+      document.title = name;
       replaceRestaurantNameInTextNodes(name);
       watchRestaurantName(name);
     }
