@@ -1186,13 +1186,13 @@ $('#pg').addEventListener('change',async e=>{
   const file=e.target.files?.[0];if(!file)return;
   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024){toast('Choose a PNG, JPG or WebP image up to 5 MB.',1);e.target.value='';return;}
   const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
-  const path=HALINA_RESTAURANT_ID+'/restaurant-logo.'+ext;
-  const {error:uploadError}=await sb.storage.from('halina-menu-images').upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});
+  const path=HALINA_RESTAURANT_ID+'/restaurant-logo/'+crypto.randomUUID()+'.'+ext;
+  const {error:uploadError}=await sb.storage.from('halina-menu-images').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});
   if(uploadError){toast('Logo upload failed: '+uploadError.message,1);e.target.value='';return;}
   const {data:{publicUrl}}=sb.storage.from('halina-menu-images').getPublicUrl(path);
   const {data,error}=await sb.from('restaurants').update({logo_url:publicUrl}).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
   if(error||!data){toast(error?.message||'Logo uploaded but profile could not be updated. Please retry Save.',1);e.target.value='';return;}
-  PROFILE.logo_url=publicUrl;window.dispatchEvent(new CustomEvent('restaurantprofilechanged',{detail:PROFILE}));render();toast('Restaurant logo updated.');
+  PROFILE.logo_url=publicUrl;window.dispatchEvent(new CustomEvent('restaurantprofilechanged',{detail:{...PROFILE,logo_url:publicUrl}}));render();toast('Restaurant logo updated.');
 });
 load=async function(manual){
   await originalLoad(manual);
@@ -1218,64 +1218,66 @@ $('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();
 
 <!-- CENTRAL RESTAURANT PROFILE CONNECTION -->
 <script>
-/* CENTRAL RESTAURANT BRANDING — reads the single public restaurant profile */
+/* CENTRAL RESTAURANT BRANDING — restaurants is the single source of truth. */
 (function () {
   const API = 'https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/restaurants';
   const KEY = 'sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
   const RESTAURANT_ID = '5e562ca7-38aa-4894-8265-ddca2f4e61b6';
-  const selectors = {
-    customer: ['.hero h1'],
-    cashier: ['.cashier-login-brand', '.pos-brand', '.success-receipt-header'],
-    dispatcher: ['.brand h1'],
-    admin: ['.topbar .sub']
-  };
-  function addLogo(el, url, mode) {
-    if (!el || !url || el.querySelector(':scope > img[data-restaurant-logo]')) return;
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = 'Restaurant logo';
-    img.dataset.restaurantLogo = 'true';
-    img.loading = 'eager';
-    img.style.cssText = mode === 'dispatcher'
-      ? 'width:34px;height:34px;object-fit:contain;border-radius:9px;display:block'
-      : 'width:30px;height:30px;object-fit:contain;border-radius:8px;vertical-align:middle;margin-right:9px';
-    if (mode === 'dispatcher') {
-      const mark = document.querySelector('.brand .logo');
-      if (mark) { mark.textContent = ''; mark.appendChild(img); }
-    } else {
+  const NAME_SELECTORS = ['header .sub'];
+  const LOGO_MODE = 'admin';
+  function setName(el, name) {
+    if (!el || !name) return;
+    let img = el.querySelector(':scope > img[data-restaurant-logo]');
+    el.textContent = '';
+    if (img) el.appendChild(img);
+    el.appendChild(document.createTextNode(name));
+  }
+  function setInlineLogo(el, url) {
+    if (!el || !url) return;
+    let img = el.querySelector(':scope > img[data-restaurant-logo]');
+    if (!img) {
+      img = document.createElement('img');
+      img.dataset.restaurantLogo = 'true';
+      img.alt = 'Restaurant logo';
+      img.loading = 'eager';
+      img.style.cssText = 'width:30px;height:30px;object-fit:contain;border-radius:8px;vertical-align:middle;margin-right:9px';
       el.insertBefore(img, el.firstChild);
     }
+    img.src = url;
+  }
+  function setDispatcherLogo(url) {
+    const mark = document.querySelector('.brand .logo');
+    if (!mark || !url) return;
+    let img = mark.querySelector(':scope > img[data-restaurant-logo]');
+    if (!img) {
+      mark.textContent = '';
+      img = document.createElement('img');
+      img.dataset.restaurantLogo = 'true';
+      img.alt = 'Restaurant logo';
+      img.loading = 'eager';
+      img.style.cssText = 'width:34px;height:34px;object-fit:contain;border-radius:9px;display:block';
+      mark.appendChild(img);
+    }
+    img.src = url;
   }
   function applyProfile(profile) {
-      if (!profile) return;
-      const name = String(profile.name || '').trim();
-      const allSelectors = selectors.customer.concat(selectors.cashier, selectors.dispatcher, selectors.admin);
-      if (name) {
-        document.querySelectorAll(allSelectors.join(',')).forEach(el => {
-          const img = el.querySelector(':scope > img[data-restaurant-logo]');
-          el.textContent = '';
-          if (img) el.appendChild(img);
-          el.appendChild(document.createTextNode(name));
-        });
-        document.title = document.title.replace(/HALINA BISTRO CAFE/gi, name);
-      }
-      if (profile.logo_url) {
-        const mark = document.querySelector('.brand .logo');
-        if (mark) {
-          mark.textContent = '';
-          addLogo(mark, profile.logo_url, 'dispatcher');
-        }
-        selectors.customer.concat(selectors.cashier, selectors.admin).forEach(sel =>
-          document.querySelectorAll(sel).forEach(el => addLogo(el, profile.logo_url, 'inline'))
-        );
-      }
-      window.HALINA_RESTAURANT_PROFILE = profile;
+    if (!profile) return;
+    const name = String(profile.name || '').trim();
+    if (name) {
+      document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
+      document.title = document.title.replace(/HALINA BISTRO CAFE/gi, name);
     }
-    window.applyRestaurantBranding = applyProfile;
-    async function connect() {
+    if (profile.logo_url) {
+      if (LOGO_MODE === 'dispatcher') setDispatcherLogo(profile.logo_url);
+      else document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setInlineLogo(el, profile.logo_url));
+    }
+    window.HALINA_RESTAURANT_PROFILE = profile;
+  }
+  window.applyRestaurantBranding = applyProfile;
+  async function connect() {
     try {
       const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate', {
-        headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }
+        headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }, cache: 'no-store'
       });
       if (!response.ok) throw new Error('Profile request failed: ' + response.status);
       const rows = await response.json();
@@ -1288,6 +1290,8 @@ $('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();
     }
   }
   window.addEventListener('restaurantprofilechanged', e => applyProfile(e.detail));
+  window.addEventListener('focus', connect);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) connect(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', connect, { once: true });
   else connect();
 })();
