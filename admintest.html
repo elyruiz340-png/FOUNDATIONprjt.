@@ -6,6 +6,8 @@
 <title>EDMEL — Admin Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+:root{--restaurant-font-family:Inter,Arial,sans-serif;--restaurant-font-scale:1;--restaurant-logo-scale:1.15}body{font-family:var(--restaurant-font-family)!important;font-size:calc(16px * var(--restaurant-font-scale))}img[data-restaurant-logo]{width:calc(30px * var(--restaurant-logo-scale))!important;height:calc(30px * var(--restaurant-logo-scale))!important;max-width:none;object-fit:contain}
+
 /* 2. THEME TOKENS */
 :root{--bg:#07110c;--bg2:#10211a;--s:rgba(34,58,45,.46);--gs:rgba(22,40,31,.66);--gh:rgba(16,30,23,.55);--gf:rgba(14,28,21,.88);--bd:rgba(150,200,170,.14);--ge:rgba(160,215,185,.24);--hl:rgba(255,255,255,.10);--o1:#2e8a58;--o2:#1b5a3d;--o3:#b59a5a;--oo:.45;--tx:#eef3ef;--mu:#9bb0a3;--ac:#8fd1a8;--ac2:#2f7a54;--ok:#78c796;--wn:#e6ae52;--er:#e2766b;--r:14px;--sh:0 8px 28px rgba(0,0,0,.3);--t:.22s}
 [data-theme=light]{--bg:#f3ebd6;--bg2:#fbf6e8;--s:rgba(255,252,243,.55);--gs:rgba(255,252,243,.72);--gh:rgba(255,252,243,.6);--gf:rgba(255,253,246,.92);--bd:rgba(80,92,70,.16);--ge:rgba(255,255,255,.85);--hl:rgba(255,255,255,.9);--o1:#79b58e;--o2:#e0c27a;--o3:#9cc9ab;--oo:.6;--tx:#222622;--mu:#4f5a4a;--ac:#2f6b4a;--ac2:#285d3f;--ok:#25794a;--wn:#8f5b06;--er:#a8362c;--sh:0 8px 24px rgba(80,66,36,.12)}
@@ -425,7 +427,7 @@ const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],
 
 /* 10. STATE + HELPERS */
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',website:'',logo_url:'',operating_hours:{}};
+const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',website:'',logo_url:'',operating_hours:{},appearance_settings:{font_family:'Inter',font_scale:1,logo_scale:1.15}};
 const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
 const $=s=>document.querySelector(s),M=n=>'₱'+Math.round(n).toLocaleString('en-PH');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -562,7 +564,7 @@ invarchived:()=>{S.showArchived=!S.showArchived;render()},
 invadjust:t=>inventoryAdjustForm(t.dataset.i),
   auditrefresh:async()=>{try{await loadAuditLogs();render();toast('Audit logs refreshed')}catch(e){auditLoadError=e.message||String(e);render();toast('Could not refresh audit logs',1)}},
   auditdetail:t=>auditDetail(t.dataset.id),
-  settingsection:t=>{S.settingsSection=t.dataset.v;render()},
+  settingsection:t=>{S.settingsSection=t.dataset.v;render();initAppearanceControls()},
   profilepick:()=>$('#profileLogoFile')?.click(),
   profilesave:()=>saveRestaurantProfile(),
   settingsback:()=>{S.settingsSection=null;render()}
@@ -670,7 +672,14 @@ settings:()=>{
  <section class="bs-panel">
   <div class="bs-panel-head"><div class="bs-head-icon">${I('cog',22)}</div><div class="bs-head-copy"><h3>Additional Settings</h3><p>Other business preferences.</p></div></div>
   <div class="bs-extra-grid"><label class="bs-field">Default Currency<select><option>PHP - Philippine Peso (₱)</option><option>USD - US Dollar ($)</option></select></label><label class="bs-field">Default Tax Rate (%)<input type="number" min="0" max="100" placeholder="Not configured"></label><label class="bs-field">Time Zone<select><option value="">Select time zone</option><option>(GMT+8) Manila, Philippines</option></select></label><label class="bs-field">Default Service Charge (%)<input type="number" min="0" max="100" placeholder="Not configured"></label></div>
- </section>`:
+ </section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Appearance & Branding</h3><p>Customize font and logo sizing across all dashboards.</p></div></div>
+ <div class="bs-profile-grid">
+ <label class="bs-field">Font Family<select id="appearanceFont"><option>Inter</option><option>Roboto</option><option>Poppins</option><option>Montserrat</option><option>Lato</option></select></label>
+ <label class="bs-field">Font Size <small id="fontScaleLabel">100%</small><input id="appearanceFontScale" type="range" min="90" max="115" step="5" value="100"></label>
+ <label class="bs-field">Logo Size <small id="logoScaleLabel">115%</small><input id="appearanceLogoScale" type="range" min="80" max="150" step="5" value="115"></label>
+ <div class="bs-field"><b>Live Preview</b><div id="appearancePreview" style="padding:18px;border:1px solid var(--line);border-radius:12px;margin-top:8px"><strong>EDMEL Restaurant</strong><p style="margin:8px 0 0">Your dashboard appearance preview</p></div></div>
+ </div></section>`:
  `<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>Controls for this section will be connected after its rules and data requirements are finalized. No settings are being saved yet.</span></div></section>`;
  return `<div class="bs-page"><div class="bs-title"><h2>Business Settings</h2><p>Manage your restaurant's configuration, operations and system preferences.</p></div><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div><button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button></div>${profile}</main></div></div>`;
 },audit:auditPage});
@@ -1164,10 +1173,13 @@ function staffAddForm(){
 }
 
 async function loadRestaurantProfile(){
-  const {data,error}=await sb.from('restaurants').select('name,address,contact_number,email,website,logo_url,operating_hours').eq('id',HALINA_RESTAURANT_ID).single();
+  const {data,error}=await sb.from('restaurants').select('name,address,contact_number,email,website,logo_url,operating_hours,appearance_settings').eq('id',HALINA_RESTAURANT_ID).single();
   if(error)throw error;
   Object.assign(PROFILE,data||{});
 }
+function initAppearanceControls(){const a=PROFILE.appearance_settings||{};const f=$('#appearanceFont'),fs=$('#appearanceFontScale'),ls=$('#appearanceLogoScale');if(f)f.value=a.font_family||'Inter';if(fs)fs.value=Math.round((a.font_scale||1)*100);if(ls)ls.value=Math.round((a.logo_scale||1.15)*100);updateAppearancePreview();}
+function updateAppearancePreview(){const f=$('#appearanceFont'),fs=$('#appearanceFontScale'),ls=$('#appearanceLogoScale'),p=$('#appearancePreview');if(!f||!fs||!ls||!p)return;const scale=Number(fs.value)/100,logo=Number(ls.value);$('#fontScaleLabel').textContent=Math.round(scale*100)+'%';$('#logoScaleLabel').textContent=logo+'%';p.style.fontFamily=f.value+',Arial,sans-serif';p.style.fontSize=(16*scale)+'px';p.innerHTML=`<strong style="display:inline-flex;align-items:center;gap:10px"><span style="width:${30*logo/100}px;height:${30*logo/100}px;border-radius:8px;background:#2f7650;display:inline-block"></span>EDMEL Restaurant</strong><p style="margin:8px 0 0">Your dashboard appearance preview</p>`;}
+document.addEventListener('input',e=>{if(['appearanceFont','appearanceFontScale','appearanceLogoScale'].includes(e.target.id))updateAppearancePreview()});
 async function saveRestaurantProfile(){
   const name=$('#profileName')?.value.trim()||'';
   const email=$('#profileEmail')?.value.trim()||'';
@@ -1175,7 +1187,8 @@ async function saveRestaurantProfile(){
   if(!name){toast('Business name is required.',1);return;}
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast('Enter a valid business email.',1);return;}
   if(website && !/^https?:\/\//i.test(website)){toast('Website must start with http:// or https://.',1);return;}
-  const payload={name,address:$('#profileAddress')?.value.trim()||null,contact_number:$('#profilePhone')?.value.trim()||null,email:email||null,website:website||null};
+  const appearance_settings={font_family:$('#appearanceFont')?.value||'Inter',font_scale:Math.min(1.15,Math.max(.9,(Number($('#appearanceFontScale')?.value)||100)/100)),logo_scale:Math.min(1.5,Math.max(.8,(Number($('#appearanceLogoScale')?.value)||115)/100))};
+  const payload={name,address:$('#profileAddress')?.value.trim()||null,contact_number:$('#profilePhone')?.value.trim()||null,email:email||null,website:website||null,appearance_settings};
   const btn=$('#pg [data-a="profilesave"]');if(btn){btn.disabled=true;btn.textContent='Saving…';}
   const {data,error}=await sb.from('restaurants').update(payload).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
   if(error||!data){if(btn){btn.disabled=false;btn.textContent='Save Changes';}toast(error?.message||'No restaurant profile was updated. Check your owner/admin access.',1);return;}
@@ -1197,7 +1210,7 @@ $('#pg').addEventListener('change',async e=>{
 load=async function(manual){
   await originalLoad(manual);
   if(!G.hidden)return;
-  try{await loadRestaurantProfile();if(S.page==='settings')render();}catch(e){toast('Could not load restaurant profile: '+(e.message||String(e)),1);}
+  try{await loadRestaurantProfile();if(S.page==='settings'){render();initAppearanceControls();}}catch(e){toast('Could not load restaurant profile: '+(e.message||String(e)),1);}
   try{await loadMenuData();if(S.page==='menu')render();}
   catch(e){menuLoadError=e.message||String(e);if(S.page==='menu')render();}
   try{await loadStaffData();if(S.page==='staff')render();}
@@ -1262,6 +1275,14 @@ $('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();
   }
   function applyProfile(profile) {
     if (!profile) return;
+    const appearance = profile.appearance_settings || {};
+    const fontMap = {Inter:'Inter, Arial, sans-serif',Roboto:'Roboto, Arial, sans-serif',Poppins:'Poppins, Arial, sans-serif',Montserrat:'Montserrat, Arial, sans-serif',Lato:'Lato, Arial, sans-serif'};
+    const font = fontMap[appearance.font_family] || fontMap.Inter;
+    const scale = Math.min(1.15, Math.max(0.9, Number(appearance.font_scale) || 1));
+    const logoScale = Math.min(1.5, Math.max(0.8, Number(appearance.logo_scale) || 1.15));
+    document.documentElement.style.setProperty('--restaurant-font-family', font);
+    document.documentElement.style.setProperty('--restaurant-font-scale', String(scale));
+    document.documentElement.style.setProperty('--restaurant-logo-scale', String(logoScale));
     const name = String(profile.name || '').trim();
     if (name) {
       document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
@@ -1276,7 +1297,7 @@ $('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();
   window.applyRestaurantBranding = applyProfile;
   async function connect() {
     try {
-      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate', {
+      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
         headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }, cache: 'no-store'
       });
       if (!response.ok) throw new Error('Profile request failed: ' + response.status);
