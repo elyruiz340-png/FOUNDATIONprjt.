@@ -156,32 +156,46 @@ body.locked .app{visibility:hidden}#gate{position:fixed;inset:0;z-index:100;disp
   --panel-soft:rgba(255,255,255,.72);
   --field-bg:rgba(255,255,255,.78);
 }
-/* Slim, quiet scrollbars across the dashboard */
-*{
-  scrollbar-width:thin;
-  scrollbar-color:var(--scroll-thumb) transparent;
-}
-*::-webkit-scrollbar{width:6px;height:6px}
+/* Auto-hide scrollbars: scrolling remains enabled; bars appear only while scrolling. */
+*{scrollbar-width:none;scrollbar-color:transparent transparent}
+*::-webkit-scrollbar{width:0;height:0}
 *::-webkit-scrollbar-track{background:transparent}
-*::-webkit-scrollbar-thumb{
-  background:var(--scroll-thumb);
-  border-radius:20px;
-  border:2px solid transparent;
-  background-clip:padding-box;
-}
-*::-webkit-scrollbar-thumb:hover{
-  background:var(--scroll-thumb-hover);
-  border:1px solid transparent;
-  background-clip:padding-box;
-}
+*::-webkit-scrollbar-thumb{background:transparent;border-radius:20px}
 *::-webkit-scrollbar-corner{background:transparent}
+*.is-scrolling{scrollbar-width:thin;scrollbar-color:var(--scroll-thumb) transparent}
+*.is-scrolling::-webkit-scrollbar{width:6px;height:6px}
+*.is-scrolling::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border:2px solid transparent;background-clip:padding-box}
+*.is-scrolling::-webkit-scrollbar-thumb:hover{background:var(--scroll-thumb-hover);border:1px solid transparent;background-clip:padding-box}
+/* Inventory & Stock — compact, readable table and quiet action menu */
+.inv-table-card{padding:8px 12px;overflow:visible}
+.inv-table-card .tw{overflow-x:auto;overscroll-behavior-x:contain}
+.inv-table{min-width:680px}
+.inv-table th{padding:10px 12px;font-size:11px;letter-spacing:.02em}
+.inv-table td{padding:12px;vertical-align:middle}
+.inv-item{display:flex;align-items:center;gap:10px;min-width:180px}
+.inv-thumb{width:38px;height:38px;flex:0 0 38px;border-radius:10px;object-fit:cover;background:var(--panel-soft);border:1px solid var(--bd)}
+.inv-thumb-placeholder{display:grid;place-items:center;color:var(--mu);font-size:16px}
+.inv-item-name{font-weight:650;white-space:normal;line-height:1.3}
+.inv-item-id{font-size:10px;color:var(--mu);margin-top:3px}
+.inv-remaining{font-weight:750;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.inv-actions{position:relative;display:inline-block}
+.inv-actions summary{list-style:none;cursor:pointer;display:grid;place-items:center;width:34px;height:32px;border:1px solid var(--bd);border-radius:9px;background:var(--s);font-size:19px;line-height:1}
+.inv-actions summary::-webkit-details-marker{display:none}
+.inv-actions[open] summary{border-color:var(--ac)}
+.inv-action-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:15;min-width:174px;padding:5px;border:1px solid var(--bd);border-radius:11px;background:var(--bg2);box-shadow:var(--sh);display:grid;gap:3px}
+.inv-action-menu button{width:100%;text-align:left;padding:8px 10px;border:0;border-radius:7px;background:transparent;font-size:12px;color:var(--tx)}
+.inv-action-menu button:hover{background:var(--panel-soft)}
+.inv-action-menu button.danger{color:var(--er)}
+.inv-toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.inv-toolbar .mu{font-size:12px;margin-right:auto}
+@media(max-width:700px){.inv-toolbar .mu{flex-basis:100%;order:3}.inv-table-card{padding:5px 7px}}
 /* More balanced page rhythm */
 #pg{padding:18px 20px 24px}
 .bs-page{gap:12px}
 .bs-title h2{font-size:23px}
 .bs-layout{grid-template-columns:minmax(255px,300px) minmax(0,1fr);gap:14px;align-items:start}
 .bs-sidebar,.bs-content{padding:13px;border-radius:17px}
-.bs-sidebar{gap:11px;max-height:calc(100vh - 166px);overflow-y:auto;overscroll-behavior:contain;position:sticky;top:94px}
+.bs-sidebar{gap:11px;max-height:calc(100vh - 166px);overflow-y:auto;overscroll-behavior:contain;position:sticky;top:94px;scrollbar-gutter:stable}
 .bs-group{gap:2px}
 .bs-group-title{padding:3px 8px 5px}
 .bs-nav-item{min-height:47px;padding:6px 8px;gap:9px;border-radius:10px}
@@ -432,7 +446,7 @@ const NT=[{ty:'New order',m:'Sample order ORD-1067 received at Branch 1 (illustr
 const HEALTH=[['Database connection','ok','Sample: OK','No real database is connected. This simulates a healthy link.'],['Order synchronization','ok','Sample: OK','Simulates orders syncing between customer, cashier and dispatcher.'],['Printer integration','wn','Sample: Warning','Simulates a receipt printer with low paper. No printer is used.'],['Payment integration','ok','Sample: OK','Simulated only. No payment system is connected.'],['AI service','wn','Not connected','EDY is not connected yet: no AI service is configured.']];
 const PER={today:['Today',1],yest:['Yesterday',.93],'7d':['Last 7 Days',7],'30d':['Last 30 Days',30],tm:['This Month',24],lm:['Last Month',30],ty:['This Year',298],cu:['Custom Range',14]};
 const WID=[['sales','Sales Today'],['orders','Orders Today'],['monthly','Monthly Sales'],['pending','Pending Orders'],['low','Low Stock Alerts'],['aov','Average Order Value'],['chart','Sales Chart'],['best','Best Sellers'],['recent','Recent Transactions'],['branch','Branch Comparison'],['act','Activity Timeline']];
-const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],['settings','Business Settings','cog'],['orders','Orders & Transactions','receipt'],['exp','Expenses & Profit','wallet'],['staff','Staff & Permissions','users'],['audit','Audit Logs','log'],['branches','Multi-Branch Management','branch'],['health','System Health & Integrations','pulse'],['ai','EDY — AI Assistant','spark']];
+const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],['orders','Orders & Transactions','receipt'],['menu','Menu & Categories','menu'],['inv','Inventory & Stock','box'],['exp','Expenses & Profit','wallet'],['staff','Staff & Permissions','users'],['audit','Audit Logs','log'],['branches','Multi-Branch Management','branch'],['health','System Health & Integrations','pulse'],['ai','EDY — AI Assistant','spark'],['settings','Business Settings','cog']];
 
 /* 10. STATE + HELPERS */
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
@@ -536,7 +550,7 @@ const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
 function render(options={}){const commit=()=>{const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;$('#ttl').textContent=NAV.find(n=>n[0]==S.page)[1];$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));$('#pg').innerHTML=PG[S.page]();dotU();if(id){const e=$('#pg [data-c=\"'+id+'\"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}};if(options.transition&&document.startViewTransition&&!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){document.startViewTransition(commit)}else commit()}
-function go(p){if(p==='menu'||p==='inv'){S.settingsSection=p==='menu'?'menu':'inventory';p='settings'}S.page=p;S.f={};$('#app').classList.remove('mo');render({transition:true});window.scrollTo({top:0,behavior:'smooth'})}
+function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render({transition:true});window.scrollTo({top:0,behavior:'smooth'})}
 const A={
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
 theme:()=>{S.theme=S.theme=='dark'?'light':'dark';ss('th',S.theme);applyTheme();if(S.page=='settings')render()},
@@ -578,6 +592,15 @@ invadjust:t=>inventoryAdjustForm(t.dataset.i),
   profilesave:()=>saveRestaurantProfile(),
   settingsback:()=>{S.settingsSection=null;render()}
 };
+/* Show scrollbars only while a region is actively scrolling. */
+let scrollHideTimer;
+document.addEventListener('scroll',e=>{
+ const target=e.target===document?document.documentElement:e.target;
+ if(!target||!target.classList)return;
+ target.classList.add('is-scrolling');
+ clearTimeout(scrollHideTimer);
+ scrollHideTimer=setTimeout(()=>target.classList.remove('is-scrolling'),850);
+},true);
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
 if(e.key=='Escape'){if(L.innerHTML)closeL();else $('#app').classList.remove('mo')}
@@ -646,7 +669,7 @@ const day0=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
 function rng(per){const n=new Date(),t=day0(n),D=864e5;switch(per){case'today':return[t,new Date(+t+D)];case'yest':return[new Date(+t-D),t];case'7d':return[new Date(+t-6*D),new Date(+t+D)];case'30d':return[new Date(+t-29*D),new Date(+t+D)];case'tm':return[new Date(n.getFullYear(),n.getMonth(),1),new Date(+t+D)];case'lm':return[new Date(n.getFullYear(),n.getMonth()-1,1),new Date(n.getFullYear(),n.getMonth(),1)];case'ty':return[new Date(n.getFullYear(),0,1),new Date(+t+D)];default:{const a=new Date(S.cu0+'T00:00'),b=new Date(S.cu1+'T00:00');return[a,new Date(+b+D)]}}}
 const inR=per=>{const[a,b]=rng(per);return ORD.filter(o=>o.dt>=a&&o.dt<b)};
 const NC=n=>`<div class="card"><span class="bd wn">● Not connected yet</span><h3 style="margin:10px 0 4px">${n}</h3><p class="mu">This section isn’t connected to your restaurant data yet, so nothing is shown here.</p></div>`;
-Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>{const q=(S.f.q||'').toLowerCase();const active=INV.filter(x=>!x.archived||S.showArchived);const rows=active.filter(x=>!q||[x.n,x.c,x.pid].join(' ').toLowerCase().includes(q));const activeCount=INV.filter(x=>!x.archived).length,archivedCount=INV.filter(x=>x.archived).length;return `<div class="tb"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${activeCount} active items · ${archivedCount} archived · Supabase live data</span><button class="btn pri" data-a="invadd">+ Add stock item</button><button class="btn" data-a="invarchived">${S.showArchived?'Hide archived':'Show archived'}</button><button class="btn" data-a="invrefresh">Refresh</button></div>${S.stockErr?`<div class="card"><span class="bd er">● Inventory load error</span><p>${esc(S.stockErr)}</p></div>`:''}<div class="card">${tbl(['Item','Category','Total stock','Remaining','Availability','Photo','Actions'],rows.map(x=>({c:[esc(x.n),esc(x.c||'Uncategorized'),x.total,x.q,x.archived?bdg('Archived'):bdg(x.available?'Available':'Unavailable'),x.image?`<a href="${esc(x.image)}" target="_blank" rel="noopener">View photo</a>`:'No photo',`${!x.archived?`<button class="btn" data-a="invedit" data-i="${x.id}">Edit item</button> <button class="btn" data-a="invavailability" data-i="${x.id}">${x.available?'Make unavailable':'Make available'}</button> <button class="btn" data-a="invadjust" data-i="${x.id}">Edit stock</button> <button class="btn" data-a="invarchive" data-i="${x.id}">Archive</button>`:`<button class="btn" data-a="invavailability" data-i="${x.id}">Restore available</button>`}`]})))}</div><p class="note">Unavailable items remain in Supabase with their quantities preserved. Archived items are hidden from this default list; use Show archived to review them. Availability must also be filtered in Cashier and customer-ordering code before it is enforced across the whole system.</p>`},exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>NC('Multi-Branch Management'),health:()=>NC('System Health & Integrations'),
+Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>{const q=(S.f.q||'').toLowerCase();const active=INV.filter(x=>!x.archived||S.showArchived);const rows=active.filter(x=>!q||[x.n,x.c,x.pid].join(' ').toLowerCase().includes(q));const activeCount=INV.filter(x=>!x.archived).length,archivedCount=INV.filter(x=>x.archived).length;return `<div class="inv-toolbar"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${activeCount} active · ${archivedCount} archived · Live data</span><button class="btn pri" data-a="invadd">+ Add item</button><button class="btn" data-a="invarchived">${S.showArchived?'Hide archived':'Show archived'}</button><button class="btn" data-a="invrefresh">Refresh</button></div>${S.stockErr?`<div class="card"><span class="bd er">● Inventory load error</span><p>${esc(S.stockErr)}</p></div>`:''}<div class="card inv-table-card"><div class="tw"><table class="inv-table"><thead><tr><th>Item</th><th>Category</th><th>Remaining stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows.map(x=>`<tr><td><div class="inv-item">${x.image?`<img class="inv-thumb" src="${esc(x.image)}" alt="">`:`<span class="inv-thumb inv-thumb-placeholder" aria-hidden="true">▦</span>`}<div><div class="inv-item-name">${esc(x.n)}</div><div class="inv-item-id">${esc(x.pid||'')}</div></div></div></td><td>${esc(x.c||'Uncategorized')}</td><td><span class="inv-remaining">${esc(String(x.q))}</span></td><td>${x.archived?bdg('Archived'):bdg(x.available?'Available':'Unavailable')}</td><td><details class="inv-actions"><summary aria-label="Actions for ${esc(x.n)}">⋯</summary><div class="inv-action-menu">${!x.archived?`<button data-a="invedit" data-i="${x.id}">Edit item details</button><button data-a="invadjust" data-i="${x.id}">Edit stock quantity</button><button data-a="invavailability" data-i="${x.id}">${x.available?'Make unavailable':'Make available'}</button><button class="danger" data-a="invarchive" data-i="${x.id}">Archive item</button>`:`<button data-a="invavailability" data-i="${x.id}">Restore available</button>`}</div></details></td></tr>`).join('')||`<tr><td colspan="5"><div class="empty">No inventory items found.</div></td></tr>`}</tbody></table></div></div><p class="note">Only Remaining Stock is displayed in this list. Total stock is retained in Supabase and remains available in the stock editor. Unavailable items retain their quantities; archived records and stock history are preserved.</p>`},exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>NC('Multi-Branch Management'),health:()=>NC('System Health & Integrations'),
 settings:()=>{
  const sections=[
   {id:'profile',name:'Restaurant Profile',desc:'Business information & operating hours',group:'BUSINESS',icon:'home'},
@@ -664,7 +687,7 @@ settings:()=>{
  const active=sections.find(x=>x.id===S.settingsSection)||sections[0];
  const groups=['BUSINESS','PAYMENTS & OPERATIONS','SECURITY'];
  const nav=groups.map(g=>`<div class="bs-group"><div class="bs-group-title">${g}</div>${sections.filter(x=>x.group===g).map(x=>`<button class="bs-nav-item ${active.id===x.id?'active':''}" data-a="settingsection" data-v="${x.id}"><span class="bs-nav-icon">${I(x.icon,21)}</span><span class="bs-nav-copy"><b>${x.name}</b><small>${x.desc}</small></span><span class="bs-arrow">›</span></button>`).join('')}</div>`).join('');
- const profile=active.id==='menu'?menuPage():active.id==='inventory'?PG.inv():active.id==='profile'?`<section class="bs-panel">
+ const profile=active.id==='profile'?`<section class="bs-panel">
   <div class="bs-panel-head"><div class="bs-head-icon">${I('home',22)}</div><div class="bs-head-copy"><h3>Basic Information</h3><p>Your restaurant's name, address and contact details.</p></div></div>
   <div class="bs-profile-grid">
    <label class="bs-field">Business Name<input id="profileName" maxlength="120" value="${esc(PROFILE.name)}" required></label>
@@ -1221,8 +1244,8 @@ load=async function(manual){
   await originalLoad(manual);
   if(!G.hidden)return;
   try{await loadRestaurantProfile();if(S.page==='settings'){render();initAppearanceControls();}}catch(e){toast('Could not load restaurant profile: '+(e.message||String(e)),1);}
-  try{await loadMenuData();if(S.page==='menu'||(S.page==='settings'&&S.settingsSection==='menu'))render();}
-  catch(e){menuLoadError=e.message||String(e);if(S.page==='menu'||(S.page==='settings'&&S.settingsSection==='menu'))render();}
+  try{await loadMenuData();if(S.page==='menu')render();}
+  catch(e){menuLoadError=e.message||String(e);if(S.page==='menu')render();}
   try{await loadStaffData();if(S.page==='staff')render();}
   catch(e){staffLoadError=e.message||String(e);if(S.page==='staff')render();}
   try{await loadAuditLogs();if(S.page==='audit')render();}
