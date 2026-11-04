@@ -166,6 +166,11 @@ body.locked .app{visibility:hidden}#gate{position:fixed;inset:0;z-index:100;disp
 *.is-scrolling::-webkit-scrollbar{width:6px;height:6px}
 *.is-scrolling::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border:2px solid transparent;background-clip:padding-box}
 *.is-scrolling::-webkit-scrollbar-thumb:hover{background:var(--scroll-thumb-hover);border:1px solid transparent;background-clip:padding-box}
+/* Business Settings linked live pages */
+.bs-linked-page{min-width:0;width:100%;padding-top:4px}
+.bs-linked-page>.tb,.bs-linked-page>.inv-toolbar{margin-bottom:12px}
+.bs-linked-page .card{min-width:0}
+.bs-linked-page .tw{max-width:100%;overflow-x:auto}
 /* Inventory & Stock — compact, readable table and quiet action menu */
 .inv-table-card{padding:8px 12px;overflow:visible}
 .inv-table-card .tw{overflow-x:auto;overscroll-behavior-x:contain}
@@ -587,7 +592,7 @@ invarchived:()=>{S.showArchived=!S.showArchived;render()},
 invadjust:t=>inventoryAdjustForm(t.dataset.i),
   auditrefresh:async()=>{try{await loadAuditLogs();render();toast('Audit logs refreshed')}catch(e){auditLoadError=e.message||String(e);render();toast('Could not refresh audit logs',1)}},
   auditdetail:t=>auditDetail(t.dataset.id),
-  settingsection:t=>{S.settingsSection=t.dataset.v;render({transition:true});initAppearanceControls()},
+  settingsection:async t=>{S.settingsSection=t.dataset.v;if(S.settingsSection==='menu'){try{await loadMenuData()}catch(e){menuLoadError=e.message||String(e)}}render({transition:true});if(S.settingsSection==='profile')initAppearanceControls()},
   profilepick:()=>$('#profileLogoFile')?.click(),
   profilesave:()=>saveRestaurantProfile(),
   settingsback:()=>{S.settingsSection=null;render()}
@@ -712,9 +717,13 @@ settings:()=>{
  <label class="bs-field">Font Size <small id="fontScaleLabel">100%</small><input id="appearanceFontScale" type="range" min="90" max="115" step="5" value="100"></label>
  <label class="bs-field">Logo Size <small id="logoScaleLabel">115%</small><input id="appearanceLogoScale" type="range" min="80" max="150" step="5" value="115"></label>
  <div class="bs-field"><b>Live Preview</b><div id="appearancePreview" style="padding:18px;border:1px solid var(--line);border-radius:12px;margin-top:8px"><strong>EDMEL Restaurant</strong><p style="margin:8px 0 0">Your dashboard appearance preview</p></div></div>
- </div></section>`:
- `<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>Controls for this section will be connected after its rules and data requirements are finalized. No settings are being saved yet.</span></div></section>`;
- return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div><button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button></div>${profile}</main></div></div>`;
+ </div></section>`
+ :active.id==='orders'?`<div class="bs-linked-page">${PG.orders()}</div>`
+ :active.id==='menu'?`<div class="bs-linked-page">${menuPage()}</div>`
+ :active.id==='inventory'?`<div class="bs-linked-page">${PG.inv()}</div>`
+ :`<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>Controls for this section will be connected after its rules and data requirements are finalized. No settings are being saved yet.</span></div></section>`;
+ const showProfileSave=active.id==='profile'?`<button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button>`:'';
+ return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div>${showProfileSave}</div>${profile}</main></div></div>`;
 },audit:auditPage});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
 const G=$('#gate');
