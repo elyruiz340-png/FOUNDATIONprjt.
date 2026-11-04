@@ -41,13 +41,16 @@ header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px
 .srch{display:flex;align-items:center;gap:8px;min-width:210px;padding:8px 12px;border-radius:11px;border:1px solid var(--bd);background:var(--s);color:var(--mu)}
 kbd{font:12px monospace;border:1px solid var(--bd);border-radius:6px;padding:0 6px;margin-left:auto}
 #pg{padding:20px;max-width:1360px;view-transition-name:admin-content;min-height:220px}
-/* Keep page content stable; avoid replaying entrance animations on every render. */
+/* Keep the content steady: animate only the incoming page, never fade the old page out. */
 #pg>*{animation:none!important}
 #pg.is-loading:before{content:"Refreshing data…";display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 11px;width:max-content;max-width:100%;border:1px solid var(--bd);border-radius:9px;background:var(--s);color:var(--mu);font-size:11px}
 #pg.is-loading:before{box-shadow:0 0 0 1px rgba(143,209,168,.04)}
-@media (prefers-reduced-motion:no-preference){::view-transition-old(admin-content){animation:adminFadeOut .12s ease both}::view-transition-new(admin-content){animation:adminFadeIn .18s ease both}}
-@keyframes adminFadeOut{to{opacity:0;transform:translateY(-2px)}}
-@keyframes adminFadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:no-preference){
+ ::view-transition-old(admin-content){animation:none;}
+ ::view-transition-new(admin-content){animation:adminEnter .24s cubic-bezier(.2,.75,.25,1) both;}
+ ::view-transition-group(admin-content){animation-duration:.24s;}
+}
+@keyframes adminEnter{from{opacity:.72;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 /* 4. COMPONENTS */
 .g{display:grid;gap:14px;margin-bottom:14px}.k{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
 .card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:16px;backdrop-filter:blur(12px);box-shadow:var(--sh);min-width:0}
@@ -554,7 +557,7 @@ function bell(){L.innerHTML=`<div class="bk" data-a="close" style="background:no
 const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
-function render(options={}){const commit=()=>{const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;$('#ttl').textContent=NAV.find(n=>n[0]==S.page)[1];$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));$('#pg').innerHTML=PG[S.page]();dotU();if(id){const e=$('#pg [data-c=\"'+id+'\"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}};if(options.transition&&document.startViewTransition&&!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){document.startViewTransition(commit)}else commit()}
+function render(options={}){const commit=()=>{const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;$('#ttl').textContent=NAV.find(n=>n[0]==S.page)[1];$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));$('#pg').innerHTML=PG[S.page]();dotU();if(id){const e=$('#pg [data-c=\"'+id+'\"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}};if(options.transition&&document.startViewTransition&&!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){try{document.startViewTransition(commit)}catch(_){commit()}}else commit()}
 function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render({transition:true});window.scrollTo({top:0,behavior:'smooth'})}
 const A={
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
