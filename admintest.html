@@ -40,17 +40,12 @@ header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px
 .av{width:38px;height:38px;border-radius:50%;border:0;background:var(--ac2);color:#fff;font-weight:700}
 .srch{display:flex;align-items:center;gap:8px;min-width:210px;padding:8px 12px;border-radius:11px;border:1px solid var(--bd);background:var(--s);color:var(--mu)}
 kbd{font:12px monospace;border:1px solid var(--bd);border-radius:6px;padding:0 6px;margin-left:auto}
-#pg{padding:20px;max-width:1360px;view-transition-name:admin-content;min-height:220px}
+#pg{padding:20px;max-width:1360px;min-height:220px}
 /* Keep the content steady: animate only the incoming page, never fade the old page out. */
 #pg>*{animation:none!important}
 #pg.is-loading:before{content:"Refreshing data…";display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 11px;width:max-content;max-width:100%;border:1px solid var(--bd);border-radius:9px;background:var(--s);color:var(--mu);font-size:11px}
 #pg.is-loading:before{box-shadow:0 0 0 1px rgba(143,209,168,.04)}
-@media (prefers-reduced-motion:no-preference){
- ::view-transition-old(admin-content){animation:none;}
- ::view-transition-new(admin-content){animation:adminEnter .24s cubic-bezier(.2,.75,.25,1) both;}
- ::view-transition-group(admin-content){animation-duration:.24s;}
-}
-@keyframes adminEnter{from{opacity:.72;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+/* Page changes are intentionally immediate to prevent stale transition snapshots. */
 /* 4. COMPONENTS */
 .g{display:grid;gap:14px;margin-bottom:14px}.k{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
 .card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:16px;backdrop-filter:blur(12px);box-shadow:var(--sh);min-width:0}
@@ -203,7 +198,7 @@ body.locked .app{visibility:hidden}#gate{position:fixed;inset:0;z-index:100;disp
 .bs-title h2{font-size:23px}
 .bs-layout{grid-template-columns:minmax(255px,300px) minmax(0,1fr);gap:14px;align-items:start}
 .bs-sidebar,.bs-content{padding:13px;border-radius:17px}
-.bs-sidebar{gap:11px;max-height:calc(100vh - 166px);overflow-y:auto;overscroll-behavior:contain;position:sticky;top:94px;scrollbar-gutter:stable}
+.bs-sidebar{gap:11px;max-height:calc(100vh - 166px);overflow-y:auto;overscroll-behavior:contain;position:sticky;top:94px;}
 .bs-group{gap:2px}
 .bs-group-title{padding:3px 8px 5px}
 .bs-nav-item{min-height:47px;padding:6px 8px;gap:9px;border-radius:10px}
@@ -257,7 +252,6 @@ body.locked .app{visibility:hidden}#gate{position:fixed;inset:0;z-index:100;disp
 [data-theme="light"] .bs-coming-note{background:rgba(246,249,242,.9);border-color:rgba(61,91,66,.18)}
 [data-theme="light"] .bs-coming-note b{color:#26352a}
 /* Keep scrolling natural on the document; avoid nested content scrollbars */
-html{scrollbar-gutter:stable}
 body{overflow-y:auto}
 .bs-content{overflow:visible}
 @media(max-width:1050px){
@@ -325,7 +319,7 @@ html,body,*{
   overscroll-behavior:contain;
   position:sticky;
   top:88px;
-  scrollbar-gutter:stable;
+  
 }
 .bs-group{gap:3px}
 .bs-group-title{padding:4px 8px 6px;font-size:9.5px}
@@ -557,8 +551,8 @@ function bell(){L.innerHTML=`<div class="bk" data-a="close" style="background:no
 const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
-function render(options={}){const commit=()=>{const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;$('#ttl').textContent=NAV.find(n=>n[0]==S.page)[1];$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));$('#pg').innerHTML=PG[S.page]();dotU();if(id){const e=$('#pg [data-c=\"'+id+'\"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}};if(options.transition&&document.startViewTransition&&!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){try{document.startViewTransition(commit)}catch(_){commit()}}else commit()}
-function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render({transition:true});window.scrollTo({top:0,behavior:'smooth'})}
+function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;const title=NAV.find(n=>n[0]===S.page);$('#ttl').textContent=title?title[1]:S.page;$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));const pg=$('#pg');pg.replaceChildren();pg.insertAdjacentHTML('afterbegin',PG[S.page]());dotU();if(id){const e=$('#pg [data-c="'+id+'"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}}
+function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render();window.scrollTo({top:0,behavior:'auto'})}
 const A={
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
 theme:()=>{S.theme=S.theme=='dark'?'light':'dark';ss('th',S.theme);applyTheme();if(S.page=='settings')render()},
@@ -595,7 +589,7 @@ invarchived:()=>{S.showArchived=!S.showArchived;render()},
 invadjust:t=>inventoryAdjustForm(t.dataset.i),
   auditrefresh:async()=>{try{await loadAuditLogs();render();toast('Audit logs refreshed')}catch(e){auditLoadError=e.message||String(e);render();toast('Could not refresh audit logs',1)}},
   auditdetail:t=>auditDetail(t.dataset.id),
-  settingsection:async t=>{S.settingsSection=t.dataset.v;if(S.settingsSection==='menu'){try{await loadMenuData()}catch(e){menuLoadError=e.message||String(e)}}render({transition:true});if(S.settingsSection==='profile')initAppearanceControls()},
+  settingsection:t=>{S.settingsSection=t.dataset.v;render();if(S.settingsSection==='menu')refreshMenu();if(S.settingsSection==='profile')initAppearanceControls()},
   profilepick:()=>$('#profileLogoFile')?.click(),
   profilesave:()=>saveRestaurantProfile(),
   settingsback:()=>{S.settingsSection=null;render()}
