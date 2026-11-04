@@ -411,7 +411,12 @@ html,body,*{
 
 /* Prevent demo restaurant branding from flashing before the saved profile loads. */
 body:not(.restaurant-profile-ready) .sub{visibility:hidden!important}
+
+.tm-wrap{display:grid;gap:16px}.tm-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.tm-stat,.tm-card{background:var(--panel,#fff);border:1px solid var(--line);border-radius:14px;padding:15px}.tm-stat small,.tm-muted{color:var(--muted);font-size:12px}.tm-stat b{display:block;font-size:24px;margin-top:5px}.tm-add{display:grid;grid-template-columns:1fr 120px auto;gap:9px;align-items:end}.tm-add label{display:grid;gap:6px;font-size:12px;color:var(--muted)}.tm-add input{min-width:0;width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--bg,#fff);color:var(--text)}.tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}.tm-card-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.tm-card h3{margin:0;font-size:17px}.tm-qr{display:flex;justify-content:center;align-items:center;min-height:154px;margin:12px 0;background:#fff;border-radius:10px;padding:10px}.tm-qr canvas,.tm-qr img{max-width:100%;height:auto}.tm-actions{display:flex;flex-wrap:wrap;gap:7px}.tm-actions .btn{font-size:12px;padding:8px 10px}.tm-status{font-size:11px;padding:4px 8px;border-radius:20px;background:#e8f4ec;color:#28633d}.tm-status.off{background:#f4eeee;color:#8b3a3a}@media(max-width:600px){.tm-stats{grid-template-columns:repeat(3,1fr)}.tm-add{grid-template-columns:1fr 90px}.tm-add button{grid-column:1/-1}}
+
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body class="locked">
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -591,7 +596,17 @@ invarchived:()=>{S.showArchived=!S.showArchived;render()},
 invadjust:t=>inventoryAdjustForm(t.dataset.i),
   auditrefresh:async()=>{try{await loadAuditLogs();render();toast('Audit logs refreshed')}catch(e){auditLoadError=e.message||String(e);render();toast('Could not refresh audit logs',1)}},
   auditdetail:t=>auditDetail(t.dataset.id),
-  settingsection:t=>{S.settingsSection=t.dataset.v;render();if(S.settingsSection==='menu')refreshMenu();if(S.settingsSection==='profile')initAppearanceControls()},
+  tablesrefresh:async()=>{try{await refreshTables()}catch(e){toast(e.message,1)}},
+  tableqr:t=>{const x=tableById(t.dataset.id);if(!x)return;const u=tableQrUrl(x);L.innerHTML=`<div class="modal"><div class="modal-head"><h3>${esc(x.table_number)} QR Code</h3><button class="btn" data-a="close">Close</button></div><div id="tmModalQr" style="display:grid;place-items:center;padding:24px;background:#fff"></div><p class="tm-muted">${esc(x.table_number)} · ${x.seating_capacity} seats</p><div class="tm-actions"><button class="btn pri" data-a="tablemodaldownload" data-id="${x.id}">Download QR</button><button class="btn" data-a="tablemodalprint" data-id="${x.id}">Print QR</button></div></div>`;new QRCode($('#tmModalQr'),{text:u,width:220,height:220});},
+  tablemodaldownload:t=>{const x=tableById(t.dataset.id);if(!x)return;const el=$('#tmModalQr');const img=el.querySelector('img');const a=document.createElement('a');a.href=img?.src||el.querySelector('canvas')?.toDataURL('image/png');a.download='HALINA-'+x.table_number+'-QR.png';a.click()},
+  tablemodalprint:t=>{const el=$('#tmModalQr');const img=el.querySelector('img')||{src:el.querySelector('canvas')?.toDataURL('image/png')};const w=window.open('','_blank');if(w){w.document.write(`<img src="${img.src}" style="width:300px"><h2>${esc(tableById(t.dataset.id)?.table_number||'Table')}</h2>`);w.document.close();w.print()}},
+  tableedit:async t=>{const x=tableById(t.dataset.id);if(!x)return;const n=prompt('Table name / number',x.table_number);if(n===null)return;const c=prompt('Seating capacity',x.seating_capacity);if(c===null)return;try{await updateTable(x,{table_number:n,seating_capacity:Number(c)});toast('Table updated')}catch(e){toast(e.message,1)}},
+  tabletoggle:async t=>{const x=tableById(t.dataset.id);if(!x)return;try{await updateTable(x,{is_active:!x.is_active});toast('Table status updated')}catch(e){toast(e.message,1)}},
+  tablelock:async t=>{const x=tableById(t.dataset.id);if(!x)return;try{await updateTable(x,{is_locked:!x.is_locked});toast(x.is_locked?'Table unlocked':'Table locked')}catch(e){toast(e.message,1)}},
+  tablerotate:async t=>{const x=tableById(t.dataset.id);if(!x)return;if(!confirm('Regenerate this QR code? The old QR will stop working.'))return;try{const d=await tableRpc('halina_rotate_table_qr',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_id:x.id});x.token=d.token;toast('QR code regenerated');render();setTimeout(drawTableQrs,0)}catch(e){toast(e.message,1)}},
+  tablesdownloadall:async()=>{try{if(!window.JSZip)throw new Error('QR archive library is unavailable. Use Print All QR Codes instead.');drawTableQrs();await new Promise(r=>setTimeout(r,250));const zip=new JSZip();let count=0;HALINA_TABLES.forEach(t=>{const el=document.getElementById('tmqr-'+t.id),img=el?.querySelector('img'),canvas=el?.querySelector('canvas');const data=img?.src||canvas?.toDataURL('image/png');if(data){zip.file('HALINA-'+t.table_number.replace(/[^a-z0-9_-]/gi,'_')+'-QR.png',data.split(',')[1],{base64:true});count++}});if(!count)throw new Error('No QR codes are available to download.');const blob=await zip.generateAsync({type:'blob'});const u=URL.createObjectURL(blob);const link=document.createElement('a');link.href=u;link.download='HALINA-All-Table-QR-Codes.zip';link.click();setTimeout(()=>URL.revokeObjectURL(u),1500);toast(count+' QR codes packaged')}catch(e){toast(e.message,1)}},
+  tablesprintall:()=>tablePrintAll(),
+  settingsection:t=>{S.settingsSection=t.dataset.v;render();if(S.settingsSection==='menu')refreshMenu();if(S.settingsSection==='profile')initAppearanceControls();if(S.settingsSection==='tables')refreshTables().catch(e=>toast(e.message,1))},
   profilepick:()=>$('#profileLogoFile')?.click(),
   profilesave:()=>saveRestaurantProfile(),
   settingsback:()=>{S.settingsSection=null;render()}
@@ -608,6 +623,7 @@ document.addEventListener('scroll',e=>{
  scrollHideTimers.set(target,timer);
 },true);
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
+document.addEventListener('submit',e=>{if(e.target.id==='tmAddForm')addTable(e)});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
 if(e.key=='Escape'){if(L.innerHTML)closeL();else $('#app').classList.remove('mo')}
 else if((e.key=='/'&&!f)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='k')){e.preventDefault();search()}
@@ -722,16 +738,43 @@ settings:()=>{
  :active.id==='orders'?`<div class="bs-linked-page">${PG.orders()}</div>`
  :active.id==='menu'?`<div class="bs-linked-page">${menuPage()}</div>`
  :active.id==='inventory'?`<div class="bs-linked-page">${PG.inv()}</div>`
+ :active.id==='tables'?tableManagementPage()
  :`<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>Controls for this section will be connected after its rules and data requirements are finalized. No settings are being saved yet.</span></div></section>`;
  const showProfileSave=active.id==='profile'?`<button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button>`:'';
  return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div>${showProfileSave}</div>${profile}</main></div></div>`;
 },audit:auditPage});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
+
+let CURRENT_RESTAURANT_ID=null;
+let HALINA_TABLES=[];
+let HALINA_QR_BASE='';
+function tableManagementPage(){
+ const active=HALINA_TABLES.filter(x=>x.is_active).length;
+ const locked=HALINA_TABLES.filter(x=>x.is_locked).length;
+ return `<div class="tm-wrap">
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('branch',22)}</div><div class="bs-head-copy"><h3>Table Management</h3><p>Create tables and manage secure customer QR ordering.</p></div><button class="btn" data-a="tablesrefresh">Refresh</button></div>
+ <div class="tm-stats"><div class="tm-stat"><small>Total Tables</small><b>${HALINA_TABLES.length}</b></div><div class="tm-stat"><small>Active</small><b>${active}</b></div><div class="tm-stat"><small>Locked</small><b>${locked}</b></div></div>
+ <form class="tm-add" id="tmAddForm"><label>Table Name / Number<input id="tmNumber" maxlength="40" placeholder="e.g. Table 11" required></label><label>Seats<input id="tmCapacity" type="number" min="1" max="50" value="4" required></label><button class="btn pri" type="submit">Add Table</button></form></section>
+ <div class="tm-grid">${HALINA_TABLES.map(t=>`<article class="tm-card" data-table-card="${esc(t.id)}"><div class="tm-card-head"><h3>${esc(t.table_number)}</h3><span class="tm-status ${t.is_active?'':'off'}">${t.is_active?'Active':'Inactive'}${t.is_locked?' · Locked':''}</span></div><p class="tm-muted">${Number(t.seating_capacity)||4} seats · ${Array.isArray(t.cart_items)?t.cart_items.reduce((n,x)=>n+(Number(x.qty)||0),0):0} items in shared cart</p><div class="tm-qr" id="tmqr-${esc(t.id)}"><span class="tm-muted">QR preview</span></div><div class="tm-actions"><button class="btn" data-a="tableqr" data-id="${esc(t.id)}">View QR</button><button class="btn" data-a="tableedit" data-id="${esc(t.id)}">Edit</button><button class="btn" data-a="tabletoggle" data-id="${esc(t.id)}">${t.is_active?'Deactivate':'Activate'}</button><button class="btn" data-a="tablelock" data-id="${esc(t.id)}">${t.is_locked?'Unlock':'Lock'}</button><button class="btn" data-a="tablerotate" data-id="${esc(t.id)}">Regenerate QR</button></div></article>`).join('')||`<section class="bs-panel"><p class="tm-muted">No tables yet. Add your first table above.</p></section>`}</div>
+ <section class="bs-panel"><div class="tm-actions"><button class="btn pri" data-a="tablesdownloadall">Download All QR Codes</button><button class="btn" data-a="tablesprintall">Print All QR Codes</button></div><p class="tm-muted">QR codes contain private table access tokens. Only share them with customers at the matching table.</p></section>
+ </div>`;
+}
+function tableQrUrl(t){const path=window.location.pathname.replace(/[^/]*$/,'index.html');const u=new URL(path,window.location.origin);u.searchParams.set('table',t.table_number);u.searchParams.set('table_id',t.id);u.searchParams.set('token',t.token);return u.href;}
+function drawTableQrs(){if(!window.QRCode)return;HALINA_TABLES.forEach(t=>{const el=document.getElementById('tmqr-'+t.id);if(el&&t.token){el.innerHTML='';new QRCode(el,{text:tableQrUrl(t),width:132,height:132,correctLevel:QRCode.CorrectLevel.M});}});}
+async function refreshTables(){if(!CURRENT_RESTAURANT_ID)return;const {data,error}=await sb.rpc('halina_list_restaurant_tables',{p_restaurant_id:CURRENT_RESTAURANT_ID});if(error)throw error;HALINA_TABLES=Array.isArray(data)?data:[];render();setTimeout(drawTableQrs,0);}
+async function tableRpc(name,args){const {data,error}=await sb.rpc(name,args);if(error)throw error;return data;}
+function tableById(id){return HALINA_TABLES.find(x=>x.id===id);}
+async function addTable(e){e.preventDefault();try{await tableRpc('halina_create_restaurant_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_number:$('#tmNumber').value.trim(),p_seating_capacity:Number($('#tmCapacity').value)});toast('Table created');await refreshTables();}catch(err){toast(err.message,1);}}
+async function updateTable(t,patch){await tableRpc('halina_update_restaurant_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_id:t.id,p_table_number:patch.table_number??t.table_number,p_seating_capacity:patch.seating_capacity??t.seating_capacity,p_is_active:patch.is_active??t.is_active,p_is_locked:patch.is_locked??t.is_locked});await refreshTables();}
+function tableDownload(t){const el=document.getElementById('tmqr-'+t.id);const img=el?.querySelector('img')||el?.querySelector('canvas');if(!img)return;const url=img.tagName==='CANVAS'?img.toDataURL('image/png'):img.src;const a=document.createElement('a');a.href=url;a.download='HALINA-'+t.table_number.replace(/[^a-z0-9_-]/gi,'_')+'-QR.png';a.click();}
+async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,250));const cards=HALINA_TABLES.map(t=>{const el=document.getElementById('tmqr-'+t.id),img=el?.querySelector('img');return img?`<article><h2>${esc(t.table_number)}</h2><img src="${img.src}"><p>Scan to order</p></article>`:''}).join('');const w=window.open('','_blank');if(!w){toast('Allow pop-ups to print QR codes',1);return;}w.document.write(`<html><head><title>HALINA Table QR Codes</title><style>body{font-family:Arial;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}article{border:1px solid #ddd;padding:16px;break-inside:avoid}img{width:180px;height:180px}</style></head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
+
 const G=$('#gate');
 function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.innerHTML=`<form id="lf" class="card gt"><div class="brand" style="padding:0"><b>E</b><span style="opacity:1;width:auto">EDMEL</span></div><h3 style="margin-top:14px">Sign in</h3><p class="mu">HALINA BISTRO CAFE · Owner dashboard</p><div class="fl"><label for="le">Email</label><input id="le" type="email" autocomplete="username" required></div><div class="fl"><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" required></div>${err?`<p class="er" role="alert">● ${esc(err)}</p>`:''}<button class="btn pri" id="lb" style="width:100%">Sign in</button></form>`;
 $('#lf').onsubmit=async e=>{e.preventDefault();$('#lb').disabled=true;const{error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});if(error){showLogin('Sign-in failed: '+error.message);return}start()}}
 async function start(){const{data:{session}}=await sb.auth.getSession();if(!session){showLogin();return}
 const{data:ru,error}=await sb.from('restaurant_users').select('role,restaurant_id').eq('user_id',session.user.id).maybeSingle();
+if(ru?.restaurant_id)CURRENT_RESTAURANT_ID=ru.restaurant_id;
 if(error||!ru||!['owner','admin'].includes(ru.role)){await sb.auth.signOut();showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to an owner or admin role.');return}
 G.hidden=true;S.user=session.user.email;await load()}
 async function load(manual){document.body.classList.remove('locked');const pg=$('#pg'),hasContent=!!pg.children.length;if(!hasContent)pg.innerHTML='<div class="card">Loading your restaurant data…</div>';else pg.classList.add('is-loading');
