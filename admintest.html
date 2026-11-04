@@ -907,6 +907,7 @@ start=async function(){
     return;
   }
   CURRENT_AUTH_USER_ID=session.user.id;
+  CURRENT_RESTAURANT_ID=ru.restaurant_id;
   G.hidden=true;S.user=session.user.email;await load();
 };
 const originalLoad=load;
