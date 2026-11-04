@@ -154,15 +154,15 @@ body.locked .app{visibility:hidden}#gate{position:fixed;inset:0;z-index:100;disp
   --panel-soft:rgba(255,255,255,.72);
   --field-bg:rgba(255,255,255,.78);
 }
-/* Auto-hide scrollbars: scrolling remains enabled; bars appear only while scrolling. */
+/* Admin-wide minimal auto-hide scrollbars. Scrolling remains enabled everywhere. */
 *{scrollbar-width:none;scrollbar-color:transparent transparent}
 *::-webkit-scrollbar{width:0;height:0}
 *::-webkit-scrollbar-track{background:transparent}
 *::-webkit-scrollbar-thumb{background:transparent;border-radius:20px}
 *::-webkit-scrollbar-corner{background:transparent}
 *.is-scrolling{scrollbar-width:thin;scrollbar-color:var(--scroll-thumb) transparent}
-*.is-scrolling::-webkit-scrollbar{width:6px;height:6px}
-*.is-scrolling::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border:2px solid transparent;background-clip:padding-box}
+*.is-scrolling::-webkit-scrollbar{width:4px;height:4px}
+*.is-scrolling::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border:1px solid transparent;background-clip:padding-box}
 *.is-scrolling::-webkit-scrollbar-thumb:hover{background:var(--scroll-thumb-hover);border:1px solid transparent;background-clip:padding-box}
 /* Business Settings linked live pages */
 .bs-linked-page{min-width:0;width:100%;padding-top:4px}
@@ -171,7 +171,9 @@ body.locked .app{visibility:hidden}#gate{position:fixed;inset:0;z-index:100;disp
 .bs-linked-page .tw{max-width:100%;overflow-x:auto}
 /* Inventory & Stock — compact, readable table and quiet action menu */
 .inv-table-card{padding:8px 12px;overflow:visible}
-.inv-table-card .tw{overflow-x:auto;overscroll-behavior-x:contain}
+.inv-table-card .tw{max-height:calc(100vh - 330px);min-height:180px;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.inv-table thead th{position:sticky;top:0;z-index:2;background:var(--card, var(--bg))}
+@media(max-width:760px){.inv-table-card .tw{max-height:calc(100vh - 300px);min-height:160px}}
 .inv-table{min-width:680px}
 .inv-table th{padding:10px 12px;font-size:11px;letter-spacing:.02em}
 .inv-table td{padding:12px;vertical-align:middle}
@@ -594,14 +596,16 @@ invadjust:t=>inventoryAdjustForm(t.dataset.i),
   profilesave:()=>saveRestaurantProfile(),
   settingsback:()=>{S.settingsSection=null;render()}
 };
-/* Show scrollbars only while a region is actively scrolling. */
-let scrollHideTimer;
+/* Show a 4px scrollbar only while its own region is actively scrolling. */
+const scrollHideTimers=new WeakMap();
 document.addEventListener('scroll',e=>{
  const target=e.target===document?document.documentElement:e.target;
  if(!target||!target.classList)return;
  target.classList.add('is-scrolling');
- clearTimeout(scrollHideTimer);
- scrollHideTimer=setTimeout(()=>target.classList.remove('is-scrolling'),850);
+ const oldTimer=scrollHideTimers.get(target);
+ if(oldTimer)clearTimeout(oldTimer);
+ const timer=setTimeout(()=>target.classList.remove('is-scrolling'),700);
+ scrollHideTimers.set(target,timer);
 },true);
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
