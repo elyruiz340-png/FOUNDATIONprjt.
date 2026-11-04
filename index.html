@@ -749,6 +749,14 @@ const urlParams =
 
 const table =
   urlParams.get("table") || "";
+const sharedTableId = urlParams.get("table_id") || "";
+const sharedQrToken = urlParams.get("token") || "";
+const sharedCartEnabled = Boolean(sharedTableId && sharedQrToken);
+let sharedCartRevision = 0;
+let sharedCartReady = false;
+let sharedCartSaving = false;
+let sharedCartDirty = false;
+let sharedCartPollHandle = null;
 
 document.getElementById("tableNumber").textContent =
   table || "?";
@@ -801,6 +809,7 @@ async function loadMenuCatalog() {
 
   cart = menu.map(item => ({ ...item, qty: 0 }));
   activeCategory = "all";
+  if (sharedCartEnabled) await initializeSharedCart();
   renderCategories();
   renderMenu();
   updateOrder();
@@ -838,6 +847,85 @@ let selectedPayment = "";
 let paymentStatus = "pending";
 let paymentReference = null;
 
+/* SHARED TABLE CART — activated only by secure table_id + QR token URLs. */
+const sharedCartHeaders = {
+  "Content-Type": "application/json",
+  "apikey": SUPABASE_KEY,
+  "Authorization": "Bearer " + SUPABASE_KEY
+};
+
+async function sharedCartRpc(name, payload) {
+  const response = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + name, {
+    method: "POST",
+    headers: sharedCartHeaders,
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || data.details || data.hint || "Shared cart connection failed.");
+  return data;
+}
+
+function applySharedCartItems(items) {
+  const quantities = new Map((Array.isArray(items) ? items : []).map(x => [String(x.id), Number(x.qty) || 0]));
+  cart.forEach(item => { item.qty = quantities.get(String(item.id)) || 0; });
+  renderMenu();
+  updateOrder();
+}
+
+async function loadSharedCart() {
+  if (!sharedCartEnabled) return false;
+  const data = await sharedCartRpc("get_shared_table_cart", {
+    p_table_id: sharedTableId,
+    p_qr_token: sharedQrToken
+  });
+  sharedCartRevision = Number(data.revision) || 0;
+  applySharedCartItems(data.cart_items);
+  sharedCartReady = true;
+  return true;
+}
+
+async function saveSharedCart() {
+  if (!sharedCartEnabled || !sharedCartReady) return;
+  if (sharedCartSaving) {
+    sharedCartDirty = true;
+    return;
+  }
+  const items = cart.filter(item => item.qty > 0).map(item => ({ id: String(item.id), qty: Number(item.qty) || 0 }));
+  sharedCartSaving = true;
+  sharedCartDirty = false;
+  try {
+    const data = await sharedCartRpc("set_shared_table_cart", {
+      p_table_id: sharedTableId,
+      p_qr_token: sharedQrToken,
+      p_cart_items: items,
+      p_expected_revision: sharedCartRevision
+    });
+    if (data.conflict) {
+      await loadSharedCart();
+      return;
+    }
+    sharedCartRevision = Number(data.revision) || sharedCartRevision;
+  } catch (error) {
+    console.error("Shared cart save failed:", error);
+    const box = document.getElementById("errorBox");
+    box.textContent = "Your shared cart could not be synchronized. Please try again. " + error.message;
+    box.classList.add("show");
+  } finally {
+    sharedCartSaving = false;
+    if (sharedCartDirty) saveSharedCart();
+  }
+}
+
+async function initializeSharedCart() {
+  if (!sharedCartEnabled) return;
+  await loadSharedCart();
+  if (sharedCartPollHandle) clearInterval(sharedCartPollHandle);
+  sharedCartPollHandle = setInterval(async () => {
+    if (document.hidden || sharedCartSaving) return;
+    try { await loadSharedCart(); }
+    catch (error) { console.warn("Shared cart refresh failed:", error); }
+  }, 2500);
+}
 
 /* TABLE STATUS CHECK */
 
@@ -847,6 +935,17 @@ async function checkTableStatus() {
     document.getElementById("tableStatusError");
 
   errorBox.classList.remove("show");
+
+  if (sharedCartEnabled) {
+    try {
+      await loadSharedCart();
+      return true;
+    } catch (qrError) {
+      errorBox.textContent = "This table QR is invalid, inactive, or locked. Please ask the staff for assistance.";
+      errorBox.classList.add("show");
+      return false;
+    }
+  }
 
   try {
 
@@ -1509,6 +1608,7 @@ function changeQtyById(id, change) {
   // stay in sync with the updated quantity and stock limit.
   renderMenu();
   updateOrder();
+  if (sharedCartEnabled) saveSharedCart();
 
 }
 /* ORDER */
@@ -1727,6 +1827,7 @@ function markAsPaid() {
 /* SEND ORDER */
 
 async function sendOrder() {
+  let sharedCheckoutLocked = false;
 
   const errorBox =
     document.getElementById("errorBox");
@@ -1767,6 +1868,19 @@ async function sendOrder() {
     return;
   }
 
+
+  if (sharedCartEnabled) {
+    try {
+      while (sharedCartSaving || sharedCartDirty) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      await loadSharedCart();
+    } catch (sharedError) {
+      errorBox.textContent = "Unable to verify the shared table cart. " + sharedError.message;
+      errorBox.classList.add("show");
+      return;
+    }
+  }
 
   const total =
     getTotal();
@@ -1825,6 +1939,30 @@ async function sendOrder() {
     return;
   }
 
+  if (sharedCartEnabled) {
+    try {
+      const locked = await sharedCartRpc("halina_lock_shared_cart_for_checkout", {
+        p_table_id: sharedTableId,
+        p_qr_token: sharedQrToken,
+        p_expected_revision: sharedCartRevision
+      });
+      if (locked.conflict) {
+        await loadSharedCart();
+        errorBox.textContent = "The shared cart changed on another device. Please review the updated cart and submit again.";
+        errorBox.classList.add("show");
+        return;
+      }
+      sharedCheckoutLocked = true;
+      const quantities = new Map((locked.cart_items || []).map(x => [String(x.id), Number(x.qty) || 0]));
+      cart.forEach(item => { item.qty = quantities.get(String(item.id)) || 0; });
+      renderMenu();
+      updateOrder();
+    } catch (lockError) {
+      errorBox.textContent = "Unable to secure the shared cart for checkout. " + lockError.message;
+      errorBox.classList.add("show");
+      return;
+    }
+  }
 
   sendButton.disabled = true;
   sendButton.textContent = "SENDING...";
@@ -2018,6 +2156,23 @@ async function sendOrder() {
     }
 
 
+    if (sharedCartEnabled && sharedCheckoutLocked) {
+      try {
+        await sharedCartRpc("halina_finish_shared_cart_checkout", {
+          p_table_id: sharedTableId,
+          p_qr_token: sharedQrToken,
+          p_clear: true
+        });
+        sharedCheckoutLocked = false;
+        sharedCartRevision += 1;
+        applySharedCartItems([]);
+      } catch (clearError) {
+        console.error("Order was submitted, but shared cart could not be cleared:", clearError);
+        errorBox.textContent = "Order was submitted, but the shared cart needs cashier attention.";
+        errorBox.classList.add("show");
+      }
+    }
+
     successBox.classList.add("show");
 
 
@@ -2057,6 +2212,18 @@ async function sendOrder() {
 
     console.error(error);
 
+    if (sharedCartEnabled && sharedCheckoutLocked) {
+      try {
+        await sharedCartRpc("halina_finish_shared_cart_checkout", {
+          p_table_id: sharedTableId,
+          p_qr_token: sharedQrToken,
+          p_clear: false
+        });
+        sharedCheckoutLocked = false;
+      } catch (unlockError) {
+        console.error("Could not release shared cart checkout lock:", unlockError);
+      }
+    }
 
     errorBox.textContent =
       "Unable to send order. " +
