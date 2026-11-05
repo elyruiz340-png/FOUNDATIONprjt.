@@ -20,7 +20,13 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 #sb{position:fixed;inset:0 auto 0 0;width:var(--sw);padding:12px 10px;background:var(--s);backdrop-filter:blur(14px);border-right:1px solid var(--bd);display:flex;flex-direction:column;gap:6px;z-index:30;transition:width var(--t),transform var(--t)}
 .brand{display:flex;align-items:center;gap:10px;height:44px;padding:0 4px;font-weight:700;letter-spacing:.06em;white-space:nowrap}
 .brand b{flex:none;width:34px;height:34px;border-radius:10px;background:var(--ac2);color:#fff;display:grid;place-items:center}
-#nav{display:flex;flex-direction:column;gap:4px;flex:1}
+#nav{display:flex;flex-direction:column;gap:4px;flex:1;position:relative;isolation:isolate}
+/* Fluid active navigation highlight: slides, stretches slightly, then settles. */
+#nav .nav-indicator{position:absolute;left:var(--nav-x,0px);top:var(--nav-y,0px);width:var(--nav-w,40px);height:var(--nav-h,40px);z-index:0;pointer-events:none;border-radius:50%;background:linear-gradient(145deg,rgba(50,174,111,.96),rgba(35,123,79,.94));border:1px solid rgba(153,239,184,.42);box-shadow:0 5px 18px rgba(24,145,82,.25),inset 0 1px 0 rgba(255,255,255,.2);transform:translate3d(0,0,0) scale(1);transform-origin:center;transition:left .54s cubic-bezier(.2,.82,.2,1),top .58s cubic-bezier(.2,.82,.2,1),width .38s cubic-bezier(.2,.82,.2,1),height .38s cubic-bezier(.2,.82,.2,1),border-radius .38s ease,transform .22s cubic-bezier(.2,.85,.25,1.25),opacity .2s ease;opacity:0}
+#nav .nav-indicator.ready{opacity:1}
+#nav .nav-indicator.stretch{transform:translate3d(0,0,0) scale(1.07,.88)}
+#nav button{z-index:1;background:transparent!important;box-shadow:none!important;position:relative}
+#nav button.on{color:#fff!important}
 #nav button,.tg{position:relative;display:flex;align-items:center;gap:12px;height:42px;padding:0 12px;border:0;border-radius:11px;background:none;color:var(--mu);white-space:nowrap;transition:background var(--t),color var(--t)}
 #nav button:hover,.tg:hover{color:var(--tx);background:rgba(134,183,154,.12)}
 #nav button.on{background:rgba(134,183,154,.22);color:var(--tx);box-shadow:inset 3px 0 var(--ac)}
@@ -650,12 +656,25 @@ function bell(){L.innerHTML=`<div class="bk" data-a="close" style="background:no
 const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
-function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;const title=NAV.find(n=>n[0]===S.page);$('#ttl').textContent=title?title[1]:S.page;$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));const pg=$('#pg');pg.replaceChildren();pg.insertAdjacentHTML('afterbegin',PG[S.page]());dotU();if(id){const e=$('#pg [data-c="'+id+'"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}if(S.page==='settings'&&S.settingsSection==='tables')setTimeout(drawTableQrs,0);}
+function moveNavIndicator(animate=true){
+ const nav=$('#nav'),indicator=nav&&nav.querySelector('.nav-indicator'),active=nav&&nav.querySelector('button.on');
+ if(!indicator||!active)return;
+ const x=active.offsetLeft,y=active.offsetTop,w=active.offsetWidth,h=active.offsetHeight;
+ const wasReady=indicator.classList.contains('ready');
+ indicator.style.setProperty('--nav-x',x+'px');indicator.style.setProperty('--nav-y',y+'px');indicator.style.setProperty('--nav-w',w+'px');indicator.style.setProperty('--nav-h',h+'px');
+ indicator.style.left=x+'px';indicator.style.top=y+'px';indicator.style.width=w+'px';indicator.style.height=h+'px';
+ indicator.style.borderRadius=$('#app').classList.contains('exp')?'14px':'50%';
+ if(animate&&wasReady&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  indicator.classList.add('stretch');requestAnimationFrame(()=>requestAnimationFrame(()=>indicator.classList.remove('stretch')));
+ }else indicator.classList.add('ready');
+ indicator.classList.add('ready');
+}
+function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;const title=NAV.find(n=>n[0]===S.page);$('#ttl').textContent=title?title[1]:S.page;$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));moveNavIndicator(true);const pg=$('#pg');pg.replaceChildren();pg.insertAdjacentHTML('afterbegin',PG[S.page]());dotU();if(id){const e=$('#pg [data-c="'+id+'"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}if(S.page==='settings'&&S.settingsSection==='tables')setTimeout(drawTableQrs,0);}
 function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render();window.scrollTo({top:0,behavior:'auto'})}
 const A={
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
 theme:()=>{S.theme=S.theme=='dark'?'light':'dark';ss('th',S.theme);applyTheme();if(S.page=='settings')render()},
-sbt:()=>{S.exp=!S.exp;ss('exp',S.exp);$('#app').classList.toggle('exp',S.exp);if(S.page=='settings')render()},
+sbt:()=>{S.exp=!S.exp;ss('exp',S.exp);$('#app').classList.toggle('exp',S.exp);requestAnimationFrame(()=>moveNavIndicator(false));if(S.page=='settings')render()},
 order:t=>orderDrawer(t.dataset.i),
 cust:()=>modal('Customize Overview',WID.map(w=>[w[1],'checkbox',!S.w[w[0]]]),()=>true,'Done'),
 profile:()=>drawer('Account',`<p><b>${esc(S.user||'')}</b><br><span class="mu">Owner dashboard</span></p><button class="btn pri" data-a="signout">Sign out</button>`),
@@ -1446,11 +1465,11 @@ load=async function(manual){
 /* 10. THEME + SIDEBAR SETUP */
 function applyTheme(){document.documentElement.dataset.theme=S.theme;$('#th').innerHTML=I(S.theme=='dark'?'sun':'moon')}
 function fillBr(){$('#br').innerHTML=`<option value="0">All Branches</option>`+BS.map((b,i)=>`<option value="${i+1}"${S.br==i+1?' selected':''}>${b}</option>`).join('')}
-$('#nav').innerHTML=NAV.map(n=>`<button data-p="${n[0]}" data-a="go" data-tip="${n[1]}" aria-label="${n[1]}">${I(n[2])}<span>${n[1]}</span></button>`).join('');
+$('#nav').innerHTML='<span class="nav-indicator" aria-hidden="true"></span>'+NAV.map(n=>`<button data-p="${n[0]}" data-a="go" data-tip="${n[1]}" aria-label="${n[1]}">${I(n[2])}<span>${n[1]}</span></button>`).join('');
 $('#tg').innerHTML=I('chev')+'<span>Collapse</span>';$('#tg').onclick=A.sbt;
 $('#mb').innerHTML=I('burger');$('#mb').onclick=()=>$('#app').classList.add('mo');$('#ov').onclick=()=>$('#app').classList.remove('mo');
 $('#si').innerHTML=I('search',16);$('#bi').innerHTML=I('bell');
-$('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();
+$('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();window.addEventListener('resize',()=>moveNavIndicator(false));
 </script>
 
 <!-- CENTRAL RESTAURANT PROFILE CONNECTION -->
