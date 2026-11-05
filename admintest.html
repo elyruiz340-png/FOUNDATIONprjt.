@@ -597,7 +597,26 @@ invadjust:t=>inventoryAdjustForm(t.dataset.i),
   auditrefresh:async()=>{try{await loadAuditLogs();render();toast('Audit logs refreshed')}catch(e){auditLoadError=e.message||String(e);render();toast('Could not refresh audit logs',1)}},
   auditdetail:t=>auditDetail(t.dataset.id),
   tablesrefresh:async()=>{try{await refreshTables()}catch(e){toast(e.message,1)}},
-  tableqr:t=>{const x=tableById(t.dataset.id);if(!x)return;const u=tableQrUrl(x);L.innerHTML=`<div class="modal"><div class="modal-head"><h3>${esc(x.table_number)} QR Code</h3><button class="btn" data-a="close">Close</button></div><div id="tmModalQr" style="display:grid;place-items:center;padding:24px;background:#fff"></div><p class="tm-muted">${esc(x.table_number)} · ${x.seating_capacity} seats</p><div class="tm-actions"><button class="btn pri" data-a="tablemodaldownload" data-id="${x.id}">Download QR</button><button class="btn" data-a="tablemodalprint" data-id="${x.id}">Print QR</button></div></div>`;new QRCode($('#tmModalQr'),{text:u,width:220,height:220});},
+  tableqr:t=>{
+    const x=tableById(t.dataset.id);
+    if(!x)return;
+    const u=tableQrUrl(x);
+    L.innerHTML=`
+      <div class="bk" data-a="close"></div>
+      <div class="md" role="dialog" aria-modal="true" aria-label="${esc(x.table_number)} QR Code">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h3 style="margin:0">${esc(x.table_number)} QR Code</h3>
+          <button class="btn" data-a="close">Close</button>
+        </div>
+        <div id="tmModalQr" style="display:grid;place-items:center;padding:24px;background:#fff;border-radius:12px;margin-top:16px"></div>
+        <p class="tm-muted" style="text-align:center">${esc(x.table_number)} · ${x.seating_capacity} seats</p>
+        <div class="tb">
+          <button class="btn pri" data-a="tablemodaldownload" data-id="${x.id}">Download QR</button>
+          <button class="btn" data-a="tablemodalprint" data-id="${x.id}">Print QR</button>
+        </div>
+      </div>`;
+    new QRCode($('#tmModalQr'),{text:u,width:220,height:220});
+  },
   tablemodaldownload:t=>{const x=tableById(t.dataset.id);if(!x)return;const el=$('#tmModalQr');const img=el.querySelector('img');const a=document.createElement('a');a.href=img?.src||el.querySelector('canvas')?.toDataURL('image/png');a.download='HALINA-'+x.table_number+'-QR.png';a.click()},
   tablemodalprint:t=>{const el=$('#tmModalQr');const img=el.querySelector('img')||{src:el.querySelector('canvas')?.toDataURL('image/png')};const w=window.open('','_blank');if(w){w.document.write(`<img src="${img.src}" style="width:300px"><h2>${esc(tableById(t.dataset.id)?.table_number||'Table')}</h2>`);w.document.close();w.print()}},
   tableedit:async t=>{const x=tableById(t.dataset.id);if(!x)return;const n=prompt('Table name / number',x.table_number);if(n===null)return;const c=prompt('Seating capacity',x.seating_capacity);if(c===null)return;try{await updateTable(x,{table_number:n,seating_capacity:Number(c)});toast('Table updated')}catch(e){toast(e.message,1)}},
