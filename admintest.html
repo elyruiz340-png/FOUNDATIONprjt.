@@ -430,6 +430,17 @@ body:not(.restaurant-profile-ready) .sub{visibility:hidden!important}
 
 /* Legacy table styles removed: use the adaptive theme-aware Table Management styles above. */
 
+
+/* TABLE MANAGEMENT LAYOUT FIX — explicit grid containers */
+.tm-wrap{display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:12px;min-width:0}
+.tm-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+.tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,245px),1fr));align-items:stretch;gap:12px;min-width:0}
+.tm-card{min-width:0}
+.tm-qr{display:grid;place-items:center;min-height:88px;margin:8px 0;padding:6px}
+.tm-qr:has(canvas),.tm-qr:has(img){min-height:112px}
+@media(min-width:1200px){.tm-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:560px){.tm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.tm-grid{grid-template-columns:1fr}}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
