@@ -607,22 +607,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac);background:rgba(2
   .main header,#sb,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,.dr,.md,.pn{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 }
 
-
-/* FINAL REFINEMENT — smoother desktop sidebar + softer Business Settings seams */
-@media (min-width:821px){
-  #sb{transition:width .42s cubic-bezier(.22,.72,.18,1),transform .32s cubic-bezier(.22,.72,.18,1),box-shadow .28s ease;will-change:width}
-  .main{transition:left .42s cubic-bezier(.22,.72,.18,1);will-change:left}
-  #nav button,.tg{transition:width .36s cubic-bezier(.22,.72,.18,1),padding .30s ease,gap .30s ease,color .20s ease,background .20s ease}
-  #nav span,.brand span,.tg span{width:auto!important;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width .34s cubic-bezier(.22,.72,.18,1),opacity .18s ease}
-  .exp #nav span,.exp .brand span,.exp .tg span{max-width:168px;opacity:1;transition:max-width .38s cubic-bezier(.22,.72,.18,1) .04s,opacity .22s ease .08s}
-}
-/* Keep the glass separation subtle; avoid a bright hairline between settings columns. */
-.bs-sidebar,.bs-content{border-color:rgba(160,215,185,.12)!important;box-shadow:0 10px 28px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.045)!important}
-.bs-panel{border-color:rgba(160,215,185,.10)!important;box-shadow:0 7px 20px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.035)!important}
-[data-theme="light"] .bs-sidebar,[data-theme="light"] .bs-content{border-color:rgba(70,105,73,.14)!important;box-shadow:0 12px 28px rgba(69,82,56,.07),inset 0 1px 0 rgba(255,255,255,.68)!important}
-[data-theme="light"] .bs-panel{border-color:rgba(70,105,73,.13)!important;box-shadow:0 7px 18px rgba(69,82,56,.055),inset 0 1px 0 rgba(255,255,255,.72)!important}
-@media(prefers-reduced-motion:reduce){#sb,.main,#nav button,.tg,#nav span,.brand span,.tg span{transition:none!important;will-change:auto!important}}
-
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -1038,7 +1022,16 @@ function tableById(id){return HALINA_TABLES.find(x=>x.id===id);}
 async function addTable(e){e.preventDefault();try{await tableRpc('halina_create_restaurant_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_number:$('#tmNumber').value.trim(),p_seating_capacity:Number($('#tmCapacity').value)});toast('Table created');await refreshTables();}catch(err){toast(err.message,1);}}
 async function updateTable(t,patch){await tableRpc('halina_update_restaurant_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_id:t.id,p_table_number:patch.table_number??t.table_number,p_seating_capacity:patch.seating_capacity??t.seating_capacity,p_is_active:patch.is_active??t.is_active,p_is_locked:patch.is_locked??t.is_locked});await refreshTables();}
 function tableDownload(t){const el=document.getElementById('tmqr-'+t.id);const img=el?.querySelector('img')||el?.querySelector('canvas');if(!img)return;const url=img.tagName==='CANVAS'?img.toDataURL('image/png'):img.src;const a=document.createElement('a');a.href=url;a.download='HALINA-'+t.table_number.replace(/[^a-z0-9_-]/gi,'_')+'-QR.png';a.click();}
-async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,250));const cards=HALINA_TABLES.map(t=>{const el=document.getElementById('tmqr-'+t.id),img=el?.querySelector('img');return img?`<article><h2>${esc(t.table_number)}</h2><img src="${img.src}"><p>Scan to order</p></article>`:''}).join('');const w=window.open('','_blank');if(!w){toast('Allow pop-ups to print QR codes',1);return;}w.document.write(`<html><head><title>HALINA Table QR Codes</title><style>body{font-family:Arial;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}article{border:1px solid #ddd;padding:16px;break-inside:avoid}img{width:180px;height:180px}</style></head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
+async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,250));const cards=HALINA_TABLES.map(t=>{const el=document.getElementById('tmqr-'+t.id),img=el?.querySelector('img');return img?`<article><h2>${esc(t.table_number)}</h2><img src="${img.src}"><p>Scan to order</p></article>`:''}).join('');const w=window.open('','_blank');if(!w){toast('Allow pop-ups to print QR codes',1);return;}w.document.write(`<html><head><title>HALINA Table QR Codes</title><style>body{font-family:Arial;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}article{border:1px solid #ddd;padding:16px;break-inside:avoid}img{width:180px;height:180px}
+/* TARGETED REFINEMENT — retain the original active navigation indicator and its JS positioning. */
+@media (min-width:821px){#sb{transition:width .36s cubic-bezier(.22,.72,.18,1),transform .30s ease,box-shadow .26s ease}.main{transition:left .36s cubic-bezier(.22,.72,.18,1)}}
+/* Remove the bright edge around Business Settings containers without changing layout. */
+.bs-sidebar,.bs-content{border-color:transparent!important;box-shadow:0 10px 26px rgba(0,0,0,.09)!important}
+.bs-panel{border-color:rgba(160,215,185,.07)!important;box-shadow:0 7px 18px rgba(0,0,0,.06)!important}
+[data-theme="light"] .bs-sidebar,[data-theme="light"] .bs-content{border-color:transparent!important;box-shadow:0 10px 24px rgba(69,82,56,.055)!important}
+[data-theme="light"] .bs-panel{border-color:rgba(70,105,73,.08)!important;box-shadow:0 7px 16px rgba(69,82,56,.045)!important}
+@media(prefers-reduced-motion:reduce){#sb,.main{transition:none!important}}
+</style></head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
 
 const G=$('#gate');
 function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.innerHTML=`<section class="login-shell" aria-label="HALINA owner sign in"><div class="login-showcase"><div class="login-brand"><span class="login-brand-mark">H</span><span>HALINA BISTRO CAFE</span></div><div class="login-hero-copy"><div class="login-eyebrow">Restaurant management</div><h1>Welcome back to a better way to manage.</h1><p>Your restaurant, your team, and your daily operations — thoughtfully brought together in one place.</p></div><div class="login-showcase-foot"><i></i><span>Owner &amp; administrator access</span></div></div><div class="login-panel"><form id="lf" class="login-form"><div class="login-mobile-brand"><span class="login-brand-mark">H</span></div><p class="login-kicker">HALINA BISTRO CAFE</p><h2>Sign in</h2><p class="login-intro">Enter your account details to continue to your dashboard.</p><div class="login-field"><label for="le">Email address</label><input id="le" type="email" autocomplete="username" placeholder="name@restaurant.com" required></div><div class="login-field"><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" placeholder="Enter your password" required></div>${err?`<p class="login-error" role="alert">${esc(err)}</p>`:''}<button class="login-submit" id="lb" type="submit">Sign in <span aria-hidden="true">→</span></button><div class="login-security"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Secure access for authorized owners and administrators</span></div></form></div></section>`;
