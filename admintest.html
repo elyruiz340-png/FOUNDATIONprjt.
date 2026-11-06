@@ -22,9 +22,8 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .brand b{flex:none;width:34px;height:34px;border-radius:10px;background:var(--ac2);color:#fff;display:grid;place-items:center}
 #nav{display:flex;flex-direction:column;gap:4px;flex:1;position:relative;isolation:isolate}
 /* Single moving active indicator — no separate active-button fill. */
-#nav .nav-indicator{position:absolute;left:0;top:0;width:40px;height:40px;z-index:0;pointer-events:none;border-radius:50%;background:linear-gradient(145deg,rgba(50,174,111,.96),rgba(35,123,79,.94));border:1px solid rgba(153,239,184,.42);box-shadow:0 5px 18px rgba(24,145,82,.25),inset 0 1px 0 rgba(255,255,255,.2);transform:translate3d(0,0,0) scale(1);transform-origin:center;transition:left .22s cubic-bezier(.22,.75,.25,1),top .22s cubic-bezier(.22,.75,.25,1),width .22s cubic-bezier(.22,.75,.25,1),height .22s cubic-bezier(.22,.75,.25,1),border-radius .22s ease,transform .16s cubic-bezier(.2,.8,.25,1.15),opacity .12s ease;opacity:0;will-change:left,top,width,height,transform}
+#nav .nav-indicator{position:absolute;left:0;top:0;width:40px;height:42px;z-index:0;pointer-events:none;border-radius:50%;background:linear-gradient(145deg,rgba(50,174,111,.96),rgba(35,123,79,.94));border:1px solid rgba(153,239,184,.42);box-shadow:0 5px 18px rgba(24,145,82,.25),inset 0 1px 0 rgba(255,255,255,.2);transform:translate3d(0,0,0);transform-origin:top left;transition:transform .30s cubic-bezier(.22,.75,.25,1),width .26s cubic-bezier(.22,.75,.25,1),height .26s cubic-bezier(.22,.75,.25,1),border-radius .24s ease,opacity .12s ease;opacity:0;will-change:transform,width,height}
 #nav .nav-indicator.ready{opacity:1}
-#nav .nav-indicator.stretch{transform:translate3d(0,0,0) scale(var(--nav-stretch-x,1.1),.9)}
 #nav button{z-index:1;background:transparent!important;box-shadow:none!important;position:relative}
 #nav button.on{color:#fff!important}
 #nav button,.tg{position:relative;display:flex;align-items:center;gap:12px;height:42px;padding:0 12px;border:0;border-radius:11px;background:none;color:var(--mu);white-space:nowrap;transition:background var(--t),color var(--t)}
@@ -656,32 +655,22 @@ function bell(){L.innerHTML=`<div class="bk" data-a="close" style="background:no
 const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
-let navIndicatorTimer=0;
+let navIndicatorFrame=0;
 function moveNavIndicator(animate=true){
  const nav=$('#nav'),indicator=nav&&nav.querySelector('.nav-indicator'),active=nav&&nav.querySelector('button.on');
  if(!indicator||!active)return;
- const navRect=nav.getBoundingClientRect(),itemRect=active.getBoundingClientRect();
- if(!navRect.width||!itemRect.width)return;
- const x=itemRect.left-navRect.left+nav.scrollLeft;
- const y=itemRect.top-navRect.top+nav.scrollTop;
- const wasReady=indicator.classList.contains('ready');
- const oldX=parseFloat(indicator.style.left)||x;
- const movingRight=x>oldX+1;
- indicator.style.left=x+'px';indicator.style.top=y+'px';
- indicator.style.width=itemRect.width+'px';indicator.style.height=itemRect.height+'px';
+ const x=active.offsetLeft,y=active.offsetTop,w=active.offsetWidth,h=active.offsetHeight;
+ if(!w||!h)return;
+ const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(!animate||reduce)indicator.style.transition='none';
+ indicator.style.width=w+'px';indicator.style.height=h+'px';
  indicator.style.borderRadius=$('#app').classList.contains('exp')?'14px':'50%';
- if(animate&&wasReady&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
-  indicator.style.setProperty('--nav-stretch-x',movingRight?'1.13':'1.13');
-  indicator.classList.remove('stretch');
-  void indicator.offsetWidth;
-  indicator.classList.add('stretch');
-  clearTimeout(navIndicatorTimer);
-  navIndicatorTimer=setTimeout(()=>indicator.classList.remove('stretch'),115);
- }else{
-  indicator.classList.remove('stretch');
-  indicator.classList.add('ready');
- }
+ indicator.style.transform=`translate3d(${x}px,${y}px,0)`;
  indicator.classList.add('ready');
+ if(!animate||reduce){
+  cancelAnimationFrame(navIndicatorFrame);
+  navIndicatorFrame=requestAnimationFrame(()=>{indicator.style.removeProperty('transition');});
+ }
 }
 function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;const title=NAV.find(n=>n[0]===S.page);$('#ttl').textContent=title?title[1]:S.page;$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));moveNavIndicator(true);const pg=$('#pg');pg.replaceChildren();pg.insertAdjacentHTML('afterbegin',PG[S.page]());dotU();if(id){const e=$('#pg [data-c="'+id+'"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}if(S.page==='settings'&&S.settingsSection==='tables')setTimeout(drawTableQrs,0);}
 function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render();window.scrollTo({top:0,behavior:'auto'})}
@@ -1483,8 +1472,11 @@ $('#nav').innerHTML='<span class="nav-indicator" aria-hidden="true"></span>'+NAV
 $('#tg').innerHTML=I('chev')+'<span>Collapse</span>';$('#tg').onclick=A.sbt;
 $('#mb').innerHTML=I('burger');$('#mb').onclick=()=>$('#app').classList.add('mo');$('#ov').onclick=()=>$('#app').classList.remove('mo');
 $('#si').innerHTML=I('search',16);$('#bi').innerHTML=I('bell');
-$('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();window.addEventListener('resize',()=>moveNavIndicator(false));
+$('#app').classList.toggle('exp',S.exp);applyTheme();fillBr();start();
+window.addEventListener('resize',()=>moveNavIndicator(false),{passive:true});
 $('#sb').addEventListener('transitionend',e=>{if(e.propertyName==='width')moveNavIndicator(false)});
+if('ResizeObserver' in window){const navLayoutObserver=new ResizeObserver(()=>moveNavIndicator(false));navLayoutObserver.observe($('#nav'));} 
+requestAnimationFrame(()=>moveNavIndicator(false));
 </script>
 
 <!-- CENTRAL RESTAURANT PROFILE CONNECTION -->
