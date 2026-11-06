@@ -607,6 +607,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac);background:rgba(2
   .main header,#sb,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,.dr,.md,.pn{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 }
 
+
+
+/* Targeted hover fixes: keep collapsed-sidebar names available via native title,
+   and prevent the Business Settings nav hover from drawing a pale border line. */
+.bs-nav-item:hover,
+.bs-nav-item:focus-visible{
+  border-color:transparent!important;
+  outline:none!important;
+  box-shadow:none!important;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -1573,7 +1583,7 @@ load=async function(manual){
 /* 10. THEME + SIDEBAR SETUP */
 function applyTheme(){document.documentElement.dataset.theme=S.theme;$('#th').innerHTML=I(S.theme=='dark'?'sun':'moon')}
 function fillBr(){$('#br').innerHTML=`<option value="0">All Branches</option>`+BS.map((b,i)=>`<option value="${i+1}"${S.br==i+1?' selected':''}>${b}</option>`).join('')}
-$('#nav').innerHTML='<span class="nav-indicator" aria-hidden="true"></span>'+NAV.map(n=>`<button data-p="${n[0]}" data-a="go" data-tip="${n[1]}" aria-label="${n[1]}">${I(n[2])}<span>${n[1]}</span></button>`).join('');
+$('#nav').innerHTML='<span class="nav-indicator" aria-hidden="true"></span>'+NAV.map(n=>`<button data-p="${n[0]}" data-a="go" data-tip="${n[1]}" title="${n[1]}" aria-label="${n[1]}">${I(n[2])}<span>${n[1]}</span></button>`).join('');
 $('#tg').innerHTML=I('chev')+'<span>Collapse</span>';$('#tg').onclick=A.sbt;
 $('#mb').innerHTML=I('burger');$('#mb').onclick=()=>$('#app').classList.add('mo');$('#ov').onclick=()=>$('#app').classList.remove('mo');
 $('#si').innerHTML=I('search',16);$('#bi').innerHTML=I('bell');
