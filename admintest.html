@@ -607,6 +607,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac);background:rgba(2
   .main header,#sb,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,.dr,.md,.pn{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 }
 
+
+/* FINAL REFINEMENT — smoother desktop sidebar + softer Business Settings seams */
+@media (min-width:821px){
+  #sb{transition:width .42s cubic-bezier(.22,.72,.18,1),transform .32s cubic-bezier(.22,.72,.18,1),box-shadow .28s ease;will-change:width}
+  .main{transition:left .42s cubic-bezier(.22,.72,.18,1);will-change:left}
+  #nav button,.tg{transition:width .36s cubic-bezier(.22,.72,.18,1),padding .30s ease,gap .30s ease,color .20s ease,background .20s ease}
+  #nav span,.brand span,.tg span{width:auto!important;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width .34s cubic-bezier(.22,.72,.18,1),opacity .18s ease}
+  .exp #nav span,.exp .brand span,.exp .tg span{max-width:168px;opacity:1;transition:max-width .38s cubic-bezier(.22,.72,.18,1) .04s,opacity .22s ease .08s}
+}
+/* Keep the glass separation subtle; avoid a bright hairline between settings columns. */
+.bs-sidebar,.bs-content{border-color:rgba(160,215,185,.12)!important;box-shadow:0 10px 28px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.045)!important}
+.bs-panel{border-color:rgba(160,215,185,.10)!important;box-shadow:0 7px 20px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.035)!important}
+[data-theme="light"] .bs-sidebar,[data-theme="light"] .bs-content{border-color:rgba(70,105,73,.14)!important;box-shadow:0 12px 28px rgba(69,82,56,.07),inset 0 1px 0 rgba(255,255,255,.68)!important}
+[data-theme="light"] .bs-panel{border-color:rgba(70,105,73,.13)!important;box-shadow:0 7px 18px rgba(69,82,56,.055),inset 0 1px 0 rgba(255,255,255,.72)!important}
+@media(prefers-reduced-motion:reduce){#sb,.main,#nav button,.tg,#nav span,.brand span,.tg span{transition:none!important;will-change:auto!important}}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
