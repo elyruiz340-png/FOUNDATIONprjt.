@@ -617,6 +617,103 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac);background:rgba(2
   outline:none!important;
   box-shadow:none!important;
 }
+
+/* HALINA — FULL ADMIN DASHBOARD LIQUID GLASS SYSTEM v2
+   Visual-only layer. Keeps navigation indicator, page logic, data and Supabase code intact. */
+:root{
+  --lg-blur:26px;
+  --lg-edge:rgba(190,232,202,.17);
+  --lg-edge-strong:rgba(190,232,202,.27);
+  --lg-reflect:rgba(255,255,255,.105);
+  --lg-shadow:0 14px 38px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.11);
+  --lg-shadow-hover:0 18px 42px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.16);
+}
+[data-theme="light"]{
+  --lg-edge:rgba(74,112,80,.16);
+  --lg-edge-strong:rgba(74,112,80,.25);
+  --lg-reflect:rgba(255,255,255,.78);
+  --lg-shadow:0 12px 30px rgba(64,79,54,.09),inset 0 1px 0 rgba(255,255,255,.90);
+  --lg-shadow-hover:0 16px 36px rgba(64,79,54,.14),inset 0 1px 0 rgba(255,255,255,.96);
+}
+/* Atmospheric background remains behind every page, giving glass something to refract. */
+.bgfx{position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden}
+.bgfx:before,.bgfx:after{content:"";position:absolute;width:42vw;height:42vw;min-width:280px;min-height:280px;border-radius:50%;filter:blur(75px);opacity:.16}
+.bgfx:before{left:8%;top:8%;background:radial-gradient(circle,rgba(70,168,112,.52),transparent 68%)}
+.bgfx:after{right:3%;bottom:0;background:radial-gradient(circle,rgba(184,157,91,.24),transparent 68%)}
+[data-theme="light"] .bgfx:before{opacity:.12}
+[data-theme="light"] .bgfx:after{opacity:.10}
+/* Fixed shell and navigation retain their existing geometry and moving active indicator. */
+#sb{background:linear-gradient(155deg,rgba(35,69,48,.78),rgba(9,27,18,.72))!important;border-color:var(--lg-edge)!important;box-shadow:14px 0 42px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.15)!important;-webkit-backdrop-filter:blur(30px) saturate(165%)!important;backdrop-filter:blur(30px) saturate(165%)!important}
+[data-theme="light"] #sb{background:linear-gradient(155deg,rgba(255,255,255,.90),rgba(232,242,231,.78))!important;border-color:var(--lg-edge)!important;box-shadow:12px 0 34px rgba(65,82,57,.10),inset 0 1px 0 #fff!important}
+#nav button{transition:color .22s ease,background .22s ease,transform .22s ease!important}
+#nav button:hover{transform:translateX(2px)}
+#nav .nav-indicator{z-index:0;pointer-events:none;filter:saturate(1.08)}
+/* Header, dashboard cards, feature panels, tables and settings surfaces. */
+header,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,.inv-table-card,.bs-coming-note,.dr,.md,.pn,.ts,.modal,.popover,.dropdown,.menu-panel,#toast{
+  border-color:var(--lg-edge)!important;
+  box-shadow:var(--lg-shadow)!important;
+  -webkit-backdrop-filter:blur(var(--lg-blur)) saturate(155%)!important;
+  backdrop-filter:blur(var(--lg-blur)) saturate(155%)!important;
+}
+header{background:linear-gradient(115deg,rgba(35,68,47,.74),rgba(12,31,21,.62))!important;border-top:0!important}
+[data-theme="light"] header{background:linear-gradient(115deg,rgba(255,255,255,.88),rgba(241,247,237,.76))!important;border-color:var(--lg-edge)!important}
+.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,.inv-table-card,.bs-coming-note{
+  background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.025) 48%,rgba(20,48,31,.42))!important;
+  border:1px solid var(--lg-edge)!important;
+  border-radius:18px;
+}
+[data-theme="light"] .card,[data-theme="light"] .bs-sidebar,[data-theme="light"] .bs-content,[data-theme="light"] .bs-panel,[data-theme="light"] .tm-hero,[data-theme="light"] .tm-stat,[data-theme="light"] .tm-tools,[data-theme="light"] .tm-card,[data-theme="light"] .tm-add-panel,[data-theme="light"] .tm-footer,[data-theme="light"] .inv-table-card,[data-theme="light"] .bs-coming-note{
+  background:linear-gradient(145deg,rgba(255,255,255,.91),rgba(255,255,255,.60) 50%,rgba(232,242,230,.66))!important;
+  border-color:var(--lg-edge)!important;
+}
+.card,.bs-panel,.tm-card,.tm-stat,.tm-tools,.tm-hero,.tm-footer{position:relative;isolation:isolate}
+.card:before,.bs-panel:before,.tm-card:before,.tm-stat:before,.tm-tools:before,.tm-hero:before,.tm-footer:before{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;
+  background:linear-gradient(128deg,rgba(255,255,255,.075),transparent 36%,transparent 76%,rgba(255,255,255,.025));
+}
+.kp:hover,.tm-card:hover{border-color:var(--lg-edge-strong)!important;box-shadow:var(--lg-shadow-hover)!important}
+/* Business Settings: hover must not create a bright hairline or doubled outline. */
+.bs-nav-item,.bs-nav-item:hover,.bs-nav-item:focus,.bs-nav-item:focus-visible,.bs-nav-item.active,.bs-nav-item.on{
+  outline:none!important;box-shadow:none!important;
+}
+.bs-nav-item:hover,.bs-nav-item:focus-visible{border-color:transparent!important;background:rgba(143,209,168,.095)!important}
+[data-theme="light"] .bs-nav-item:hover,[data-theme="light"] .bs-nav-item:focus-visible{background:rgba(78,139,91,.09)!important}
+.bs-nav-item{transition:background .20s ease,color .20s ease,transform .20s ease!important}
+/* Controls: common frosted material and consistent touch targets. */
+.btn,.ib,.srch,.chip,.seg,.tm-search,.tm-filter,.bs-nav-item,button:not(#nav button):not(.av):not(.tg){
+  -webkit-backdrop-filter:blur(15px) saturate(145%);
+  backdrop-filter:blur(15px) saturate(145%);
+}
+.btn,.ib,.srch,input,select,textarea,.chip,.seg,.tm-search,.tm-filter{
+  border-color:var(--lg-edge)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09);
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,transform .16s ease;
+}
+.btn:not(.pri):hover,.ib:hover,.chip:hover,.seg:hover{border-color:var(--lg-edge-strong)!important;box-shadow:0 7px 18px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.14)}
+.pri{background:linear-gradient(135deg,#398b5d,#246642)!important;border:1px solid rgba(176,235,191,.30)!important;box-shadow:0 8px 20px rgba(25,105,61,.22),inset 0 1px 0 rgba(255,255,255,.22)!important}
+[data-theme="light"] .btn:not(.pri),[data-theme="light"] .ib,[data-theme="light"] .srch{background:rgba(255,255,255,.62)!important;color:var(--tx)}
+input,select,textarea{background:rgba(255,255,255,.055)!important}
+[data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] textarea{background:rgba(255,255,255,.76)!important;color:var(--tx)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(117,194,142,.65)!important;box-shadow:0 0 0 3px rgba(104,185,130,.13),inset 0 1px 0 rgba(255,255,255,.10)!important}
+/* Tables, list rows, badges, notifications and empty states share the same visual language. */
+thead th{background:rgba(255,255,255,.035)}
+tbody tr:hover td{background:rgba(143,209,168,.055)}
+[data-theme="light"] tbody tr:hover td{background:rgba(65,135,82,.055)}
+th,td{border-bottom-color:var(--lg-edge)!important}
+.bd,.chip{border-color:var(--lg-edge)!important}
+.empty{background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;border-color:var(--lg-edge)!important}
+/* Dialog layers should float above the dashboard rather than look opaque/flat. */
+#layer .dr,#layer .md,#layer .pn,.dr,.md,.pn{background:linear-gradient(145deg,rgba(27,52,37,.94),rgba(9,25,17,.94))!important;border:1px solid var(--lg-edge-strong)!important;box-shadow:0 28px 80px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.15)!important}
+[data-theme="light"] #layer .dr,[data-theme="light"] #layer .md,[data-theme="light"] #layer .pn,[data-theme="light"] .dr,[data-theme="light"] .md,[data-theme="light"] .pn{background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(239,246,235,.95))!important}
+/* Keep the main content as the only vertical workspace scroller. */
+#pg{scrollbar-color:rgba(143,209,168,.28) transparent;scrollbar-width:thin}
+#pg::-webkit-scrollbar{width:7px}
+#pg::-webkit-scrollbar-thumb{background:rgba(143,209,168,.24);border-radius:20px}
+#pg::-webkit-scrollbar-track{background:transparent}
+@media(max-width:820px){header{border-radius:0 0 16px 16px!important}.card,.bs-sidebar,.bs-content,.bs-panel,.tm-card{border-radius:16px}}
+@media(prefers-reduced-motion:no-preference){.card,.bs-panel,.tm-card,.tm-stat,.tm-tools,.btn,.ib,.bs-nav-item{transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,transform .22s ease}}
+@media(prefers-reduced-transparency:reduce){header,#sb,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-card,.tm-stat,.tm-tools,.tm-hero,.tm-footer,.dr,.md,.pn{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
