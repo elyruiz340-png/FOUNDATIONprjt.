@@ -1621,6 +1621,60 @@ header{background-color:rgba(255,255,255,.025)!important}
 }
 </style>
 
+
+<style id="admintest27-lightmode-slimmer-sidebar">
+/* Light Mode only: narrow the rail and bring it slightly back toward the screen edge. */
+@media (min-width:821px){
+  html[data-theme="light"] #sb{
+    left:14px!important;
+    width:40px!important;
+    min-width:40px!important;
+    padding-left:3px!important;
+    padding-right:3px!important;
+  }
+  html[data-theme="light"] .app.exp #sb{
+    left:14px!important;
+    width:194px!important;
+    min-width:194px!important;
+  }
+  html[data-theme="light"] .brand b{
+    width:26px!important;
+    height:26px!important;
+  }
+  html[data-theme="light"] #nav button,
+  html[data-theme="light"] .tg{
+    width:31px!important;
+    height:31px!important;
+    min-width:31px!important;
+    border-radius:10px!important;
+  }
+  html[data-theme="light"] #nav svg,
+  html[data-theme="light"] .tg svg,
+  html[data-theme="light"] .app.exp #nav svg,
+  html[data-theme="light"] .app.exp .tg svg{
+    width:15px!important;
+    height:15px!important;
+  }
+  html[data-theme="light"] #nav .nav-indicator{
+    width:31px!important;
+    height:31px!important;
+    border-radius:10px!important;
+  }
+}
+</style>
+
+
+<style id="admintest28-lightmode-collapsed-sidebar-width">
+/* Light Mode only: adjust the collapsed rail width; preserve icon sizing and position. */
+@media (min-width:821px){
+  html[data-theme="light"] #sb{
+    width:36px!important;
+    min-width:36px!important;
+    max-width:36px!important;
+  }
+}
+</style>
+
 </head>
 <body class="locked">
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
