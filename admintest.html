@@ -642,6 +642,27 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac);background:rgba(2
 .bgfx:after{right:3%;bottom:0;background:radial-gradient(circle,rgba(184,157,91,.24),transparent 68%)}
 [data-theme="light"] .bgfx:before{opacity:.12}
 [data-theme="light"] .bgfx:after{opacity:.10}
+
+/* HALINA Midnight Ocean wallpaper — background only.
+   Existing Liquid Glass panels, opacity, blur, edges and component colors are intentionally untouched. */
+body{background:#0b1420!important}
+.bgfx{z-index:0!important;isolation:isolate;background:
+  radial-gradient(ellipse at 16% 12%,rgba(49,83,119,.30),transparent 42%),
+  radial-gradient(ellipse at 84% 78%,rgba(35,67,99,.22),transparent 44%),
+  linear-gradient(132deg,#0b1420 0%,#111f30 48%,#0a1522 100%);}
+.bgfx i{display:none!important}
+.bgfx:before,.bgfx:after{content:"";position:absolute;pointer-events:none;border-radius:50%;filter:blur(78px);}
+.bgfx:before{width:58vw;height:58vw;min-width:340px;min-height:340px;left:-18vw;top:-22vw;opacity:.48;
+  background:radial-gradient(circle,rgba(72,111,151,.34) 0%,rgba(53,85,121,.15) 38%,transparent 72%);}
+.bgfx:after{width:54vw;height:54vw;min-width:320px;min-height:320px;right:-18vw;bottom:-24vw;opacity:.36;
+  background:radial-gradient(circle,rgba(49,91,130,.30) 0%,rgba(39,69,100,.12) 42%,transparent 72%);}
+[data-theme="light"] body{background:#dce4eb!important}
+[data-theme="light"] .bgfx{background:
+  radial-gradient(ellipse at 15% 12%,rgba(115,145,171,.24),transparent 42%),
+  radial-gradient(ellipse at 86% 82%,rgba(159,174,188,.22),transparent 44%),
+  linear-gradient(132deg,#dce4eb 0%,#cbd7e1 52%,#e4e9ed 100%);}
+[data-theme="light"] .bgfx:before{opacity:.22;background:radial-gradient(circle,rgba(95,132,165,.28),transparent 70%)}
+[data-theme="light"] .bgfx:after{opacity:.18;background:radial-gradient(circle,rgba(128,151,173,.24),transparent 70%)}
 /* Fixed shell and navigation retain their existing geometry and moving active indicator. */
 #sb{background:linear-gradient(155deg,rgba(35,69,48,.78),rgba(9,27,18,.72))!important;border-color:var(--lg-edge)!important;box-shadow:14px 0 42px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.15)!important;-webkit-backdrop-filter:blur(30px) saturate(165%)!important;backdrop-filter:blur(30px) saturate(165%)!important}
 [data-theme="light"] #sb{background:linear-gradient(155deg,rgba(255,255,255,.90),rgba(232,242,231,.78))!important;border-color:var(--lg-edge)!important;box-shadow:12px 0 34px rgba(65,82,57,.10),inset 0 1px 0 #fff!important}
