@@ -735,170 +735,90 @@ th,td{border-bottom-color:var(--lg-edge)!important}
 @media(prefers-reduced-motion:no-preference){.card,.bs-panel,.tm-card,.tm-stat,.tm-tools,.btn,.ib,.bs-nav-item{transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,transform .22s ease}}
 @media(prefers-reduced-transparency:reduce){header,#sb,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-card,.tm-stat,.tm-tools,.tm-hero,.tm-footer,.dr,.md,.pn{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 
-/* ==========================================================================
-   HALINA — WATER LIQUID GLASS v3 (Midnight Ocean / Icy Light)
-   Visual-only final layer. Appended last so it overrides the earlier
-   green-tinted glass tokens without editing any older rule.
-   Untouched on purpose: JavaScript, Supabase, login gate (#gate),
-   #nav .nav-indicator, #nav button::after tooltips, sidebar geometry.
-   ========================================================================== */
 
-/* ---- 1. DARK TOKENS (every variable set here is mirrored in the light block) ---- */
+/* HALINA WATER LIQUID GLASS — iOS App Library inspired UI-only material pass.
+   CSS-only: preserves existing markup, IDs, navigation indicator, tooltips and application logic. */
 :root{
-  --bg:#050d16;--bg2:#0a1c2b;
-  --s:rgba(90,170,190,.14);--gs:rgba(12,38,54,.60);--gh:rgba(10,32,46,.56);--gf:rgba(7,24,37,.92);
-  --bd:rgba(150,215,230,.15);--ge:rgba(170,232,242,.26);--hl:rgba(225,252,255,.16);
-  --tx:#ecf7f9;--mu:#9db7c3;
-  --ac:#4fd1a1;--ac2:#27885a;--ok:#5fd6a0;
-  --sh:0 18px 44px rgba(0,8,16,.38);
-  --scroll-thumb:rgba(120,215,230,.24);--scroll-thumb-hover:rgba(120,215,230,.50);
-  --panel-soft:rgba(190,240,250,.05);--field-bg:rgba(4,20,32,.38);
-  --glass-edge:rgba(170,232,242,.22);--glass-top:rgba(220,250,255,.14);
-  --glass-surface:rgba(18,70,92,.34);--glass-surface-strong:rgba(10,36,52,.82);
-  --glass-shadow:0 18px 44px rgba(0,8,18,.40),inset 0 1px 0 rgba(215,250,255,.24);
-  --lg-blur:24px;
-  --lg-edge:rgba(170,232,242,.20);--lg-edge-strong:rgba(190,240,248,.34);
-  --lg-reflect:rgba(215,250,255,.12);
-  --lg-shadow:0 18px 44px rgba(0,8,18,.40),0 2px 8px rgba(0,8,18,.22),inset 0 1px 0 rgba(215,250,255,.26),inset 1px 0 0 rgba(200,245,255,.10),inset 0 -1px 0 rgba(0,0,0,.20),inset 0 0 26px rgba(110,220,235,.05);
-  --lg-shadow-hover:0 24px 54px rgba(0,8,18,.46),0 3px 10px rgba(0,8,18,.24),inset 0 1px 0 rgba(225,252,255,.34),inset 1px 0 0 rgba(200,245,255,.14),inset 0 -1px 0 rgba(0,0,0,.20),inset 0 0 30px rgba(110,220,235,.08);
+  --bg:#071525;--bg2:#142b40;--s:rgba(17,39,58,.42);--gs:rgba(17,43,64,.48);
+  --gh:rgba(14,37,56,.40);--gf:rgba(13,34,52,.82);
+  --bd:rgba(190,225,245,.20);--ge:rgba(203,237,255,.28);--hl:rgba(255,255,255,.16);
+  --tx:#f2f8fc;--mu:#b8cbd9;--ac:#8fd8c2;--ac2:#197d68;
+  --glass-edge:rgba(205,237,255,.24);--glass-top:rgba(220,245,255,.16);
+  --glass-surface:rgba(77,133,166,.25);--glass-surface-strong:rgba(29,65,91,.72);
+  --glass-shadow:0 16px 42px rgba(0,8,20,.24),inset 0 1px 0 rgba(255,255,255,.19);
+  --glass-blur:26px;
+  --lg-edge:rgba(203,237,255,.25);--lg-edge-strong:rgba(218,245,255,.42);
+  --lg-reflect:rgba(255,255,255,.17);
+  --lg-shadow:0 16px 42px rgba(0,8,20,.25),inset 0 1px 0 rgba(255,255,255,.18);
+  --lg-shadow-hover:0 20px 46px rgba(0,8,20,.30),inset 0 1px 0 rgba(255,255,255,.23);
 }
-
-/* ---- 2. LIGHT TOKENS ---- */
 [data-theme="light"]{
-  --bg:#d9e8f0;--bg2:#f2f8fb;
-  --s:rgba(255,255,255,.52);--gs:rgba(255,255,255,.62);--gh:rgba(255,255,255,.56);--gf:rgba(246,251,253,.94);
-  --bd:rgba(70,115,140,.16);--ge:rgba(255,255,255,.88);--hl:rgba(255,255,255,.95);
-  --tx:#0e2a3b;--mu:#4c6a7c;
-  --ac:#1d9468;--ac2:#1f8559;--ok:#1f8a5c;
-  --sh:0 16px 38px rgba(40,95,125,.14);
-  --scroll-thumb:rgba(40,100,130,.26);--scroll-thumb-hover:rgba(40,100,130,.50);
-  --panel-soft:rgba(255,255,255,.55);--field-bg:rgba(255,255,255,.72);
-  --glass-edge:rgba(255,255,255,.85);--glass-top:rgba(255,255,255,.90);
-  --glass-surface:rgba(255,255,255,.45);--glass-surface-strong:rgba(247,252,254,.90);
-  --glass-shadow:0 16px 38px rgba(40,95,125,.14),inset 0 1px 0 rgba(255,255,255,.95);
-  --lg-blur:24px;
-  --lg-edge:rgba(255,255,255,.82);--lg-edge-strong:rgba(255,255,255,.96);
-  --lg-reflect:rgba(255,255,255,.70);
-  --lg-shadow:0 16px 38px rgba(40,95,125,.14),0 2px 6px rgba(40,95,125,.06),inset 0 1px 0 rgba(255,255,255,.96),inset 0 0 0 1px rgba(110,160,185,.10);
-  --lg-shadow-hover:0 22px 46px rgba(40,95,125,.19),0 3px 8px rgba(40,95,125,.08),inset 0 1px 0 #fff,inset 0 0 0 1px rgba(110,160,185,.14);
+  --bg:#dce7ef;--bg2:#eef5f9;--s:rgba(235,246,252,.48);--gs:rgba(228,242,250,.52);
+  --gh:rgba(239,247,251,.46);--gf:rgba(240,248,252,.86);
+  --bd:rgba(91,132,158,.20);--ge:rgba(255,255,255,.66);--hl:rgba(255,255,255,.72);
+  --tx:#172d3d;--mu:#526b7c;--ac:#238b70;--ac2:#197d68;
+  --glass-edge:rgba(91,132,158,.22);--glass-top:rgba(255,255,255,.62);
+  --glass-surface:rgba(206,228,241,.43);--glass-surface-strong:rgba(239,248,253,.84);
+  --glass-shadow:0 14px 34px rgba(39,72,94,.12),inset 0 1px 0 rgba(255,255,255,.78);
+  --glass-blur:26px;
+  --lg-edge:rgba(91,132,158,.23);--lg-edge-strong:rgba(91,132,158,.38);
+  --lg-reflect:rgba(255,255,255,.72);
+  --lg-shadow:0 14px 34px rgba(39,72,94,.13),inset 0 1px 0 rgba(255,255,255,.78);
+  --lg-shadow-hover:0 18px 38px rgba(39,72,94,.17),inset 0 1px 0 rgba(255,255,255,.86);
 }
-
-/* ---- 3. WALLPAPER: darker than every glass layer ---- */
-body{background:#050d16!important}
-.bgfx{background:
-  linear-gradient(118deg,transparent 18%,rgba(70,190,210,.07) 26%,transparent 34%),
-  linear-gradient(118deg,transparent 46%,rgba(60,170,200,.09) 54%,transparent 63%),
-  linear-gradient(118deg,transparent 70%,rgba(80,200,220,.06) 77%,transparent 85%),
-  radial-gradient(ellipse at 14% 10%,rgba(24,92,112,.55),transparent 46%),
-  radial-gradient(ellipse at 88% 18%,rgba(14,60,84,.50),transparent 44%),
-  radial-gradient(ellipse at 70% 92%,rgba(10,70,86,.50),transparent 48%),
-  linear-gradient(150deg,#04101a 0%,#07202e 46%,#041019 100%)!important}
-.bgfx:before{opacity:.42;background:radial-gradient(circle,rgba(40,170,190,.34) 0%,rgba(20,100,125,.14) 40%,transparent 72%)}
-.bgfx:after{opacity:.34;background:radial-gradient(circle,rgba(30,120,160,.30) 0%,rgba(20,80,115,.12) 42%,transparent 72%)}
-.main{background:transparent}
-#pg{background:transparent}
-
-[data-theme="light"] body{background:#d9e8f0!important}
+body{background:var(--bg)!important;color:var(--tx)}
+.bgfx{z-index:0!important;isolation:isolate;overflow:hidden;background:
+  radial-gradient(ellipse at 18% 18%,rgba(43,112,157,.34),transparent 43%),
+  radial-gradient(ellipse at 82% 70%,rgba(32,91,125,.28),transparent 46%),
+  linear-gradient(135deg,#071525 0%,#102b42 52%,#081827 100%)!important}
+.bgfx:before{width:66vw;height:66vw;left:-20vw;top:-24vw;opacity:.44;filter:blur(90px);background:radial-gradient(circle,rgba(83,157,194,.32),transparent 70%)}
+.bgfx:after{width:58vw;height:58vw;right:-18vw;bottom:-24vw;opacity:.38;filter:blur(92px);background:radial-gradient(circle,rgba(52,125,161,.28),transparent 70%)}
+[data-theme="light"] body{background:#dce7ef!important}
 [data-theme="light"] .bgfx{background:
-  linear-gradient(120deg,transparent 15%,rgba(255,255,255,.55) 24%,transparent 33%),
-  linear-gradient(120deg,transparent 48%,rgba(255,255,255,.45) 57%,transparent 66%),
-  radial-gradient(ellipse at 12% 8%,rgba(255,255,255,.85),transparent 44%),
-  radial-gradient(ellipse at 90% 85%,rgba(150,200,222,.55),transparent 48%),
-  linear-gradient(140deg,#e9f4f9 0%,#d3e7f0 50%,#e6f1f6 100%)!important}
-[data-theme="light"] .bgfx:before{opacity:.35;background:radial-gradient(circle,rgba(130,195,220,.40),transparent 70%)}
-[data-theme="light"] .bgfx:after{opacity:.30;background:radial-gradient(circle,rgba(255,255,255,.80),transparent 70%)}
+  radial-gradient(ellipse at 16% 16%,rgba(255,255,255,.76),transparent 42%),
+  radial-gradient(ellipse at 82% 76%,rgba(157,194,215,.36),transparent 45%),
+  linear-gradient(135deg,#dce8f0 0%,#cbdce8 52%,#e7eff4 100%)!important}
+[data-theme="light"] .bgfx:before{opacity:.26;background:radial-gradient(circle,rgba(255,255,255,.72),transparent 70%)}
+[data-theme="light"] .bgfx:after{opacity:.22;background:radial-gradient(circle,rgba(126,171,199,.28),transparent 70%)}
+/* Darker shell surfaces; keep existing geometry and emerald active-nav indicator intact. */
+#sb{background:linear-gradient(145deg,rgba(13,39,59,.70),rgba(9,29,46,.58))!important;
+ border:1px solid rgba(204,237,255,.24)!important;border-radius:24px!important;
+ box-shadow:12px 8px 36px rgba(0,8,20,.22),inset 0 1px 0 rgba(255,255,255,.20)!important;
+ -webkit-backdrop-filter:blur(32px) saturate(165%)!important;backdrop-filter:blur(32px) saturate(165%)!important}
+header{background:linear-gradient(120deg,rgba(19,49,70,.56),rgba(20,54,76,.34))!important;
+ border-color:var(--lg-edge)!important;box-shadow:0 10px 30px rgba(0,8,20,.12),inset 0 1px 0 rgba(255,255,255,.18)!important;
+ -webkit-backdrop-filter:blur(30px) saturate(165%)!important;backdrop-filter:blur(30px) saturate(165%)!important}
+[data-theme="light"] #sb{background:linear-gradient(145deg,rgba(247,252,255,.70),rgba(213,231,242,.48))!important;
+ border-color:rgba(255,255,255,.72)!important;box-shadow:10px 8px 32px rgba(43,78,100,.12),inset 0 1px 0 rgba(255,255,255,.88)!important}
+[data-theme="light"] header{background:linear-gradient(120deg,rgba(247,252,255,.70),rgba(223,238,247,.48))!important;
+ border-color:rgba(255,255,255,.68)!important;box-shadow:0 8px 26px rgba(43,78,100,.09),inset 0 1px 0 rgba(255,255,255,.88)!important}
+/* Main cards: distinct water-glass tint, translucency and visible frosted blur. */
+.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,.inv-table-card,.empty,.bs-coming-note{
+ background:linear-gradient(145deg,rgba(221,246,255,.19) 0%,rgba(117,177,204,.105) 46%,rgba(43,91,119,.28) 100%)!important;
+ border:1px solid rgba(207,239,255,.27)!important;border-radius:19px;
+ box-shadow:0 16px 38px rgba(0,9,22,.20),inset 0 1px 0 rgba(255,255,255,.20),inset 0 -1px 0 rgba(5,28,45,.12)!important;
+ -webkit-backdrop-filter:blur(28px) saturate(165%)!important;backdrop-filter:blur(28px) saturate(165%)!important}
+[data-theme="light"] .card,[data-theme="light"] .bs-sidebar,[data-theme="light"] .bs-content,[data-theme="light"] .bs-panel,[data-theme="light"] .tm-hero,[data-theme="light"] .tm-stat,[data-theme="light"] .tm-tools,[data-theme="light"] .tm-card,[data-theme="light"] .tm-add-panel,[data-theme="light"] .tm-footer,[data-theme="light"] .inv-table-card,[data-theme="light"] .empty,[data-theme="light"] .bs-coming-note{
+ background:linear-gradient(145deg,rgba(255,255,255,.69) 0%,rgba(226,241,249,.48) 48%,rgba(190,218,234,.40) 100%)!important;
+ border:1px solid rgba(255,255,255,.74)!important;
+ box-shadow:0 14px 34px rgba(49,83,105,.12),inset 0 1px 0 rgba(255,255,255,.88),inset 0 -1px 0 rgba(98,140,164,.08)!important;
+ -webkit-backdrop-filter:blur(28px) saturate(150%)!important;backdrop-filter:blur(28px) saturate(150%)!important}
+/* Nested Business Settings surfaces should be visibly lighter than the parent container. */
+.bs-sidebar,.bs-content{background:linear-gradient(145deg,rgba(214,242,255,.17),rgba(76,132,161,.20))!important}
+.bs-panel{background:linear-gradient(145deg,rgba(226,247,255,.22),rgba(91,150,178,.16))!important}
+[data-theme="light"] .bs-sidebar,[data-theme="light"] .bs-content{background:linear-gradient(145deg,rgba(255,255,255,.58),rgba(204,227,240,.40))!important}
+[data-theme="light"] .bs-panel{background:linear-gradient(145deg,rgba(255,255,255,.76),rgba(216,235,246,.53))!important}
+/* Keep the green active indicator and existing hover interactions unchanged. */
+#nav .nav-indicator{background:linear-gradient(145deg,rgba(38,174,125,.97),rgba(24,119,91,.95))!important;border-color:rgba(176,255,222,.48)!important}
+/* Form controls remain readable but receive a restrained frosted surface. */
+input,select,textarea,.btn:not(.pri),.ib,.srch,.chip,.seg,.tm-search,.tm-filter{
+ background:rgba(207,235,249,.10)!important;border-color:rgba(205,237,255,.22)!important}
+[data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] textarea,[data-theme="light"] .btn:not(.pri),[data-theme="light"] .ib,[data-theme="light"] .srch,[data-theme="light"] .chip,[data-theme="light"] .seg,[data-theme="light"] .tm-search,[data-theme="light"] .tm-filter{
+ background:rgba(255,255,255,.48)!important;border-color:rgba(105,145,168,.22)!important}
+[data-theme="light"] .dr,[data-theme="light"] .md,[data-theme="light"] .pn,[data-theme="light"] .inv-action-menu{background:linear-gradient(145deg,rgba(250,254,255,.94),rgba(218,235,245,.88))!important;color:var(--tx)}
+@media(max-width:820px){#sb{border-radius:0 22px 22px 0!important}}
+@media(prefers-reduced-transparency:reduce){#sb,header,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--bg2)!important}}
 
-/* ---- 4. SIDEBAR + HEADER: darkest / structural glass ---- */
-#sb{background:linear-gradient(160deg,rgba(7,26,40,.80),rgba(3,14,24,.74))!important;border-color:var(--lg-edge)!important;box-shadow:16px 0 46px rgba(0,6,14,.34),inset 0 1px 0 rgba(200,245,255,.20),inset 1px 0 0 rgba(200,245,255,.08),inset 0 -1px 0 rgba(0,0,0,.25)!important;-webkit-backdrop-filter:blur(28px) saturate(150%)!important;backdrop-filter:blur(28px) saturate(150%)!important}
-[data-theme="light"] #sb{background:linear-gradient(160deg,rgba(255,255,255,.64),rgba(214,234,243,.50))!important;border-color:rgba(255,255,255,.85)!important;box-shadow:14px 0 38px rgba(40,95,125,.13),inset 0 1px 0 #fff,inset 0 0 0 1px rgba(110,160,185,.10)!important}
-header{background:linear-gradient(115deg,rgba(10,38,54,.62),rgba(6,24,38,.52))!important}
-[data-theme="light"] header{background:linear-gradient(115deg,rgba(255,255,255,.66),rgba(226,240,247,.52))!important;border-color:rgba(255,255,255,.85)!important}
-
-/* ---- 5. DASHBOARD CARDS: lighter aqua glass ---- */
-.card,.bs-sidebar,.bs-content,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,.inv-table-card{
-  background:linear-gradient(145deg,rgba(190,240,250,.16),rgba(100,200,220,.06) 42%,rgba(18,76,98,.34))!important;
-  border-radius:20px;
-}
-[data-theme="light"] .card,[data-theme="light"] .bs-sidebar,[data-theme="light"] .bs-content,[data-theme="light"] .tm-hero,[data-theme="light"] .tm-stat,[data-theme="light"] .tm-tools,[data-theme="light"] .tm-card,[data-theme="light"] .tm-add-panel,[data-theme="light"] .tm-footer,[data-theme="light"] .inv-table-card{
-  background:linear-gradient(145deg,rgba(255,255,255,.80),rgba(255,255,255,.46) 50%,rgba(205,229,240,.42))!important;
-}
-/* Many Tables cards: lighter blur to keep it smooth on modest laptops. */
-.tm-card,.tm-stat{-webkit-backdrop-filter:blur(14px) saturate(150%)!important;backdrop-filter:blur(14px) saturate(150%)!important}
-/* Top-left reflective sheen (re-colors the existing :before, no new pseudo-elements). */
-.card:before,.bs-sidebar:before,.bs-content:before,.bs-panel:before,.tm-hero:before,.tm-stat:before,.tm-tools:before,.tm-card:before,.tm-footer:before{
-  background:linear-gradient(128deg,rgba(215,250,255,.11),transparent 36%,transparent 72%,rgba(120,220,240,.04))}
-[data-theme="light"] .card:before,[data-theme="light"] .bs-sidebar:before,[data-theme="light"] .bs-content:before,[data-theme="light"] .bs-panel:before,[data-theme="light"] .tm-hero:before,[data-theme="light"] .tm-stat:before,[data-theme="light"] .tm-tools:before,[data-theme="light"] .tm-card:before,[data-theme="light"] .tm-footer:before{
-  background:linear-gradient(128deg,rgba(255,255,255,.55),transparent 38%,transparent 74%,rgba(255,255,255,.20))}
-
-/* ---- 6. NESTED SURFACES: subtle, no extra blur ---- */
-.bs-panel,.bs-logo,.bs-coming-note{
-  background:linear-gradient(145deg,rgba(210,248,255,.09),rgba(120,210,230,.03) 55%,rgba(8,40,58,.28))!important;
-  border-color:rgba(170,232,242,.14)!important;border-radius:15px;
-  box-shadow:0 8px 22px rgba(0,8,18,.14),inset 0 1px 0 rgba(215,250,255,.14)!important;
-  -webkit-backdrop-filter:none!important;backdrop-filter:none!important}
-[data-theme="light"] .bs-panel,[data-theme="light"] .bs-logo,[data-theme="light"] .bs-coming-note{
-  background:linear-gradient(145deg,rgba(255,255,255,.66),rgba(255,255,255,.38))!important;
-  border-color:rgba(255,255,255,.80)!important;
-  box-shadow:0 8px 20px rgba(40,95,125,.08),inset 0 1px 0 #fff,inset 0 0 0 1px rgba(110,160,185,.08)!important}
-[data-theme="light"] .bs-coming-note b{color:var(--tx)}
-
-/* ---- 7. MODALS, DRAWERS, PANELS, DROPDOWNS, TOASTS ---- */
-#layer .dr,#layer .md,#layer .pn,.dr,.md,.pn,.inv-action-menu{
-  background:linear-gradient(145deg,rgba(14,48,68,.90),rgba(6,24,38,.93))!important;
-  border:1px solid var(--lg-edge-strong)!important;
-  box-shadow:0 30px 80px rgba(0,6,14,.50),inset 0 1px 0 rgba(215,250,255,.20),inset 0 0 30px rgba(110,220,235,.05)!important;
-  -webkit-backdrop-filter:blur(30px) saturate(160%)!important;backdrop-filter:blur(30px) saturate(160%)!important}
-[data-theme="light"] #layer .dr,[data-theme="light"] #layer .md,[data-theme="light"] #layer .pn,[data-theme="light"] .dr,[data-theme="light"] .md,[data-theme="light"] .pn,[data-theme="light"] .inv-action-menu{
-  background:linear-gradient(145deg,rgba(255,255,255,.90),rgba(232,244,250,.88))!important;
-  box-shadow:0 26px 64px rgba(40,95,125,.22),inset 0 1px 0 #fff,inset 0 0 0 1px rgba(110,160,185,.10)!important}
-.ts{background:linear-gradient(145deg,rgba(14,48,68,.88),rgba(6,24,38,.90))}
-[data-theme="light"] .ts{background:linear-gradient(145deg,rgba(255,255,255,.90),rgba(232,244,250,.88))}
-.bk{background:rgba(2,10,20,.46);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
-[data-theme="light"] .bk{background:rgba(40,80,105,.22)}
-
-/* ---- 8. FORMS + BUTTONS ---- */
-input,select,textarea{background:rgba(4,22,34,.42)!important;border-color:rgba(170,232,242,.20)!important;color:var(--tx)}
-select option{background:#0a1c2b;color:#ecf7f9}
-input:focus,select:focus,textarea:focus{border-color:rgba(95,214,170,.70)!important;box-shadow:0 0 0 3px rgba(79,209,161,.16),inset 0 1px 0 rgba(255,255,255,.08)!important}
-[data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] textarea{background:rgba(255,255,255,.72)!important;border-color:rgba(70,115,140,.22)!important;color:var(--tx)}
-[data-theme="light"] select option{background:#fff;color:#0e2a3b}
-[data-theme="light"] .bs-field input,[data-theme="light"] .bs-field textarea,[data-theme="light"] .bs-field select,[data-theme="light"] .bs-hour-row input[type=time]{color:var(--tx)}
-.btn:not(.pri):hover,.ib:hover,.chip:hover,.seg:hover{background:rgba(120,215,230,.13)!important;border-color:var(--lg-edge-strong)!important}
-[data-theme="light"] .btn:not(.pri):hover,[data-theme="light"] .ib:hover{background:rgba(255,255,255,.90)!important}
-.tm-search,.tm-filter{background:rgba(6,30,46,.40)!important}
-[data-theme="light"] .tm-search{background:rgba(255,255,255,.70)!important;border-color:rgba(70,115,140,.22)!important}
-[data-theme="light"] .tm-filter{background:rgba(255,255,255,.55)!important;border-color:rgba(70,115,140,.18)!important}
-[data-theme="light"] .tm-filter button.active{background:#1f8559;color:#fff}
-[data-theme="light"] .tm-view-qr{color:#1b7f5c;background:rgba(255,255,255,.70);border-color:rgba(110,160,185,.25)}
-[data-theme="light"] .tm-card-more{border-color:rgba(110,160,185,.20)}
-
-/* ---- 9. ICON TILES, NAV-STYLE ITEMS, TABLES ---- */
-.bs-nav-icon,.bs-head-icon{background:rgba(120,215,230,.11);color:var(--ac)}
-[data-theme="light"] .bs-nav-icon,[data-theme="light"] .bs-head-icon{background:rgba(255,255,255,.70);color:#1b7f5c}
-.tm-hero-icon,.tm-table-symbol,.tm-stat-icon{background:rgba(70,200,160,.18);color:var(--ac)}
-[data-theme="light"] .tm-hero-icon,[data-theme="light"] .tm-table-symbol,[data-theme="light"] .tm-stat-icon{background:rgba(60,185,140,.18);color:#1b7f5c}
-.bs-nav-item:hover,.bs-nav-item:focus-visible{background:rgba(120,215,230,.10)!important}
-[data-theme="light"] .bs-nav-item:hover,[data-theme="light"] .bs-nav-item:focus-visible{background:rgba(255,255,255,.60)!important}
-thead th{background:rgba(190,240,250,.06)}
-tbody tr:hover td,tr[data-a]:hover td{background:rgba(110,215,230,.07)}
-.inv-table thead th{background:rgba(8,32,48,.92)}
-[data-theme="light"] thead th{background:rgba(255,255,255,.50)}
-[data-theme="light"] tbody tr:hover td,[data-theme="light"] tr[data-a]:hover td{background:rgba(60,140,170,.07)}
-[data-theme="light"] .inv-table thead th{background:rgba(238,247,251,.95)}
-
-/* ---- 10. SCROLLBAR TINT ---- */
-#pg{scrollbar-color:rgba(120,215,230,.28) transparent}
-#pg::-webkit-scrollbar-thumb{background:rgba(120,215,230,.24)}
-[data-theme="light"] #pg{scrollbar-color:rgba(40,100,130,.28) transparent}
-[data-theme="light"] #pg::-webkit-scrollbar-thumb{background:rgba(40,100,130,.24)}
-
-/* ---- 11. ACCESSIBILITY / FALLBACKS: fall back to near-solid panels ---- */
-@media(prefers-reduced-transparency:reduce){
-  :root[data-theme] #sb,:root[data-theme] header,:root[data-theme] .card,:root[data-theme] .bs-sidebar,:root[data-theme] .bs-content,:root[data-theme] .tm-hero,:root[data-theme] .tm-stat,:root[data-theme] .tm-tools,:root[data-theme] .tm-card,:root[data-theme] .tm-add-panel,:root[data-theme] .tm-footer,:root[data-theme] .inv-table-card,:root[data-theme] .dr,:root[data-theme] .md,:root[data-theme] .pn,:root[data-theme] #layer .dr,:root[data-theme] #layer .md,:root[data-theme] #layer .pn{background:var(--gf)!important}
-}
-@supports not (backdrop-filter:blur(1px)){
-  :root[data-theme] #sb,:root[data-theme] header,:root[data-theme] .card,:root[data-theme] .bs-sidebar,:root[data-theme] .bs-content,:root[data-theme] .tm-hero,:root[data-theme] .tm-stat,:root[data-theme] .tm-tools,:root[data-theme] .tm-card,:root[data-theme] .tm-add-panel,:root[data-theme] .tm-footer,:root[data-theme] .inv-table-card,:root[data-theme] .dr,:root[data-theme] .md,:root[data-theme] .pn,:root[data-theme] #layer .dr,:root[data-theme] #layer .md,:root[data-theme] #layer .pn{background:var(--gf)!important}
-}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
