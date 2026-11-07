@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="liquid-glass">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1254,6 +1254,78 @@ header{background-color:rgba(255,255,255,.025)!important}
   box-shadow:0 4px 16px rgba(85,80,65,.045)!important;
 }
 
+
+/* HALINA THREE-THEME PASS — fixed geometry; theme-only visual changes */
+.theme-switch{
+ display:inline-flex;align-items:center;gap:3px;padding:3px;border-radius:999px;
+ border:1px solid var(--bd);background:var(--bg2);box-shadow:inset 2px 2px 5px rgba(0,0,0,.12),inset -2px -2px 5px rgba(255,255,255,.08);
+ flex:0 0 auto
+}
+.theme-switch button{
+ appearance:none;border:0;border-radius:999px;padding:7px 10px;min-height:30px;
+ background:transparent;color:var(--mu);font:600 11px/1 Inter,Arial,sans-serif;
+ white-space:nowrap;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s
+}
+.theme-switch button.active{
+ color:var(--tx);background:var(--bg);box-shadow:3px 3px 7px rgba(0,0,0,.16),-3px -3px 7px rgba(255,255,255,.12)
+}
+.theme-switch button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+header{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+header .ib,header .btn,header .av,header .edy,.theme-switch{position:relative;z-index:1}
+@media(max-width:560px){.theme-switch button{padding:7px 7px;font-size:10px}.theme-switch{gap:1px;padding:2px}}
+
+/* Dark Mode: retain the Light Mode geometry, use deep charcoal convex neumorphism. */
+[data-theme="dark"]{
+ --bg:#111216;--bg2:#1b1d22;--s:#22252b;--gs:#252830;--gh:#292d35;--gf:#1c1f25;
+ --bd:#30343d;--ge:#353a44;--hl:rgba(255,255,255,.055);
+ --tx:#f1f2f4;--mu:#b7bbc3;--ac:#c5cad1;--ac2:#aeb5bf;
+ --sh:8px 8px 18px rgba(0,0,0,.48),-6px -6px 16px rgba(255,255,255,.035)
+}
+[data-theme="dark"] body{background:#111216!important;color:var(--tx)!important}
+[data-theme="dark"] .bgfx{opacity:.08!important}
+[data-theme="dark"] #sb,[data-theme="dark"] .card,[data-theme="dark"] .bs-sidebar,
+[data-theme="dark"] .bs-content,[data-theme="dark"] .bs-panel,[data-theme="dark"] .tm-hero,
+[data-theme="dark"] .tm-stat,[data-theme="dark"] .tm-tools,[data-theme="dark"] .tm-card,
+[data-theme="dark"] .tm-add-panel,[data-theme="dark"] .tm-footer,[data-theme="dark"] .inv-table-card,
+[data-theme="dark"] .empty,[data-theme="dark"] .bs-coming-note,[data-theme="dark"] .kp,
+[data-theme="dark"] .panel,[data-theme="dark"] .tile,[data-theme="dark"] .widget,
+[data-theme="dark"] .stat-card,[data-theme="dark"] .chart-card{
+ background:linear-gradient(145deg,#292c33,#1d2026)!important;
+ border:1px solid #30343d!important;
+ box-shadow:7px 7px 15px rgba(0,0,0,.48),-5px -5px 13px rgba(255,255,255,.035)!important;
+ backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+}
+[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea,
+[data-theme="dark"] .srch,[data-theme="dark"] .tm-search,[data-theme="dark"] .tm-filter,
+[data-theme="dark"] .bs-field input,[data-theme="dark"] .bs-field textarea,[data-theme="dark"] .bs-field select{
+ color:#f1f2f4!important;background:#17191e!important;border:1px solid #30343d!important;
+ box-shadow:inset 4px 4px 8px rgba(0,0,0,.48),inset -3px -3px 7px rgba(255,255,255,.035)!important
+}
+[data-theme="dark"] button:not(#nav button),[data-theme="dark"] .btn,
+[data-theme="dark"] .ib,[data-theme="dark"] .chip,[data-theme="dark"] .seg,
+[data-theme="dark"] .theme-switch{
+ border-color:#343943
+}
+[data-theme="dark"] .btn:not(.pri),[data-theme="dark"] .ib,
+[data-theme="dark"] .theme-switch button.active{
+ color:#e8eaee!important;background:linear-gradient(145deg,#292d34,#1b1e24)!important;
+ box-shadow:4px 4px 8px rgba(0,0,0,.48),-3px -3px 7px rgba(255,255,255,.035)!important
+}
+[data-theme="dark"] button:active,[data-theme="dark"] .btn:active,
+[data-theme="dark"] .ib:active,[data-theme="dark"] .theme-switch button.active{
+ box-shadow:inset 4px 4px 8px rgba(0,0,0,.5),inset -3px -3px 7px rgba(255,255,255,.035)!important
+}
+[data-theme="dark"] header{background:transparent!important;border:0!important;box-shadow:none!important}
+[data-theme="dark"] .theme-switch{background:#17191e!important;box-shadow:inset 3px 3px 6px rgba(0,0,0,.5),inset -2px -2px 5px rgba(255,255,255,.035)!important}
+[data-theme="dark"] .theme-switch button.active{background:linear-gradient(145deg,#2b2f37,#1c1f25)!important}
+
+/* Liquid Glass Mode intentionally retains the existing transparent glass material and wallpaper. */
+[data-theme="liquid"]{color-scheme:dark}
+[data-theme="liquid"] body{background:#0b1420!important}
+[data-theme="liquid"] header{background:transparent!important;border:0!important;box-shadow:none!important}
+[data-theme="liquid"] .theme-switch{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+[data-theme="liquid"] .theme-switch button.active{background:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 4px 12px rgba(0,0,0,.18)}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -1512,102 +1584,6 @@ header{background-color:rgba(255,255,255,.025)!important}
 @media (max-width:820px){
   .main{margin:0!important;left:0!important;width:100%!important}
 }
-
-
-/* HALINA THREE-MODE THEME SYSTEM — layout and component geometry remain shared. */
-header{
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  -webkit-backdrop-filter:none!important;
-  backdrop-filter:none!important;
-}
-header .ib,header .srch,header .av,header .edy,.theme-switch{
-  position:relative;
-  z-index:1;
-  box-shadow:0 4px 12px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.38)!important;
-}
-header .edy{border:1px solid var(--bd)!important}
-.theme-switch{display:inline-flex;align-items:center;gap:3px;padding:4px;border:1px solid var(--bd);border-radius:12px;background:var(--s);flex:none}
-.theme-switch button{height:29px;min-width:42px;padding:0 8px;border:0;border-radius:8px;background:transparent;color:var(--mu);font-size:11px;font-weight:650;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s}
-.theme-switch button.active{background:var(--bg2);color:var(--tx);box-shadow:3px 3px 7px rgba(0,0,0,.12),-2px -2px 6px rgba(255,255,255,.24)!important}
-.theme-switch button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-@media(max-width:560px){.theme-switch{gap:1px;padding:3px}.theme-switch button{min-width:35px;padding:0 5px;font-size:10px}header{gap:6px!important;padding-left:8px!important;padding-right:8px!important}header .edy{display:none!important}}
-
-/* DARK MODE: same neumorphic component language and dimensions as the Light Mode base. */
-[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#111216;--bg2:#1b1d22;--s:#24272e;--gs:#24272e;--gh:transparent;--gf:#202329;
-  --bd:#30343d;--ge:#383e48;--hl:rgba(255,255,255,.055);
-  --tx:#f1f2f4;--mu:#aeb4bd;--ac:#c5cad1;--ac2:#68717d;
-  --ok:#75c995;--wn:#e6b45d;--er:#e47b73;--sh:7px 7px 16px rgba(0,0,0,.42),-5px -5px 13px rgba(255,255,255,.035);
-}
-[data-theme="dark"] body{background:#111216!important;color:var(--tx)!important}
-[data-theme="dark"] .bgfx{background:#111216!important;background-image:none!important}
-[data-theme="dark"] .bgfx i,[data-theme="dark"] .bgfx:before,[data-theme="dark"] .bgfx:after{display:none!important;content:none!important}
-[data-theme="dark"] .app,[data-theme="dark"] .main,[data-theme="dark"] #pg{background:transparent!important}
-[data-theme="dark"] #sb,
-[data-theme="dark"] .card,[data-theme="dark"] .dr,[data-theme="dark"] .md,[data-theme="dark"] .pn,
-[data-theme="dark"] .bs-sidebar,[data-theme="dark"] .bs-content,[data-theme="dark"] .bs-panel,
-[data-theme="dark"] .tm-hero,[data-theme="dark"] .tm-stat,[data-theme="dark"] .tm-tools,
-[data-theme="dark"] .tm-card,[data-theme="dark"] .tm-add-panel,[data-theme="dark"] .tm-footer,
-[data-theme="dark"] .inv-table-card,[data-theme="dark"] .empty,[data-theme="dark"] .bs-coming-note,
-[data-theme="dark"] .kp,[data-theme="dark"] .panel,[data-theme="dark"] .tile,[data-theme="dark"] .widget,
-[data-theme="dark"] .stat-card,[data-theme="dark"] .chart-card{
-  background:#24272e!important;
-  border:1px solid #30343d!important;
-  border-radius:var(--r);
-  box-shadow:7px 7px 15px rgba(0,0,0,.46),-5px -5px 12px rgba(255,255,255,.035),inset 0 1px 0 rgba(255,255,255,.025)!important;
-  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
-}
-[data-theme="dark"] #sb{background:#1b1d22!important;border-radius:0!important}
-[data-theme="dark"] .bs-sidebar,[data-theme="dark"] .bs-content{background:#202329!important}
-[data-theme="dark"] .bs-panel,[data-theme="dark"] .tm-stat,[data-theme="dark"] .tm-tools,
-[data-theme="dark"] .tm-footer,[data-theme="dark"] .tm-card{background:#292d34!important}
-[data-theme="dark"] .dr,[data-theme="dark"] .md,[data-theme="dark"] .pn,
-[data-theme="dark"] .ts,[data-theme="dark"] .modal,[data-theme="dark"] .popover,
-[data-theme="dark"] .dropdown,[data-theme="dark"] .menu-panel,[data-theme="dark"] .inv-action-menu,
-[data-theme="dark"] #toast{background:#202329!important;border-color:#383e48!important;color:var(--tx)!important}
-[data-theme="dark"] button:not(#nav button),[data-theme="dark"] .btn,
-[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea,
-[data-theme="dark"] .seg,[data-theme="dark"] .chip,[data-theme="dark"] .ib,
-[data-theme="dark"] .srch,[data-theme="dark"] .tm-search,[data-theme="dark"] .tm-filter{
-  background:#17191e!important;color:var(--tx)!important;border:1px solid #30343d!important;
-  box-shadow:inset 4px 4px 8px rgba(0,0,0,.48),inset -3px -3px 7px rgba(255,255,255,.035)!important;
-}
-[data-theme="dark"] .btn.pri,[data-theme="dark"] .seg button.on{background:#68717d!important;color:#fff!important;border-color:#68717d!important}
-[data-theme="dark"] #nav button{background:transparent!important;box-shadow:none!important;color:#aeb4bd!important}
-[data-theme="dark"] #nav button.on,[data-theme="dark"] #nav button.active{
-  color:#f1f2f4!important;background:#24272e!important;
-  box-shadow:inset 4px 4px 8px rgba(0,0,0,.48),inset -3px -3px 7px rgba(255,255,255,.035)!important;
-}
-[data-theme="dark"] #nav .nav-indicator{display:none!important;opacity:0!important}
-[data-theme="dark"] .bs-nav-item{color:#d5d9df!important}
-[data-theme="dark"] .bs-nav-item.active{background:#292d34!important;color:#f1f2f4!important;border-color:#383e48!important;box-shadow:inset 3px 3px 7px rgba(0,0,0,.42),inset -3px -3px 7px rgba(255,255,255,.035)!important}
-[data-theme="dark"] header .ib,[data-theme="dark"] header .srch,[data-theme="dark"] header .av,
-[data-theme="dark"] header .edy,[data-theme="dark"] .theme-switch{
-  background:#24272e!important;border-color:#30343d!important;
-  box-shadow:5px 5px 10px rgba(0,0,0,.42),-3px -3px 8px rgba(255,255,255,.035)!important;
-}
-[data-theme="dark"] .theme-switch button{background:transparent!important;color:#aeb4bd!important;box-shadow:none!important}
-[data-theme="dark"] .theme-switch button.active{background:#17191e!important;color:#f1f2f4!important;box-shadow:inset 3px 3px 6px rgba(0,0,0,.48),inset -2px -2px 5px rgba(255,255,255,.04)!important}
-[data-theme="dark"] .edy{color:#e4e7eb!important;border-color:#555d68!important}
-[data-theme="dark"] input::placeholder,[data-theme="dark"] textarea::placeholder{color:#858c96!important}
-[data-theme="dark"] thead th{background:#202329!important}
-[data-theme="dark"] tbody tr:hover td{background:rgba(255,255,255,.035)!important}
-[data-theme="dark"] .meter{background:#17191e!important}
-[data-theme="dark"] .rc{background:#fff!important;color:#222!important}
-[data-theme="dark"] .empty{color:#aeb4bd!important}
-
-/* Liquid Glass Mode retains the existing approved transparent glass and wallpaper styling. */
-[data-theme="liquid-glass"]{color-scheme:dark}
-[data-theme="liquid-glass"] header{background:transparent!important;border:0!important;box-shadow:none!important}
-[data-theme="liquid-glass"] header .ib,[data-theme="liquid-glass"] header .srch,
-[data-theme="liquid-glass"] header .av,[data-theme="liquid-glass"] header .edy,
-[data-theme="liquid-glass"] .theme-switch{box-shadow:0 5px 16px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.20)!important}
-[data-theme="liquid-glass"] .theme-switch button{color:var(--mu)}
-[data-theme="liquid-glass"] .theme-switch button.active{background:rgba(255,255,255,.16)!important;color:var(--tx)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.24)!important}
-
 </style>
 </head>
 <body class="locked">
@@ -1624,10 +1600,10 @@ header .edy{border:1px solid var(--bd)!important}
 <select id="br" aria-label="Branch" data-c="br" hidden></select>
 <button class="btn edy" data-a="go" data-p="ai">✦ Ask EDY</button>
 <button class="ib" data-a="bell" aria-label="Notifications"><span id="bi"></span><i class="dot" id="dot"></i></button>
-<div class="theme-switch" id="th" role="group" aria-label="Color theme">
-<button type="button" data-a="settheme" data-theme-value="light" aria-label="Light Mode" title="Light Mode">Light</button>
-<button type="button" data-a="settheme" data-theme-value="dark" aria-label="Dark Mode" title="Dark Mode">Dark</button>
-<button type="button" data-a="settheme" data-theme-value="liquid-glass" aria-label="Liquid Glass Mode" title="Liquid Glass Mode">Glass</button>
+<div class="theme-switch" id="th" role="group" aria-label="Choose appearance theme">
+  <button type="button" data-a="theme" data-theme-choice="light" aria-label="Light Mode">Light</button>
+  <button type="button" data-a="theme" data-theme-choice="dark" aria-label="Dark Mode">Dark</button>
+  <button type="button" data-a="theme" data-theme-choice="liquid" aria-label="Liquid Glass Mode">Glass</button>
 </div>
 <button class="av" data-a="profile" aria-label="Account menu">HO</button>
 </header>
@@ -1656,7 +1632,7 @@ const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],
 /* 10. STATE + HELPERS */
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',website:'',logo_url:'',operating_hours:{},appearance_settings:{font_family:'Inter',font_scale:1,logo_scale:1.15}};
-const S={page:'overview',br:0,per:'30d',theme:(ss('th')==='light'?'light':ss('th')==='dark'?'liquid-glass':ss('th')==='liquid-glass'?'liquid-glass':'liquid-glass'),exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
+const S={page:'overview',br:0,per:'30d',theme:ss('th')||'light',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
 const $=s=>document.querySelector(s),M=n=>'₱'+Math.round(n).toLocaleString('en-PH');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const I=(n,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]}"/></svg>`;
@@ -1736,7 +1712,7 @@ return`<p class="note">Changes here update this page only. Nothing is saved or s
 <div class="card"><h3>Receipt & printer</h3><div class="rc">HALINA BISTRO CAFE<br>Sample Street, Sample City<br>--------------------<br>Tapsilog x1 ....... ₱219<br>Garlic Rice x2 .... ₱78<br>--------------------<br>TOTAL ........... ₱297<br>Thank you! (preview)</div><div class="fl" style="margin-top:10px"><label>Printer</label><select><option>Front counter (simulated)</option><option>Kitchen (simulated)</option></select></div>${bdg('Sample: Warning')}</div>
 <div class="card"><h3>Notifications</h3>${tg('Order notification sound',1)}${tg('Low-stock alerts',1)}${tg('System alerts',1)}</div>
 <div class="card"><h3>Security & access (preview)</h3><p class="mu">Roles: Owner, Manager, Cashier, Dispatcher / Kitchen.</p><p>Cashier PIN policy preview: 6 digits, owner-managed. No PIN is created or checked here.</p><button class="btn" data-a="go" data-p="staff">View permission matrix</button></div>
-<div class="card"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme">Cycle display mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>
+<div class="card"><h3>Appearance</h3><div class="tb"><button class="btn" data-a="theme" data-theme-choice="light">Light Mode</button><button class="btn" data-a="theme" data-theme-choice="dark">Dark Mode</button><button class="btn" data-a="theme" data-theme-choice="liquid">Liquid Glass Mode</button><button class="btn" data-a="sbt">${S.exp?'Collapse':'Expand'} sidebar</button></div></div>
 <div class="card"><h3>Subscription</h3><p>Package: Full Package (sample)</p><p class="mu">No billing is connected.</p></div></div>`}
 };
 
@@ -1775,8 +1751,7 @@ function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=
 function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render();const workspace=$('#pg');if(workspace)workspace.scrollTop=0;window.scrollTo({top:0,behavior:'auto'})}
 const A={
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
-theme:()=>{S.theme=({light:'dark',dark:'liquid-glass','liquid-glass':'light'})[S.theme]||'light';ss('th',S.theme);applyTheme();if(S.page=='settings')render()},
-settheme:(t,e)=>{const choice=e.target.closest('[data-theme-value]')?.dataset.themeValue;if(!['light','dark','liquid-glass'].includes(choice)||choice===S.theme)return;S.theme=choice;ss('th',S.theme);applyTheme();},
+theme:t=>{const order=['light','dark','liquid'];const picked=t&&t.dataset&&t.dataset.themeChoice;S.theme=picked&&order.includes(picked)?picked:order[(order.indexOf(S.theme)+1)%order.length];ss('th',S.theme);applyTheme();if(S.page==='settings')render()},
 sbt:()=>{S.exp=!S.exp;ss('exp',S.exp);$('#app').classList.toggle('exp',S.exp);requestAnimationFrame(()=>moveNavIndicator(false));if(S.page=='settings')render()},
 order:t=>orderDrawer(t.dataset.i),
 cust:()=>modal('Customize Overview',WID.map(w=>[w[1],'checkbox',!S.w[w[0]]]),()=>true,'Done'),
@@ -2047,6 +2022,53 @@ async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,
   background-attachment:fixed!important;
 }
 .bgfx i,.bgfx:before,.bgfx:after{display:none!important;content:none!important}
+
+
+/* Repositioned existing sidebar and Light Mode CSS inside stylesheet */
+/* ADMINTEST18 — verified sidebar geometry and Light Mode pressed navigation */
+@media (min-width:821px){
+  .app{--sw:64px!important;}
+  .app.exp{--sw:224px!important;}
+  #sb{
+    left:0!important;
+    width:var(--sw)!important;
+    box-sizing:border-box!important;
+    transition:width .28s cubic-bezier(.22,.72,.18,1)!important;
+  }
+  .main{
+    position:relative!important;
+    left:auto!important;
+    width:auto!important;
+    margin-left:var(--sw)!important;
+    min-width:0!important;
+    transition:margin-left .28s cubic-bezier(.22,.72,.18,1)!important;
+  }
+  #pg{width:auto!important;max-width:none!important;min-width:0!important;}
+  header{width:100%!important;min-width:0!important;}
+  .app:not(.exp) #nav span,
+  .app:not(.exp) .brand span,
+  .app:not(.exp) .tg span{
+    display:none!important;width:0!important;opacity:0!important;
+  }
+}
+@media (max-width:820px){
+  #sb{left:0!important;}
+  .main{margin-left:0!important;left:auto!important;width:100%!important;}
+}
+[data-theme="light"] #nav .nav-indicator{display:none!important;opacity:0!important;visibility:hidden!important;}
+[data-theme="light"] #nav button.on,
+[data-theme="light"] #nav button.active{
+  color:var(--tx)!important;
+  background:rgba(235,235,228,.62)!important;
+  border:1px solid rgba(130,139,119,.12)!important;
+  box-shadow:inset 3px 3px 7px rgba(105,112,99,.22),inset -3px -3px 7px rgba(255,255,255,.95)!important;
+}
+[data-theme="light"] #nav button:active,
+[data-theme="light"] .tg:active{
+  color:var(--tx)!important;
+  transform:translateY(1px)!important;
+  box-shadow:inset 3px 3px 7px rgba(105,112,99,.22),inset -3px -3px 7px rgba(255,255,255,.95)!important;
+}
 </style></head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
 
 const G=$('#gate');
@@ -2587,7 +2609,18 @@ load=async function(manual){
 };
 
 /* 10. THEME + SIDEBAR SETUP */
-function applyTheme(){document.documentElement.dataset.theme=S.theme;const names={light:'Light Mode',dark:'Dark Mode','liquid-glass':'Liquid Glass Mode'};$('#th').querySelectorAll('[data-theme-value]').forEach(b=>{const active=b.dataset.themeValue===S.theme;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});$('#th').setAttribute('aria-label','Color theme: '+(names[S.theme]||'Liquid Glass Mode'));}
+function applyTheme(){
+ document.documentElement.dataset.theme=S.theme;
+ const toggle=$('#th');
+ if(toggle){
+  toggle.querySelectorAll('[data-theme-choice]').forEach(b=>{
+   const active=b.dataset.themeChoice===S.theme;
+   b.classList.toggle('active',active);
+   b.setAttribute('aria-pressed',String(active));
+  });
+  toggle.setAttribute('aria-label','Current theme: '+({light:'Light Mode',dark:'Dark Mode',liquid:'Liquid Glass Mode'}[S.theme]||'Light Mode'));
+ }
+}
 function fillBr(){$('#br').innerHTML=`<option value="0">All Branches</option>`+BS.map((b,i)=>`<option value="${i+1}"${S.br==i+1?' selected':''}>${b}</option>`).join('')}
 $('#nav').innerHTML='<span class="nav-indicator" aria-hidden="true"></span>'+NAV.map(n=>`<button data-p="${n[0]}" data-a="go" data-tip="${n[1]}" title="${n[1]}" aria-label="${n[1]}">${I(n[2])}<span>${n[1]}</span></button>`).join('');
 $('#tg').innerHTML=I('chev')+'<span>Collapse</span>';$('#tg').onclick=A.sbt;
@@ -2713,49 +2746,3 @@ requestAnimationFrame(()=>moveNavIndicator(false));
 
 </body>
 </html>
-/* ADMINTEST18 — verified sidebar geometry and Light Mode pressed navigation */
-@media (min-width:821px){
-  .app{--sw:64px!important;}
-  .app.exp{--sw:224px!important;}
-  #sb{
-    left:0!important;
-    width:var(--sw)!important;
-    box-sizing:border-box!important;
-    transition:width .28s cubic-bezier(.22,.72,.18,1)!important;
-  }
-  .main{
-    position:relative!important;
-    left:auto!important;
-    width:auto!important;
-    margin-left:var(--sw)!important;
-    min-width:0!important;
-    transition:margin-left .28s cubic-bezier(.22,.72,.18,1)!important;
-  }
-  #pg{width:auto!important;max-width:none!important;min-width:0!important;}
-  header{width:100%!important;min-width:0!important;}
-  .app:not(.exp) #nav span,
-  .app:not(.exp) .brand span,
-  .app:not(.exp) .tg span{
-    display:none!important;width:0!important;opacity:0!important;
-  }
-}
-@media (max-width:820px){
-  #sb{left:0!important;}
-  .main{margin-left:0!important;left:auto!important;width:100%!important;}
-}
-[data-theme="light"] #nav .nav-indicator{display:none!important;opacity:0!important;visibility:hidden!important;}
-[data-theme="light"] #nav button.on,
-[data-theme="light"] #nav button.active{
-  color:var(--tx)!important;
-  background:rgba(235,235,228,.62)!important;
-  border:1px solid rgba(130,139,119,.12)!important;
-  box-shadow:inset 3px 3px 7px rgba(105,112,99,.22),inset -3px -3px 7px rgba(255,255,255,.95)!important;
-}
-[data-theme="light"] #nav button:active,
-[data-theme="light"] .tg:active{
-  color:var(--tx)!important;
-  transform:translateY(1px)!important;
-  box-shadow:inset 3px 3px 7px rgba(105,112,99,.22),inset -3px -3px 7px rgba(255,255,255,.95)!important;
-}
-
-
