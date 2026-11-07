@@ -1412,6 +1412,68 @@ header{background-color:rgba(255,255,255,.025)!important}
 }
 
 </style>
+
+<style id="admintest19-sidebar-expand-only">
+/* Desktop sidebar expansion only — preserve the current dashboard spacing. */
+@media (min-width:821px){
+  #app{--sw:64px;}
+  #app.exp{--sw:224px!important;}
+  #sb{
+    width:var(--sw)!important;
+    min-width:var(--sw)!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+    transition:width .28s cubic-bezier(.22,.72,.18,1)!important;
+  }
+  #app:not(.exp) #sb{--sw:64px;}
+  #app.exp #sb{--sw:224px;}
+  #nav button{
+    width:40px;
+    min-width:0;
+    justify-content:center;
+    gap:0;
+    transition:width .28s ease, padding .28s ease, gap .28s ease, border-radius .28s ease!important;
+  }
+  #app.exp #nav button{
+    width:100%!important;
+    justify-content:flex-start!important;
+    gap:12px!important;
+    padding-left:12px!important;
+    padding-right:12px!important;
+    border-radius:14px!important;
+  }
+  #nav button span,
+  .brand span,
+  .tg span{
+    display:inline-block!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    max-width:0!important;
+    width:0!important;
+    opacity:0!important;
+    transition:max-width .22s ease,width .22s ease,opacity .18s ease!important;
+  }
+  #app.exp #nav button span,
+  #app.exp .brand span,
+  #app.exp .tg span{
+    max-width:180px!important;
+    width:auto!important;
+    opacity:1!important;
+  }
+  #app.exp .brand{
+    justify-content:flex-start!important;
+    padding-left:8px!important;
+  }
+  #app.exp .tg{
+    width:100%!important;
+    justify-content:flex-start!important;
+    gap:12px!important;
+    padding-left:12px!important;
+    border-radius:14px!important;
+  }
+}
+</style>
+
 </head>
 <body class="locked">
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1845,59 +1907,7 @@ async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,
   background-attachment:fixed!important;
 }
 .bgfx i,.bgfx:before,.bgfx:after{display:none!important;content:none!important}
-</style></head><body>${cards}
-<style id="sidebar-expand-only-fix">
-/* Sidebar expansion only: keep the workspace flush against the sidebar. */
-@media (min-width:821px) {
-  #sb {
-    position: fixed !important;
-    inset: 0 auto 0 0 !important;
-    width: var(--sw) !important;
-    box-sizing: border-box !important;
-    transition: width .28s cubic-bezier(.22,.72,.18,1) !important;
-  }
-
-  .main {
-    position: fixed !important;
-    inset: 0 0 0 var(--sw) !important;
-    width: auto !important;
-    min-width: 0 !important;
-    margin: 0 !important;
-    transition: left .28s cubic-bezier(.22,.72,.18,1) !important;
-  }
-
-  #nav button span,
-  .brand span,
-  .tg span {
-    min-width: 0;
-  }
-
-  .app.exp #nav button span,
-  .app.exp .brand span,
-  .app.exp .tg span {
-    display: inline !important;
-    width: auto !important;
-    opacity: 1 !important;
-    overflow: visible;
-  }
-
-  .app.exp #nav button span {
-    flex: 1 1 auto;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .app:not(.exp) #nav button span,
-  .app:not(.exp) .brand span,
-  .app:not(.exp) .tg span {
-    display: none !important;
-    width: 0 !important;
-    opacity: 0 !important;
-  }
-}
-</style>
-
-</body></html>`);w.document.close();w.onload=()=>w.print();}
+</style></head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
 
 const G=$('#gate');
 function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.innerHTML=`<section class="login-shell" aria-label="HALINA owner sign in"><div class="login-showcase"><div class="login-brand"><span class="login-brand-mark">H</span><span>HALINA BISTRO CAFE</span></div><div class="login-hero-copy"><div class="login-eyebrow">Restaurant management</div><h1>Welcome back to a better way to manage.</h1><p>Your restaurant, your team, and your daily operations — thoughtfully brought together in one place.</p></div><div class="login-showcase-foot"><i></i><span>Owner &amp; administrator access</span></div></div><div class="login-panel"><form id="lf" class="login-form"><div class="login-mobile-brand"><span class="login-brand-mark">H</span></div><p class="login-kicker">HALINA BISTRO CAFE</p><h2>Sign in</h2><p class="login-intro">Enter your account details to continue to your dashboard.</p><div class="login-field"><label for="le">Email address</label><input id="le" type="email" autocomplete="username" placeholder="name@restaurant.com" required></div><div class="login-field"><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" placeholder="Enter your password" required></div>${err?`<p class="login-error" role="alert">${esc(err)}</p>`:''}<button class="login-submit" id="lb" type="submit">Sign in <span aria-hidden="true">→</span></button><div class="login-security"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Secure access for authorized owners and administrators</span></div></form></div></section>`;
