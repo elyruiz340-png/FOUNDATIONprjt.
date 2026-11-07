@@ -1411,108 +1411,270 @@ header{background-color:rgba(255,255,255,.025)!important}
   box-shadow:inset 3px 3px 7px rgba(105,112,99,.22),inset -3px -3px 7px rgba(255,255,255,.95)!important;
 }
 
+</style>
 
-/* ADMINTEST19 — restore desktop sidebar expand/collapse and label visibility */
+<style id="admintest19-sidebar-expand-only">
+/* Desktop sidebar expansion only — preserve the current dashboard spacing. */
 @media (min-width:821px){
-  .app{--sw:74px!important;}
-  .app.exp{--sw:240px!important;}
-
+  #app{--sw:64px;}
+  #app.exp{--sw:224px!important;}
   #sb{
-    position:fixed!important;
-    left:8px!important;
-    right:auto!important;
-    width:58px!important;
-    min-width:58px!important;
-    max-width:none!important;
+    width:var(--sw)!important;
+    min-width:var(--sw)!important;
     box-sizing:border-box!important;
-    overflow-x:hidden!important;
+    overflow:hidden!important;
     transition:width .28s cubic-bezier(.22,.72,.18,1)!important;
   }
-  .app.exp #sb{
-    width:224px!important;
-    min-width:224px!important;
+  #app:not(.exp) #sb{--sw:64px;}
+  #app.exp #sb{--sw:224px;}
+  #nav button{
+    width:40px;
+    min-width:0;
+    justify-content:center;
+    gap:0;
+    transition:width .28s ease, padding .28s ease, gap .28s ease, border-radius .28s ease!important;
   }
+  #app.exp #nav button{
+    width:100%!important;
+    justify-content:flex-start!important;
+    gap:12px!important;
+    padding-left:12px!important;
+    padding-right:12px!important;
+    border-radius:14px!important;
+  }
+  #nav button span,
+  .brand span,
+  .tg span{
+    display:inline-block!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    max-width:0!important;
+    width:0!important;
+    opacity:0!important;
+    transition:max-width .22s ease,width .22s ease,opacity .18s ease!important;
+  }
+  #app.exp #nav button span,
+  #app.exp .brand span,
+  #app.exp .tg span{
+    max-width:180px!important;
+    width:auto!important;
+    opacity:1!important;
+  }
+  #app.exp .brand{
+    justify-content:flex-start!important;
+    padding-left:8px!important;
+  }
+  #app.exp .tg{
+    width:100%!important;
+    justify-content:flex-start!important;
+    gap:12px!important;
+    padding-left:12px!important;
+    border-radius:14px!important;
+  }
+}
+</style>
 
-  .main{
+
+<style id="halina-lightmode-navigation-spacing-fix">
+/* Match Light Mode navigation geometry to the already-correct Glass/Dark layout.
+   Keep the existing theme colors and all navigation/application behavior unchanged. */
+@media (min-width:821px){
+  [data-theme="light"] .app{
+    --sw:64px!important;
+  }
+  [data-theme="light"] .app.exp{
+    --sw:224px!important;
+  }
+  [data-theme="light"] #sb{
+    position:fixed!important;
+    left:0!important;
+    right:auto!important;
+    width:var(--sw)!important;
+    min-width:var(--sw)!important;
+    max-width:var(--sw)!important;
+  }
+  [data-theme="light"] .main{
     position:fixed!important;
     inset:0 0 0 var(--sw)!important;
     left:var(--sw)!important;
     right:0!important;
     width:auto!important;
-    height:100vh!important;
-    height:100dvh!important;
+    max-width:none!important;
     margin:0!important;
-    min-width:0!important;
-    transition:left .28s cubic-bezier(.22,.72,.18,1)!important;
+    transform:none!important;
+    box-sizing:border-box!important;
+    transition:left var(--t)!important;
   }
-  #pg{width:auto!important;max-width:none!important;min-width:0!important}
-  header{width:100%!important;min-width:0!important}
+}
+</style>
 
-  #sb .brand{
-    justify-content:center!important;
+<style id="admintest24-compact-floating-sidebar">
+/* Compact floating sidebar refinement — preserves the existing layout offsets. */
+@media (min-width:821px){
+  /* Keep the main workspace's established 72px / 224px offsets unchanged. */
+  #sb{
+    left:16px!important;
+    inset-top:14px!important;
+    inset-bottom:14px!important;
+    width:52px!important;
+    padding:12px 5px!important;
+    border-radius:24px!important;
+    box-sizing:border-box!important;
+  }
+  .app.exp #sb{
+    left:16px!important;
+    width:200px!important;
+    padding:12px 9px!important;
+  }
+
+  .brand{height:40px!important;}
+  .brand b{
+    width:30px!important;
+    height:30px!important;
+    border-radius:9px!important;
+  }
+
+  #nav{gap:6px!important;}
+  #nav button,.tg{
+    width:36px!important;
+    height:36px!important;
+    min-width:36px!important;
     padding:0!important;
-    overflow:hidden!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+    justify-content:center!important;
+    border-radius:12px!important;
   }
-  #sb .brand span,
-  #tg span,
-  #nav button span{
-    transition:opacity .18s ease,width .18s ease!important;
-  }
-  .app:not(.exp) #sb .brand span,
-  .app:not(.exp) #tg span,
-  .app:not(.exp) #nav button span{
-    display:none!important;
-    opacity:0!important;
-    width:0!important;
-    flex:0 0 0!important;
+  #nav svg,.tg svg{
+    width:18px!important;
+    height:18px!important;
   }
 
-  .app.exp #sb .brand{
-    justify-content:flex-start!important;
-    padding:0 8px!important;
-  }
-  .app.exp #sb .brand span,
-  .app.exp #tg span{
-    display:inline!important;
-    opacity:1!important;
-    width:auto!important;
-    flex:1 1 auto!important;
-  }
-  .app.exp #nav button{
-    display:flex!important;
+  .app.exp #nav button,.app.exp .tg{
     width:100%!important;
-    max-width:100%!important;
     min-width:0!important;
-    flex:0 0 42px!important;
+    height:38px!important;
+    padding:0 11px!important;
+    margin-left:0!important;
+    margin-right:0!important;
     justify-content:flex-start!important;
-    gap:12px!important;
-    margin:0!important;
-    padding:0 12px!important;
     border-radius:12px!important;
-    overflow:hidden!important;
   }
-  .app.exp #nav button span{
-    display:inline-block!important;
-    opacity:1!important;
-    width:auto!important;
-    min-width:0!important;
-    flex:1 1 auto!important;
-    overflow:visible!important;
-    white-space:nowrap!important;
-    text-overflow:ellipsis!important;
+  .app.exp #nav svg,.app.exp .tg svg{
+    width:18px!important;
+    height:18px!important;
   }
-  .app.exp #tg{
+  #nav .nav-indicator{
+    width:36px!important;
+    height:36px!important;
+    border-radius:12px!important;
+  }
+  .app.exp #nav .nav-indicator{
     width:100%!important;
-    justify-content:flex-start!important;
-    gap:12px!important;
-    padding:0 12px!important;
-    margin:0!important;
+    height:38px!important;
+    border-radius:12px!important;
   }
 }
 @media (max-width:820px){
-  .main{margin:0!important;left:0!important;width:100%!important}
+  /* Leave the existing mobile drawer sizing and behavior untouched. */
 }
 </style>
+
+
+<style id="admintest26-lightmode-only-sidebar-refinement">
+/* Light Mode only: compact the floating sidebar.
+   Glass/Dark Mode retains the exact admintest24 dimensions and positioning. */
+@media (min-width:821px){
+  html[data-theme="light"] #sb{
+    left:22px!important;
+    width:46px!important;
+    padding-left:4px!important;
+    padding-right:4px!important;
+  }
+  html[data-theme="light"] .app.exp #sb{
+    left:22px!important;
+    width:194px!important;
+  }
+  html[data-theme="light"] .brand b{
+    width:28px!important;
+    height:28px!important;
+  }
+  html[data-theme="light"] #nav button,
+  html[data-theme="light"] .tg{
+    width:34px!important;
+    height:34px!important;
+    min-width:34px!important;
+    border-radius:11px!important;
+  }
+  html[data-theme="light"] #nav svg,
+  html[data-theme="light"] .tg svg,
+  html[data-theme="light"] .app.exp #nav svg,
+  html[data-theme="light"] .app.exp .tg svg{
+    width:16px!important;
+    height:16px!important;
+  }
+  html[data-theme="light"] #nav .nav-indicator{
+    width:34px!important;
+    height:34px!important;
+    border-radius:11px!important;
+  }
+}
+</style>
+
+
+<style id="admintest27-lightmode-slimmer-sidebar">
+/* Light Mode only: narrow the rail and bring it slightly back toward the screen edge. */
+@media (min-width:821px){
+  html[data-theme="light"] #sb{
+    left:14px!important;
+    width:40px!important;
+    min-width:40px!important;
+    padding-left:3px!important;
+    padding-right:3px!important;
+  }
+  html[data-theme="light"] .app.exp #sb{
+    left:14px!important;
+    width:194px!important;
+    min-width:194px!important;
+  }
+  html[data-theme="light"] .brand b{
+    width:26px!important;
+    height:26px!important;
+  }
+  html[data-theme="light"] #nav button,
+  html[data-theme="light"] .tg{
+    width:31px!important;
+    height:31px!important;
+    min-width:31px!important;
+    border-radius:10px!important;
+  }
+  html[data-theme="light"] #nav svg,
+  html[data-theme="light"] .tg svg,
+  html[data-theme="light"] .app.exp #nav svg,
+  html[data-theme="light"] .app.exp .tg svg{
+    width:15px!important;
+    height:15px!important;
+  }
+  html[data-theme="light"] #nav .nav-indicator{
+    width:31px!important;
+    height:31px!important;
+    border-radius:10px!important;
+  }
+}
+</style>
+
+
+<style id="admintest28-lightmode-collapsed-sidebar-width">
+/* Light Mode only: adjust the collapsed rail width; preserve icon sizing and position. */
+@media (min-width:821px){
+  html[data-theme="light"] #sb{
+    width:42px!important;
+    min-width:42px!important;
+    max-width:42px!important;
+  }
+}
+</style>
+
 </head>
 <body class="locked">
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1528,11 +1690,7 @@ header{background-color:rgba(255,255,255,.025)!important}
 <select id="br" aria-label="Branch" data-c="br" hidden></select>
 <button class="btn edy" data-a="go" data-p="ai">✦ Ask EDY</button>
 <button class="ib" data-a="bell" aria-label="Notifications"><span id="bi"></span><i class="dot" id="dot"></i></button>
-<div class="theme-switch" id="th" role="group" aria-label="Choose appearance theme">
-  <button type="button" data-a="theme" data-theme-choice="light" aria-label="Light Mode">Light</button>
-  <button type="button" data-a="theme" data-theme-choice="dark" aria-label="Dark Mode">Dark</button>
-  <button type="button" data-a="theme" data-theme-choice="liquid" aria-label="Liquid Glass Mode">Glass</button>
-</div>
+<button class="ib" data-a="theme" id="th" aria-label="Toggle dark or light theme"></button>
 <button class="av" data-a="profile" aria-label="Account menu">HO</button>
 </header>
 <main id="pg"></main>
@@ -1560,7 +1718,7 @@ const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],
 /* 10. STATE + HELPERS */
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',website:'',logo_url:'',operating_hours:{},appearance_settings:{font_family:'Inter',font_scale:1,logo_scale:1.15}};
-const S={page:'overview',br:0,per:'30d',theme:ss('th')||'light',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
+const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
 const $=s=>document.querySelector(s),M=n=>'₱'+Math.round(n).toLocaleString('en-PH');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const I=(n,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]}"/></svg>`;
@@ -1679,13 +1837,7 @@ function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=
 function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render();const workspace=$('#pg');if(workspace)workspace.scrollTop=0;window.scrollTo({top:0,behavior:'auto'})}
 const A={
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
-theme:t=>{
-  const modes=['light','dark','liquid'];
-  const selected=t&&t.dataset?t.dataset.themeChoice:null;
-  S.theme=modes.includes(selected)?selected:modes[(modes.indexOf(S.theme)+1)%modes.length];
-  ss('th',S.theme);applyTheme();
-  if(S.page==='settings')render();
-},
+theme:()=>{S.theme=S.theme=='dark'?'light':'dark';ss('th',S.theme);applyTheme();if(S.page=='settings')render()},
 sbt:()=>{S.exp=!S.exp;ss('exp',S.exp);$('#app').classList.toggle('exp',S.exp);requestAnimationFrame(()=>moveNavIndicator(false));if(S.page=='settings')render()},
 order:t=>orderDrawer(t.dataset.i),
 cust:()=>modal('Customize Overview',WID.map(w=>[w[1],'checkbox',!S.w[w[0]]]),()=>true,'Done'),
@@ -1956,119 +2108,7 @@ async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,
   background-attachment:fixed!important;
 }
 .bgfx i,.bgfx:before,.bgfx:after{display:none!important;content:none!important}
-</style>
-<style id="halina-three-theme-extension">
-/* Theme selector: compact segmented control; no dashboard geometry changes. */
-.theme-switch{
-  display:inline-flex;align-items:center;gap:3px;padding:3px;border-radius:999px;
-  border:1px solid var(--bd);background:var(--bg2);flex:0 0 auto;
-}
-.theme-switch button{
-  appearance:none;border:0;border-radius:999px;padding:7px 10px;min-height:30px;
-  background:transparent;color:var(--mu);font:600 11px/1 Inter,Arial,sans-serif;
-  white-space:nowrap;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s;
-}
-.theme-switch button.active{
-  color:var(--tx);background:var(--s);box-shadow:var(--sh);
-}
-.theme-switch button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-@media(max-width:560px){
-  .theme-switch{gap:1px;padding:2px}
-  .theme-switch button{padding:7px 7px;font-size:10px}
-}
-
-/* DARK MODE — same convex/inset Neumorphic language and same component geometry as Light Mode. */
-[data-theme="dark"]{
-  --bg:#17191e;--bg2:#202329;--s:#242830;--gs:#242830;--gh:#292e37;--gf:#1c1f25;
-  --tx:#edf0f4;--mu:#aeb5c0;--bd:rgba(255,255,255,.055);
-  --sh:7px 7px 16px rgba(0,0,0,.48),-7px -7px 16px rgba(255,255,255,.045);
-  --ac:#b9c2ce;--ac2:#8995a5;--ok:#78c796;--wn:#e6ae52;--er:#e2766b;
-}
-[data-theme="dark"] body{background:#17191e!important;color:#edf0f4}
-[data-theme="dark"] .app,
-[data-theme="dark"] .main,
-[data-theme="dark"] #pg{background:rgba(23,25,30,.72)!important}
-[data-theme="dark"] #sb,
-[data-theme="dark"] .card,
-[data-theme="dark"] .dr,
-[data-theme="dark"] .md,
-[data-theme="dark"] .pn,
-[data-theme="dark"] .ts,
-[data-theme="dark"] .modal,
-[data-theme="dark"] .popover,
-[data-theme="dark"] .dropdown,
-[data-theme="dark"] .menu-panel,
-[data-theme="dark"] .bs-sidebar,
-[data-theme="dark"] .bs-content,
-[data-theme="dark"] .bs-panel,
-[data-theme="dark"] .tm-hero,
-[data-theme="dark"] .tm-stat,
-[data-theme="dark"] .tm-tools,
-[data-theme="dark"] .tm-card,
-[data-theme="dark"] .tm-add-panel,
-[data-theme="dark"] .tm-footer,
-[data-theme="dark"] .inv-table-card,
-[data-theme="dark"] .bs-coming-note,
-[data-theme="dark"] .kp,
-[data-theme="dark"] .panel,
-[data-theme="dark"] .tile,
-[data-theme="dark"] .widget,
-[data-theme="dark"] .stat-card,
-[data-theme="dark"] .chart-card{
-  background:#242830!important;background-image:none!important;
-  border:1px solid rgba(255,255,255,.055)!important;border-radius:16px;
-  box-shadow:7px 7px 16px rgba(0,0,0,.48),-7px -7px 16px rgba(255,255,255,.045)!important;
-  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
-}
-[data-theme="dark"] header{
-  background:transparent!important;border-color:transparent!important;box-shadow:none!important;
-}
-[data-theme="dark"] button:not(#nav button),
-[data-theme="dark"] .btn,
-[data-theme="dark"] input,
-[data-theme="dark"] select,
-[data-theme="dark"] textarea,
-[data-theme="dark"] .seg{
-  color:#edf0f4;border-color:rgba(255,255,255,.06)!important;
-  box-shadow:4px 4px 9px rgba(0,0,0,.48),-4px -4px 9px rgba(255,255,255,.045)!important;
-}
-[data-theme="dark"] input,
-[data-theme="dark"] select,
-[data-theme="dark"] textarea{
-  background:#1b1e24!important;color:#edf0f4!important;
-}
-[data-theme="dark"] button:not(#nav button):active,
-[data-theme="dark"] .btn:active,
-[data-theme="dark"] .seg button.on,
-[data-theme="dark"] input:focus,
-[data-theme="dark"] select:focus,
-[data-theme="dark"] textarea:focus{
-  box-shadow:inset 3px 3px 7px rgba(0,0,0,.5),inset -3px -3px 7px rgba(255,255,255,.04)!important;
-  transform:translateY(1px);
-}
-[data-theme="dark"] #nav button.on,
-[data-theme="dark"] #nav button.active{
-  color:#fff!important;background:linear-gradient(145deg,#3c9b69,#24764d)!important;
-  box-shadow:inset 3px 3px 6px rgba(15,70,42,.25),inset -3px -3px 7px rgba(150,235,180,.18),3px 3px 8px rgba(0,0,0,.3)!important;
-}
-[data-theme="dark"] #nav button:not(.on):not(.active){
-  color:#aeb5c0!important;border-radius:50%;
-  box-shadow:4px 4px 9px rgba(0,0,0,.48),-4px -4px 9px rgba(255,255,255,.045)!important;
-}
-[data-theme="dark"] .theme-switch{
-  background:#1b1e24;border-color:rgba(255,255,255,.07);
-  box-shadow:inset 3px 3px 7px rgba(0,0,0,.5),inset -3px -3px 7px rgba(255,255,255,.035);
-}
-[data-theme="dark"] .theme-switch button.active{
-  background:#292e37;color:#edf0f4;
-  box-shadow:4px 4px 9px rgba(0,0,0,.48),-4px -4px 9px rgba(255,255,255,.045);
-}
-
-/* LIQUID GLASS MODE intentionally uses the original root/default glass styling.
-   No extra override is applied, preserving the previously established glass appearance. */
-</style>
-
-</head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
+</style></head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
 
 const G=$('#gate');
 function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.innerHTML=`<section class="login-shell" aria-label="HALINA owner sign in"><div class="login-showcase"><div class="login-brand"><span class="login-brand-mark">H</span><span>HALINA BISTRO CAFE</span></div><div class="login-hero-copy"><div class="login-eyebrow">Restaurant management</div><h1>Welcome back to a better way to manage.</h1><p>Your restaurant, your team, and your daily operations — thoughtfully brought together in one place.</p></div><div class="login-showcase-foot"><i></i><span>Owner &amp; administrator access</span></div></div><div class="login-panel"><form id="lf" class="login-form"><div class="login-mobile-brand"><span class="login-brand-mark">H</span></div><p class="login-kicker">HALINA BISTRO CAFE</p><h2>Sign in</h2><p class="login-intro">Enter your account details to continue to your dashboard.</p><div class="login-field"><label for="le">Email address</label><input id="le" type="email" autocomplete="username" placeholder="name@restaurant.com" required></div><div class="login-field"><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" placeholder="Enter your password" required></div>${err?`<p class="login-error" role="alert">${esc(err)}</p>`:''}<button class="login-submit" id="lb" type="submit">Sign in <span aria-hidden="true">→</span></button><div class="login-security"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Secure access for authorized owners and administrators</span></div></form></div></section>`;
@@ -2608,19 +2648,7 @@ load=async function(manual){
 };
 
 /* 10. THEME + SIDEBAR SETUP */
-function applyTheme(){
-  document.documentElement.dataset.theme=S.theme;
-  const labels={light:'Light Mode',dark:'Dark Mode',liquid:'Liquid Glass Mode'};
-  const toggle=$('#th');
-  if(toggle){
-    toggle.querySelectorAll('[data-theme-choice]').forEach(button=>{
-      const active=button.dataset.themeChoice===S.theme;
-      button.classList.toggle('active',active);
-      button.setAttribute('aria-pressed',String(active));
-    });
-    toggle.setAttribute('aria-label','Current theme: '+(labels[S.theme]||labels.light));
-  }
-}
+function applyTheme(){document.documentElement.dataset.theme=S.theme;$('#th').innerHTML=I(S.theme=='dark'?'sun':'moon')}
 function fillBr(){$('#br').innerHTML=`<option value="0">All Branches</option>`+BS.map((b,i)=>`<option value="${i+1}"${S.br==i+1?' selected':''}>${b}</option>`).join('')}
 $('#nav').innerHTML='<span class="nav-indicator" aria-hidden="true"></span>'+NAV.map(n=>`<button data-p="${n[0]}" data-a="go" data-tip="${n[1]}" title="${n[1]}" aria-label="${n[1]}">${I(n[2])}<span>${n[1]}</span></button>`).join('');
 $('#tg').innerHTML=I('chev')+'<span>Collapse</span>';$('#tg').onclick=A.sbt;
@@ -2746,3 +2774,49 @@ requestAnimationFrame(()=>moveNavIndicator(false));
 
 </body>
 </html>
+/* ADMINTEST18 — verified sidebar geometry and Light Mode pressed navigation */
+@media (min-width:821px){
+  .app{--sw:64px!important;}
+  .app.exp{--sw:224px!important;}
+  #sb{
+    left:0!important;
+    width:var(--sw)!important;
+    box-sizing:border-box!important;
+    transition:width .28s cubic-bezier(.22,.72,.18,1)!important;
+  }
+  .main{
+    position:relative!important;
+    left:auto!important;
+    width:auto!important;
+    margin-left:var(--sw)!important;
+    min-width:0!important;
+    transition:margin-left .28s cubic-bezier(.22,.72,.18,1)!important;
+  }
+  #pg{width:auto!important;max-width:none!important;min-width:0!important;}
+  header{width:100%!important;min-width:0!important;}
+  .app:not(.exp) #nav span,
+  .app:not(.exp) .brand span,
+  .app:not(.exp) .tg span{
+    display:none!important;width:0!important;opacity:0!important;
+  }
+}
+@media (max-width:820px){
+  #sb{left:0!important;}
+  .main{margin-left:0!important;left:auto!important;width:100%!important;}
+}
+[data-theme="light"] #nav .nav-indicator{display:none!important;opacity:0!important;visibility:hidden!important;}
+[data-theme="light"] #nav button.on,
+[data-theme="light"] #nav button.active{
+  color:var(--tx)!important;
+  background:rgba(235,235,228,.62)!important;
+  border:1px solid rgba(130,139,119,.12)!important;
+  box-shadow:inset 3px 3px 7px rgba(105,112,99,.22),inset -3px -3px 7px rgba(255,255,255,.95)!important;
+}
+[data-theme="light"] #nav button:active,
+[data-theme="light"] .tg:active{
+  color:var(--tx)!important;
+  transform:translateY(1px)!important;
+  box-shadow:inset 3px 3px 7px rgba(105,112,99,.22),inset -3px -3px 7px rgba(255,255,255,.95)!important;
+}
+
+
