@@ -2465,3 +2465,42 @@ requestAnimationFrame(()=>moveNavIndicator(false));
 
 </body>
 </html>
+
+
+/* ADMINTEST17 — sidebar layout first: remove duplicated main offset and correct collapse/expand geometry. */
+@media (min-width:821px){
+  .main{margin-left:0!important;left:var(--sw)!important;width:calc(100% - var(--sw))!important;transition:left .32s cubic-bezier(.22,.72,.18,1),width .32s cubic-bezier(.22,.72,.18,1)!important;}
+  .app{--sw:72px!important}
+  .app.exp{--sw:224px!important}
+  #sb{left:10px!important;width:48px!important;box-sizing:border-box!important;}
+  .app.exp #sb{width:200px!important;}
+  #pg{width:100%!important;max-width:none!important;}
+}
+/* Keep mobile drawer behavior unchanged; desktop-only geometry above. */
+@media (max-width:820px){
+  .main{left:0!important;width:100%!important;margin-left:0!important;}
+}
+/* Light-mode navigation: no green floating indicator. Active item is pressed into the same surface. */
+[data-theme="light"] #nav .nav-indicator{display:none!important;opacity:0!important;visibility:hidden!important;}
+[data-theme="light"] #nav button,
+[data-theme="light"] .tg{
+  color:#526057!important;background:transparent!important;border:1px solid transparent!important;
+  box-shadow:none!important;transform:none!important;
+  transition:box-shadow .18s ease,background .18s ease,color .18s ease,transform .18s ease!important;
+}
+[data-theme="light"] #nav button.on,
+[data-theme="light"] #nav button.active{
+  color:#33483a!important;background:rgba(232,235,226,.28)!important;border-color:rgba(130,139,119,.08)!important;
+  box-shadow:inset 3px 3px 7px rgba(111,119,103,.22),inset -3px -3px 7px rgba(255,255,255,.96)!important;
+}
+[data-theme="light"] #nav button:active,
+[data-theme="light"] .tg:active{
+  transform:translateY(1px)!important;
+  box-shadow:inset 3px 3px 7px rgba(111,119,103,.24),inset -3px -3px 7px rgba(255,255,255,.96)!important;
+}
+[data-theme="light"] #nav button:hover:not(.on):not(.active){
+  color:#33483a!important;background:rgba(255,255,255,.22)!important;
+  box-shadow:inset 1px 1px 3px rgba(111,119,103,.08),inset -1px -1px 3px rgba(255,255,255,.78)!important;
+}
+[data-theme="light"] #nav button.on svg,
+[data-theme="light"] #nav button.active svg{color:inherit!important;}
