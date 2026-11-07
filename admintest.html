@@ -1580,6 +1580,47 @@ header{background-color:rgba(255,255,255,.025)!important}
 }
 </style>
 
+
+<style id="admintest26-lightmode-only-sidebar-refinement">
+/* Light Mode only: compact the floating sidebar.
+   Glass/Dark Mode retains the exact admintest24 dimensions and positioning. */
+@media (min-width:821px){
+  html[data-theme="light"] #sb{
+    left:22px!important;
+    width:46px!important;
+    padding-left:4px!important;
+    padding-right:4px!important;
+  }
+  html[data-theme="light"] .app.exp #sb{
+    left:22px!important;
+    width:194px!important;
+  }
+  html[data-theme="light"] .brand b{
+    width:28px!important;
+    height:28px!important;
+  }
+  html[data-theme="light"] #nav button,
+  html[data-theme="light"] .tg{
+    width:34px!important;
+    height:34px!important;
+    min-width:34px!important;
+    border-radius:11px!important;
+  }
+  html[data-theme="light"] #nav svg,
+  html[data-theme="light"] .tg svg,
+  html[data-theme="light"] .app.exp #nav svg,
+  html[data-theme="light"] .app.exp .tg svg{
+    width:16px!important;
+    height:16px!important;
+  }
+  html[data-theme="light"] #nav .nav-indicator{
+    width:34px!important;
+    height:34px!important;
+    border-radius:11px!important;
+  }
+}
+</style>
+
 </head>
 <body class="locked">
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
