@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
@@ -901,6 +901,104 @@ input,select,textarea,.btn:not(.pri),.ib,.srch,.chip,.seg,.tm-search,.tm-filter{
 @media(prefers-reduced-transparency:reduce){
   #sb,header,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,.dr,.md,.pn,.ts{
     -webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(255,255,255,.16)!important
+  }
+}
+
+
+/* HALINA FIX: reveal the restaurant wallpaper through neutral, colorless glass.
+   UI-only override: preserve DOM, navigation, scripts, Supabase and interactions. */
+:root{
+  --gs:rgba(255,255,255,.075)!important;
+  --gh:rgba(255,255,255,.055)!important;
+  --gf:rgba(255,255,255,.10)!important;
+  --s:rgba(255,255,255,.075)!important;
+  --bd:rgba(255,255,255,.19)!important;
+  --ge:rgba(255,255,255,.25)!important;
+  --hl:rgba(255,255,255,.16)!important;
+  --sh:0 12px 32px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.18)!important;
+}
+body,[data-theme="dark"] body{background:transparent!important}
+.app,.main,#pg{background:transparent!important}
+#sb{
+  background:rgba(255,255,255,.075)!important;
+  border:1px solid rgba(255,255,255,.24)!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.22)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(145%)!important;
+  backdrop-filter:blur(30px) saturate(145%)!important;
+}
+header{
+  background:rgba(255,255,255,.065)!important;
+  border-color:rgba(255,255,255,.22)!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.20)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(145%)!important;
+  backdrop-filter:blur(28px) saturate(145%)!important;
+}
+.card,.dr,.md,.pn,.bs-sidebar,.bs-content,.bs-panel,
+.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer{
+  background:rgba(255,255,255,.065)!important;
+  border-color:rgba(255,255,255,.20)!important;
+  box-shadow:0 9px 26px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.15)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(140%)!important;
+  backdrop-filter:blur(26px) saturate(140%)!important;
+}
+.bs-panel,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer{
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(255,255,255,.16)!important;
+}
+.bs-nav-item,.bs-nav-item:hover,.bs-nav-item:focus-visible{
+  border-color:transparent!important;
+}
+.bs-nav-item.active{
+  /* Preserve the existing emerald active state. */
+  background:linear-gradient(110deg,rgba(40,145,86,.25),rgba(31,83,53,.19))!important;
+  border-color:rgba(86,190,125,.55)!important;
+}
+#nav button.on{background:transparent!important;color:#fff!important}
+[data-theme="light"]{
+  --gs:rgba(255,255,255,.16)!important;
+  --gh:rgba(255,255,255,.13)!important;
+  --gf:rgba(255,255,255,.20)!important;
+  --s:rgba(255,255,255,.17)!important;
+  --bd:rgba(255,255,255,.48)!important;
+  --ge:rgba(255,255,255,.58)!important;
+  --hl:rgba(255,255,255,.62)!important;
+}
+[data-theme="light"] body,
+[data-theme="light"] .app,
+[data-theme="light"] .main,
+[data-theme="light"] #pg{background:transparent!important}
+[data-theme="light"] #sb,
+[data-theme="light"] header,
+[data-theme="light"] .card,
+[data-theme="light"] .dr,
+[data-theme="light"] .md,
+[data-theme="light"] .pn,
+[data-theme="light"] .bs-sidebar,
+[data-theme="light"] .bs-content,
+[data-theme="light"] .bs-panel,
+[data-theme="light"] .tm-hero,
+[data-theme="light"] .tm-stat,
+[data-theme="light"] .tm-tools,
+[data-theme="light"] .tm-card,
+[data-theme="light"] .tm-add-panel,
+[data-theme="light"] .tm-footer{
+  background:rgba(255,255,255,.16)!important;
+  border-color:rgba(255,255,255,.52)!important;
+  box-shadow:0 10px 28px rgba(50,60,70,.10),inset 0 1px 0 rgba(255,255,255,.72)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(140%)!important;
+  backdrop-filter:blur(26px) saturate(140%)!important;
+}
+[data-theme="light"] .bs-panel,
+[data-theme="light"] .tm-stat,
+[data-theme="light"] .tm-tools,
+[data-theme="light"] .tm-card,
+[data-theme="light"] .tm-add-panel,
+[data-theme="light"] .tm-footer{background:rgba(255,255,255,.11)!important}
+@media(prefers-reduced-transparency:reduce){
+  #sb,header,.card,.dr,.md,.pn,.bs-sidebar,.bs-content,.bs-panel,
+  .tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer{
+    -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+    background:rgba(30,40,45,.72)!important;
   }
 }
 
