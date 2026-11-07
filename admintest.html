@@ -1413,72 +1413,100 @@ header{background-color:rgba(255,255,255,.025)!important}
 
 </style>
 
-<style id="admintest21-sidebar-navigation-fixed">
-/* Desktop sidebar navigation: reserve exactly the sidebar's current width.
-   The main workspace starts at the same x-position as the sidebar's right edge. */
+<style id="admintest19-sidebar-expand-only">
+/* Desktop sidebar expansion only — preserve the current dashboard spacing. */
 @media (min-width:821px){
-  #app{
-    --sw:64px!important;
-    position:relative!important;
-    width:100%!important;
-    height:100vh!important;
-    height:100dvh!important;
-    min-width:0!important;
-    overflow:hidden!important;
-  }
+  #app{--sw:64px;}
   #app.exp{--sw:224px!important;}
-
   #sb{
-    position:fixed!important;
-    inset:0 auto 0 0!important;
     width:var(--sw)!important;
     min-width:var(--sw)!important;
-    max-width:var(--sw)!important;
     box-sizing:border-box!important;
-    overflow-x:hidden!important;
+    overflow:hidden!important;
     transition:width .28s cubic-bezier(.22,.72,.18,1)!important;
   }
-
-  .main{
-    position:absolute!important;
-    inset:0 0 0 var(--sw)!important;
-    width:auto!important;
-    height:100%!important;
-    min-width:0!important;
-    min-height:0!important;
-    margin:0!important;
-    transition:left .28s cubic-bezier(.22,.72,.18,1)!important;
+  #app:not(.exp) #sb{--sw:64px;}
+  #app.exp #sb{--sw:224px;}
+  #nav button{
+    width:40px;
+    min-width:0;
+    justify-content:center;
+    gap:0;
+    transition:width .28s ease, padding .28s ease, gap .28s ease, border-radius .28s ease!important;
   }
-
-  header,#pg{
+  #app.exp #nav button{
     width:100%!important;
-    min-width:0!important;
-    max-width:none!important;
+    justify-content:flex-start!important;
+    gap:12px!important;
+    padding-left:12px!important;
+    padding-right:12px!important;
+    border-radius:14px!important;
   }
-
-  #app:not(.exp) #nav span,
-  #app:not(.exp) .brand span,
-  #app:not(.exp) .tg span{
-    display:none!important;
-    width:0!important;
+  #nav button span,
+  .brand span,
+  .tg span{
+    display:inline-block!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
     max-width:0!important;
+    width:0!important;
     opacity:0!important;
+    transition:max-width .22s ease,width .22s ease,opacity .18s ease!important;
   }
-}
-
-@media (max-width:820px){
-  #sb{left:0!important;}
-  .main{
-    position:fixed!important;
-    inset:0!important;
+  #app.exp #nav button span,
+  #app.exp .brand span,
+  #app.exp .tg span{
+    max-width:180px!important;
+    width:auto!important;
+    opacity:1!important;
+  }
+  #app.exp .brand{
+    justify-content:flex-start!important;
+    padding-left:8px!important;
+  }
+  #app.exp .tg{
     width:100%!important;
-    height:100vh!important;
-    height:100dvh!important;
-    margin:0!important;
+    justify-content:flex-start!important;
+    gap:12px!important;
+    padding-left:12px!important;
+    border-radius:14px!important;
   }
 }
 </style>
 
+
+<style id="halina-lightmode-navigation-spacing-fix">
+/* Match Light Mode navigation geometry to the already-correct Glass/Dark layout.
+   Keep the existing theme colors and all navigation/application behavior unchanged. */
+@media (min-width:821px){
+  [data-theme="light"] .app{
+    --sw:64px!important;
+  }
+  [data-theme="light"] .app.exp{
+    --sw:224px!important;
+  }
+  [data-theme="light"] #sb{
+    position:fixed!important;
+    left:0!important;
+    right:auto!important;
+    width:var(--sw)!important;
+    min-width:var(--sw)!important;
+    max-width:var(--sw)!important;
+  }
+  [data-theme="light"] .main{
+    position:fixed!important;
+    inset:0 0 0 var(--sw)!important;
+    left:var(--sw)!important;
+    right:0!important;
+    width:auto!important;
+    max-width:none!important;
+    margin:0!important;
+    transform:none!important;
+    box-sizing:border-box!important;
+    transition:left var(--t)!important;
+  }
+}
+</style>
 </head>
 <body class="locked">
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
