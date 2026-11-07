@@ -819,6 +819,91 @@ input,select,textarea,.btn:not(.pri),.ib,.srch,.chip,.seg,.tm-search,.tm-filter{
 @media(max-width:820px){#sb{border-radius:0 22px 22px 0!important}}
 @media(prefers-reduced-transparency:reduce){#sb,header,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--bg2)!important}}
 
+
+
+/* HALINA FINAL MATERIAL PASS — COLORLESS TRANSPARENT LIQUID GLASS
+   The wallpaper supplies all visible color. Containers use neutral, near-clear
+   white translucency only; blur, edge reflections and shadows create the glass. */
+:root{
+  --halina-glass-blur:28px;
+  --halina-glass-edge:rgba(255,255,255,.20);
+  --halina-glass-edge-strong:rgba(255,255,255,.30);
+  --halina-glass-fill:rgba(255,255,255,.055);
+  --halina-glass-fill-soft:rgba(255,255,255,.035);
+  --halina-glass-fill-inner:rgba(255,255,255,.025);
+  --halina-glass-shadow:0 16px 42px rgba(0,0,0,.19),inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(255,255,255,.035);
+}
+/* Neutral, colorless glass for the dashboard shell. */
+#sb,header{
+  background:rgba(255,255,255,.045)!important;
+  border-color:var(--halina-glass-edge)!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.16)!important;
+  -webkit-backdrop-filter:blur(var(--halina-glass-blur)) saturate(125%)!important;
+  backdrop-filter:blur(var(--halina-glass-blur)) saturate(125%)!important;
+}
+/* Main cards and all Business Settings surfaces: no blue/green fill or gradients. */
+.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,
+.tm-add-panel,.tm-footer,.inv-table-card,.empty,.bs-coming-note{
+  background:var(--halina-glass-fill)!important;
+  border:1px solid var(--halina-glass-edge)!important;
+  box-shadow:var(--halina-glass-shadow)!important;
+  -webkit-backdrop-filter:blur(var(--halina-glass-blur)) saturate(125%)!important;
+  backdrop-filter:blur(var(--halina-glass-blur)) saturate(125%)!important;
+}
+/* Nested panels remain distinguishable through neutral opacity and edge strength only. */
+.bs-sidebar,.bs-content{background:var(--halina-glass-fill-soft)!important;border-color:rgba(255,255,255,.17)!important}
+.bs-panel,.tm-stat,.tm-tools,.tm-footer{background:var(--halina-glass-fill-inner)!important;border-color:rgba(255,255,255,.15)!important}
+/* Dialogs and floating surfaces stay translucent, not opaque colored blocks. */
+.dr,.md,.pn,.ts,.modal,.popover,.dropdown,.menu-panel,.inv-action-menu,#toast{
+  background:rgba(255,255,255,.085)!important;
+  border-color:var(--halina-glass-edge-strong)!important;
+  box-shadow:0 22px 64px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.18)!important;
+  -webkit-backdrop-filter:blur(32px) saturate(130%)!important;
+  backdrop-filter:blur(32px) saturate(130%)!important;
+}
+/* Neutralize previous theme-specific colored glass fills. */
+[data-theme="light"] #sb,[data-theme="light"] header{
+  background:rgba(255,255,255,.12)!important;
+  border-color:rgba(255,255,255,.48)!important;
+  box-shadow:0 12px 34px rgba(20,38,52,.09),inset 0 1px 0 rgba(255,255,255,.56)!important;
+}
+[data-theme="light"] .card,[data-theme="light"] .bs-sidebar,[data-theme="light"] .bs-content,
+[data-theme="light"] .bs-panel,[data-theme="light"] .tm-hero,[data-theme="light"] .tm-stat,
+[data-theme="light"] .tm-tools,[data-theme="light"] .tm-card,[data-theme="light"] .tm-add-panel,
+[data-theme="light"] .tm-footer,[data-theme="light"] .inv-table-card,[data-theme="light"] .empty,
+[data-theme="light"] .bs-coming-note{
+  background:rgba(255,255,255,.14)!important;
+  border-color:rgba(255,255,255,.48)!important;
+  box-shadow:0 14px 34px rgba(20,38,52,.085),inset 0 1px 0 rgba(255,255,255,.58)!important;
+  -webkit-backdrop-filter:blur(var(--halina-glass-blur)) saturate(120%)!important;
+  backdrop-filter:blur(var(--halina-glass-blur)) saturate(120%)!important;
+}
+[data-theme="light"] .bs-sidebar,[data-theme="light"] .bs-content{background:rgba(255,255,255,.095)!important}
+[data-theme="light"] .bs-panel,[data-theme="light"] .tm-stat,[data-theme="light"] .tm-tools,[data-theme="light"] .tm-footer{background:rgba(255,255,255,.075)!important}
+[data-theme="light"] .dr,[data-theme="light"] .md,[data-theme="light"] .pn,[data-theme="light"] .ts,
+[data-theme="light"] .modal,[data-theme="light"] .popover,[data-theme="light"] .dropdown,
+[data-theme="light"] .menu-panel,[data-theme="light"] .inv-action-menu,[data-theme="light"] #toast{
+  background:rgba(255,255,255,.22)!important;border-color:rgba(255,255,255,.58)!important;
+  box-shadow:0 22px 58px rgba(20,38,52,.13),inset 0 1px 0 rgba(255,255,255,.68)!important;
+}
+/* Keep inputs usable while removing their former blue/green surface tint. */
+input,select,textarea,.btn:not(.pri),.ib,.srch,.chip,.seg,.tm-search,.tm-filter{
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(255,255,255,.17)!important;
+}
+[data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] textarea,
+[data-theme="light"] .btn:not(.pri),[data-theme="light"] .ib,[data-theme="light"] .srch,
+[data-theme="light"] .chip,[data-theme="light"] .seg,[data-theme="light"] .tm-search,[data-theme="light"] .tm-filter{
+  background:rgba(255,255,255,.20)!important;border-color:rgba(255,255,255,.48)!important;
+}
+/* Preserve the emerald active navigation indicator; it is an intentional accent, not a container fill. */
+#nav .nav-indicator{background:linear-gradient(145deg,rgba(38,174,125,.97),rgba(24,119,91,.95))!important;border-color:rgba(176,255,222,.48)!important}
+@media(prefers-reduced-transparency:reduce){
+  #sb,header,.card,.bs-sidebar,.bs-content,.bs-panel,.tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,.dr,.md,.pn,.ts{
+    -webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(255,255,255,.16)!important
+  }
+}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
