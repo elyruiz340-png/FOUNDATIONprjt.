@@ -1886,6 +1886,7 @@ const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',w
 const BUSINESS_SETTINGS={country_code:'PH',region:null,city:null,tax_registration_type:'NOT_SET'};
 const TAX_RULES=[];let taxRulesLoading=false,taxRulesError='';
 const SERVICE_CHARGE_RULES=[];let serviceChargeLoading=false,serviceChargeError='';
+const PAYMENT_METHODS=[];let paymentMethodsLoading=false,paymentMethodsError='';
 const DISCOUNT_RULES=[];let discountRulesLoading=false,discountRulesError='';
 const VOUCHERS=[];let vouchersLoading=false,vouchersError='';
 const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
@@ -2071,11 +2072,13 @@ invadjust:t=>inventoryAdjustForm(t.dataset.i),
   tablerotate:async t=>{const x=tableById(t.dataset.id);if(!x)return;if(!confirm('Regenerate this QR code? The old QR will stop working.'))return;try{const d=await tableRpc('halina_rotate_table_qr',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_id:x.id});x.token=d.token;toast('QR code regenerated');render();setTimeout(drawTableQrs,0)}catch(e){toast(e.message,1)}},
   tablesdownloadall:async()=>{try{if(!window.JSZip)throw new Error('QR archive library is unavailable. Use Print All QR Codes instead.');drawTableQrs();await new Promise(r=>setTimeout(r,250));const zip=new JSZip();let count=0;HALINA_TABLES.forEach(t=>{const el=document.getElementById('tmqr-'+t.id),img=el?.querySelector('img'),canvas=el?.querySelector('canvas');const data=img?.src||canvas?.toDataURL('image/png');if(data){zip.file('HALINA-'+t.table_number.replace(/[^a-z0-9_-]/gi,'_')+'-QR.png',data.split(',')[1],{base64:true});count++}});if(!count)throw new Error('No QR codes are available to download.');const blob=await zip.generateAsync({type:'blob'});const u=URL.createObjectURL(blob);const link=document.createElement('a');link.href=u;link.download='HALINA-All-Table-QR-Codes.zip';link.click();setTimeout(()=>URL.revokeObjectURL(u),1500);toast(count+' QR codes packaged')}catch(e){toast(e.message,1)}},
   tablesprintall:()=>tablePrintAll(),
-  settingsection:t=>{S.settingsSection=t.dataset.v;if(S.settingsSection==='appearance'&&window.wpOpen)wpOpen();render();if(S.settingsSection==='menu')refreshMenu();if(S.settingsSection==='profile')initAppearanceControls();if(S.settingsSection==='tables')refreshTables().catch(e=>toast(e.message,1));if(S.settingsSection==='tax')loadTaxRules();if(S.settingsSection==='servicecharge')loadServiceChargeRules();if(S.settingsSection==='discounts')loadDiscountSettings()},
+  settingsection:t=>{S.settingsSection=t.dataset.v;if(S.settingsSection==='appearance'&&window.wpOpen)wpOpen();render();if(S.settingsSection==='menu')refreshMenu();if(S.settingsSection==='profile')initAppearanceControls();if(S.settingsSection==='tables')refreshTables().catch(e=>toast(e.message,1));if(S.settingsSection==='tax')loadTaxRules();if(S.settingsSection==='servicecharge')loadServiceChargeRules();if(S.settingsSection==='payments')loadPaymentMethods();if(S.settingsSection==='discounts')loadDiscountSettings()},
   'taxrules-refresh':()=>loadTaxRules(),
   'taxrule-toggle':t=>toggleTaxRule(t.dataset.id),
   'taxrule-delete':t=>deleteTaxRule(t.dataset.id),
   'servicecharge-refresh':()=>loadServiceChargeRules(),
+  'paymentmethods-refresh':()=>loadPaymentMethods(),
+  'paymentmethod-toggle':t=>togglePaymentMethod(t.dataset.id),
   'servicecharge-toggle':t=>toggleServiceChargeRule(t.dataset.id),
   'servicecharge-delete':t=>deleteServiceChargeRule(t.dataset.id),
   'discounts-refresh':()=>loadDiscountSettings(),
@@ -2099,7 +2102,8 @@ document.addEventListener('scroll',e=>{
  scrollHideTimers.set(target,timer);
 },true);
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
-document.addEventListener('submit',e=>{if(e.target.id==='tmAddForm')addTable(e);else if(e.target.id==='taxRuleForm')saveTaxRule(e);else if(e.target.id==='serviceChargeForm')saveServiceChargeRule(e);else if(e.target.id==='discountRuleForm')saveDiscountRule(e);else if(e.target.id==='voucherForm')saveVoucher(e)});
+document.addEventListener('submit',e=>{if(e.target.id==='tmAddForm')addTable(e);else if(e.target.id==='taxRuleForm')saveTaxRule(e);else if(e.target.id==='serviceChargeForm')saveServiceChargeRule(e);else if(e.target.id==='paymentMethodForm')savePaymentMethod(e);else if(e.target.id==='discountRuleForm')saveDiscountRule(e);else if(e.target.id==='voucherForm')saveVoucher(e)});
+document.addEventListener('change',e=>{if(e.target.id==='pmKey'){const n={cash:'Cash',card:'Card / Terminal',qr_manual:'Manual QR Payment',online:'Online Payment Gateway'};$('#pmName').value=n[e.target.value]||'';if(e.target.value==='cash'){$('#pmFeePercent').value='0';$('#pmFeeFixed').value='0';}}});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
 if(e.key=='Escape'){if(L.innerHTML)closeL();else $('#app').classList.remove('mo')}
 else if((e.key=='/'&&!f)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='k')){e.preventDefault();search()}
@@ -2230,6 +2234,7 @@ settings:()=>{
  :active.id==='menu'?`<div class="bs-linked-page">${menuPage()}</div>`
  :active.id==='inventory'?`<div class="bs-linked-page">${PG.inv()}</div>`
  :active.id==='tables'?tableManagementPage()
+ :active.id==='payments'?paymentMethodsPage()
  :active.id==='tax'?taxSettingsPage()
  :active.id==='servicecharge'?serviceChargeSettingsPage()
  :active.id==='discounts'?discountSettingsPage()
@@ -2238,6 +2243,25 @@ settings:()=>{
  return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div>${showProfileSave}</div>${profile}</main></div></div>`;
 },audit:auditPage});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
+
+function paymentMethodsPage(){
+ const methodNames={cash:'Cash',card:'Card / Terminal',qr_manual:'Manual QR Payment',online:'Online Payment Gateway'};
+ const rows=PAYMENT_METHODS.map(m=>`<tr><td><b>${esc(m.display_name)}</b><small class="mu" style="display:block">${esc(methodNames[m.method_key]||m.method_key)}</small></td><td>${m.method_key==='cash'?'No fee':Number(m.fee_percent||0).toFixed(2)+'% + '+Number(m.fee_fixed||0).toFixed(2)}</td><td>${esc(m.provider_name||'—')}</td><td>${m.is_enabled?bdg('Enabled'):bdg('Disabled')}</td><td><button class="btn" data-a="paymentmethod-toggle" data-id="${m.id}">${m.is_enabled?'Disable':'Enable'}</button></td></tr>`).join('');
+ return `<section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('wallet',22)}</div><div class="bs-head-copy"><h3>Payment method controls</h3><p>Choose which payment methods your restaurant accepts. New configurations are disabled until you enable them.</p></div><button class="btn" data-a="paymentmethods-refresh">Refresh</button></div>${paymentMethodsLoading?'<p class="mu">Loading payment methods…</p>':''}${paymentMethodsError?`<p class="er">${esc(paymentMethodsError)}</p>`:''}<div class="tw"><table class="inv-table"><thead><tr><th>Payment Method</th><th>Configured Fee</th><th>Provider</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows||'<tr><td colspan="5">No payment methods configured yet. Add each method below.</td></tr>'}</tbody></table></div></section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Add / Update Payment Method</h3><p>Save one configuration per payment method. No provider credentials or secret keys should be entered here.</p></div></div><form id="paymentMethodForm" class="bs-profile-grid">
+ <label class="bs-field">Payment Method<select id="pmKey" required><option value="cash">Cash</option><option value="card">Card / Terminal</option><option value="qr_manual">Manual QR Payment</option><option value="online">Online Payment Gateway</option></select></label>
+ <label class="bs-field">Display Name<input id="pmName" maxlength="80" required value="Cash"></label>
+ <label class="bs-field">Provider / Bank Name <small>(Optional)</small><input id="pmProvider" maxlength="120" placeholder="e.g. Maya, PayMongo, GCash"></label>
+ <label class="bs-field">Provider Fee (%)<input id="pmFeePercent" type="number" min="0" max="100" step="0.0001" value="0" required></label>
+ <label class="bs-field">Fixed Fee <small>(Optional)</small><input id="pmFeeFixed" type="number" min="0" step="0.01" value="0" required></label>
+ <label class="bs-field bs-address">QR Image URL <small>(Manual QR only; optional)</small><input id="pmQrUrl" type="url" maxlength="1000" placeholder="https://…"></label>
+ <label class="bs-field bs-address">Customer / Cashier Instructions <small>(Optional)</small><textarea id="pmInstructions" rows="3" maxlength="1000" placeholder="Explain how this payment method should be used and verified."></textarea></label>
+ <div class="bs-address"><button class="btn pri" id="pmSave" type="submit">Save Payment Method</button></div></form></section>
+ <div class="bs-coming-note"><span class="bd wn">● Configuration only</span><b>Payment processing is not connected yet</b><span>Cashier checkout is not changed by these settings. Manual QR payments must remain pending until a cashier verifies the received payment. Online gateway payments must only be marked paid after trusted provider confirmation. Provider fees are stored for configuration and are not added to customer totals yet.</span></div>`;
+}
+async function loadPaymentMethods(){paymentMethodsLoading=true;paymentMethodsError='';try{const {data,error}=await sb.from('restaurant_payment_methods').select('id,method_key,display_name,is_enabled,provider_name,fee_percent,fee_fixed,qr_image_url,instructions,sort_order').eq('restaurant_id',HALINA_RESTAURANT_ID).order('sort_order',{ascending:true}).order('method_key',{ascending:true});if(error)throw error;PAYMENT_METHODS.splice(0,PAYMENT_METHODS.length,...(data||[]));}catch(e){paymentMethodsError=e.message||String(e);}finally{paymentMethodsLoading=false;if(S.page==='settings'&&S.settingsSection==='payments')render();}}
+async function savePaymentMethod(e){e.preventDefault();const key=$('#pmKey').value,name=$('#pmName').value.trim(),provider=$('#pmProvider').value.trim()||null,feePercent=Number($('#pmFeePercent').value),feeFixed=Number($('#pmFeeFixed').value),qr=$('#pmQrUrl').value.trim()||null,instructions=$('#pmInstructions').value.trim()||null;if(!name||name.length<2||!Number.isFinite(feePercent)||feePercent<0||feePercent>100||!Number.isFinite(feeFixed)||feeFixed<0){toast('Check the payment name and fee values.',1);return;}if(key==='cash'&&(feePercent>0||feeFixed>0)){toast('Cash payment cannot have a provider processing fee in this configuration.',1);return;}if(key!=='qr_manual'&&qr){toast('QR image URL is only available for Manual QR Payment.',1);return;}const btn=$('#pmSave');btn.disabled=true;btn.textContent='Saving…';try{const existing=PAYMENT_METHODS.find(x=>x.method_key===key);const payload={restaurant_id:HALINA_RESTAURANT_ID,method_key:key,display_name:name,is_enabled:existing?.is_enabled??false,provider_name:provider,fee_percent:feePercent,fee_fixed:feeFixed,qr_image_url:qr,instructions,sort_order:({cash:1,card:2,qr_manual:3,online:4})[key],updated_at:new Date().toISOString()};const {error}=await sb.from('restaurant_payment_methods').upsert(payload,{onConflict:'restaurant_id,method_key'});if(error)throw error;e.target.reset();$('#pmKey').value='cash';$('#pmName').value='Cash';$('#pmFeePercent').value='0';$('#pmFeeFixed').value='0';toast('Payment method configuration saved disabled. Enable it after review.');await loadPaymentMethods();}catch(ex){toast('Could not save payment method: '+(ex.message||String(ex)),1);btn.disabled=false;btn.textContent='Save Payment Method';}}
+async function togglePaymentMethod(id){const m=PAYMENT_METHODS.find(x=>x.id===id);if(!m)return;const {error}=await sb.from('restaurant_payment_methods').update({is_enabled:!m.is_enabled,updated_at:new Date().toISOString()}).eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);if(error){toast('Could not update payment method: '+error.message,1);return;}toast('Payment method status updated. Cashier checkout is not connected yet.');await loadPaymentMethods();}
 
 function taxSettingsPage(){
  const country=BUSINESS_SETTINGS.country_code||'PH',reg=BUSINESS_SETTINGS.tax_registration_type||'NOT_SET';
