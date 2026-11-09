@@ -1884,6 +1884,7 @@ const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',website:'',logo_url:'',operating_hours:{},appearance_settings:{font_family:'Inter',font_scale:1,logo_scale:1.15},currency:'PHP',timezone:'Asia/Manila'};
 const BUSINESS_SETTINGS={country_code:'PH',region:null,city:null,tax_registration_type:'NOT_SET'};
+const TAX_RULES=[];let taxRulesLoading=false,taxRulesError='';
 const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
 const $=s=>document.querySelector(s),M=n=>'₱'+Math.round(n).toLocaleString('en-PH');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -2067,7 +2068,10 @@ invadjust:t=>inventoryAdjustForm(t.dataset.i),
   tablerotate:async t=>{const x=tableById(t.dataset.id);if(!x)return;if(!confirm('Regenerate this QR code? The old QR will stop working.'))return;try{const d=await tableRpc('halina_rotate_table_qr',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_id:x.id});x.token=d.token;toast('QR code regenerated');render();setTimeout(drawTableQrs,0)}catch(e){toast(e.message,1)}},
   tablesdownloadall:async()=>{try{if(!window.JSZip)throw new Error('QR archive library is unavailable. Use Print All QR Codes instead.');drawTableQrs();await new Promise(r=>setTimeout(r,250));const zip=new JSZip();let count=0;HALINA_TABLES.forEach(t=>{const el=document.getElementById('tmqr-'+t.id),img=el?.querySelector('img'),canvas=el?.querySelector('canvas');const data=img?.src||canvas?.toDataURL('image/png');if(data){zip.file('HALINA-'+t.table_number.replace(/[^a-z0-9_-]/gi,'_')+'-QR.png',data.split(',')[1],{base64:true});count++}});if(!count)throw new Error('No QR codes are available to download.');const blob=await zip.generateAsync({type:'blob'});const u=URL.createObjectURL(blob);const link=document.createElement('a');link.href=u;link.download='HALINA-All-Table-QR-Codes.zip';link.click();setTimeout(()=>URL.revokeObjectURL(u),1500);toast(count+' QR codes packaged')}catch(e){toast(e.message,1)}},
   tablesprintall:()=>tablePrintAll(),
-  settingsection:t=>{S.settingsSection=t.dataset.v;if(S.settingsSection==='appearance'&&window.wpOpen)wpOpen();render();if(S.settingsSection==='menu')refreshMenu();if(S.settingsSection==='profile')initAppearanceControls();if(S.settingsSection==='tables')refreshTables().catch(e=>toast(e.message,1))},
+  settingsection:t=>{S.settingsSection=t.dataset.v;if(S.settingsSection==='appearance'&&window.wpOpen)wpOpen();render();if(S.settingsSection==='menu')refreshMenu();if(S.settingsSection==='profile')initAppearanceControls();if(S.settingsSection==='tables')refreshTables().catch(e=>toast(e.message,1));if(S.settingsSection==='tax')loadTaxRules()},
+  'taxrules-refresh':()=>loadTaxRules(),
+  'taxrule-toggle':t=>toggleTaxRule(t.dataset.id),
+  'taxrule-delete':t=>deleteTaxRule(t.dataset.id),
   profilepick:()=>$('#profileLogoFile')?.click(),
   profilesave:()=>saveRestaurantProfile(),
   settingsback:()=>{S.settingsSection=null;render()}
@@ -2084,7 +2088,7 @@ document.addEventListener('scroll',e=>{
  scrollHideTimers.set(target,timer);
 },true);
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
-document.addEventListener('submit',e=>{if(e.target.id==='tmAddForm')addTable(e)});
+document.addEventListener('submit',e=>{if(e.target.id==='tmAddForm')addTable(e);else if(e.target.id==='taxRuleForm')saveTaxRule(e)});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
 if(e.key=='Escape'){if(L.innerHTML)closeL();else $('#app').classList.remove('mo')}
 else if((e.key=='/'&&!f)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='k')){e.preventDefault();search()}
@@ -2215,11 +2219,35 @@ settings:()=>{
  :active.id==='menu'?`<div class="bs-linked-page">${menuPage()}</div>`
  :active.id==='inventory'?`<div class="bs-linked-page">${PG.inv()}</div>`
  :active.id==='tables'?tableManagementPage()
+ :active.id==='tax'?taxSettingsPage()
  :`<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>This settings workspace is reserved for the approved configuration workflow. It is not connected to Supabase yet, and no settings are being saved or applied.</span></div></section>`;
  const showProfileSave=active.id==='profile'?`<button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button>`:'';
  return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div>${showProfileSave}</div>${profile}</main></div></div>`;
 },audit:auditPage});
 A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
+
+function taxSettingsPage(){
+ const country=BUSINESS_SETTINGS.country_code||'PH',reg=BUSINESS_SETTINGS.tax_registration_type||'NOT_SET';
+ const typeOptions=country==='PH'?(reg==='PH_VAT_REGISTERED'?`<option value="VAT">VAT</option><option value="OTHER">Other</option>`:reg==='PH_NON_VAT'?`<option value="PERCENTAGE_TAX">Percentage Tax</option><option value="OTHER">Other</option>`:`<option value="OTHER">Other</option>`):`<option value="US_SALES_TAX">Sales Tax</option><option value="OTHER">Other</option>`;
+ const rules=TAX_RULES.map(r=>`<tr><td><b>${esc(r.rule_name)}</b><small class="mu" style="display:block">${esc(r.tax_type.replaceAll('_',' '))}</small></td><td>${Number(r.rate).toFixed(4).replace(/0+$/,'').replace(/\.$/,'')}%</td><td>${r.calculation_method==='inclusive'?'Tax inclusive':'Tax exclusive'}</td><td>${esc(r.effective_from)}${r.effective_to?' – '+esc(r.effective_to):' – No end date'}</td><td>${r.is_active?bdg('Active'):bdg('Inactive')}</td><td><button class="btn" data-a="taxrule-toggle" data-id="${r.id}">${r.is_active?'Deactivate':'Activate'}</button> <button class="btn danger" data-a="taxrule-delete" data-id="${r.id}">Delete</button></td></tr>`).join('');
+ return `<section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('receipt',22)}</div><div class="bs-head-copy"><h3>Tax jurisdiction</h3><p>Rules are stored per restaurant. They do not change checkout totals yet.</p></div></div><div class="bs-profile-grid"><div class="bs-field"><b>Country</b><div>${country==='PH'?'Philippines':'United States'}</div></div><div class="bs-field"><b>Registration</b><div>${esc(reg.replaceAll('_',' '))}</div></div><div class="bs-field"><b>Region / State</b><div>${esc(BUSINESS_SETTINGS.region||'Not configured')}</div></div><div class="bs-field"><b>City</b><div>${esc(BUSINESS_SETTINGS.city||'Not configured')}</div></div></div>${reg==='NOT_SET'?`<div class="bs-coming-note"><span class="bd wn">● Action required</span><b>Complete Business Tax Registration first</b><span>Open Restaurant Profile and select the correct tax registration before adding tax rules. No tax rate has been assumed.</span></div>`:''}</section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Add tax rule</h3><p>Enter the rate confirmed for this restaurant and jurisdiction. Do not guess a rate.</p></div></div><form id="taxRuleForm" class="bs-profile-grid">
+ <label class="bs-field">Rule Name<input id="taxRuleName" maxlength="120" required placeholder="e.g. Standard VAT"></label>
+ <label class="bs-field">Tax Type<select id="taxRuleType">${typeOptions}</select></label>
+ <label class="bs-field">Rate (%)<input id="taxRuleRate" type="number" min="0" max="100" step="0.0001" required placeholder="Enter confirmed rate"></label>
+ <label class="bs-field">Price Calculation<select id="taxRuleMethod"><option value="exclusive">Tax exclusive — added to price</option><option value="inclusive">Tax inclusive — included in price</option></select></label>
+ <label class="bs-field">Applies To<select id="taxRuleScope"><option value="all_sales">All sales (subject to jurisdiction rules)</option><option value="taxable_items_only">Taxable items only</option></select></label>
+ <label class="bs-field">Effective From<input id="taxRuleFrom" type="date" required value="${new Date().toISOString().slice(0,10)}"></label>
+ <label class="bs-field">Effective To <small>(Optional)</small><input id="taxRuleTo" type="date"></label>
+ <label class="bs-field bs-address">Notes <small>(Optional)</small><textarea id="taxRuleNotes" rows="2" maxlength="1000" placeholder="Reference or accountant confirmation"></textarea></label>
+ <div class="bs-address"><button class="btn pri" id="taxRuleSave" type="submit">Save Tax Rule</button></div></form></section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('log',22)}</div><div class="bs-head-copy"><h3>Saved tax rules</h3><p>Historical rules are retained with their effective dates.</p></div><button class="btn" data-a="taxrules-refresh">Refresh</button></div>${taxRulesLoading?'<p class="mu">Loading tax rules…</p>':''}${taxRulesError?`<p class="er">${esc(taxRulesError)}</p>`:''}<div class="tw"><table class="inv-table"><thead><tr><th>Rule</th><th>Rate</th><th>Method</th><th>Effective period</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rules||'<tr><td colspan="6">No tax rules have been configured.</td></tr>'}</tbody></table></div></section>
+ <div class="bs-coming-note"><span class="bd wn">● Configuration only</span><b>Checkout tax calculation is not enabled</b><span>These rules are saved for configuration and review. Cashier totals, receipts and historical transactions remain unchanged until the tax engine is separately implemented and tested for the selected jurisdiction.</span></div>`;
+}
+async function loadTaxRules(){taxRulesLoading=true;taxRulesError='';try{const {data,error}=await sb.from('restaurant_tax_rules').select('id,rule_name,tax_type,rate,calculation_method,tax_scope,effective_from,effective_to,is_active,notes').eq('restaurant_id',HALINA_RESTAURANT_ID).order('effective_from',{ascending:false});if(error)throw error;TAX_RULES.splice(0,TAX_RULES.length,...(data||[]));}catch(e){taxRulesError=e.message||String(e);}finally{taxRulesLoading=false;if(S.page==='settings'&&S.settingsSection==='tax')render();}}
+async function saveTaxRule(e){e.preventDefault();const name=$('#taxRuleName').value.trim(),type=$('#taxRuleType').value,rate=Number($('#taxRuleRate').value),from=$('#taxRuleFrom').value,to=$('#taxRuleTo').value||null,method=$('#taxRuleMethod').value,scope=$('#taxRuleScope').value,notes=$('#taxRuleNotes').value.trim()||null;if(!name||!Number.isFinite(rate)||rate<0||rate>100||!from||(to&&to<from)){toast('Check the tax rule name, rate and effective dates.',1);return;}if((BUSINESS_SETTINGS.tax_registration_type||'NOT_SET')==='NOT_SET'){toast('Configure Business Tax Registration first.',1);return;}const btn=$('#taxRuleSave');btn.disabled=true;btn.textContent='Saving…';const payload={restaurant_id:HALINA_RESTAURANT_ID,rule_name:name,tax_type:type,rate,calculation_method:method,tax_scope:scope,effective_from:from,effective_to:to,notes,created_by:(await sb.auth.getUser()).data?.user?.id||null};const {error}=await sb.from('restaurant_tax_rules').insert(payload);if(error){btn.disabled=false;btn.textContent='Save Tax Rule';toast('Could not save tax rule: '+error.message,1);return;}toast('Tax rule saved. Checkout is not affected.');await loadTaxRules();}
+async function toggleTaxRule(id){const r=TAX_RULES.find(x=>x.id===id);if(!r)return;const {error}=await sb.from('restaurant_tax_rules').update({is_active:!r.is_active,updated_at:new Date().toISOString()}).eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);if(error){toast('Could not update tax rule: '+error.message,1);return;}toast('Tax rule status updated.');await loadTaxRules();}
+async function deleteTaxRule(id){if(!confirm('Delete this tax rule? This removes the configuration record and does not affect past receipts.'))return;const {error}=await sb.from('restaurant_tax_rules').delete().eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);if(error){toast('Could not delete tax rule: '+error.message,1);return;}toast('Tax rule deleted.');await loadTaxRules();}
 
 let CURRENT_RESTAURANT_ID=null;
 let HALINA_TABLES=[];
