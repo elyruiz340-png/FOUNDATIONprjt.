@@ -2163,9 +2163,11 @@ settings:()=>{
   {id:'menu',name:'Menu & Categories',desc:'Menu visibility & item settings',group:'BUSINESS',icon:'menu'},
   {id:'inventory',name:'Inventory & Stock',desc:'Stock units & availability rules',group:'BUSINESS',icon:'box'},
   {id:'tables',name:'Table Management & QR Codes',desc:'Tables, status & customer QR ordering',group:'BUSINESS',icon:'branch'},
-  {id:'discounts',name:'Discounts & Vouchers',desc:'Senior, PWD & promotional discounts',group:'PAYMENTS & OPERATIONS',icon:'spark'},
   {id:'payments',name:'Payment Methods',desc:'Cash, QR, bank & online payments',group:'PAYMENTS & OPERATIONS',icon:'wallet'},
-  {id:'receipt',name:'Receipt & Tax',desc:'Receipt details & tax settings',group:'PAYMENTS & OPERATIONS',icon:'log'},
+  {id:'tax',name:'Tax Settings',desc:'Business tax profile & jurisdiction',group:'PAYMENTS & OPERATIONS',icon:'receipt'},
+  {id:'servicecharge',name:'Service Charge',desc:'Service charge rules & application',group:'PAYMENTS & OPERATIONS',icon:'spark'},
+  {id:'discounts',name:'Discount Rules & Vouchers',desc:'Senior, PWD & promotional discounts',group:'PAYMENTS & OPERATIONS',icon:'spark'},
+  {id:'receipt',name:'Receipt Settings',desc:'Receipt details & print layout',group:'PAYMENTS & OPERATIONS',icon:'log'},
   {id:'notifications',name:'Notifications',desc:'Order alerts & system notifications',group:'PAYMENTS & OPERATIONS',icon:'bell'},
   {id:'devices',name:'Devices & Printers',desc:'Receipt printers & kitchen displays',group:'PAYMENTS & OPERATIONS',icon:'pulse'},
   {id:'access',name:'Staff Access Control',desc:'Permissions & security rules',group:'SECURITY',icon:'users'}
@@ -2189,8 +2191,16 @@ settings:()=>{
   <div class="bs-hours-grid">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d=>`<div class="bs-hour-row"><b>${d}</b><input aria-label="${d} opening time" type="time" value="10:00"><span>to</span><input aria-label="${d} closing time" type="time" value="22:00"><label><input type="checkbox" checked aria-label="${d} open"></label></div>`).join('')}</div>
  </section>
  <section class="bs-panel">
-  <div class="bs-panel-head"><div class="bs-head-icon">${I('cog',22)}</div><div class="bs-head-copy"><h3>Additional Settings</h3><p>Other business preferences.</p></div></div>
-  <div class="bs-extra-grid"><label class="bs-field">Default Currency<select><option>PHP - Philippine Peso (₱)</option><option>USD - US Dollar ($)</option></select></label><label class="bs-field">Default Tax Rate (%)<input type="number" min="0" max="100" placeholder="Not configured"></label><label class="bs-field">Time Zone<select><option value="">Select time zone</option><option>(GMT+8) Manila, Philippines</option></select></label><label class="bs-field">Default Service Charge (%)<input type="number" min="0" max="100" placeholder="Not configured"></label></div>
+  <div class="bs-panel-head"><div class="bs-head-icon">${I('branch',22)}</div><div class="bs-head-copy"><h3>Business Location & Registration</h3><p>Establish the restaurant's jurisdiction before configuring tax rules.</p></div></div>
+  <div class="bs-profile-grid">
+   <label class="bs-field">Country<select id="businessCountry" disabled><option value="PH" selected>Philippines</option><option value="US">United States</option></select></label>
+   <label class="bs-field">State / Province<input id="businessRegion" placeholder="Not configured" disabled></label>
+   <label class="bs-field">City<input id="businessCity" placeholder="Not configured" disabled></label>
+   <label class="bs-field">Business Tax Registration<select id="businessTaxRegistration" disabled><option value="">Not configured</option><option>VAT Registered</option><option>Non-VAT</option><option>US Sales Tax</option></select></label>
+   <label class="bs-field">Default Currency<select id="businessCurrency" disabled><option selected>PHP - Philippine Peso (₱)</option><option>USD - US Dollar ($)</option></select></label>
+   <label class="bs-field">Time Zone<select id="businessTimezone" disabled><option selected>Asia/Manila</option><option>America/New_York</option></select></label>
+  </div>
+  <div class="bs-coming-note"><span class="bd wn">● Setup foundation only</span><b>Business jurisdiction is not connected yet</b><span>These fields are intentionally disabled. They are not saved to Supabase until the restaurant profile schema and tax configuration are approved. No tax rate or service charge is being applied from this page.</span></div>
  </section>
  <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Appearance & Branding</h3><p>Customize font and logo sizing across all dashboards.</p></div></div>
  <div class="bs-profile-grid">
@@ -2204,7 +2214,7 @@ settings:()=>{
  :active.id==='menu'?`<div class="bs-linked-page">${menuPage()}</div>`
  :active.id==='inventory'?`<div class="bs-linked-page">${PG.inv()}</div>`
  :active.id==='tables'?tableManagementPage()
- :`<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>Controls for this section will be connected after its rules and data requirements are finalized. No settings are being saved yet.</span></div></section>`;
+ :`<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>This settings workspace is reserved for the approved configuration workflow. It is not connected to Supabase yet, and no settings are being saved or applied.</span></div></section>`;
  const showProfileSave=active.id==='profile'?`<button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button>`:'';
  return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div>${showProfileSave}</div>${profile}</main></div></div>`;
 },audit:auditPage});
