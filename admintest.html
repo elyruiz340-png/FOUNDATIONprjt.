@@ -1882,7 +1882,8 @@ const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],
 
 /* 10. STATE + HELPERS */
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',website:'',logo_url:'',operating_hours:{},appearance_settings:{font_family:'Inter',font_scale:1,logo_scale:1.15}};
+const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',website:'',logo_url:'',operating_hours:{},appearance_settings:{font_family:'Inter',font_scale:1,logo_scale:1.15},currency:'PHP',timezone:'Asia/Manila'};
+const BUSINESS_SETTINGS={country_code:'PH',region:null,city:null,tax_registration_type:'NOT_SET'};
 const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
 const $=s=>document.querySelector(s),M=n=>'₱'+Math.round(n).toLocaleString('en-PH');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -2193,14 +2194,14 @@ settings:()=>{
  <section class="bs-panel">
   <div class="bs-panel-head"><div class="bs-head-icon">${I('branch',22)}</div><div class="bs-head-copy"><h3>Business Location & Registration</h3><p>Establish the restaurant's jurisdiction before configuring tax rules.</p></div></div>
   <div class="bs-profile-grid">
-   <label class="bs-field">Country<select id="businessCountry" disabled><option value="PH" selected>Philippines</option><option value="US">United States</option></select></label>
-   <label class="bs-field">State / Province<input id="businessRegion" placeholder="Not configured" disabled></label>
-   <label class="bs-field">City<input id="businessCity" placeholder="Not configured" disabled></label>
-   <label class="bs-field">Business Tax Registration<select id="businessTaxRegistration" disabled><option value="">Not configured</option><option>VAT Registered</option><option>Non-VAT</option><option>US Sales Tax</option></select></label>
-   <label class="bs-field">Default Currency<select id="businessCurrency" disabled><option selected>PHP - Philippine Peso (₱)</option><option>USD - US Dollar ($)</option></select></label>
-   <label class="bs-field">Time Zone<select id="businessTimezone" disabled><option selected>Asia/Manila</option><option>America/New_York</option></select></label>
+   <label class="bs-field">Country<select id="businessCountry"><option value="PH" ${BUSINESS_SETTINGS.country_code==='PH'?'selected':''}>Philippines</option><option value="US" ${BUSINESS_SETTINGS.country_code==='US'?'selected':''}>United States</option></select></label>
+   <label class="bs-field">State / Province<input id="businessRegion" maxlength="120" value="${esc(BUSINESS_SETTINGS.region||'')}" placeholder="Enter state or province"></label>
+   <label class="bs-field">City<input id="businessCity" maxlength="120" value="${esc(BUSINESS_SETTINGS.city||'')}" placeholder="Enter city"></label>
+   <label class="bs-field">Business Tax Registration<select id="businessTaxRegistration"><option value="NOT_SET" ${BUSINESS_SETTINGS.tax_registration_type==='NOT_SET'?'selected':''}>Not configured</option><option value="PH_VAT_REGISTERED" ${BUSINESS_SETTINGS.tax_registration_type==='PH_VAT_REGISTERED'?'selected':''}>Philippines — VAT Registered</option><option value="PH_NON_VAT" ${BUSINESS_SETTINGS.tax_registration_type==='PH_NON_VAT'?'selected':''}>Philippines — Non-VAT</option><option value="US_SALES_TAX" ${BUSINESS_SETTINGS.tax_registration_type==='US_SALES_TAX'?'selected':''}>United States — Sales Tax</option></select></label>
+   <label class="bs-field">Default Currency<select id="businessCurrency"><option value="PHP" ${PROFILE.currency==='PHP'?'selected':''}>PHP - Philippine Peso (₱)</option><option value="USD" ${PROFILE.currency==='USD'?'selected':''}>USD - US Dollar ($)</option></select></label>
+   <label class="bs-field">Time Zone<select id="businessTimezone"><option value="Asia/Manila" ${PROFILE.timezone==='Asia/Manila'?'selected':''}>Asia/Manila</option><option value="America/New_York" ${PROFILE.timezone==='America/New_York'?'selected':''}>America/New_York</option><option value="America/Chicago" ${PROFILE.timezone==='America/Chicago'?'selected':''}>America/Chicago</option><option value="America/Denver" ${PROFILE.timezone==='America/Denver'?'selected':''}>America/Denver</option><option value="America/Los_Angeles" ${PROFILE.timezone==='America/Los_Angeles'?'selected':''}>America/Los_Angeles</option></select></label>
   </div>
-  <div class="bs-coming-note"><span class="bd wn">● Setup foundation only</span><b>Business jurisdiction is not connected yet</b><span>These fields are intentionally disabled. They are not saved to Supabase until the restaurant profile schema and tax configuration are approved. No tax rate or service charge is being applied from this page.</span></div>
+  <div class="bs-coming-note"><span class="bd wn">● Business profile connected</span><b>Jurisdiction details are saved to Supabase</b><span>Tax rates, tax calculations, service charges and legal compliance are not activated by this profile. Configure and validate those separately before using them in checkout.</span></div>
  </section>
  <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Appearance & Branding</h3><p>Customize font and logo sizing across all dashboards.</p></div></div>
  <div class="bs-profile-grid">
@@ -2758,10 +2759,22 @@ function staffAddForm(){
 }
 
 async function loadRestaurantProfile(){
-  const {data,error}=await sb.from('restaurants').select('name,address,contact_number,email,website,logo_url,operating_hours,appearance_settings').eq('id',HALINA_RESTAURANT_ID).single();
+  const [{data,error},{data:business,error:businessError}]=await Promise.all([
+    sb.from('restaurants').select('name,address,contact_number,email,website,logo_url,operating_hours,appearance_settings,currency,timezone').eq('id',HALINA_RESTAURANT_ID).single(),
+    sb.from('restaurant_business_settings').select('country_code,region,city,tax_registration_type').eq('restaurant_id',HALINA_RESTAURANT_ID).maybeSingle()
+  ]);
   if(error)throw error;
+  if(businessError)throw businessError;
   Object.assign(PROFILE,data||{});
+  Object.assign(BUSINESS_SETTINGS,business||{});
   if(window.wpSyncFromProfile)wpSyncFromProfile();
+  const country=$('#businessCountry'),region=$('#businessRegion'),city=$('#businessCity'),registration=$('#businessTaxRegistration'),currency=$('#businessCurrency'),timezone=$('#businessTimezone');
+  if(country)country.value=BUSINESS_SETTINGS.country_code||'PH';
+  if(region)region.value=BUSINESS_SETTINGS.region||'';
+  if(city)city.value=BUSINESS_SETTINGS.city||'';
+  if(registration)registration.value=BUSINESS_SETTINGS.tax_registration_type||'NOT_SET';
+  if(currency)currency.value=PROFILE.currency||'PHP';
+  if(timezone)timezone.value=PROFILE.timezone||'Asia/Manila';
 }
 function initAppearanceControls(){const a=PROFILE.appearance_settings||{};const f=$('#appearanceFont'),fs=$('#appearanceFontScale'),ls=$('#appearanceLogoScale');if(f)f.value=a.font_family||'Inter';if(fs)fs.value=Math.round((a.font_scale||1)*100);if(ls)ls.value=Math.round((a.logo_scale||1.15)*100);updateAppearancePreview();}
 function updateAppearancePreview(){const f=$('#appearanceFont'),fs=$('#appearanceFontScale'),ls=$('#appearanceLogoScale'),p=$('#appearancePreview');if(!f||!fs||!ls||!p)return;const scale=Number(fs.value)/100,logo=Number(ls.value);$('#fontScaleLabel').textContent=Math.round(scale*100)+'%';$('#logoScaleLabel').textContent=logo+'%';p.style.fontFamily=f.value+',Arial,sans-serif';p.style.fontSize=(16*scale)+'px';p.innerHTML=`<strong style="display:inline-flex;align-items:center;gap:10px"><span style="width:${30*logo/100}px;height:${30*logo/100}px;border-radius:8px;background:#2f7650;display:inline-block"></span>EDMEL Restaurant</strong><p style="margin:8px 0 0">Your dashboard appearance preview</p>`;}
@@ -2774,11 +2787,19 @@ async function saveRestaurantProfile(){
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast('Enter a valid business email.',1);return;}
   if(website && !/^https?:\/\//i.test(website)){toast('Website must start with http:// or https://.',1);return;}
   const appearance_settings={...(PROFILE.appearance_settings||{}),font_family:$('#appearanceFont')?.value||'Inter',font_scale:Math.min(1.15,Math.max(.9,(Number($('#appearanceFontScale')?.value)||100)/100)),logo_scale:Math.min(1.5,Math.max(.8,(Number($('#appearanceLogoScale')?.value)||115)/100))};
-  const payload={name,address:$('#profileAddress')?.value.trim()||null,contact_number:$('#profilePhone')?.value.trim()||null,email:email||null,website:website||null,appearance_settings};
+  const currency=$('#businessCurrency')?.value||'PHP';
+  const timezone=$('#businessTimezone')?.value||'Asia/Manila';
+  const countryCode=$('#businessCountry')?.value||'PH';
+  const taxRegistration=$('#businessTaxRegistration')?.value||'NOT_SET';
+  if((countryCode==='PH'&&!['NOT_SET','PH_VAT_REGISTERED','PH_NON_VAT'].includes(taxRegistration))||(countryCode==='US'&&!['NOT_SET','US_SALES_TAX'].includes(taxRegistration))){toast('Choose a tax registration type that matches the selected country.',1);return;}
+  const profilePayload={name,address:$('#profileAddress')?.value.trim()||null,contact_number:$('#profilePhone')?.value.trim()||null,email:email||null,website:website||null,appearance_settings,currency,timezone};
   const btn=$('#pg [data-a="profilesave"]');if(btn){btn.disabled=true;btn.textContent='Saving…';}
-  const {data,error}=await sb.from('restaurants').update(payload).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
+  const {data,error}=await sb.from('restaurants').update(profilePayload).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
   if(error||!data){if(btn){btn.disabled=false;btn.textContent='Save Changes';}toast(error?.message||'No restaurant profile was updated. Check your owner/admin access.',1);return;}
-  Object.assign(PROFILE,payload);window.dispatchEvent(new CustomEvent('restaurantprofilechanged',{detail:PROFILE}));render();toast('Restaurant profile saved.');
+  const businessPayload={restaurant_id:HALINA_RESTAURANT_ID,country_code:countryCode,region:$('#businessRegion')?.value.trim()||null,city:$('#businessCity')?.value.trim()||null,tax_registration_type:taxRegistration,updated_at:new Date().toISOString()};
+  const {error:businessError}=await sb.from('restaurant_business_settings').upsert(businessPayload,{onConflict:'restaurant_id'});
+  if(businessError){if(btn){btn.disabled=false;btn.textContent='Save Changes';}toast('Profile saved, but business jurisdiction was not saved: '+businessError.message,1);return;}
+  Object.assign(PROFILE,profilePayload);Object.assign(BUSINESS_SETTINGS,businessPayload);window.dispatchEvent(new CustomEvent('restaurantprofilechanged',{detail:PROFILE}));render();toast('Business profile and jurisdiction saved.');
 }
 $('#pg').addEventListener('change',async e=>{
   if(e.target.id!=='profileLogoFile')return;
