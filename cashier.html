@@ -13033,8 +13033,13 @@ let halinaStaffSessionId = null;
 let halinaStaffHeartbeatTimer = null;
 let halinaStaffPresenceUserId = null;
 let halinaStaffPresenceStarting = false;
+let halinaStaffActivitySinceHeartbeat = true;
+let halinaStaffExpiryHandled = false;
+let halinaStaffInactivityTimer = null;
+let halinaStaffLastHeartbeatAt = 0;
+const HALINA_STAFF_INACTIVITY_MS = 30 * 60 * 1000;
 
-async function callStaffSessionAction(action, sessionId) {
+async function callStaffSessionAction(action, sessionId, activity = false) {
   if (!cashierAuthClient) throw new Error("Cashier authentication is unavailable.");
   const { data: sessionData, error: sessionError } = await cashierAuthClient.auth.getSession();
   const session = sessionData && sessionData.session;
@@ -13048,12 +13053,14 @@ async function callStaffSessionAction(action, sessionId) {
       "apikey": SUPABASE_KEY,
       "Authorization": "Bearer " + session.access_token
     },
-    body: JSON.stringify({ action, ...(sessionId ? { session_id: sessionId } : {}) })
+    body: JSON.stringify({ action, ...(sessionId ? { session_id: sessionId } : {}), ...(action === "heartbeat" ? { activity: activity === true } : {}) })
   });
   let result = {};
   try { result = await response.json(); } catch (_) {}
   if (!response.ok || result.success !== true) {
-    throw new Error(result.error || "Could not update staff presence.");
+    const error = new Error(result.error || "Could not update staff presence.");
+    error.sessionExpired = result.expired === true;
+    throw error;
   }
   return result;
 }
@@ -13063,11 +13070,53 @@ function stopStaffHeartbeat() {
   halinaStaffHeartbeatTimer = null;
 }
 
+function clearStaffInactivityTimer() {
+  if (halinaStaffInactivityTimer) clearTimeout(halinaStaffInactivityTimer);
+  halinaStaffInactivityTimer = null;
+}
+
+function scheduleStaffInactivityExpiry() {
+  clearStaffInactivityTimer();
+  if (!halinaStaffSessionId) return;
+  halinaStaffInactivityTimer = setTimeout(() => {
+    handleStaffInactivityExpiry();
+  }, HALINA_STAFF_INACTIVITY_MS);
+}
+
+async function handleStaffInactivityExpiry() {
+  if (halinaStaffExpiryHandled) return;
+  halinaStaffExpiryHandled = true;
+  const expiredSessionId = halinaStaffSessionId;
+  clearStaffInactivityTimer();
+  stopStaffHeartbeat();
+  if (expiredSessionId) {
+    try { await callStaffSessionAction("heartbeat", expiredSessionId, false); }
+    catch (error) { /* The server may already have marked this session expired. */ }
+  }
+  halinaStaffSessionId = null;
+  halinaStaffPresenceUserId = null;
+  hideCashierPOS();
+  try {
+    if (cashierAuthClient) await cashierAuthClient.auth.signOut({ scope: "local" });
+  } catch (error) {
+    console.warn("Could not clear the expired local session:", error.message || error);
+  }
+  showCashierLogin("You were signed out after 30 minutes of inactivity. Please sign in again.");
+  halinaStaffExpiryHandled = false;
+}
+
 async function sendStaffHeartbeat() {
   if (!halinaStaffSessionId) return;
+  const activity = halinaStaffActivitySinceHeartbeat;
+  halinaStaffActivitySinceHeartbeat = false;
   try {
-    await callStaffSessionAction("heartbeat", halinaStaffSessionId);
+    await callStaffSessionAction("heartbeat", halinaStaffSessionId, activity);
+    halinaStaffLastHeartbeatAt = Date.now();
   } catch (error) {
+    if (error.sessionExpired) {
+      await handleStaffInactivityExpiry();
+      return;
+    }
     console.warn("Staff presence heartbeat failed:", error.message || error);
   }
 }
@@ -13090,6 +13139,8 @@ async function startStaffPresence() {
     const result = await callStaffSessionAction("start");
     halinaStaffSessionId = result.session_id;
     halinaStaffPresenceUserId = userId;
+    halinaStaffActivitySinceHeartbeat = true;
+    scheduleStaffInactivityExpiry();
     await sendStaffHeartbeat();
     stopStaffHeartbeat();
     halinaStaffHeartbeatTimer = setInterval(sendStaffHeartbeat, 45000);
@@ -13106,6 +13157,7 @@ async function endStaffPresence() {
   const sessionId = halinaStaffSessionId;
   halinaStaffSessionId = null;
   halinaStaffPresenceUserId = null;
+  clearStaffInactivityTimer();
   try {
     await callStaffSessionAction("end", sessionId);
   } catch (error) {
@@ -13113,11 +13165,14 @@ async function endStaffPresence() {
   }
 }
 
-window.addEventListener("focus", () => {
-  if (halinaStaffSessionId) sendStaffHeartbeat();
-});
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && halinaStaffSessionId) sendStaffHeartbeat();
+/* Only genuine user interaction refreshes the inactivity clock. */
+["pointerdown", "keydown", "touchstart", "scroll", "click", "input", "change"].forEach((eventName) => {
+  document.addEventListener(eventName, () => {
+    if (!halinaStaffSessionId) return;
+    halinaStaffActivitySinceHeartbeat = true;
+    scheduleStaffInactivityExpiry();
+    if (Date.now() - halinaStaffLastHeartbeatAt >= 10000) sendStaffHeartbeat();
+  }, { capture: true, passive: true });
 });
 
 function hideCashierPOS() {
