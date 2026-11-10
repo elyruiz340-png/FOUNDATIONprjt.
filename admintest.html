@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark" data-ui="glass">
 <head>
 <meta charset="utf-8">
@@ -2017,6 +2017,19 @@ function moveNavIndicator(animate=true){
 }
 function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;const title=NAV.find(n=>n[0]===S.page);$('#ttl').textContent=title?title[1]:S.page;$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.page));moveNavIndicator(true);const pg=$('#pg');pg.replaceChildren();pg.insertAdjacentHTML('afterbegin',PG[S.page]());dotU();if(id){const e=$('#pg [data-c="'+id+'"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}if(S.page==='settings'&&S.settingsSection==='tables')setTimeout(drawTableQrs,0);}
 function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render();const workspace=$('#pg');if(workspace)workspace.scrollTop=0;window.scrollTo({top:0,behavior:'auto'})}
+function securitySettingsPage(){
+ return `<section class="bs-panel">
+  <div class="bs-panel-head"><div class="bs-head-icon">${I('shield',22)}</div><div class="bs-head-copy"><h3>Restaurant Security</h3><p>Manage the security policies that protect staff accounts and active sessions.</p></div></div>
+  <div class="bs-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+   <article class="bs-panel" style="margin:0"><div class="bs-head-icon">${I('lock',21)}</div><h3>Login Security</h3><p>Sign-in protection and account access rules.</p><span class="bd wn">Configuration pending</span></article>
+   <article class="bs-panel" style="margin:0"><div class="bs-head-icon">${I('key',21)}</div><h3>PIN Security Policy</h3><p>PIN requirements, failed-attempt limits and owner reset policy.</p><span class="bd wn">Configuration pending</span></article>
+   <article class="bs-panel" style="margin:0"><div class="bs-head-icon">${I('mail',21)}</div><h3>OTP & Email Verification</h3><p>Owner email verification and one-time code delivery settings.</p><span class="bd wn">Configuration pending</span></article>
+   <article class="bs-panel" style="margin:0"><div class="bs-head-icon">${I('activity',21)}</div><h3>Session Security</h3><p>Session expiry, active session handling and device access rules.</p><span class="bd wn">Configuration pending</span></article>
+  </div>
+  <div class="bs-coming-note" style="margin-top:16px"><span class="bd wn">● Planning workspace</span><b>Existing staff access remains unchanged</b><span>Employee accounts, roles, permissions and the current OTP-based PIN reset workflow remain under Staff & Permissions. These security policy cards are not connected to Supabase yet and do not change or save any settings.</span></div>
+ </section>`;
+}
+
 const A={
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
 theme:t=>{const T=['light','neodark','dark'],v=t&&t.dataset&&t.dataset.v;const next=T.includes(v)?v:T[(T.indexOf(S.theme)+1)%3];if(v&&next===S.theme)return;const change=()=>{S.theme=next;ss('th',S.theme);applyTheme();if(S.page=='settings')render()};if(window.startThemeReveal&&t&&t.getBoundingClientRect)startThemeReveal(t,change);else change()},
@@ -2204,7 +2217,7 @@ settings:()=>{
   {id:'discounts',name:'Discount Rules & Vouchers',desc:'Senior, PWD & promotional discounts',group:'PAYMENTS & OPERATIONS',icon:'spark'},
   {id:'receipt',name:'Receipt & Printer Settings',desc:'Printer setup, receipt design & test printing',group:'PAYMENTS & OPERATIONS',icon:'log'},
   {id:'notifications',name:'Notifications',desc:'Order alerts & system notifications',group:'PAYMENTS & OPERATIONS',icon:'bell'},
-  {id:'access',name:'Staff Access Control',desc:'Permissions & security rules',group:'SECURITY',icon:'users'}
+  {id:'access',name:'Security Settings',desc:'Login protection, PIN policy & session security',group:'SECURITY',icon:'shield'}
  ];
  const active=sections.find(x=>x.id===S.settingsSection)||sections[0];
  const groups=['BUSINESS','PAYMENTS & OPERATIONS','SECURITY'];
@@ -2253,6 +2266,7 @@ settings:()=>{
  :active.id==='servicecharge'?serviceChargeSettingsPage()
  :active.id==='discounts'?discountSettingsPage()
  :active.id==='receipt'?receiptSettingsPage()
+ :active.id==='access'?securitySettingsPage()
  :`<section class="bs-panel bs-coming"><div class="bs-head-icon">${I(active.icon,24)}</div><h3>${active.name}</h3><p>${active.desc}</p><div class="bs-coming-note"><span class="bd wn">● Configuration pending</span><b>Settings workspace</b><span>This settings workspace is reserved for the approved configuration workflow. It is not connected to Supabase yet, and no settings are being saved or applied.</span></div></section>`;
  const showProfileSave=active.id==='profile'?`<button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button>`:'';
  return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div>${showProfileSave}</div>${profile}</main></div></div>`;
