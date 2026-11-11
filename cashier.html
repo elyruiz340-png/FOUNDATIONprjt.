@@ -5908,6 +5908,100 @@ body:not(.restaurant-profile-ready) .cashier-login-brand, body:not(.restaurant-p
   }
 </style>
 
+
+
+<style id="halina-transaction-history-styles">
+#transactionsSection {
+  padding: 22px 26px 30px;
+  background: #f7f3ec;
+  color: #29372b;
+  min-height: calc(100vh - 24px);
+}
+.transaction-history-header {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:16px; margin-bottom:20px;
+}
+.transaction-history-header h2 { margin:0; color:#29372b; font-size:26px; }
+.transaction-history-header p { margin:7px 0 0; color:#7b7d72; font-size:13px; }
+.transaction-history-toolbar {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:14px; flex-wrap:wrap; margin-bottom:16px;
+}
+.transaction-history-tabs { display:flex; gap:7px; flex-wrap:wrap; }
+.transaction-filter-tab {
+  border:1px solid #e0ddcf; border-radius:9px; padding:9px 14px;
+  background:#fffdf8; color:#566052; font-size:12px; font-weight:750;
+  cursor:pointer; transition:all .18s ease;
+}
+.transaction-filter-tab.active {
+  background:#34452f; border-color:#34452f; color:#fffdf7;
+}
+.transaction-history-search {
+  width:min(100%,320px); min-height:40px; padding:9px 12px;
+  border:1px solid #deded3; border-radius:9px; background:#fffdf8;
+  color:#30382e; outline:none;
+}
+.transaction-history-search:focus {
+  border-color:#8aa17d; box-shadow:0 0 0 3px rgba(116,145,99,.13);
+}
+.transaction-history-summary {
+  display:flex; gap:20px; flex-wrap:wrap; padding:13px 16px;
+  margin-bottom:14px; border:1px solid #e7e3d9; border-radius:11px;
+  background:#fffdf8; color:#72766a; font-size:12px;
+}
+.transaction-history-summary strong { color:#34452f; font-size:14px; }
+.transaction-history-table-wrap {
+  width:100%; overflow:auto; border:1px solid #e6e1d7;
+  border-radius:13px; background:#fffdf8;
+}
+.transaction-history-table { width:100%; min-width:900px; border-collapse:collapse; }
+.transaction-history-table th {
+  padding:14px 13px; text-align:left; background:#f0eee6;
+  color:#72766a; font-size:10px; letter-spacing:.6px; font-weight:800;
+  white-space:nowrap;
+}
+.transaction-history-table td {
+  padding:13px; border-top:1px solid #efede6; color:#42483d;
+  font-size:12px; white-space:nowrap; vertical-align:middle;
+}
+.transaction-history-table td:first-child { white-space:normal; min-width:150px; }
+.transaction-history-table td:first-child small {
+  display:block; max-width:180px; overflow:hidden; text-overflow:ellipsis;
+  color:#a0a093; font-size:9px; margin-top:4px;
+}
+.transaction-amount-heading, .transaction-amount { text-align:right!important; }
+.transaction-amount { font-weight:800; color:#34452f!important; }
+.transaction-status {
+  display:inline-flex; padding:5px 8px; border-radius:6px;
+  background:#f0eee7; color:#686d61; font-size:9px; font-weight:800;
+}
+.transaction-paid { background:#e8f3e7; color:#3d7143; }
+.transaction-refunded { background:#fff1df; color:#98601f; }
+.transaction-voided { background:#fbe9e6; color:#a34c40; }
+.transaction-history-empty {
+  padding:36px!important; text-align:center; color:#85877c!important;
+  white-space:normal!important; line-height:1.7;
+}
+.transaction-history-note {
+  margin:12px 2px 0; color:#929286; font-size:10px; line-height:1.5;
+}
+.payment-confirm-actions { margin-top:12px; }
+.confirm-payment-btn {
+  width:100%; min-height:46px; border:1px solid #2f7046; border-radius:10px;
+  background:#2f7046; color:#fff; font-size:12px; font-weight:800;
+  letter-spacing:.4px; cursor:pointer; transition:all .18s ease;
+}
+.confirm-payment-btn:hover { background:#265d3a; transform:translateY(-1px); }
+.confirm-payment-btn:disabled { opacity:.6; cursor:wait; transform:none; }
+@media (max-width:700px) {
+  #transactionsSection { padding:16px 12px 24px; }
+  .transaction-history-header { align-items:flex-start; flex-direction:column; }
+  .transaction-history-header h2 { font-size:22px; }
+  .transaction-history-search { width:100%; }
+  .transaction-history-summary { gap:12px; }
+}
+</style>
+
 </head>
 <body>
  <style>
@@ -6778,7 +6872,22 @@ background:
     </svg>
   </button>
 
-  <!-- 3. TABLES -->
+  <!-- 3. TRANSACTION HISTORY -->
+  <button
+    type="button"
+    class="pos-sidebar-btn"
+    data-pos-section="transactionsSection"
+    aria-label="Transaction History"
+    title="Transaction History"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 5h16v14H4z"/>
+      <path d="M8 9h8M8 13h5M8 16h3"/>
+      <path d="M7 2v3M17 2v3"/>
+    </svg>
+  </button>
+
+  <!-- 4. TABLES -->
   <button
     type="button"
     class="pos-sidebar-btn"
@@ -6793,7 +6902,7 @@ background:
     </svg>
   </button>
 
-  <!-- 4. STOCKS -->
+  <!-- 5. STOCKS -->
   <button
     type="button"
     class="pos-sidebar-btn"
@@ -6809,7 +6918,7 @@ background:
     </svg>
   </button>
 
-  <!-- 5. SETTINGS -->
+  <!-- 6. SETTINGS -->
   <button
     type="button"
     class="pos-sidebar-btn"
@@ -7735,6 +7844,68 @@ background:
 
   </div>
 </section>
+
+<!-- =========================
+     TRANSACTION HISTORY
+     READ-ONLY VIEW OF SAVED ORDERS
+========================= -->
+<section
+  id="transactionsSection"
+  class="page-section"
+>
+  <div class="transaction-history-header">
+    <div>
+      <h2>Transaction History</h2>
+      <p>Permanent records of completed, refunded, and voided transactions.</p>
+    </div>
+    <button type="button" id="refreshTransactionHistory" class="refresh-btn">
+      Refresh
+    </button>
+  </div>
+
+  <div class="transaction-history-toolbar">
+    <div class="transaction-history-tabs" role="tablist" aria-label="Transaction filters">
+      <button type="button" class="transaction-filter-tab active" data-transaction-filter="all" aria-selected="true">All</button>
+      <button type="button" class="transaction-filter-tab" data-transaction-filter="paid" aria-selected="false">Paid</button>
+      <button type="button" class="transaction-filter-tab" data-transaction-filter="refunded" aria-selected="false">Refunded</button>
+      <button type="button" class="transaction-filter-tab" data-transaction-filter="voided" aria-selected="false">Voided</button>
+    </div>
+    <input
+      type="search"
+      id="transactionHistorySearch"
+      class="transaction-history-search"
+      placeholder="Search transaction or order number..."
+      aria-label="Search transaction history"
+    >
+  </div>
+
+  <div class="transaction-history-summary" id="transactionHistorySummary">
+    <span>Loading transaction records...</span>
+  </div>
+
+  <div class="transaction-history-table-wrap">
+    <table class="transaction-history-table">
+      <thead>
+        <tr>
+          <th>Order / Transaction</th>
+          <th>Date &amp; Time</th>
+          <th>Order Type</th>
+          <th>Payment Method</th>
+          <th>Payment Status</th>
+          <th>Order Status</th>
+          <th class="transaction-amount-heading">Total</th>
+        </tr>
+      </thead>
+      <tbody id="transactionHistoryRows">
+        <tr><td colspan="7" class="transaction-history-empty">Loading transaction records...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="transaction-history-note">
+    These records are loaded from the existing Supabase orders table. This page does not delete or alter historical orders.
+  </p>
+</section>
+
   <!-- =========================
        SETTINGS SECTION
   ========================= -->
@@ -8088,6 +8259,12 @@ reminderStyle.id = "stockSaveReminderStyles";
        if (typeof startOrdersRefresh === "function") {
          startOrdersRefresh();
        }
+     }
+     if (
+       sectionId === "transactionsSection" &&
+       typeof loadTransactionHistory === "function"
+     ) {
+       loadTransactionHistory();
      }
      requestAnimationFrame(updateSidebarHighlight);
    });
@@ -11153,6 +11330,23 @@ function renderSelectedOrderDetails(order, detailsPanel) {
 </div>
    `
    : "";
+ const isServedOrder = ["served", "completed"].includes(status);
+ const isPaymentPending = !["paid", "successful", "succeeded", "verified", "refunded"].includes(
+   String(paymentStatus).trim().toLowerCase()
+ );
+ const confirmPaymentButtonHtml = isServedOrder && isPaymentPending
+   ? `
+<div class="order-actions payment-confirm-actions">
+<button
+   type="button"
+   class="confirm-payment-btn"
+   data-order-id="${escapeHtml(String(order.id))}"
+>
+   CONFIRM PAYMENT
+</button>
+</div>
+   `
+   : "";
  detailsPanel.innerHTML = `
 <div class="order-details-content">
 <div class="order-details-heading">
@@ -11195,6 +11389,7 @@ function renderSelectedOrderDetails(order, detailsPanel) {
 <strong>₱${total.toLocaleString()}</strong>
 </div>
  ${acceptButtonHtml}
+ ${confirmPaymentButtonHtml}
 </div>
  `;
  const acceptButton = detailsPanel.querySelector(".accept-order-btn");
@@ -11203,6 +11398,15 @@ function renderSelectedOrderDetails(order, detailsPanel) {
      acceptOrder(
        acceptButton.dataset.orderId,
        acceptButton
+     );
+   });
+ }
+ const confirmPaymentButton = detailsPanel.querySelector(".confirm-payment-btn");
+ if (confirmPaymentButton) {
+   confirmPaymentButton.addEventListener("click", function() {
+     confirmOrderPayment(
+       confirmPaymentButton.dataset.orderId,
+       confirmPaymentButton
      );
    });
  }
@@ -11356,6 +11560,112 @@ if (orderCard) {
     );
   }
 }
+/* =========================
+   CONFIRM PENDING PAYMENT
+   Explicit cashier confirmation
+========================= */
+async function confirmOrderPayment(orderId, button) {
+  if (!orderId || !button || button.disabled) return;
+
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = "CONFIRMING...";
+
+  try {
+    const currentResponse = await fetch(
+      SUPABASE_URL +
+      "/rest/v1/orders?select=id,payment_status&id=eq." +
+      encodeURIComponent(orderId) +
+      "&limit=1",
+      {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY
+        }
+      }
+    );
+    const currentRows = await currentResponse.json();
+    if (!currentResponse.ok) {
+      throw new Error(
+        currentRows.message || currentRows.error || currentRows.hint ||
+        "Unable to verify the current payment status."
+      );
+    }
+    if (!Array.isArray(currentRows) || currentRows.length !== 1) {
+      throw new Error("The order could not be found. Refresh the order list.");
+    }
+
+    const currentPaymentStatus = String(currentRows[0].payment_status || "")
+      .trim().toLowerCase();
+    if (["paid", "successful", "succeeded", "verified"].includes(currentPaymentStatus)) {
+      throw new Error("This payment has already been confirmed.");
+    }
+    if (!["pending", "unpaid", ""].includes(currentPaymentStatus)) {
+      throw new Error("This payment cannot be confirmed from its current status: " + currentPaymentStatus + ".");
+    }
+
+    const paymentFilter = currentRows[0].payment_status == null
+      ? "&payment_status=is.null"
+      : "&payment_status=eq." + encodeURIComponent(currentRows[0].payment_status);
+    const response = await fetch(
+      SUPABASE_URL +
+      "/rest/v1/orders?id=eq." +
+      encodeURIComponent(orderId) +
+      paymentFilter,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY,
+          "Prefer": "return=representation"
+        },
+        body: JSON.stringify({ payment_status: "paid" })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || data.error || data.hint ||
+        "Unable to confirm this payment."
+      );
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error(
+        "The payment status changed before confirmation. Refresh the order and check its latest status."
+      );
+    }
+
+    window.cashierOrdersCache = (window.cashierOrdersCache || []).map(function(order) {
+      return String(order.id) === String(orderId)
+        ? Object.assign({}, order, { payment_status: "paid" })
+        : order;
+    });
+
+    await loadOrders();
+
+    const historySection = document.getElementById("transactionsSection");
+    if (historySection && historySection.classList.contains("active")) {
+      await loadTransactionHistory();
+    }
+
+    if (typeof showSuccess === "function") {
+      showSuccess("Payment confirmed successfully.");
+    }
+  } catch (error) {
+    console.error("Confirm payment error:", error);
+    button.disabled = false;
+    button.textContent = originalText;
+    if (typeof showError === "function") {
+      showError(error.message);
+    }
+  }
+}
+
 /* =========================
    COMPLETED ORDERS
 ========================= */
@@ -11655,6 +11965,174 @@ function createCompletedOrderCard(
   return card;
 
 }
+/* =========================
+   TRANSACTION HISTORY
+   Reads existing saved orders
+========================= */
+window.transactionHistoryCache = window.transactionHistoryCache || [];
+window.transactionHistoryFilter = window.transactionHistoryFilter || "all";
+
+function getTransactionHistoryCategory(order) {
+  const payment = String(order.payment_status || "").trim().toLowerCase();
+  const orderStatus = String(order.status || "").trim().toLowerCase();
+
+  if (payment === "refunded" || orderStatus === "refunded") return "refunded";
+  if (["void", "voided", "cancelled", "canceled"].includes(orderStatus) ||
+      ["void", "voided"].includes(payment)) return "voided";
+  if (["paid", "successful", "succeeded", "verified"].includes(payment)) return "paid";
+  return "other";
+}
+
+function renderTransactionHistory() {
+  const rows = document.getElementById("transactionHistoryRows");
+  const summary = document.getElementById("transactionHistorySummary");
+  const searchInput = document.getElementById("transactionHistorySearch");
+  if (!rows || !summary) return;
+
+  const filter = window.transactionHistoryFilter || "all";
+  const query = String(searchInput ? searchInput.value : "").trim().toLowerCase();
+
+  document.querySelectorAll(".transaction-filter-tab").forEach(function(tab) {
+    const active = tab.dataset.transactionFilter === filter;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", active ? "true" : "false");
+  });
+
+  const allRecords = window.transactionHistoryCache || [];
+  const filtered = allRecords.filter(function(order) {
+    const category = getTransactionHistoryCategory(order);
+    const matchesFilter = filter === "all" ||
+      (filter === "paid" && category === "paid") ||
+      (filter === "refunded" && category === "refunded") ||
+      (filter === "voided" && category === "voided");
+    const haystack = [
+      order.order_number,
+      order.id,
+      order.payment_reference,
+      order.payment_method,
+      order.table_number,
+      order.order_type
+    ].join(" ").toLowerCase();
+    return matchesFilter && (!query || haystack.includes(query));
+  });
+
+  const paidCount = allRecords.filter(function(order) {
+    return getTransactionHistoryCategory(order) === "paid";
+  }).length;
+  const refundedCount = allRecords.filter(function(order) {
+    return getTransactionHistoryCategory(order) === "refunded";
+  }).length;
+  const voidedCount = allRecords.filter(function(order) {
+    return getTransactionHistoryCategory(order) === "voided";
+  }).length;
+
+  summary.innerHTML =
+    "<span><strong>" + allRecords.length + "</strong> total records</span>" +
+    "<span><strong>" + paidCount + "</strong> paid</span>" +
+    "<span><strong>" + refundedCount + "</strong> refunded</span>" +
+    "<span><strong>" + voidedCount + "</strong> voided</span>";
+
+  if (!filtered.length) {
+    rows.innerHTML = '<tr><td colspan="7" class="transaction-history-empty">No matching transaction records found.</td></tr>';
+    return;
+  }
+
+  rows.innerHTML = filtered.map(function(order) {
+    const category = getTransactionHistoryCategory(order);
+    const paymentStatus = String(order.payment_status || "pending");
+    const orderStatus = String(order.status || "—");
+    const orderType = String(order.order_type || "—").replace(/_/g, " ");
+    const createdAt = order.created_at
+      ? new Date(order.created_at).toLocaleString()
+      : "—";
+    const number = order.order_number || String(order.id || "—").slice(0, 8);
+    const total = Number(order.total || 0);
+    const categoryLabel = category === "other" ? paymentStatus : category;
+
+    return `
+      <tr>
+        <td>
+          <strong>${escapeHtml(String(number))}</strong>
+          <small>${escapeHtml(String(order.id || ""))}</small>
+        </td>
+        <td>${escapeHtml(createdAt)}</td>
+        <td>${escapeHtml(orderType.toUpperCase())}</td>
+        <td>${escapeHtml(String(order.payment_method || "—").toUpperCase())}</td>
+        <td><span class="transaction-status transaction-${escapeHtml(category)}">${escapeHtml(categoryLabel.toUpperCase())}</span></td>
+        <td>${escapeHtml(orderStatus.toUpperCase())}</td>
+        <td class="transaction-amount">₱${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+async function loadTransactionHistory() {
+  const rows = document.getElementById("transactionHistoryRows");
+  if (!rows) return;
+
+  rows.innerHTML = '<tr><td colspan="7" class="transaction-history-empty">Loading transaction records...</td></tr>';
+
+  try {
+    const allRecords = [];
+    const pageSize = 1000;
+    let offset = 0;
+
+    while (true) {
+      const response = await fetch(
+        SUPABASE_URL +
+        "/rest/v1/orders" +
+        "?select=id,order_number,table_number,order_type,total,status,payment_method,payment_status,payment_reference,created_at,completed_at" +
+        "&order=created_at.desc&limit=" + pageSize + "&offset=" + offset,
+        {
+          method: "GET",
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY
+          }
+        }
+      );
+
+      const page = await response.json();
+      if (!response.ok) {
+        throw new Error(page.message || page.error || page.hint || "Unable to load transaction history.");
+      }
+      if (!Array.isArray(page)) {
+        throw new Error("Unexpected transaction history response.");
+      }
+
+      allRecords.push.apply(allRecords, page);
+      if (page.length < pageSize) break;
+      offset += pageSize;
+    }
+
+    window.transactionHistoryCache = allRecords;
+    renderTransactionHistory();
+  } catch (error) {
+    console.error("Transaction history loading error:", error);
+    rows.innerHTML =
+      '<tr><td colspan="7" class="transaction-history-empty">Unable to load transaction records.<br><small>' +
+      escapeHtml(error.message) +
+      '</small></td></tr>';
+  }
+}
+
+document.querySelectorAll(".transaction-filter-tab").forEach(function(tab) {
+  tab.addEventListener("click", function() {
+    window.transactionHistoryFilter = tab.dataset.transactionFilter || "all";
+    renderTransactionHistory();
+  });
+});
+
+const transactionSearchInput = document.getElementById("transactionHistorySearch");
+if (transactionSearchInput) {
+  transactionSearchInput.addEventListener("input", renderTransactionHistory);
+}
+
+const refreshTransactionHistoryButton = document.getElementById("refreshTransactionHistory");
+if (refreshTransactionHistoryButton) {
+  refreshTransactionHistoryButton.addEventListener("click", loadTransactionHistory);
+}
+
 /* =========================
    AUTO REFRESH ORDERS
 ========================= */
