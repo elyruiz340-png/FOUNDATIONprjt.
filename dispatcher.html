@@ -5,13 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dispatcher</title>
 <style>
-:root{--restaurant-font-family:Inter,Arial,sans-serif;--restaurant-font-scale:1;--restaurant-logo-scale:1.15}body{font-family:var(--restaurant-font-family)!important;font-size:calc(16px * var(--restaurant-font-scale))}img[data-restaurant-logo]{width:calc(30px * var(--restaurant-logo-scale))!important;height:calc(30px * var(--restaurant-logo-scale))!important;max-width:none;object-fit:contain}
-
-:root{--bg:#f4f6f3;--panel:#fff;--ink:#243229;--muted:#738076;--line:#e2e8e1;--green:#2f7650;--green-soft:#e7f3e9;--amber:#fff3d6;--amber-ink:#8b6416;--blue:#eaf1ff;--blue-ink:#315e9d;--shadow:0 8px 28px rgba(28,48,34,.06)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer}.topbar{background:#fff;border-bottom:1px solid var(--line);padding:20px clamp(16px,4vw,42px);display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:5}.brand{display:flex;align-items:center;gap:12px}.logo{height:42px;width:42px;border-radius:13px;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-size:22px}.brand h1{font-size:18px;line-height:1.2;margin:0;letter-spacing:.02em}.brand p{margin:4px 0 0;color:var(--muted);font-size:12px}.live{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--green);background:var(--green-soft);padding:9px 12px;border-radius:999px;font-weight:700}.dot{width:7px;height:7px;background:#3b9b5d;border-radius:50%}.wrap{max-width:1440px;margin:0 auto;padding:26px clamp(14px,3vw,36px) 50px}.welcome{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:20px}.welcome h2{font-size:26px;margin:0 0 6px;letter-spacing:-.03em}.welcome p{margin:0;color:var(--muted);font-size:14px}.refresh{border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:11px;color:var(--ink);font-weight:650}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:22px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}.stat span{display:block;color:var(--muted);font-size:13px}.stat strong{display:block;font-size:28px;margin-top:8px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.filters{display:flex;gap:8px;flex-wrap:wrap}.filter{border:1px solid var(--line);background:#fff;color:var(--muted);padding:9px 13px;border-radius:999px;font-size:13px;font-weight:650}.filter.active{background:var(--green);border-color:var(--green);color:#fff}.updated{font-size:12px;color:var(--muted)}.orders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);min-width:0}.cardhead{padding:17px 18px 14px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.tablelabel{font-size:19px;font-weight:800;letter-spacing:-.02em}.order-meta{margin-top:5px;color:var(--muted);font-size:12px;display:flex;gap:8px;flex-wrap:wrap}.status{white-space:nowrap;padding:6px 9px;border-radius:999px;background:#eef1ed;color:#5e6d60;font-size:10px;font-weight:800;letter-spacing:.05em}.status.pending,.status.new{background:var(--amber);color:var(--amber-ink)}.status.accepted,.status.preparing{background:var(--blue);color:var(--blue-ink)}.status.ready{background:var(--green-soft);color:var(--green)}.cardbody{padding:16px 18px}.items-title{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}.item{display:flex;gap:12px;align-items:flex-start;padding:8px 0}.qty{flex:0 0 32px;height:29px;border-radius:9px;background:#f1f4f0;display:grid;place-items:center;font-weight:800;font-size:13px}.itemname{font-size:14px;font-weight:650;line-height:1.4;overflow-wrap:anywhere}.instructions{background:#fff9e9;border:1px solid #f3e7c5;color:#6f5a2a;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12px;line-height:1.5}.cardfoot{padding:13px 18px 17px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--line)}.action{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:750;color:var(--ink)}.action.primary{background:var(--green);border-color:var(--green);color:#fff}.action:disabled{opacity:.55;cursor:wait}.empty,.notice{grid-column:1/-1;background:#fff;border:1px dashed #d5ded4;border-radius:16px;padding:32px 18px;text-align:center;color:var(--muted)}.empty strong{display:block;color:var(--ink);margin-bottom:5px}.notice{display:none;text-align:left;border-style:solid;border-color:#f0d5a0;background:#fff9e9;color:#72551e;margin-bottom:14px;padding:12px 14px;font-size:13px}.notice.show{display:block}.footer-note{color:var(--muted);font-size:11px;text-align:center;margin-top:22px;line-height:1.6}
-@media(max-width:760px){.orders{grid-template-columns:1fr}.stats{gap:8px}.stat{padding:13px}.stat strong{font-size:24px}.welcome h2{font-size:22px}.topbar{padding:15px}.live{font-size:0;padding:10px}.live .dot{width:8px;height:8px}.cardhead{padding:15px}.cardbody{padding:13px 15px}.cardfoot{padding:12px 15px}}
-
-/* Prevent demo restaurant branding from flashing before the saved profile loads. */
+:root{--restaurant-font-family:Inter,Arial,sans-serif;--restaurant-font-scale:1;--restaurant-logo-scale:1.15;--bg:#f6f7f3;--panel:#fff;--ink:#202820;--muted:#788178;--line:#e5e9e2;--green:#16813d;--green-dark:#116b32;--green-soft:#eaf5eb;--amber:#fff3dc;--amber-ink:#98630c;--blue:#edf3ff;--blue-ink:#315e9d;--shadow:0 5px 18px rgba(34,53,38,.055)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--restaurant-font-family)!important;font-size:calc(15px * var(--restaurant-font-scale));}img[data-restaurant-logo]{width:calc(30px * var(--restaurant-logo-scale))!important;height:calc(30px * var(--restaurant-logo-scale))!important;max-width:none;object-fit:contain}button{font:inherit;cursor:pointer}
+.topbar{height:82px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);padding:12px 26px;display:flex;align-items:center;justify-content:space-between;gap:18px;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}.brand{display:flex;align-items:center;gap:12px;min-width:0}.logo{height:48px;width:48px;flex:0 0 48px;border-radius:15px;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-size:23px}.brand h1{font-size:17px;line-height:1.15;margin:0;letter-spacing:.01em;font-weight:850}.brand p{margin:4px 0 0;color:var(--muted);font-size:12px}.live{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--green-dark);background:var(--green-soft);padding:9px 14px;border-radius:999px;font-weight:800;white-space:nowrap}.dot{width:8px;height:8px;background:#239447;border-radius:50%;box-shadow:0 0 0 4px rgba(35,148,71,.10)}
+.wrap{max-width:1900px;margin:0 auto;padding:22px 22px 34px}.welcome{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px}.welcome h2{font-size:23px;margin:0 0 4px;letter-spacing:-.035em}.welcome p{margin:0;color:var(--muted);font-size:13px}.refresh{border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:11px;color:var(--ink);font-weight:700;box-shadow:0 2px 7px rgba(20,40,25,.035)}.refresh:hover,.filter:hover{border-color:#b8cdbb}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:12px 16px;box-shadow:var(--shadow)}.stat span{display:block;color:var(--muted);font-size:12px;font-weight:650}.stat strong{display:block;font-size:24px;margin-top:3px;letter-spacing:-.03em}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:13px}.filters{display:flex;gap:7px;flex-wrap:wrap}.filter{border:1px solid var(--line);background:#fff;color:#657067;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:750}.filter.active{background:var(--green);border-color:var(--green);color:#fff}.updated{font-size:11px;color:var(--muted)}
+.orders{display:grid;grid-template-columns:repeat(4,minmax(245px,1fr));gap:12px;align-items:stretch}.lane{min-width:0;background:#f1f4ef;border:1px solid #e1e8df;border-radius:19px;padding:11px;min-height:390px}.lane[data-lane="new"]{background:#f1f7f0}.lane[data-lane="preparing"]{background:#fbf6e9;border-color:#eee5d2}.lane[data-lane="ready"]{background:#eff6ed}.lane[data-lane="served"]{background:#f4f3ef;border-color:#e8e5dc}.lanehead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 4px 12px}.lane-title{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:850;letter-spacing:-.025em}.lane-icon{width:30px;height:30px;border-radius:10px;background:#fff;color:var(--green);display:grid;place-items:center;font-size:17px;box-shadow:0 2px 7px rgba(30,60,35,.05)}.lane[data-lane="preparing"] .lane-icon{color:#a66e12}.lane[data-lane="served"] .lane-icon{color:#5f7865}.lane-count{min-width:28px;height:27px;padding:0 8px;border-radius:999px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:850}.lane[data-lane="preparing"] .lane-count{background:#c18a27}.lane-list{display:flex;flex-direction:column;gap:10px}.card{background:#fff;border:1px solid #e8ece6;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(31,49,34,.055);min-width:0}.cardhead{padding:13px 13px 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.order-main{display:flex;gap:9px;min-width:0}.order-icon{width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:#eef6ee;color:var(--green);display:grid;place-items:center;font-size:15px;font-weight:800}.lane[data-lane="preparing"] .order-icon{background:#fff5df;color:#9b6a18}.order-number{font-size:16px;font-weight:850;line-height:1.2;letter-spacing:-.02em}.order-sub{margin-top:3px;color:#566158;font-size:12px;line-height:1.35}.time-chip{white-space:nowrap;padding:5px 8px;border-radius:999px;background:#fff0ed;color:#b44b3e;font-size:11px;font-weight:850}.lane[data-lane="preparing"] .time-chip{background:#fff0d2;color:#94620d}.status{display:none}.cardbody{padding:2px 14px 12px}.items-title{font-size:10px;color:#899188;font-weight:850;letter-spacing:.08em;text-transform:uppercase;margin:2px 0 5px}.item{display:flex;gap:8px;align-items:flex-start;padding:4px 0}.qty{flex:0 0 auto;min-width:21px;color:#3e5544;font-weight:850;font-size:12px}.itemname{font-size:13px;font-weight:620;line-height:1.35;overflow-wrap:anywhere}.instructions{background:#fff8e8;border:1px solid #f1e6c8;color:#745c2d;border-radius:9px;padding:8px 9px;margin-top:8px;font-size:11px;line-height:1.4}.cardfoot{padding:0 12px 12px;display:flex;justify-content:stretch;gap:8px}.action{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;color:var(--ink)}.action.primary{background:linear-gradient(180deg,#229448,#147a38);border-color:#147a38;color:#fff;box-shadow:0 3px 8px rgba(20,122,56,.16)}.action:disabled{opacity:.55;cursor:wait}.served-mark{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#e8f5e9;color:#16813d;font-weight:900;flex:0 0 25px}.lane-empty{border:1px dashed #d5ded4;border-radius:13px;padding:22px 10px;text-align:center;color:#8a958b;font-size:11px;background:rgba(255,255,255,.45)}.empty,.notice{grid-column:1/-1;background:#fff;border:1px dashed #d5ded4;border-radius:16px;padding:28px 18px;text-align:center;color:var(--muted)}.empty strong{display:block;color:var(--ink);margin-bottom:5px}.notice{display:none;text-align:left;border-style:solid;border-color:#f0d5a0;background:#fff9e9;color:#72551e;margin-bottom:12px;padding:11px 13px;font-size:12px}.notice.show{display:block}.footer-note{color:var(--muted);font-size:10px;text-align:center;margin-top:17px;line-height:1.5}
+@media(min-width:1500px){.wrap{padding-left:28px;padding-right:28px}.orders{gap:14px}.lane{padding:13px}.order-number{font-size:17px}.itemname{font-size:14px}}
+@media(max-width:1100px){.orders{grid-template-columns:repeat(2,minmax(250px,1fr))}}
+@media(max-width:620px){.topbar{height:70px;padding:10px 14px}.brand h1{font-size:14px}.brand p{font-size:10px}.logo{width:40px;height:40px;flex-basis:40px}.live{font-size:0;padding:10px}.wrap{padding:16px 12px 25px}.welcome h2{font-size:20px}.welcome p{font-size:12px}.stats{gap:7px}.stat{padding:10px}.stat span{font-size:10px}.stat strong{font-size:21px}.orders{grid-template-columns:1fr}.lane{min-height:0}.lane-list{gap:8px}}
 body:not(.restaurant-profile-ready) .brand h1{visibility:hidden!important}
 </style>
 </head>
@@ -22,7 +25,12 @@ body:not(.restaurant-profile-ready) .brand h1{visibility:hidden!important}
   <section class="stats"><div class="stat"><span>New / Accepted</span><strong id="newCount">—</strong></div><div class="stat"><span>Preparing</span><strong id="preparingCount">—</strong></div><div class="stat"><span>Ready</span><strong id="readyCount">—</strong></div></section>
   <div id="notice" class="notice"></div>
   <section class="toolbar"><div class="filters" id="filters"><button class="filter active" data-filter="active">Active Orders</button><button class="filter" data-filter="all">All Open</button><button class="filter" data-filter="new">New / Accepted</button><button class="filter" data-filter="preparing">Preparing</button><button class="filter" data-filter="ready">Ready</button></div><div class="updated" id="updatedText">Connecting…</div></section>
-  <section class="orders" id="ordersGrid"><div class="empty"><strong>Loading orders…</strong>Please wait while the dashboard connects to Supabase.</div></section>
+  <section class="orders" id="ordersGrid">
+    <div class="lane" data-lane="new"><div class="lanehead"><div class="lane-title"><span class="lane-icon">♧</span>Incoming Orders</div><span class="lane-count" id="laneNewCount">—</span></div><div class="lane-list" id="laneNew"><div class="lane-empty">Loading orders…</div></div></div>
+    <div class="lane" data-lane="preparing"><div class="lanehead"><div class="lane-title"><span class="lane-icon">♨</span>Preparing</div><span class="lane-count" id="lanePreparingCount">—</span></div><div class="lane-list" id="lanePreparing"><div class="lane-empty">Loading orders…</div></div></div>
+    <div class="lane" data-lane="ready"><div class="lanehead"><div class="lane-title"><span class="lane-icon">□</span>Ready</div><span class="lane-count" id="laneReadyCount">—</span></div><div class="lane-list" id="laneReady"><div class="lane-empty">Loading orders…</div></div></div>
+    <div class="lane" data-lane="served"><div class="lanehead"><div class="lane-title"><span class="lane-icon">✓</span>Served</div><span class="lane-count" id="laneServedCount">—</span></div><div class="lane-list" id="laneServed"><div class="lane-empty">No served orders yet</div></div></div>
+  </section>
   <p class="footer-note">This dashboard does not display prices or payment information. It uses the existing orders data. Status changes update the existing <code>status</code> field.</p>
 </main>
 <script>
@@ -34,6 +42,7 @@ const SUPABASE_KEY = "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
 const grid = document.getElementById('ordersGrid');
 const notice = document.getElementById('notice');
 let allOrders = [];
+let allServedOrders = [];
 let activeFilter = 'active';
 let busyIds = new Set();
 const terminalStatuses = ['completed','cancelled','served','dispatched'];
@@ -67,94 +76,52 @@ function setNotice(message){notice.textContent=message;notice.classList.toggle('
 async function api(path,options={}){const response=await fetch(SUPABASE_URL+'/rest/v1/'+path,{...options,headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...(options.headers||{})}});const text=await response.text();let data;try{data=text?JSON.parse(text):null}catch{data=text}if(!response.ok)throw new Error(data?.message||data?.details||data?.hint||String(data||'Supabase request failed'));return data;}
 async function loadOrders(){document.getElementById('updatedText').textContent='Refreshing…';try{
   const rows=await api('orders?select=id,order_number,table_number,table_id,order_type,items,status,order_status,special_instructions,created_at&order=created_at.desc&limit=100');
-  const open=(Array.isArray(rows)?rows:[]).filter(isOpen);
+  const sourceRows=Array.isArray(rows)?rows:[];
+  const open=sourceRows.filter(isOpen);
+  allServedOrders=sourceRows.filter(o=>normalizeStatus(o)==='served').slice(0,8);
   // Prefer items stored on orders.items. Fetch order_items only for orders whose JSON items are absent/empty.
   const needRows=open.filter(o=>orderItems(o).length===0);
   if(needRows.length){try{const ids=needRows.map(o=>o.id).filter(Boolean);if(ids.length){const encoded=ids.map(id=>`"${id}"`).join(',');const itemRows=await api('order_items?select=order_id,item_name,quantity,special_instructions&order_id=in.('+encoded+')&order=created_at.asc');const byOrder=new Map();for(const item of (Array.isArray(itemRows)?itemRows:[])){if(!byOrder.has(item.order_id))byOrder.set(item.order_id,[]);byOrder.get(item.order_id).push({name:item.item_name||'Menu item',qty:Number(item.quantity)||1,instructions:item.special_instructions||''});}for(const o of needRows){if(byOrder.has(o.id))o._fallbackItems=byOrder.get(o.id);}}}catch(e){console.warn('Could not load order_items fallback:',e.message)}}
   allOrders=open;render();document.getElementById('updatedText').textContent='Updated '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});setNotice('');
  }catch(e){console.error('Dispatcher load error:',e);document.getElementById('updatedText').textContent='Connection issue';setNotice('Could not load orders: '+e.message+'. Check that the Supabase API key and SELECT policies allow this dashboard to read orders and order_items.');if(!allOrders.length)grid.innerHTML='<div class="empty"><strong>Orders could not be loaded.</strong>Check the connection and Supabase Row Level Security (RLS) policies.</div>';}}
-function render(){const newN=allOrders.filter(o=>isNew(normalizeStatus(o))).length;const prepN=allOrders.filter(o=>normalizeStatus(o)==='preparing').length;const readyN=allOrders.filter(o=>normalizeStatus(o)==='ready').length;document.getElementById('newCount').textContent=newN;document.getElementById('preparingCount').textContent=prepN;document.getElementById('readyCount').textContent=readyN;let list=allOrders;if(activeFilter==='new')list=list.filter(o=>isNew(normalizeStatus(o)));else if(activeFilter==='preparing'||activeFilter==='ready')list=list.filter(o=>normalizeStatus(o)===activeFilter);else if(activeFilter==='active')list=list.filter(o=>normalizeStatus(o)!=='ready');if(!list.length){grid.innerHTML='<div class="empty"><strong>No orders in this view</strong>New accepted orders will appear here when available.</div>';return;}grid.innerHTML=list.map(renderCard).join('');grid.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',()=>updateStatus(btn.dataset.id,btn.dataset.action,btn)));}
-function renderCard(o) {
-  const status = normalizeStatus(o);
-  const items = o._fallbackItems || orderItems(o);
-  const table = o.table_number || o.table_id || 'Table not assigned';
-
-  const number = o.order_number != null
-    ? '#' + o.order_number
-    : '#' + String(o.id || '').slice(0, 8);
-
-  const type = String(o.order_type || 'dine_in')
-    .replace(/_/g, ' ')
-    .replace(/^\w/, c => c.toUpperCase());
-
-  const instructions = o.special_instructions
-    ? `<div class="instructions"><strong>Order note:</strong> ${safe(o.special_instructions)}</div>`
-    : '';
-
-  const itemHtml = items.length
-    ? items.map(it => `
-        <div class="item">
-          <div class="qty">${safe(it.qty)}×</div>
-          <div class="itemname">
-            ${safe(it.name)}
-            ${it.instructions
-              ? `<div class="instructions"><strong>Item note:</strong> ${safe(it.instructions)}</div>`
-              : ''}
-          </div>
-        </div>
-      `).join('')
-    : '<div class="item"><div class="itemname">No item details found for this order.</div></div>';
-
-  let action = '';
-
-  if (isNew(status)) {
-    action = `
-      <button class="action primary"
-        data-action="preparing"
-        data-id="${safe(o.id)}">
-        Start Preparing
-      </button>`;
-  } else if (status === 'preparing') {
-    action = `
-      <button class="action primary"
-        data-action="ready"
-        data-id="${safe(o.id)}">
-        Mark Ready
-      </button>`;
-  } else if (status === 'ready') {
-    action = `
-      <button class="action primary"
-        data-action="served"
-        data-id="${safe(o.id)}">
-        Mark Served
-      </button>`;
+function render(){
+  const active=allOrders;
+  const newOrders=active.filter(o=>isNew(normalizeStatus(o)));
+  const preparing=active.filter(o=>normalizeStatus(o)==='preparing');
+  const ready=active.filter(o=>normalizeStatus(o)==='ready');
+  const served=allServedOrders;
+  document.getElementById('newCount').textContent=newOrders.length;
+  document.getElementById('preparingCount').textContent=preparing.length;
+  document.getElementById('readyCount').textContent=ready.length;
+  const groups={new:newOrders,preparing,ready,served};
+  for(const [key,orders] of Object.entries(groups)){
+    const lane=document.getElementById(key==='new'?'laneNew':key==='preparing'?'lanePreparing':key==='ready'?'laneReady':'laneServed');
+    const count=document.getElementById(key==='new'?'laneNewCount':key==='preparing'?'lanePreparingCount':key==='ready'?'laneReadyCount':'laneServedCount');
+    count.textContent=orders.length;
+    let visible=orders;
+    if(activeFilter==='new')visible=key==='new'?orders:[];
+    else if(activeFilter==='preparing')visible=key==='preparing'?orders:[];
+    else if(activeFilter==='ready')visible=key==='ready'?orders:[];
+    else if(activeFilter==='active')visible=key==='ready'||key==='served'?[]:orders;
+    lane.innerHTML=visible.length?visible.map(o=>renderCard(o,key==='served')).join(''):`<div class="lane-empty">${key==='served'?'No served orders yet':'No orders in this stage'}</div>`;
   }
-
-  return `
-    <article class="card">
-      <header class="cardhead">
-        <div>
-          <div class="tablelabel">${safe(table)}</div>
-          <div class="order-meta">
-            <span>${safe(number)}</span>
-            <span>·</span>
-            <span>${safe(timeLabel(o.created_at))}</span>
-            <span>·</span>
-            <span>${safe(type)}</span>
-          </div>
-        </div>
-        <span class="status ${safe(status)}">${safe(prettyStatus(status))}</span>
-      </header>
-
-      <div class="cardbody">
-        <div class="items-title">Order items · ${items.length}</div>
-        ${itemHtml}
-        ${instructions}
-      </div>
-
-      <footer class="cardfoot">${action}</footer>
-    </article>
-  `;
+  grid.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',()=>updateStatus(btn.dataset.id,btn.dataset.action,btn)));
+}
+function renderCard(o,servedView=false) {
+  const status=normalizeStatus(o);
+  const items=o._fallbackItems||orderItems(o);
+  const type=String(o.order_type||'dine_in').replace(/_/g,' ').replace(/^\w/,c=>c.toUpperCase());
+  const isDelivery=/delivery/i.test(type);
+  const place=isDelivery?'Delivery':(/takeout/i.test(type)?'Takeout':(o.table_number?'Table '+o.table_number:(o.table_id?'Table '+o.table_id:'Table not assigned')));
+  const number=o.order_number!=null?'#'+o.order_number:'#'+String(o.id||'').slice(0,8);
+  const age=o.created_at?Math.max(0,Math.floor((Date.now()-new Date(o.created_at).getTime())/60000))+' min':timeLabel(o.created_at);
+  const instructions=o.special_instructions?`<div class="instructions"><strong>Order note:</strong> ${safe(o.special_instructions)}</div>`:'';
+  const itemHtml=items.length?items.map(it=>`<div class="item"><div class="qty">${safe(it.qty)} ×</div><div class="itemname">${safe(it.name)}${it.instructions?`<div class="instructions"><strong>Note:</strong> ${safe(it.instructions)}</div>`:''}</div></div>`).join(''):'<div class="item"><div class="itemname">No item details found.</div></div>';
+  let action='';
+  if(!servedView&&isNew(status))action=`<button class="action primary" data-action="preparing" data-id="${safe(o.id)}">Accept &amp; Start Preparing</button>`;
+  else if(!servedView&&status==='preparing')action=`<button class="action primary" data-action="ready" data-id="${safe(o.id)}">Mark Ready</button>`;
+  else if(!servedView&&status==='ready')action=`<button class="action primary" data-action="served" data-id="${safe(o.id)}">Mark Served</button>`;
+  return `<article class="card"><header class="cardhead"><div class="order-main"><div class="order-icon">${isDelivery?'↗':'♨'}</div><div><div class="order-number">${safe(number)}</div><div class="order-sub">${safe(type)} · ${safe(place)}</div></div></div>${servedView?'<span class="served-mark">✓</span>':`<span class="time-chip">${safe(age)}</span>`}</header><div class="cardbody"><div class="items-title">Order items · ${items.length}</div>${itemHtml}${instructions}</div>${action?`<footer class="cardfoot">${action}</footer>`:''}</article>`;
 }
   async function updateStatus(id,status,button){if(!id||busyIds.has(id))return;const label=button.textContent;busyIds.add(id);button.disabled=true;button.textContent='Updating…';try{const updated=await api('orders?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({status})});if(!Array.isArray(updated)||!updated.length)throw new Error('No order was updated. Check the Supabase UPDATE policy.');await loadOrders();}catch(e){setNotice('Could not update order status: '+e.message);button.disabled=false;button.textContent=label;}finally{busyIds.delete(id);}}
 document.getElementById('refreshBtn').addEventListener('click',loadOrders);document.getElementById('filters').addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;activeFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render();});
