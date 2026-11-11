@@ -8065,6 +8065,325 @@ background:
     overflow-y: auto;
   }
 }
+
+
+/* =========================================
+   HALINA INCOMING ORDERS — FINAL DESIGN PASS
+   Consistent order cards + dedicated details panel
+========================================= */
+#ordersSection.active {
+  grid-template-columns: minmax(0, 1.45fr) minmax(340px, .9fr);
+  column-gap: 20px;
+  row-gap: 14px;
+  padding: 22px 26px 18px !important;
+}
+#ordersSection > .top-bar h2 {
+  margin: 0;
+  color: #263b2b;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -.45px;
+}
+#ordersSection > .orders-filter-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 3px 2px 7px;
+  scrollbar-width: none;
+}
+#ordersSection > .orders-filter-tabs::-webkit-scrollbar { display: none; }
+#ordersSection .orders-filter-tab {
+  min-height: 42px;
+  padding: 8px 13px;
+  border: 1px solid #e3e8de;
+  border-radius: 10px;
+  background: #f8f9f5;
+  color: #53614f;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .45px;
+  white-space: nowrap;
+}
+#ordersSection .orders-filter-tab.active {
+  border-color: #34543a;
+  background: #34543a;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(43,75,49,.15);
+}
+#ordersSection .orders-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 21px;
+  height: 21px;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.2);
+  font-size: 10px;
+}
+#ordersSection .orders-list-column {
+  grid-column: 1;
+  grid-row: 3;
+  min-height: 0;
+  overflow: hidden;
+}
+#ordersSection #ordersContainer,
+#ordersSection #completedOrdersContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 11px;
+  padding: 5px 8px 18px 2px;
+}
+#ordersSection .order-card {
+  display: flex;
+  flex: 0 0 158px !important;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  height: 158px !important;
+  min-height: 158px !important;
+  max-height: 158px !important;
+  padding: 12px 14px;
+  border: 1px solid #e4e9df;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(38,57,39,.045);
+  overflow: hidden;
+}
+#ordersSection .order-card:hover {
+  transform: translateY(-1px);
+  border-color: #b9cbb4;
+  box-shadow: 0 6px 15px rgba(38,57,39,.08);
+}
+#ordersSection .order-card.selected-order-card {
+  border-color: #6e956d;
+  box-shadow: 0 0 0 2px rgba(103,145,99,.14), 0 4px 12px rgba(38,57,39,.06);
+}
+#ordersSection .order-card-header {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 0 8px;
+  border-bottom: 1px solid #edf0e9;
+}
+#ordersSection .order-number {
+  overflow: hidden;
+  color: #263b2b;
+  font-size: 14px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#ordersSection .order-time {
+  margin-top: 3px;
+  color: #8a9185;
+  font-size: 10px;
+  white-space: nowrap;
+}
+#ordersSection .order-status {
+  max-width: 43%;
+  overflow: hidden;
+  padding: 5px 8px;
+  border: 1px solid #dce8d8;
+  border-radius: 7px;
+  background: #eef5eb;
+  color: #416541;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .45px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#ordersSection .compact-order-info,
+#ordersSection .compact-order-payment {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow: hidden;
+}
+#ordersSection .compact-order-info span,
+#ordersSection .compact-order-payment span {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 5px 8px;
+  border: 1px solid #edf0e9;
+  border-radius: 7px;
+  background: #f8f9f6;
+  color: #485447;
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#ordersSection .compact-order-info small,
+#ordersSection .compact-order-payment small {
+  color: #92998d;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .55px;
+}
+#ordersSection .compact-order-payment .payment-state { background: #f4f6f0; }
+#ordersSection .compact-order-footer {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+}
+#ordersSection .compact-order-footer strong {
+  color: #2e4933;
+  font-size: 17px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+#ordersSection .view-order-details-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 31px;
+  padding: 6px 10px;
+  border: 1px solid #dce7d8;
+  border-radius: 8px;
+  background: #edf3e9;
+  color: #34543a;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .35px;
+  cursor: pointer;
+}
+#ordersSection .view-order-details-btn:hover { background: #e1ebdc; }
+#ordersSection .order-details-panel {
+  grid-column: 2;
+  grid-row: 1 / 4;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 20px;
+  border: 1px solid #e6eadf;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(43,58,40,.055);
+}
+#ordersSection .order-details-heading {
+  align-items: flex-start;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #edf0e9;
+}
+#ordersSection .order-details-heading h3 {
+  color: #293d2e;
+  font-size: 18px;
+  font-weight: 850;
+}
+#ordersSection .order-details-status {
+  display: inline-flex;
+  padding: 5px 9px;
+  border: 1px solid #dce8d8;
+  border-radius: 7px;
+  background: #eef5eb;
+  color: #416541;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .4px;
+}
+#ordersSection .order-details-info > div {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #edf0e9;
+  border-radius: 9px;
+  background: #f8f9f6;
+}
+#ordersSection .order-details-info span {
+  display: block;
+  margin-bottom: 4px;
+  color: #8b9386;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .45px;
+  text-transform: uppercase;
+}
+#ordersSection .order-details-info strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #3c493a;
+  font-size: 11px;
+}
+#ordersSection .order-details-total {
+  border: 1px solid #dce8d8;
+  background: #eef4e9;
+}
+#ordersSection .order-details-total strong { color: #2e4933; }
+#ordersSection .order-details-items-list { padding-right: 7px; }
+#ordersSection .order-details-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  color: #7e8979;
+  text-align: center;
+}
+#ordersSection .order-details-empty h3 { margin: 10px 0 4px; color: #40523f; }
+#ordersSection .order-details-empty p { max-width: 230px; font-size: 12px; line-height: 1.5; }
+#ordersSection .payment-center-heading {
+  padding: 10px 8px 12px;
+  color: #40523f;
+}
+#ordersSection .payment-center-heading h3 { font-size: 13px; font-weight: 850; }
+#ordersSection .payment-center-heading > span {
+  display: inline-flex;
+  min-width: 24px;
+  justify-content: center;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: #edf3e9;
+  color: #416541;
+  font-size: 10px;
+  font-weight: 850;
+}
+@media (max-width: 900px) {
+  #ordersSection.active {
+    display: flex !important;
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    max-height: none;
+    padding: 18px 16px !important;
+    overflow: visible;
+  }
+  #ordersSection > .orders-filter-tabs { max-width: 100%; }
+  #ordersSection .orders-list-column { height: auto; min-height: 0; overflow: visible; }
+  #ordersSection #ordersContainer,
+  #ordersSection #completedOrdersContainer { height: auto; max-height: 55vh; }
+  #ordersSection .order-card { flex-basis: 158px !important; }
+  #ordersSection .order-details-panel { width: 100%; height: auto; min-height: 480px; max-height: none; }
+  #ordersSection #paymentCenterContainer { min-height: 520px; }
+}
+@media (max-width: 480px) {
+  #ordersSection .order-details-panel { padding: 15px; }
+  #ordersSection .order-card { padding: 10px; }
+  #ordersSection .compact-order-info span,
+  #ordersSection .compact-order-payment span { padding: 4px 6px; }
+}
 </style>
     </div>
   </section>
@@ -11449,12 +11768,12 @@ function createOrderCard(order, newOrderIds) {
 </div>
 </div>
 <div class="compact-order-info">
-<span>Table: ${escapeHtml(String(tableNumber))}</span>
-<span>${orderType}</span>
+<span><small>TYPE</small>${orderType}</span>
+<span><small>TABLE</small>${escapeHtml(String(tableNumber))}</span>
 </div>
 <div class="compact-order-payment">
-<span>Payment: ${escapeHtml(String(paymentMethod))}</span>
-<span>${escapeHtml(paymentStatus.toUpperCase())}</span>
+<span><small>PAYMENT METHOD</small>${escapeHtml(String(paymentMethod))}</span>
+<span class="payment-state"><small>PAYMENT STATUS</small>${escapeHtml(paymentStatus.toUpperCase())}</span>
 </div>
 <div class="compact-order-footer">
 <strong>₱${total.toLocaleString()}</strong>
@@ -11463,7 +11782,7 @@ function createOrderCard(order, newOrderIds) {
        class="view-order-details-btn"
        data-order-id="${escapeHtml(orderId)}"
 >
-       VIEW DETAILS
+       VIEW DETAILS <span aria-hidden="true">→</span>
 </button>
 </div>
  `;
