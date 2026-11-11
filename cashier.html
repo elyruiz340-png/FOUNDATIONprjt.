@@ -5908,100 +5908,6 @@ body:not(.restaurant-profile-ready) .cashier-login-brand, body:not(.restaurant-p
   }
 </style>
 
-
-
-<style id="halina-transaction-history-styles">
-#transactionsSection {
-  padding: 22px 26px 30px;
-  background: #f7f3ec;
-  color: #29372b;
-  min-height: calc(100vh - 24px);
-}
-.transaction-history-header {
-  display:flex; align-items:center; justify-content:space-between;
-  gap:16px; margin-bottom:20px;
-}
-.transaction-history-header h2 { margin:0; color:#29372b; font-size:26px; }
-.transaction-history-header p { margin:7px 0 0; color:#7b7d72; font-size:13px; }
-.transaction-history-toolbar {
-  display:flex; justify-content:space-between; align-items:center;
-  gap:14px; flex-wrap:wrap; margin-bottom:16px;
-}
-.transaction-history-tabs { display:flex; gap:7px; flex-wrap:wrap; }
-.transaction-filter-tab {
-  border:1px solid #e0ddcf; border-radius:9px; padding:9px 14px;
-  background:#fffdf8; color:#566052; font-size:12px; font-weight:750;
-  cursor:pointer; transition:all .18s ease;
-}
-.transaction-filter-tab.active {
-  background:#34452f; border-color:#34452f; color:#fffdf7;
-}
-.transaction-history-search {
-  width:min(100%,320px); min-height:40px; padding:9px 12px;
-  border:1px solid #deded3; border-radius:9px; background:#fffdf8;
-  color:#30382e; outline:none;
-}
-.transaction-history-search:focus {
-  border-color:#8aa17d; box-shadow:0 0 0 3px rgba(116,145,99,.13);
-}
-.transaction-history-summary {
-  display:flex; gap:20px; flex-wrap:wrap; padding:13px 16px;
-  margin-bottom:14px; border:1px solid #e7e3d9; border-radius:11px;
-  background:#fffdf8; color:#72766a; font-size:12px;
-}
-.transaction-history-summary strong { color:#34452f; font-size:14px; }
-.transaction-history-table-wrap {
-  width:100%; overflow:auto; border:1px solid #e6e1d7;
-  border-radius:13px; background:#fffdf8;
-}
-.transaction-history-table { width:100%; min-width:900px; border-collapse:collapse; }
-.transaction-history-table th {
-  padding:14px 13px; text-align:left; background:#f0eee6;
-  color:#72766a; font-size:10px; letter-spacing:.6px; font-weight:800;
-  white-space:nowrap;
-}
-.transaction-history-table td {
-  padding:13px; border-top:1px solid #efede6; color:#42483d;
-  font-size:12px; white-space:nowrap; vertical-align:middle;
-}
-.transaction-history-table td:first-child { white-space:normal; min-width:150px; }
-.transaction-history-table td:first-child small {
-  display:block; max-width:180px; overflow:hidden; text-overflow:ellipsis;
-  color:#a0a093; font-size:9px; margin-top:4px;
-}
-.transaction-amount-heading, .transaction-amount { text-align:right!important; }
-.transaction-amount { font-weight:800; color:#34452f!important; }
-.transaction-status {
-  display:inline-flex; padding:5px 8px; border-radius:6px;
-  background:#f0eee7; color:#686d61; font-size:9px; font-weight:800;
-}
-.transaction-paid { background:#e8f3e7; color:#3d7143; }
-.transaction-refunded { background:#fff1df; color:#98601f; }
-.transaction-voided { background:#fbe9e6; color:#a34c40; }
-.transaction-history-empty {
-  padding:36px!important; text-align:center; color:#85877c!important;
-  white-space:normal!important; line-height:1.7;
-}
-.transaction-history-note {
-  margin:12px 2px 0; color:#929286; font-size:10px; line-height:1.5;
-}
-.payment-confirm-actions { margin-top:12px; }
-.confirm-payment-btn {
-  width:100%; min-height:46px; border:1px solid #2f7046; border-radius:10px;
-  background:#2f7046; color:#fff; font-size:12px; font-weight:800;
-  letter-spacing:.4px; cursor:pointer; transition:all .18s ease;
-}
-.confirm-payment-btn:hover { background:#265d3a; transform:translateY(-1px); }
-.confirm-payment-btn:disabled { opacity:.6; cursor:wait; transform:none; }
-@media (max-width:700px) {
-  #transactionsSection { padding:16px 12px 24px; }
-  .transaction-history-header { align-items:flex-start; flex-direction:column; }
-  .transaction-history-header h2 { font-size:22px; }
-  .transaction-history-search { width:100%; }
-  .transaction-history-summary { gap:12px; }
-}
-</style>
-
 </head>
 <body>
  <style>
@@ -6872,22 +6778,7 @@ background:
     </svg>
   </button>
 
-  <!-- 3. TRANSACTION HISTORY -->
-  <button
-    type="button"
-    class="pos-sidebar-btn"
-    data-pos-section="transactionsSection"
-    aria-label="Transaction History"
-    title="Transaction History"
-  >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 5h16v14H4z"/>
-      <path d="M8 9h8M8 13h5M8 16h3"/>
-      <path d="M7 2v3M17 2v3"/>
-    </svg>
-  </button>
-
-  <!-- 4. TABLES -->
+  <!-- 3. TABLES -->
   <button
     type="button"
     class="pos-sidebar-btn"
@@ -6902,7 +6793,7 @@ background:
     </svg>
   </button>
 
-  <!-- 5. STOCKS -->
+  <!-- 4. STOCKS -->
   <button
     type="button"
     class="pos-sidebar-btn"
@@ -6918,7 +6809,7 @@ background:
     </svg>
   </button>
 
-  <!-- 6. SETTINGS -->
+  <!-- 5. SETTINGS -->
   <button
     type="button"
     class="pos-sidebar-btn"
@@ -7844,68 +7735,6 @@ background:
 
   </div>
 </section>
-
-<!-- =========================
-     TRANSACTION HISTORY
-     READ-ONLY VIEW OF SAVED ORDERS
-========================= -->
-<section
-  id="transactionsSection"
-  class="page-section"
->
-  <div class="transaction-history-header">
-    <div>
-      <h2>Transaction History</h2>
-      <p>Permanent records of completed, refunded, and voided transactions.</p>
-    </div>
-    <button type="button" id="refreshTransactionHistory" class="refresh-btn">
-      Refresh
-    </button>
-  </div>
-
-  <div class="transaction-history-toolbar">
-    <div class="transaction-history-tabs" role="tablist" aria-label="Transaction filters">
-      <button type="button" class="transaction-filter-tab active" data-transaction-filter="all" aria-selected="true">All</button>
-      <button type="button" class="transaction-filter-tab" data-transaction-filter="paid" aria-selected="false">Paid</button>
-      <button type="button" class="transaction-filter-tab" data-transaction-filter="refunded" aria-selected="false">Refunded</button>
-      <button type="button" class="transaction-filter-tab" data-transaction-filter="voided" aria-selected="false">Voided</button>
-    </div>
-    <input
-      type="search"
-      id="transactionHistorySearch"
-      class="transaction-history-search"
-      placeholder="Search transaction or order number..."
-      aria-label="Search transaction history"
-    >
-  </div>
-
-  <div class="transaction-history-summary" id="transactionHistorySummary">
-    <span>Loading transaction records...</span>
-  </div>
-
-  <div class="transaction-history-table-wrap">
-    <table class="transaction-history-table">
-      <thead>
-        <tr>
-          <th>Order / Transaction</th>
-          <th>Date &amp; Time</th>
-          <th>Order Type</th>
-          <th>Payment Method</th>
-          <th>Payment Status</th>
-          <th>Order Status</th>
-          <th class="transaction-amount-heading">Total</th>
-        </tr>
-      </thead>
-      <tbody id="transactionHistoryRows">
-        <tr><td colspan="7" class="transaction-history-empty">Loading transaction records...</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="transaction-history-note">
-    These records are loaded from the existing Supabase orders table. This page does not delete or alter historical orders.
-  </p>
-</section>
-
   <!-- =========================
        SETTINGS SECTION
   ========================= -->
@@ -8067,323 +7896,147 @@ background:
 }
 
 
-/* =========================================
-   HALINA INCOMING ORDERS — FINAL DESIGN PASS
-   Consistent order cards + dedicated details panel
-========================================= */
+/* =========================================================
+   HALINA INCOMING ORDERS — CLEAN, CONSISTENT WORKSPACE
+   Final layout rules; scoped only to Incoming Orders.
+========================================================= */
 #ordersSection.active {
-  grid-template-columns: minmax(0, 1.45fr) minmax(340px, .9fr);
-  column-gap: 20px;
-  row-gap: 14px;
-  padding: 22px 26px 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  min-height: 0 !important;
+  max-height: 100vh !important;
+  padding: 18px 22px 16px !important;
+  margin: 0 !important;
+  gap: 14px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
-#ordersSection > .top-bar h2 {
-  margin: 0;
-  color: #263b2b;
-  font-size: 25px;
-  font-weight: 800;
-  letter-spacing: -.45px;
-}
+#ordersSection > .top-bar { flex: 0 0 auto; margin: 0 !important; min-height: 34px; }
 #ordersSection > .orders-filter-tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 3px 2px 7px;
-  scrollbar-width: none;
+  flex: 0 0 auto; display: flex; flex-wrap: nowrap; gap: 9px;
+  margin: 0 !important; padding: 0 0 2px; overflow-x: auto; overflow-y: hidden;
 }
-#ordersSection > .orders-filter-tabs::-webkit-scrollbar { display: none; }
 #ordersSection .orders-filter-tab {
-  min-height: 42px;
-  padding: 8px 13px;
-  border: 1px solid #e3e8de;
-  border-radius: 10px;
-  background: #f8f9f5;
-  color: #53614f;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .45px;
-  white-space: nowrap;
+  flex: 0 0 auto; min-height: 42px; padding: 0 15px;
+  border-radius: 11px; white-space: nowrap;
 }
-#ordersSection .orders-filter-tab.active {
-  border-color: #34543a;
-  background: #34543a;
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(43,75,49,.15);
-}
-#ordersSection .orders-filter-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 21px;
-  height: 21px;
-  margin-left: 5px;
-  padding: 0 5px;
-  border-radius: 7px;
-  background: rgba(255,255,255,.2);
-  font-size: 10px;
+#ordersSection > .orders-workspace {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, .9fr) !important;
+  align-items: stretch; gap: 16px; flex: 1 1 0;
+  width: 100%; min-width: 0; min-height: 0; height: auto; overflow: hidden;
 }
 #ordersSection .orders-list-column {
-  grid-column: 1;
-  grid-row: 3;
-  min-height: 0;
-  overflow: hidden;
+  display: flex !important; flex-direction: column; grid-column: 1;
+  width: 100%; min-width: 0; min-height: 0; height: 100%; overflow: hidden;
 }
 #ordersSection #ordersContainer,
 #ordersSection #completedOrdersContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 11px;
-  padding: 5px 8px 18px 2px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start; align-items: start; gap: 12px;
+  flex: 1 1 0; width: 100%; height: 100%; min-width: 0; min-height: 0;
+  max-height: 100%; margin: 0; padding: 3px 5px 12px 2px;
+  overflow-x: hidden; overflow-y: auto; box-sizing: border-box;
 }
+#ordersSection #ordersContainer .loading,
+#ordersSection #completedOrdersContainer .loading { grid-column: 1 / -1; }
 #ordersSection .order-card {
-  display: flex;
-  flex: 0 0 158px !important;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 100%;
-  min-width: 0;
-  height: 158px !important;
-  min-height: 158px !important;
-  max-height: 158px !important;
-  padding: 12px 14px;
-  border: 1px solid #e4e9df;
-  border-radius: 13px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(38,57,39,.045);
-  overflow: hidden;
-}
-#ordersSection .order-card:hover {
-  transform: translateY(-1px);
-  border-color: #b9cbb4;
-  box-shadow: 0 6px 15px rgba(38,57,39,.08);
+  display: flex; flex-direction: column; align-self: stretch;
+  width: 100%; min-width: 0; min-height: 132px; height: auto;
+  padding: 14px 15px; border-radius: 13px; box-sizing: border-box;
+  background: #fffefa; border: 1px solid #e7e4da;
+  box-shadow: 0 2px 8px rgba(43, 54, 39, .045);
 }
 #ordersSection .order-card.selected-order-card {
-  border-color: #6e956d;
-  box-shadow: 0 0 0 2px rgba(103,145,99,.14), 0 4px 12px rgba(38,57,39,.06);
+  border-color: #78936b !important;
+  box-shadow: 0 0 0 2px rgba(105, 139, 89, .14), 0 5px 14px rgba(43, 54, 39, .07) !important;
+  background: #fbfdf8 !important;
 }
-#ordersSection .order-card-header {
-  display: flex;
-  flex: 0 0 auto;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  padding: 0 0 8px;
-  border-bottom: 1px solid #edf0e9;
-}
-#ordersSection .order-number {
-  overflow: hidden;
-  color: #263b2b;
-  font-size: 14px;
-  font-weight: 850;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-#ordersSection .order-time {
-  margin-top: 3px;
-  color: #8a9185;
-  font-size: 10px;
-  white-space: nowrap;
-}
-#ordersSection .order-status {
-  max-width: 43%;
-  overflow: hidden;
-  padding: 5px 8px;
-  border: 1px solid #dce8d8;
-  border-radius: 7px;
-  background: #eef5eb;
-  color: #416541;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: .45px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+#ordersSection .order-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 9px; padding-bottom: 10px; }
+#ordersSection .order-number { font-size: 15px; line-height: 1.25; font-weight: 800; }
+#ordersSection .order-time { font-size: 10px; line-height: 1.45; }
+#ordersSection .order-status { padding: 5px 8px; font-size: 9px; border-radius: 7px; white-space: nowrap; }
 #ordersSection .compact-order-info,
 #ordersSection .compact-order-payment {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-  overflow: hidden;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 7px;
 }
 #ordersSection .compact-order-info span,
 #ordersSection .compact-order-payment span {
-  display: flex;
-  flex: 1 1 0;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  overflow: hidden;
-  padding: 5px 8px;
-  border: 1px solid #edf0e9;
-  border-radius: 7px;
-  background: #f8f9f6;
-  color: #485447;
-  font-size: 10px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-#ordersSection .compact-order-info small,
-#ordersSection .compact-order-payment small {
-  color: #92998d;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: .55px;
-}
-#ordersSection .compact-order-payment .payment-state { background: #f4f6f0; }
-#ordersSection .compact-order-footer {
-  display: flex;
-  flex: 0 0 auto;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  margin: 0;
-}
-#ordersSection .compact-order-footer strong {
-  color: #2e4933;
-  font-size: 17px;
-  font-weight: 850;
-  white-space: nowrap;
-}
-#ordersSection .view-order-details-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 31px;
-  padding: 6px 10px;
-  border: 1px solid #dce7d8;
-  border-radius: 8px;
-  background: #edf3e9;
-  color: #34543a;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: .35px;
-  cursor: pointer;
-}
-#ordersSection .view-order-details-btn:hover { background: #e1ebdc; }
-#ordersSection .order-details-panel {
-  grid-column: 2;
-  grid-row: 1 / 4;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  padding: 20px;
-  border: 1px solid #e6eadf;
-  border-radius: 15px;
-  background: #fff;
-  box-shadow: 0 5px 18px rgba(43,58,40,.055);
-}
-#ordersSection .order-details-heading {
-  align-items: flex-start;
-  padding-bottom: 13px;
-  border-bottom: 1px solid #edf0e9;
-}
-#ordersSection .order-details-heading h3 {
-  color: #293d2e;
-  font-size: 18px;
-  font-weight: 850;
-}
-#ordersSection .order-details-status {
-  display: inline-flex;
-  padding: 5px 9px;
-  border: 1px solid #dce8d8;
-  border-radius: 7px;
-  background: #eef5eb;
-  color: #416541;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: .4px;
-}
-#ordersSection .order-details-info > div {
-  min-width: 0;
-  padding: 9px 10px;
-  border: 1px solid #edf0e9;
-  border-radius: 9px;
-  background: #f8f9f6;
-}
-#ordersSection .order-details-info span {
-  display: block;
-  margin-bottom: 4px;
-  color: #8b9386;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: .45px;
-  text-transform: uppercase;
-}
-#ordersSection .order-details-info strong {
-  display: block;
+  display: block; min-width: 0; padding: 7px 8px; border-radius: 8px;
+  background: #f5f4ed; color: #596052; font-size: 10px; line-height: 1.35;
   overflow-wrap: anywhere;
-  color: #3c493a;
-  font-size: 11px;
 }
-#ordersSection .order-details-total {
-  border: 1px solid #dce8d8;
-  background: #eef4e9;
+#ordersSection .compact-order-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 10px; }
+#ordersSection .compact-order-footer strong { font-size: 14px; color: #34452f; }
+#ordersSection .view-order-details-btn { font-size: 9px; padding: 6px 9px; }
+#ordersSection .order-details-panel {
+  grid-column: 2; grid-row: 1; position: relative; top: auto; align-self: stretch;
+  width: 100%; height: 100%; min-width: 0; min-height: 0; max-height: 100%;
+  margin: 0 !important; padding: 18px !important; overflow-x: hidden; overflow-y: auto;
+  border: 1px solid #e6e3d9; border-radius: 15px; background: #fffefa;
+  box-shadow: 0 3px 12px rgba(43, 54, 39, .045); box-sizing: border-box;
 }
-#ordersSection .order-details-total strong { color: #2e4933; }
-#ordersSection .order-details-items-list { padding-right: 7px; }
-#ordersSection .order-details-empty {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 220px;
-  color: #7e8979;
-  text-align: center;
+#ordersSection .order-details-content { display: flex; flex-direction: column; min-height: 100%; gap: 13px; }
+#ordersSection .order-details-heading { display: flex; flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 0 0 13px; }
+#ordersSection .order-details-heading h3 { font-size: 17px; margin: 0; }
+#ordersSection .order-details-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+#ordersSection .order-details-status { white-space: nowrap; }
+#ordersSection .order-details-time-clean { font-size: 10px; text-align: right; }
+#ordersSection .order-details-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+#ordersSection .order-details-info > div { min-width: 0; padding: 9px 10px; border-radius: 9px; background: #f5f4ed; }
+#ordersSection .order-details-info span { display: block; margin-bottom: 4px; font-size: 9px; }
+#ordersSection .order-details-info strong { display: block; font-size: 11px; overflow-wrap: anywhere; }
+#ordersSection .order-details-items { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 100px; margin: 0; }
+#ordersSection .order-details-items h4 { margin: 0 0 7px; font-size: 10px; letter-spacing: .8px; }
+#ordersSection .order-details-items-list { min-height: 0; max-height: none; overflow-y: auto; }
+#ordersSection .order-details-items-list .order-item { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; font-size: 12px; }
+#ordersSection .order-details-total { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding: 12px 13px; border-radius: 10px; }
+#ordersSection .order-details-total strong { font-size: 20px; }
+#ordersSection .order-actions { margin-top: 0; padding-top: 0; border: 0; }
+#ordersSection .accept-order-btn { width: 100%; min-width: 0; min-height: 44px; }
+/* Payment Center uses two equal, independently scrollable lanes. */
+#ordersSection #paymentCenterContainer {
+  display: none; grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1 1 0; width: 100%; height: 100%; min-width: 0; min-height: 0;
+  gap: 12px; overflow: hidden;
 }
-#ordersSection .order-details-empty h3 { margin: 10px 0 4px; color: #40523f; }
-#ordersSection .order-details-empty p { max-width: 230px; font-size: 12px; line-height: 1.5; }
-#ordersSection .payment-center-heading {
-  padding: 10px 8px 12px;
-  color: #40523f;
+#ordersSection .payment-center-column { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+#ordersSection .payment-center-heading { flex: 0 0 auto; padding: 7px 5px 10px; }
+#ordersSection .payment-center-heading h3 { font-size: 12px; margin: 0; }
+#ordersSection .payment-center-orders {
+  display: flex; flex-direction: column; flex: 1 1 0; gap: 10px;
+  min-width: 0; min-height: 0; padding: 2px 5px 12px 1px;
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
 }
-#ordersSection .payment-center-heading h3 { font-size: 13px; font-weight: 850; }
-#ordersSection .payment-center-heading > span {
-  display: inline-flex;
-  min-width: 24px;
-  justify-content: center;
-  padding: 4px 7px;
-  border-radius: 7px;
-  background: #edf3e9;
-  color: #416541;
-  font-size: 10px;
-  font-weight: 850;
+#ordersSection .payment-center-orders .order-card { flex: 0 0 auto; min-height: 132px; }
+#ordersSection .payment-center-orders .loading { width: 100%; }
+#ordersSection #ordersContainer::-webkit-scrollbar,
+#ordersSection #completedOrdersContainer::-webkit-scrollbar,
+#ordersSection .payment-center-orders::-webkit-scrollbar,
+#ordersSection .order-details-panel::-webkit-scrollbar { width: 4px; }
+#ordersSection #ordersContainer::-webkit-scrollbar-thumb,
+#ordersSection #completedOrdersContainer::-webkit-scrollbar-thumb,
+#ordersSection .payment-center-orders::-webkit-scrollbar-thumb,
+#ordersSection .order-details-panel::-webkit-scrollbar-thumb { background: transparent; border-radius: 8px; }
+#ordersSection #ordersContainer:hover::-webkit-scrollbar-thumb,
+#ordersSection #completedOrdersContainer:hover::-webkit-scrollbar-thumb,
+#ordersSection .payment-center-orders:hover::-webkit-scrollbar-thumb,
+#ordersSection .order-details-panel:hover::-webkit-scrollbar-thumb { background: #c9cbbf; }
+@media (max-width: 1050px) {
+  #ordersSection > .orders-workspace { grid-template-columns: minmax(0, 1.2fr) minmax(290px, .9fr) !important; }
+  #ordersSection #ordersContainer, #ordersSection #completedOrdersContainer { grid-template-columns: minmax(0, 1fr); }
 }
-@media (max-width: 900px) {
-  #ordersSection.active {
-    display: flex !important;
-    flex-direction: column;
-    height: auto;
-    min-height: 100vh;
-    max-height: none;
-    padding: 18px 16px !important;
-    overflow: visible;
-  }
-  #ordersSection > .orders-filter-tabs { max-width: 100%; }
-  #ordersSection .orders-list-column { height: auto; min-height: 0; overflow: visible; }
-  #ordersSection #ordersContainer,
-  #ordersSection #completedOrdersContainer { height: auto; max-height: 55vh; }
-  #ordersSection .order-card { flex-basis: 158px !important; }
-  #ordersSection .order-details-panel { width: 100%; height: auto; min-height: 480px; max-height: none; }
-  #ordersSection #paymentCenterContainer { min-height: 520px; }
+@media (max-width: 760px) {
+  #ordersSection.active { height: auto !important; min-height: 100vh !important; max-height: none !important; overflow: visible !important; }
+  #ordersSection > .orders-workspace { display: flex !important; flex-direction: column; overflow: visible; }
+  #ordersSection .orders-list-column { height: 55vh; min-height: 300px; }
+  #ordersSection #ordersContainer, #ordersSection #completedOrdersContainer { grid-template-columns: minmax(0, 1fr); }
+  #ordersSection .order-details-panel { width: 100%; height: auto; min-height: 330px; max-height: none; }
+  #ordersSection #paymentCenterContainer { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
+  #ordersSection .payment-center-column { min-height: 260px; }
 }
-@media (max-width: 480px) {
-  #ordersSection .order-details-panel { padding: 15px; }
-  #ordersSection .order-card { padding: 10px; }
-  #ordersSection .compact-order-info span,
-  #ordersSection .compact-order-payment span { padding: 4px 6px; }
-}
+
 </style>
     </div>
   </section>
@@ -8578,12 +8231,6 @@ reminderStyle.id = "stockSaveReminderStyles";
        if (typeof startOrdersRefresh === "function") {
          startOrdersRefresh();
        }
-     }
-     if (
-       sectionId === "transactionsSection" &&
-       typeof loadTransactionHistory === "function"
-     ) {
-       loadTransactionHistory();
      }
      requestAnimationFrame(updateSidebarHighlight);
    });
@@ -11351,58 +10998,28 @@ function setupOrderFilterTabs() {
 }
 
 function renderPaymentCenter(orders) {
-  const pendingContainer =
-    document.getElementById("pendingPaymentOrders");
-  const successfulContainer =
-    document.getElementById("successfulPaymentOrders");
+  const pendingContainer = document.getElementById("pendingPaymentOrders");
+  const successfulContainer = document.getElementById("successfulPaymentOrders");
+  const detailsPanel = document.getElementById("orderDetailsPanel");
+  if (!pendingContainer || !successfulContainer) return;
 
-  if (!pendingContainer || !successfulContainer) {
-    return;
-  }
-
-  const isServed = function(order) {
-    const status = String(order.status || "")
-      .trim()
-      .toLowerCase();
-
-    return status === "served" || status === "completed";
-  };
-
-  const isPaid = function(order) {
-    const status = String(order.payment_status || "")
-      .trim()
-      .toLowerCase();
-
-    return [
-      "paid",
-      "successful",
-      "succeeded",
-      "verified"
-    ].includes(status);
-  };
-
+  const isServed = order => ["served", "completed"].includes(String(order.status || "").trim().toLowerCase());
+  const isPaid = order => ["paid", "successful", "succeeded", "verified"].includes(String(order.payment_status || "").trim().toLowerCase());
   const servedOrders = orders.filter(isServed);
-  const pending = servedOrders.filter(function(order) {
-    return !isPaid(order);
-  });
+  const pending = servedOrders.filter(order => !isPaid(order));
   const successful = servedOrders.filter(isPaid);
 
-  const pendingCount =
-    document.getElementById("pendingPaymentCount");
-  const successfulCount =
-    document.getElementById("successfulPaymentCount");
+  const pendingCount = document.getElementById("pendingPaymentCount");
+  const successfulCount = document.getElementById("successfulPaymentCount");
+  if (pendingCount) pendingCount.textContent = pending.length;
+  if (successfulCount) successfulCount.textContent = successful.length;
 
-  if (pendingCount) {
-    pendingCount.textContent = pending.length;
-  }
-
-  if (successfulCount) {
-    successfulCount.textContent = successful.length;
-  }
+  let selected = servedOrders.find(order => String(order.id) === String(window.selectedCashierOrderId));
+  if (!selected) selected = pending[0] || successful[0] || null;
+  if (selected) window.selectedCashierOrderId = String(selected.id);
 
   function fill(container, list, emptyText) {
     container.innerHTML = "";
-
     if (!list.length) {
       const empty = document.createElement("div");
       empty.className = "loading";
@@ -11410,42 +11027,32 @@ function renderPaymentCenter(orders) {
       container.appendChild(empty);
       return;
     }
-
     list.forEach(function(order) {
       const card = createOrderCard(order, new Set());
-
       card.setAttribute("role", "button");
       card.setAttribute("tabindex", "0");
-
-      card.addEventListener("click", function(event) {
-        if (event.target.closest(".accept-order-btn")) {
-          return;
-        }
-
+      if (selected && String(order.id) === String(selected.id)) card.classList.add("selected-order-card");
+      const choose = function() {
         window.selectedCashierOrderId = String(order.id);
-
-        renderSelectedOrderDetails(
-          order,
-          document.getElementById("orderDetailsPanel")
-        );
+        document.querySelectorAll("#paymentCenterContainer .order-card").forEach(el => el.classList.remove("selected-order-card"));
+        card.classList.add("selected-order-card");
+        renderSelectedOrderDetails(order, detailsPanel);
+      };
+      card.addEventListener("click", choose);
+      card.addEventListener("keydown", function(event) {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); choose(); }
       });
-
       container.appendChild(card);
     });
   }
-
-  fill(
-    pendingContainer,
-    pending,
-    "No served orders awaiting payment."
-  );
-
-  fill(
-    successfulContainer,
-    successful,
-    "No successful payments yet."
-  );
+  fill(pendingContainer, pending, "No served orders awaiting payment.");
+  fill(successfulContainer, successful, "No successful payments yet.");
+  if (detailsPanel) {
+    if (selected) renderSelectedOrderDetails(selected, detailsPanel);
+    else detailsPanel.innerHTML = '<div class="order-details-empty"><div class="order-details-empty-icon">🧾</div><h3>Order Details</h3><p>No served transactions to display.</p></div>';
+  }
 }
+
 function renderOrders(orders, newOrderIds) {
   const ordersContainer =
     document.getElementById("ordersContainer");
@@ -11479,7 +11086,7 @@ function renderOrders(orders, newOrderIds) {
     new: newOrders.length,
     active: activeOrders.length,
     served: 0,
-    "payment-center": orders.length
+    "payment-center": orders.filter(function(order) { return ["served", "completed"].includes(String(order.status || "").trim().toLowerCase()); }).length
   };
 
   updateOrderFilterTabs(counts);
@@ -11605,10 +11212,8 @@ function renderSelectedOrderDetails(order, detailsPanel) {
  }
  const orderNumber = order.order_number || "Pending";
  const tableNumber = order.table_number || "—";
- const orderType =
-   String(order.order_type || "").toLowerCase() === "takeout"
-     ? "🥡 TAKEOUT"
-     : "🍽️ DINE IN";
+ const normalizedOrderType = String(order.order_type || "dine in").toLowerCase();
+ const orderType = normalizedOrderType === "takeout" ? "🥡 TAKEOUT" : normalizedOrderType === "delivery" ? "🚚 DELIVERY" : "🍽️ DINE IN";
  const paymentMethod = order.payment_method || "—";
  const paymentStatus = order.payment_status || "pending";
  const status = String(order.status || "new").toLowerCase();
@@ -11645,23 +11250,6 @@ function renderSelectedOrderDetails(order, detailsPanel) {
    data-order-id="${escapeHtml(String(order.id))}"
 >
    🟢 ACCEPT ORDER
-</button>
-</div>
-   `
-   : "";
- const isServedOrder = ["served", "completed"].includes(status);
- const isPaymentPending = !["paid", "successful", "succeeded", "verified", "refunded"].includes(
-   String(paymentStatus).trim().toLowerCase()
- );
- const confirmPaymentButtonHtml = isServedOrder && isPaymentPending
-   ? `
-<div class="order-actions payment-confirm-actions">
-<button
-   type="button"
-   class="confirm-payment-btn"
-   data-order-id="${escapeHtml(String(order.id))}"
->
-   CONFIRM PAYMENT
 </button>
 </div>
    `
@@ -11708,7 +11296,6 @@ function renderSelectedOrderDetails(order, detailsPanel) {
 <strong>₱${total.toLocaleString()}</strong>
 </div>
  ${acceptButtonHtml}
- ${confirmPaymentButtonHtml}
 </div>
  `;
  const acceptButton = detailsPanel.querySelector(".accept-order-btn");
@@ -11717,15 +11304,6 @@ function renderSelectedOrderDetails(order, detailsPanel) {
      acceptOrder(
        acceptButton.dataset.orderId,
        acceptButton
-     );
-   });
- }
- const confirmPaymentButton = detailsPanel.querySelector(".confirm-payment-btn");
- if (confirmPaymentButton) {
-   confirmPaymentButton.addEventListener("click", function() {
-     confirmOrderPayment(
-       confirmPaymentButton.dataset.orderId,
-       confirmPaymentButton
      );
    });
  }
@@ -11742,10 +11320,8 @@ function createOrderCard(order, newOrderIds) {
    "order-card" + (isNewOrder ? " new-order-pop" : "");
  const orderNumber = order.order_number || "Pending";
  const tableNumber = order.table_number || "—";
- const orderType =
-   String(order.order_type || "").toLowerCase() === "takeout"
-     ? "🥡 TAKEOUT"
-     : "🍽️ DINE IN";
+ const normalizedOrderType = String(order.order_type || "dine in").toLowerCase();
+ const orderType = normalizedOrderType === "takeout" ? "🥡 TAKEOUT" : normalizedOrderType === "delivery" ? "🚚 DELIVERY" : "🍽️ DINE IN";
  const paymentMethod = order.payment_method || "—";
  const paymentStatus = String(order.payment_status || "pending");
  const status = String(order.status || "new").toLowerCase();
@@ -11768,12 +11344,12 @@ function createOrderCard(order, newOrderIds) {
 </div>
 </div>
 <div class="compact-order-info">
-<span><small>TYPE</small>${orderType}</span>
-<span><small>TABLE</small>${escapeHtml(String(tableNumber))}</span>
+<span>Table: ${escapeHtml(String(tableNumber))}</span>
+<span>${orderType}</span>
 </div>
 <div class="compact-order-payment">
-<span><small>PAYMENT METHOD</small>${escapeHtml(String(paymentMethod))}</span>
-<span class="payment-state"><small>PAYMENT STATUS</small>${escapeHtml(paymentStatus.toUpperCase())}</span>
+<span>Payment: ${escapeHtml(String(paymentMethod))}</span>
+<span>${escapeHtml(paymentStatus.toUpperCase())}</span>
 </div>
 <div class="compact-order-footer">
 <strong>₱${total.toLocaleString()}</strong>
@@ -11782,7 +11358,7 @@ function createOrderCard(order, newOrderIds) {
        class="view-order-details-btn"
        data-order-id="${escapeHtml(orderId)}"
 >
-       VIEW DETAILS <span aria-hidden="true">→</span>
+       VIEW DETAILS
 </button>
 </div>
  `;
@@ -11880,183 +11456,54 @@ if (orderCard) {
   }
 }
 /* =========================
-   CONFIRM PENDING PAYMENT
-   Explicit cashier confirmation
-========================= */
-async function confirmOrderPayment(orderId, button) {
-  if (!orderId || !button || button.disabled) return;
-
-  const originalText = button.textContent;
-  button.disabled = true;
-  button.textContent = "CONFIRMING...";
-
-  try {
-    const currentResponse = await fetch(
-      SUPABASE_URL +
-      "/rest/v1/orders?select=id,payment_status&id=eq." +
-      encodeURIComponent(orderId) +
-      "&limit=1",
-      {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_KEY,
-          "Authorization": "Bearer " + SUPABASE_KEY
-        }
-      }
-    );
-    const currentRows = await currentResponse.json();
-    if (!currentResponse.ok) {
-      throw new Error(
-        currentRows.message || currentRows.error || currentRows.hint ||
-        "Unable to verify the current payment status."
-      );
-    }
-    if (!Array.isArray(currentRows) || currentRows.length !== 1) {
-      throw new Error("The order could not be found. Refresh the order list.");
-    }
-
-    const currentPaymentStatus = String(currentRows[0].payment_status || "")
-      .trim().toLowerCase();
-    if (["paid", "successful", "succeeded", "verified"].includes(currentPaymentStatus)) {
-      throw new Error("This payment has already been confirmed.");
-    }
-    if (!["pending", "unpaid", ""].includes(currentPaymentStatus)) {
-      throw new Error("This payment cannot be confirmed from its current status: " + currentPaymentStatus + ".");
-    }
-
-    const paymentFilter = currentRows[0].payment_status == null
-      ? "&payment_status=is.null"
-      : "&payment_status=eq." + encodeURIComponent(currentRows[0].payment_status);
-    const response = await fetch(
-      SUPABASE_URL +
-      "/rest/v1/orders?id=eq." +
-      encodeURIComponent(orderId) +
-      paymentFilter,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_KEY,
-          "Authorization": "Bearer " + SUPABASE_KEY,
-          "Prefer": "return=representation"
-        },
-        body: JSON.stringify({ payment_status: "paid" })
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || data.error || data.hint ||
-        "Unable to confirm this payment."
-      );
-    }
-
-    if (!Array.isArray(data) || data.length === 0) {
-      throw new Error(
-        "The payment status changed before confirmation. Refresh the order and check its latest status."
-      );
-    }
-
-    window.cashierOrdersCache = (window.cashierOrdersCache || []).map(function(order) {
-      return String(order.id) === String(orderId)
-        ? Object.assign({}, order, { payment_status: "paid" })
-        : order;
-    });
-
-    await loadOrders();
-
-    const historySection = document.getElementById("transactionsSection");
-    if (historySection && historySection.classList.contains("active")) {
-      await loadTransactionHistory();
-    }
-
-    if (typeof showSuccess === "function") {
-      showSuccess("Payment confirmed successfully.");
-    }
-  } catch (error) {
-    console.error("Confirm payment error:", error);
-    button.disabled = false;
-    button.textContent = originalText;
-    if (typeof showError === "function") {
-      showError(error.message);
-    }
-  }
-}
-
-/* =========================
    COMPLETED ORDERS
 ========================= */
 
 async function loadCompletedOrders() {
-  const completedContainer =
-    document.getElementById("completedOrdersContainer");
-
-  if (!completedContainer) {
-    return;
-  }
-
-  completedContainer.innerHTML = `
-    <div class="loading">
-      Loading served orders...
-    </div>
-  `;
-
+  const completedContainer = document.getElementById("completedOrdersContainer");
+  const detailsPanel = document.getElementById("orderDetailsPanel");
+  if (!completedContainer) return;
+  completedContainer.innerHTML = '<div class="loading">Loading served orders...</div>';
   try {
     const response = await fetch(
-      SUPABASE_URL +
-      "/rest/v1/orders" +
+      SUPABASE_URL + "/rest/v1/orders" +
       "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,created_at,completed_at" +
-      "&status=in.(served,completed)" +
-      "&order=created_at.desc" +
-      "&limit=100",
-      {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_KEY,
-          "Authorization": "Bearer " + SUPABASE_KEY
-        }
-      }
+      "&status=in.(served,completed)&order=created_at.desc&limit=100",
+      { method: "GET", headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY } }
     );
-
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message ||
-        data.error ||
-        data.hint ||
-        "Unable to load served orders."
-      );
-    }
-
-    if (!Array.isArray(data) || data.length === 0) {
-      completedContainer.innerHTML = `
-        <div class="loading">
-          📋 No served orders yet.
-        </div>
-      `;
+    if (!response.ok) throw new Error(data.message || data.error || data.hint || "Unable to load served orders.");
+    if (!Array.isArray(data) || !data.length) {
+      completedContainer.innerHTML = '<div class="loading">No served orders yet.</div>';
+      if (detailsPanel) detailsPanel.innerHTML = '<div class="order-details-empty"><div class="order-details-empty-icon">🧾</div><h3>Order Details</h3><p>No served orders to display.</p></div>';
+      window.selectedCashierOrderId = null;
       return;
     }
-
+    let selected = data.find(order => String(order.id) === String(window.selectedCashierOrderId));
+    if (!selected) selected = data[0];
+    window.selectedCashierOrderId = String(selected.id);
     completedContainer.innerHTML = "";
-
     data.forEach(function(order) {
       const card = createCompletedOrderCard(order);
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      if (String(order.id) === String(selected.id)) card.classList.add("selected-order-card");
+      const choose = function() {
+        window.selectedCashierOrderId = String(order.id);
+        completedContainer.querySelectorAll(".order-card").forEach(el => el.classList.remove("selected-order-card"));
+        card.classList.add("selected-order-card");
+        renderSelectedOrderDetails(order, detailsPanel);
+      };
+      card.addEventListener("click", choose);
+      card.addEventListener("keydown", function(event) {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); choose(); }
+      });
       completedContainer.appendChild(card);
     });
-
+    renderSelectedOrderDetails(selected, detailsPanel);
   } catch (error) {
     console.error("Served orders loading error:", error);
-
-    completedContainer.innerHTML = `
-      <div class="loading">
-        Unable to load served orders.
-        <br><br>
-        ${escapeHtml(error.message)}
-      </div>
-    `;
+    completedContainer.innerHTML = '<div class="loading">Unable to load served orders.<br><br>' + escapeHtml(error.message) + '</div>';
   }
 }
 
@@ -12284,174 +11731,6 @@ function createCompletedOrderCard(
   return card;
 
 }
-/* =========================
-   TRANSACTION HISTORY
-   Reads existing saved orders
-========================= */
-window.transactionHistoryCache = window.transactionHistoryCache || [];
-window.transactionHistoryFilter = window.transactionHistoryFilter || "all";
-
-function getTransactionHistoryCategory(order) {
-  const payment = String(order.payment_status || "").trim().toLowerCase();
-  const orderStatus = String(order.status || "").trim().toLowerCase();
-
-  if (payment === "refunded" || orderStatus === "refunded") return "refunded";
-  if (["void", "voided", "cancelled", "canceled"].includes(orderStatus) ||
-      ["void", "voided"].includes(payment)) return "voided";
-  if (["paid", "successful", "succeeded", "verified"].includes(payment)) return "paid";
-  return "other";
-}
-
-function renderTransactionHistory() {
-  const rows = document.getElementById("transactionHistoryRows");
-  const summary = document.getElementById("transactionHistorySummary");
-  const searchInput = document.getElementById("transactionHistorySearch");
-  if (!rows || !summary) return;
-
-  const filter = window.transactionHistoryFilter || "all";
-  const query = String(searchInput ? searchInput.value : "").trim().toLowerCase();
-
-  document.querySelectorAll(".transaction-filter-tab").forEach(function(tab) {
-    const active = tab.dataset.transactionFilter === filter;
-    tab.classList.toggle("active", active);
-    tab.setAttribute("aria-selected", active ? "true" : "false");
-  });
-
-  const allRecords = window.transactionHistoryCache || [];
-  const filtered = allRecords.filter(function(order) {
-    const category = getTransactionHistoryCategory(order);
-    const matchesFilter = filter === "all" ||
-      (filter === "paid" && category === "paid") ||
-      (filter === "refunded" && category === "refunded") ||
-      (filter === "voided" && category === "voided");
-    const haystack = [
-      order.order_number,
-      order.id,
-      order.payment_reference,
-      order.payment_method,
-      order.table_number,
-      order.order_type
-    ].join(" ").toLowerCase();
-    return matchesFilter && (!query || haystack.includes(query));
-  });
-
-  const paidCount = allRecords.filter(function(order) {
-    return getTransactionHistoryCategory(order) === "paid";
-  }).length;
-  const refundedCount = allRecords.filter(function(order) {
-    return getTransactionHistoryCategory(order) === "refunded";
-  }).length;
-  const voidedCount = allRecords.filter(function(order) {
-    return getTransactionHistoryCategory(order) === "voided";
-  }).length;
-
-  summary.innerHTML =
-    "<span><strong>" + allRecords.length + "</strong> total records</span>" +
-    "<span><strong>" + paidCount + "</strong> paid</span>" +
-    "<span><strong>" + refundedCount + "</strong> refunded</span>" +
-    "<span><strong>" + voidedCount + "</strong> voided</span>";
-
-  if (!filtered.length) {
-    rows.innerHTML = '<tr><td colspan="7" class="transaction-history-empty">No matching transaction records found.</td></tr>';
-    return;
-  }
-
-  rows.innerHTML = filtered.map(function(order) {
-    const category = getTransactionHistoryCategory(order);
-    const paymentStatus = String(order.payment_status || "pending");
-    const orderStatus = String(order.status || "—");
-    const orderType = String(order.order_type || "—").replace(/_/g, " ");
-    const createdAt = order.created_at
-      ? new Date(order.created_at).toLocaleString()
-      : "—";
-    const number = order.order_number || String(order.id || "—").slice(0, 8);
-    const total = Number(order.total || 0);
-    const categoryLabel = category === "other" ? paymentStatus : category;
-
-    return `
-      <tr>
-        <td>
-          <strong>${escapeHtml(String(number))}</strong>
-          <small>${escapeHtml(String(order.id || ""))}</small>
-        </td>
-        <td>${escapeHtml(createdAt)}</td>
-        <td>${escapeHtml(orderType.toUpperCase())}</td>
-        <td>${escapeHtml(String(order.payment_method || "—").toUpperCase())}</td>
-        <td><span class="transaction-status transaction-${escapeHtml(category)}">${escapeHtml(categoryLabel.toUpperCase())}</span></td>
-        <td>${escapeHtml(orderStatus.toUpperCase())}</td>
-        <td class="transaction-amount">₱${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-      </tr>
-    `;
-  }).join("");
-}
-
-async function loadTransactionHistory() {
-  const rows = document.getElementById("transactionHistoryRows");
-  if (!rows) return;
-
-  rows.innerHTML = '<tr><td colspan="7" class="transaction-history-empty">Loading transaction records...</td></tr>';
-
-  try {
-    const allRecords = [];
-    const pageSize = 1000;
-    let offset = 0;
-
-    while (true) {
-      const response = await fetch(
-        SUPABASE_URL +
-        "/rest/v1/orders" +
-        "?select=id,order_number,table_number,order_type,total,status,payment_method,payment_status,payment_reference,created_at,completed_at" +
-        "&order=created_at.desc&limit=" + pageSize + "&offset=" + offset,
-        {
-          method: "GET",
-          headers: {
-            "apikey": SUPABASE_KEY,
-            "Authorization": "Bearer " + SUPABASE_KEY
-          }
-        }
-      );
-
-      const page = await response.json();
-      if (!response.ok) {
-        throw new Error(page.message || page.error || page.hint || "Unable to load transaction history.");
-      }
-      if (!Array.isArray(page)) {
-        throw new Error("Unexpected transaction history response.");
-      }
-
-      allRecords.push.apply(allRecords, page);
-      if (page.length < pageSize) break;
-      offset += pageSize;
-    }
-
-    window.transactionHistoryCache = allRecords;
-    renderTransactionHistory();
-  } catch (error) {
-    console.error("Transaction history loading error:", error);
-    rows.innerHTML =
-      '<tr><td colspan="7" class="transaction-history-empty">Unable to load transaction records.<br><small>' +
-      escapeHtml(error.message) +
-      '</small></td></tr>';
-  }
-}
-
-document.querySelectorAll(".transaction-filter-tab").forEach(function(tab) {
-  tab.addEventListener("click", function() {
-    window.transactionHistoryFilter = tab.dataset.transactionFilter || "all";
-    renderTransactionHistory();
-  });
-});
-
-const transactionSearchInput = document.getElementById("transactionHistorySearch");
-if (transactionSearchInput) {
-  transactionSearchInput.addEventListener("input", renderTransactionHistory);
-}
-
-const refreshTransactionHistoryButton = document.getElementById("refreshTransactionHistory");
-if (refreshTransactionHistoryButton) {
-  refreshTransactionHistoryButton.addEventListener("click", loadTransactionHistory);
-}
-
 /* =========================
    AUTO REFRESH ORDERS
 ========================= */
