@@ -163,7 +163,33 @@ function renderCard(o,isServed=false) {
   else if(!isServed&&status==='ready')action=`<button class="action" data-action="served" data-id="${safe(o.id)}">Mark Served</button>`;
   return `<article class="order-card"><div class="order-top"><div class="order-main"><div class="order-number">${safe(number)}</div><div class="order-meta"><span>${safe(type)}</span><span>·</span><span>${safe(table)}</span></div></div>${isServed?'<span class="served-check">✓</span>':`<span class="elapsed">${safe(elapsed)}</span>`}</div><div class="order-items">${itemHtml}${instructions}</div>${action?`<div class="order-action">${action}</div>`:''}</article>`;
 }
-  async function updateStatus(id,status,button){if(!id||busyIds.has(id))return;const label=button.textContent;busyIds.add(id);button.disabled=true;button.textContent='Updating…';try{const updated=await api('orders?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({status})});if(!Array.isArray(updated)||!updated.length)throw new Error('No order was updated. Check the Supabase UPDATE policy.');await loadOrders();}catch(e){setNotice('Could not update order status: '+e.message);button.disabled=false;button.textContent=label;}finally{busyIds.delete(id);}}
+async function updateStatus(id,status,button){
+  if(!id||busyIds.has(id))return;
+  const label=button.textContent;
+  busyIds.add(id);
+  button.disabled=true;
+  button.textContent='Updating…';
+  try{
+    // Record the completion timestamp only when an order is marked Served.
+    // Other status transitions retain their existing payload and behavior.
+    const updatePayload = status === 'served'
+      ? { status, completed_at: new Date().toISOString() }
+      : { status };
+    const updated=await api('orders?id=eq.'+encodeURIComponent(id),{
+      method:'PATCH',
+      headers:{Prefer:'return=representation'},
+      body:JSON.stringify(updatePayload)
+    });
+    if(!Array.isArray(updated)||!updated.length)throw new Error('No order was updated. Check the Supabase UPDATE policy.');
+    await loadOrders();
+  }catch(e){
+    setNotice('Could not update order status: '+e.message);
+    button.disabled=false;
+    button.textContent=label;
+  }finally{
+    busyIds.delete(id);
+  }
+}
 const refreshButton=document.getElementById('refreshBtn');if(refreshButton)refreshButton.addEventListener('click',loadOrders);const filtersElement=document.getElementById('filters');if(filtersElement)filtersElement.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;activeFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render();});
 loadOrders();setInterval(loadOrders,10000);
 </script>
