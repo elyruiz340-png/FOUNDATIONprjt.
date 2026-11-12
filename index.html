@@ -1541,6 +1541,11 @@ function changeQtyById(id, change) {
     const stock =
       item.stockProductId ? productStocks[item.stockProductId] : null;
 
+    if (!item.stockProductId) {
+
+      alert("This menu item needs an inventory link. Please ask the restaurant staff.");
+      return;
+    }
 
     if (!item.stockProductId) {
 
