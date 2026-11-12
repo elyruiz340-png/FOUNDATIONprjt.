@@ -10774,6 +10774,24 @@ let firstOrdersLoad = true;
    LOAD ORDERS
 ========================= */
 
+function formatRestaurantDateTime(value){
+  if(!value)return '—';
+  const date=new Date(value);
+  if(Number.isNaN(date.getTime()))return '—';
+  const timezone=String(window.HALINA_RESTAURANT_PROFILE?.timezone||'').trim();
+  if(timezone){
+    try{
+      return new Intl.DateTimeFormat('en-US',{
+        year:'numeric',month:'numeric',day:'numeric',
+        hour:'numeric',minute:'2-digit',second:'2-digit',
+        timeZone:timezone
+      }).format(date);
+    }catch(error){
+      console.warn('Invalid restaurant timezone; using device timezone for this timestamp.',error);
+    }
+  }
+  return date.toLocaleString('en-US');
+}
 async function loadOrders() {
 
   const ordersContainer =
@@ -11294,7 +11312,7 @@ function renderSelectedOrderDetails(order, detailsPanel) {
  const paymentStatus = order.payment_status || "pending";
  const status = String(order.status || "new").toLowerCase();
  const createdAt = order.created_at
-   ? new Date(order.created_at).toLocaleString()
+   ? formatRestaurantDateTime(order.created_at)
    : "—";
  let calculatedTotal = 0;
  const itemsHtml = items.map(function(item) {
@@ -11431,7 +11449,7 @@ function createOrderCard(order, newOrderIds) {
  const paymentStatus = String(order.payment_status || "pending");
  const status = String(order.status || "new").toLowerCase();
  const createdAt = order.created_at
-   ? new Date(order.created_at).toLocaleString()
+   ? formatRestaurantDateTime(order.created_at)
    : "—";
  const total = Number(order.total || 0);
  card.innerHTML = `
@@ -11848,16 +11866,12 @@ function createCompletedOrderCard(
 
   const orderTime =
     order.created_at
-      ? new Date(
-          order.created_at
-        ).toLocaleString()
+      ? formatRestaurantDateTime(order.created_at)
       : "—";
 
   const completedTime =
     order.completed_at
-      ? new Date(
-          order.completed_at
-        ).toLocaleString()
+      ? formatRestaurantDateTime(order.completed_at)
       : "—";
 
 
@@ -12043,7 +12057,7 @@ function renderTransactionHistory() {
     const orderStatus = String(order.status || "—");
     const orderType = String(order.order_type || "—").replace(/_/g, " ");
     const createdAt = order.created_at
-      ? new Date(order.created_at).toLocaleString()
+      ? formatRestaurantDateTime(order.created_at)
       : "—";
     const number = order.order_number || String(order.id || "—").slice(0, 8);
     const total = Number(order.total || 0);
@@ -14721,7 +14735,7 @@ if (cashierLoginForm) {
   window.applyRestaurantBranding = applyProfile;
   async function connect() {
     try {
-      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
+      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings,operating_hours', {
         headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }, cache: 'no-store'
       });
       if (!response.ok) throw new Error('Profile request failed: ' + response.status);
@@ -14735,6 +14749,19 @@ if (cashierLoginForm) {
     }
   }
   window.addEventListener('restaurantprofilechanged', e => applyProfile(e.detail));
+  window.addEventListener('restaurantprofileloaded', () => {
+    if(typeof renderOrders==='function'&&Array.isArray(window.cashierOrdersCache)){
+      renderOrders(window.cashierOrdersCache,new Set());
+    }
+    const ordersSection=document.getElementById('ordersSection');
+    if(ordersSection&&ordersSection.classList.contains('active')&&window.cashierOrderFilter==='served'&&typeof loadCompletedOrders==='function'){
+      loadCompletedOrders();
+    }
+    const transactionsSection=document.getElementById('transactionsSection');
+    if(transactionsSection&&transactionsSection.classList.contains('active')&&typeof renderTransactionHistory==='function'){
+      renderTransactionHistory();
+    }
+  });
   window.addEventListener('focus', connect);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) connect(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', connect, { once: true });
