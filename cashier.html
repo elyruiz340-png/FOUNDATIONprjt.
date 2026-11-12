@@ -6971,16 +6971,31 @@ background:
       ====================== -->
       <div class="pos-topbar">
 
-        <div>
-          <h2>Cashier POS</h2>
+        <div class="pos-topbar-heading">
+          <div class="pos-topbar-title-block">
+            <h2>Cashier POS</h2>
 
-          <div class="pos-brand">
-            HALINA BISTRO CAFE
+            <div class="pos-brand">
+              HALINA BISTRO CAFE
+            </div>
+
+            <p>
+              Select items to create an order
+            </p>
           </div>
-
-          <p>
-            Select items to create an order
-          </p>
+          <div class="cashier-session-widget" data-cashier-session-widget hidden>
+            <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
+            <div class="cashier-session-copy">
+              <span class="cashier-session-label">SIGNED IN AS</span>
+              <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
+              <small class="cashier-session-role" data-cashier-role>Cashier</small>
+            </div>
+            <span class="cashier-session-divider" aria-hidden="true"></span>
+            <div class="cashier-session-clock">
+              <strong data-cashier-live-time>--:--:--</strong>
+              <small data-cashier-live-date>Loading time…</small>
+            </div>
+          </div>
         </div>
 
         <div class="pos-search-wrap">
@@ -7521,6 +7536,19 @@ background:
 >
   <div class="top-bar">
     <h2>Table Management</h2>
+    <div class="cashier-session-widget" data-cashier-session-widget hidden>
+      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
+      <div class="cashier-session-copy">
+        <span class="cashier-session-label">SIGNED IN AS</span>
+        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
+        <small class="cashier-session-role" data-cashier-role>Cashier</small>
+      </div>
+      <span class="cashier-session-divider" aria-hidden="true"></span>
+      <div class="cashier-session-clock">
+        <strong data-cashier-live-time>--:--:--</strong>
+        <small data-cashier-live-date>Loading time…</small>
+      </div>
+    </div>
 
     <button
       class="refresh-btn"
@@ -7556,6 +7584,20 @@ background:
       Manage your product stocks and inventory
     </p>
   </div>
+
+  <div class="cashier-session-widget" data-cashier-session-widget hidden>
+      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
+      <div class="cashier-session-copy">
+        <span class="cashier-session-label">SIGNED IN AS</span>
+        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
+        <small class="cashier-session-role" data-cashier-role>Cashier</small>
+      </div>
+      <span class="cashier-session-divider" aria-hidden="true"></span>
+      <div class="cashier-session-clock">
+        <strong data-cashier-live-time>--:--:--</strong>
+        <small data-cashier-live-date>Loading time…</small>
+      </div>
+    </div>
 
   <div class="stocks-header-actions">
     <button
@@ -7713,6 +7755,19 @@ background:
 >
   <div class="top-bar">
     <h2>Incoming Orders</h2>
+    <div class="cashier-session-widget" data-cashier-session-widget hidden>
+      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
+      <div class="cashier-session-copy">
+        <span class="cashier-session-label">SIGNED IN AS</span>
+        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
+        <small class="cashier-session-role" data-cashier-role>Cashier</small>
+      </div>
+      <span class="cashier-session-divider" aria-hidden="true"></span>
+      <div class="cashier-session-clock">
+        <strong data-cashier-live-time>--:--:--</strong>
+        <small data-cashier-live-date>Loading time…</small>
+      </div>
+    </div>
   </div>
 
   <div
@@ -7858,6 +7913,19 @@ background:
       <h2>Transaction History</h2>
       <p>Permanent records of completed, refunded, and voided transactions.</p>
     </div>
+    <div class="cashier-session-widget" data-cashier-session-widget hidden>
+      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
+      <div class="cashier-session-copy">
+        <span class="cashier-session-label">SIGNED IN AS</span>
+        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
+        <small class="cashier-session-role" data-cashier-role>Cashier</small>
+      </div>
+      <span class="cashier-session-divider" aria-hidden="true"></span>
+      <div class="cashier-session-clock">
+        <strong data-cashier-live-time>--:--:--</strong>
+        <small data-cashier-live-date>Loading time…</small>
+      </div>
+    </div>
     <button type="button" id="refreshTransactionHistory" class="refresh-btn">
       Refresh
     </button>
@@ -7915,6 +7983,19 @@ background:
   >
     <div class="top-bar">
       <h2>Settings</h2>
+      <div class="cashier-session-widget" data-cashier-session-widget hidden>
+      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
+      <div class="cashier-session-copy">
+        <span class="cashier-session-label">SIGNED IN AS</span>
+        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
+        <small class="cashier-session-role" data-cashier-role>Cashier</small>
+      </div>
+      <span class="cashier-session-divider" aria-hidden="true"></span>
+      <div class="cashier-session-clock">
+        <strong data-cashier-live-time>--:--:--</strong>
+        <small data-cashier-live-date>Loading time…</small>
+      </div>
+    </div>
     </div>
     <div class="coming-soon">
       <div class="icon">
@@ -10810,6 +10891,7 @@ async function loadOrders() {
         SUPABASE_URL +
         "/rest/v1/orders" +
         "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,payment_reference,created_at" +
+        "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
         "&order=created_at.desc" +
         "&limit=50",
         {
@@ -11174,10 +11256,18 @@ function renderOrders(orders, newOrderIds) {
     }
   });
 
+  const servedOrders = orders.filter(function(order) {
+    const status = String(order.status || "")
+      .trim()
+      .toLowerCase();
+
+    return status === "served" || status === "completed";
+  });
+
   const counts = {
     new: newOrders.length,
     active: activeOrders.length,
-    served: 0,
+    served: servedOrders.length,
     "payment-center": orders.length
   };
 
@@ -11525,7 +11615,8 @@ if (orderCard) {
         "/rest/v1/orders?id=eq." +
         encodeURIComponent(
           orderId
-        ),
+        ) +
+        "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6",
         {
           method: "PATCH",
           headers: {
@@ -11594,6 +11685,7 @@ async function confirmOrderPayment(orderId, button) {
       SUPABASE_URL +
       "/rest/v1/orders?select=id,payment_status&id=eq." +
       encodeURIComponent(orderId) +
+      "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
       "&limit=1",
       {
         method: "GET",
@@ -11630,6 +11722,7 @@ async function confirmOrderPayment(orderId, button) {
       SUPABASE_URL +
       "/rest/v1/orders?id=eq." +
       encodeURIComponent(orderId) +
+      "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
       paymentFilter,
       {
         method: "PATCH",
@@ -11708,6 +11801,7 @@ async function loadCompletedOrders() {
       "/rest/v1/orders" +
       "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,created_at,completed_at" +
       "&status=in.(served,completed)" +
+      "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
       "&order=created_at.desc" +
       "&limit=100",
       {
@@ -11728,6 +11822,15 @@ async function loadCompletedOrders() {
         data.hint ||
         "Unable to load served orders."
       );
+    }
+
+    const servedCountElement =
+      document.getElementById("servedOrdersCount");
+
+    if (servedCountElement) {
+      servedCountElement.textContent = Array.isArray(data)
+        ? String(data.length)
+        : "0";
     }
 
     if (!Array.isArray(data) || data.length === 0) {
@@ -12096,6 +12199,7 @@ async function loadTransactionHistory() {
         SUPABASE_URL +
         "/rest/v1/orders" +
         "?select=id,order_number,table_number,order_type,total,status,payment_method,payment_status,payment_reference,created_at,completed_at" +
+        "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
         "&order=created_at.desc&limit=" + pageSize + "&offset=" + offset,
         {
           method: "GET",
@@ -13122,7 +13226,8 @@ const orderUpdate = {
 const detailsResponse = await fetch(
  SUPABASE_URL +
  "/rest/v1/orders?id=eq." +
- encodeURIComponent(savedOrderId),
+ encodeURIComponent(savedOrderId) +
+ "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6",
  {
    method: "PATCH",
    headers: {
@@ -13148,7 +13253,8 @@ if (
       const statusResponse = await fetch(
         SUPABASE_URL +
         "/rest/v1/orders?id=eq." +
-        encodeURIComponent(savedOrderId),
+        encodeURIComponent(savedOrderId) +
+        "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6",
         {
           method: "PATCH",
           headers: {
@@ -14766,6 +14872,264 @@ if (cashierLoginForm) {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) connect(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', connect, { once: true });
   else connect();
+})();
+</script>
+
+
+<style id="cashier-session-widget-styles">
+.cashier-session-widget {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  max-width: 100%;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid #e2d9c9;
+  border-radius: 13px;
+  background: rgba(255, 253, 248, 0.96);
+  box-shadow: 0 3px 10px rgba(70, 55, 35, 0.06), inset 0 1px 0 rgba(255,255,255,.8);
+  color: #3d493d;
+}
+.cashier-session-widget[hidden] { display: none !important; }
+.cashier-session-avatar {
+  width: 38px; height: 38px; flex: 0 0 38px;
+  display: grid; place-items: center; overflow: hidden;
+  border-radius: 50%; border: 1px solid #d8e4d6;
+  background: linear-gradient(145deg, #edf4e9, #dce9d8);
+  color: #35533d; font-size: 13px; font-weight: 850;
+  letter-spacing: .03em;
+}
+.cashier-session-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cashier-session-copy, .cashier-session-clock {
+  display: flex; flex-direction: column; justify-content: center;
+  min-width: 0; gap: 2px;
+}
+.cashier-session-copy { max-width: 135px; }
+.cashier-session-label {
+  color: #8c907f; font-size: 8px; line-height: 1.1;
+  font-weight: 850; letter-spacing: .1em;
+}
+.cashier-session-name {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #293b2f; font-size: 12px; line-height: 1.25; font-weight: 850;
+}
+.cashier-session-role {
+  color: #7b806f; font-size: 10px; line-height: 1.15;
+  font-weight: 650; text-transform: capitalize;
+}
+.cashier-session-divider {
+  width: 1px; height: 31px; flex: 0 0 1px;
+  background: #e6dfd2; margin: 0 2px;
+}
+.cashier-session-clock { min-width: 92px; text-align: right; align-items: flex-end; }
+.cashier-session-clock strong {
+  color: #344b38; font-size: 12px; line-height: 1.25;
+  font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.cashier-session-clock small {
+  color: #858676; font-size: 9px; line-height: 1.15; white-space: nowrap;
+}
+.pos-topbar {
+  display: flex !important; flex-direction: column;
+  align-items: stretch; gap: 10px;
+}
+.pos-topbar-heading {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; min-width: 0; width: 100%;
+}
+.pos-topbar-title-block { min-width: 0; }
+.pos-topbar .pos-search-wrap { width: 100%; align-self: stretch; }
+.top-bar .cashier-session-widget,
+.stocks-top-bar .cashier-session-widget,
+.transaction-history-header .cashier-session-widget { margin-left: auto; }
+@media (max-width: 760px) {
+  .pos-topbar-heading { align-items: flex-start; flex-wrap: wrap; }
+  .cashier-session-widget { gap: 7px; padding: 6px 8px; }
+  .cashier-session-copy { max-width: 105px; }
+  .cashier-session-avatar { width: 34px; height: 34px; flex-basis: 34px; }
+  .cashier-session-clock { min-width: 82px; }
+  .stocks-top-bar { flex-wrap: wrap; }
+  .stocks-top-bar .cashier-session-widget { order: 3; margin-left: auto; }
+}
+@media (max-width: 520px) {
+  .cashier-session-widget { gap: 6px; padding: 5px 7px; }
+  .cashier-session-label { font-size: 7px; }
+  .cashier-session-name { max-width: 88px; font-size: 11px; }
+  .cashier-session-clock strong { font-size: 11px; }
+  .cashier-session-clock small { font-size: 8px; }
+}
+</style>
+
+<script id="cashier-session-widget-script">
+(function initCashierSessionHeader() {
+  "use strict";
+
+  const RESTAURANT_ID = "5e562ca7-38aa-4894-8265-ddca2f4e61b6";
+  const widgetSelector = "[data-cashier-session-widget]";
+  let clockTimer = null;
+  let identityLoadInProgress = false;
+  let lastLoadedUserId = null;
+
+  function getWidgets() {
+    return Array.from(document.querySelectorAll(widgetSelector));
+  }
+
+  function initialsFor(name) {
+    const parts = String(name || "Cashier").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "C";
+    return parts.slice(0, 2).map(part => part.charAt(0).toUpperCase()).join("");
+  }
+
+  function safePhotoUrl(value) {
+    if (typeof value !== "string" || !value.trim()) return "";
+    try {
+      const parsed = new URL(value.trim(), window.location.href);
+      return ["https:", "http:"].includes(parsed.protocol) ? parsed.href : "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function setAvatar(avatar, displayName, photoUrl) {
+    if (!avatar) return;
+    avatar.textContent = initialsFor(displayName);
+    const url = safePhotoUrl(photoUrl);
+    if (!url) return;
+
+    const image = document.createElement("img");
+    image.alt = displayName + " profile picture";
+    image.referrerPolicy = "no-referrer";
+    image.src = url;
+    image.addEventListener("error", function() {
+      image.remove();
+      avatar.textContent = initialsFor(displayName);
+    }, { once: true });
+    avatar.textContent = "";
+    avatar.appendChild(image);
+  }
+
+  function applyIdentity(profile) {
+    getWidgets().forEach(function(widget) {
+      widget.hidden = false;
+      const nameNode = widget.querySelector("[data-cashier-display-name]");
+      const roleNode = widget.querySelector("[data-cashier-role]");
+      const avatarNode = widget.querySelector("[data-cashier-avatar]");
+      if (nameNode) nameNode.textContent = profile.displayName;
+      if (roleNode) roleNode.textContent = profile.role;
+      setAvatar(avatarNode, profile.displayName, profile.photoUrl);
+    });
+  }
+
+  function hideIdentity() {
+    getWidgets().forEach(function(widget) { widget.hidden = true; });
+    lastLoadedUserId = null;
+  }
+
+  function updateRestaurantClock() {
+    const now = new Date();
+    const timezone = String(window.HALINA_RESTAURANT_PROFILE?.timezone || "").trim();
+    let timeText = "";
+    let dateText = "";
+    try {
+      const timeOptions = { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true };
+      const dateOptions = { weekday: "short", month: "short", day: "numeric", year: "numeric" };
+      if (timezone) { timeOptions.timeZone = timezone; dateOptions.timeZone = timezone; }
+      timeText = new Intl.DateTimeFormat("en-US", timeOptions).format(now);
+      dateText = new Intl.DateTimeFormat("en-US", dateOptions).format(now);
+    } catch (error) {
+      console.warn("Cashier live clock could not use the restaurant timezone:", error);
+      timeText = now.toLocaleTimeString("en-US");
+      dateText = now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+    }
+
+    getWidgets().forEach(function(widget) {
+      const timeNode = widget.querySelector("[data-cashier-live-time]");
+      const dateNode = widget.querySelector("[data-cashier-live-date]");
+      if (timeNode) timeNode.textContent = timeText;
+      if (dateNode) dateNode.textContent = dateText;
+      widget.querySelector(".cashier-session-clock")?.setAttribute(
+        "title", timezone ? "Restaurant time · " + timezone : "Device local time"
+      );
+    });
+  }
+
+  async function loadCashierIdentity(force = false) {
+    if (identityLoadInProgress || !cashierAuthClient) return;
+    identityLoadInProgress = true;
+    try {
+      const { data: sessionData, error: sessionError } = await cashierAuthClient.auth.getSession();
+      const session = sessionData?.session;
+      if (sessionError || !session?.user?.id) {
+        hideIdentity();
+        return;
+      }
+
+      const user = session.user;
+      if (!force && lastLoadedUserId === user.id && getWidgets().some(widget => !widget.hidden)) return;
+
+      let staff = null;
+      const { data, error } = await cashierAuthClient
+        .from("restaurant_users")
+        .select("display_name,full_name,cashier_username,position,role")
+        .eq("user_id", user.id)
+        .eq("restaurant_id", RESTAURANT_ID)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (error) {
+        console.warn("Could not load cashier display name from restaurant_users:", error.message);
+      } else {
+        staff = data;
+      }
+
+      const userMetadata = user.user_metadata || {};
+      const appMetadata = user.app_metadata || {};
+      const displayName = String(
+        staff?.display_name ||
+        staff?.full_name ||
+        userMetadata.display_name ||
+        userMetadata.full_name ||
+        userMetadata.name ||
+        staff?.cashier_username ||
+        "Cashier"
+      ).trim() || "Cashier";
+      const role = String(staff?.position || staff?.role || "Cashier").trim() || "Cashier";
+      const photoUrl =
+        userMetadata.profile_picture_url ||
+        userMetadata.avatar_url ||
+        userMetadata.picture ||
+        userMetadata.photo_url ||
+        userMetadata.image_url ||
+        appMetadata.avatar_url ||
+        "";
+
+      applyIdentity({ displayName, role, photoUrl });
+      lastLoadedUserId = user.id;
+    } catch (error) {
+      console.warn("Cashier identity could not be loaded:", error.message || error);
+    } finally {
+      identityLoadInProgress = false;
+    }
+  }
+
+  updateRestaurantClock();
+  if (!clockTimer) clockTimer = setInterval(updateRestaurantClock, 1000);
+  window.addEventListener("restaurantprofileloaded", updateRestaurantClock);
+  window.addEventListener("restaurantprofilechanged", updateRestaurantClock);
+
+  // Run once after the existing Auth client has been initialized.
+  loadCashierIdentity(true);
+  if (cashierAuthClient) {
+    cashierAuthClient.auth.onAuthStateChange(function(event) {
+      if (event === "SIGNED_OUT") {
+        hideIdentity();
+        return;
+      }
+      if (["SIGNED_IN", "INITIAL_SESSION", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event)) {
+        window.setTimeout(function() { loadCashierIdentity(true); }, 0);
+      }
+    });
+  }
 })();
 </script>
 
