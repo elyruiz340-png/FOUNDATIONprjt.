@@ -2083,6 +2083,62 @@ const NAV=[['overview','Overview','home'],['sales','Sales & Analytics','chart'],
 /* 10. STATE + HELPERS */
 const ss=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 const PROFILE={name:'HALINA BISTRO CAFE',address:'',contact_number:'',email:'',website:'',logo_url:'',operating_hours:{},appearance_settings:{font_family:'Inter',font_scale:1,logo_scale:1.15},currency:'USD',timezone:'America/New_York'};
+const OPERATING_DAYS=[
+  {key:'monday',label:'Monday'},
+  {key:'tuesday',label:'Tuesday'},
+  {key:'wednesday',label:'Wednesday'},
+  {key:'thursday',label:'Thursday'},
+  {key:'friday',label:'Friday'},
+  {key:'saturday',label:'Saturday'},
+  {key:'sunday',label:'Sunday'}
+];
+let operatingHoursDirty=false;
+let operatingHoursDraft=null;
+function getOperatingHoursValue(dayKey,field,fallback){
+  const draft=operatingHoursDraft&&operatingHoursDraft[dayKey];
+  if(draft&&draft[field]!==undefined&&draft[field]!==null)return draft[field];
+  const saved=PROFILE.operating_hours&&PROFILE.operating_hours[dayKey];
+  return saved&&saved[field]!==undefined&&saved[field]!==null?saved[field]:fallback;
+}
+function captureOperatingHoursDraft(){
+  const draft={};
+  for(const day of OPERATING_DAYS){
+    const enabled=$('#hours-'+day.key+'-enabled');
+    const openInput=$('#hours-'+day.key+'-open');
+    const closeInput=$('#hours-'+day.key+'-close');
+    draft[day.key]={
+      is_open:!!enabled?.checked,
+      open_time:openInput?.value||'10:00',
+      close_time:closeInput?.value||'22:00'
+    };
+  }
+  operatingHoursDraft=draft;
+}
+function collectOperatingHours(){
+  const schedule={};
+  for(const day of OPERATING_DAYS){
+    const enabled=$('#hours-'+day.key+'-enabled');
+    const openInput=$('#hours-'+day.key+'-open');
+    const closeInput=$('#hours-'+day.key+'-close');
+    const isOpen=!!enabled?.checked;
+    if(!isOpen){
+      schedule[day.key]={is_open:false,open_time:null,close_time:null};
+      continue;
+    }
+    const openTime=openInput?.value||'';
+    const closeTime=closeInput?.value||'';
+    if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(openTime)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(closeTime)){
+      throw new Error('Set a valid opening and closing time for '+day.label+'.');
+    }
+    if(openTime===closeTime){
+      throw new Error('Opening and closing times cannot be identical for '+day.label+'. Use different times or mark the day closed.');
+    }
+    // A closing time earlier than opening time represents an overnight schedule.
+    schedule[day.key]={is_open:true,open_time:openTime,close_time:closeTime};
+  }
+  return schedule;
+}
+
 const BUSINESS_SETTINGS={country_code:'PH',region:null,city:null,tax_registration_type:'NOT_SET'};
 const TAX_RULES=[];let taxRulesLoading=false,taxRulesError='';
 const SERVICE_CHARGE_RULES=[];let serviceChargeLoading=false,serviceChargeError='';
@@ -2321,6 +2377,16 @@ document.addEventListener('scroll',e=>{
  const timer=setTimeout(()=>target.classList.remove('is-scrolling'),700);
  scrollHideTimers.set(target,timer);
 },true);
+document.addEventListener('change',e=>{
+  const dayKey=e.target?.dataset?.hoursDay;
+  if(!dayKey)return;
+  operatingHoursDirty=true;
+  if(e.target.dataset.hoursField==='is_open'){
+    const row=e.target.closest('.bs-hour-row');
+    row?.querySelectorAll('input[type="time"]').forEach(input=>{input.disabled=!e.target.checked;});
+  }
+  captureOperatingHoursDraft();
+});
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
 document.addEventListener('submit',e=>{if(e.target.id==='tmAddForm')addTable(e);else if(e.target.id==='taxRuleForm')saveTaxRule(e);else if(e.target.id==='serviceChargeForm')saveServiceChargeRule(e);else if(e.target.id==='paymentMethodForm')savePaymentMethod(e);else if(e.target.id==='discountRuleForm')saveDiscountRule(e);else if(e.target.id==='voucherForm')saveVoucher(e)});
 document.addEventListener('change',e=>{if(e.target.id==='pmKey'){const n={cash:'Cash',card:'Card / Terminal',qr_manual:'Manual QR Payment',online:'Online Payment Gateway'};$('#pmName').value=n[e.target.value]||'';if(e.target.value==='cash'){$('#pmFeePercent').value='0';$('#pmFeeFixed').value='0';}}});
@@ -2427,7 +2493,14 @@ settings:()=>{
  </section>
  <section class="bs-panel">
   <div class="bs-panel-head"><div class="bs-head-icon">${I('pulse',22)}</div><div class="bs-head-copy"><h3>Operating Hours</h3><p>Set your restaurant's regular operating hours.</p></div></div>
-  <div class="bs-hours-grid">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d=>`<div class="bs-hour-row"><b>${d}</b><input aria-label="${d} opening time" type="time" value="10:00"><span>to</span><input aria-label="${d} closing time" type="time" value="22:00"><label><input type="checkbox" checked aria-label="${d} open"></label></div>`).join('')}</div>
+  <div class="bs-hours-grid">${OPERATING_DAYS.map(day=>{
+    const storedOpen=getOperatingHoursValue(day.key,'is_open',true);
+    const savedOpen=storedOpen!==false&&storedOpen!=='false';
+    const openTime=getOperatingHoursValue(day.key,'open_time','10:00');
+    const closeTime=getOperatingHoursValue(day.key,'close_time','22:00');
+    const validTime=value=>typeof value==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+    return `<div class="bs-hour-row" data-operating-day="${day.key}"><b>${day.label}</b><input id="hours-${day.key}-open" data-hours-day="${day.key}" data-hours-field="open_time" aria-label="${day.label} opening time" type="time" value="${validTime(openTime)?openTime:'10:00'}" ${savedOpen?'':'disabled'}><span>to</span><input id="hours-${day.key}-close" data-hours-day="${day.key}" data-hours-field="close_time" aria-label="${day.label} closing time" type="time" value="${validTime(closeTime)?closeTime:'22:00'}" ${savedOpen?'':'disabled'}><label><input id="hours-${day.key}-enabled" data-hours-day="${day.key}" data-hours-field="is_open" type="checkbox" ${savedOpen?'checked':''} aria-label="${day.label} open"></label></div>`;
+  }).join('')}</div>
  </section>
  <section class="bs-panel">
   <div class="bs-panel-head"><div class="bs-head-icon">${I('branch',22)}</div><div class="bs-head-copy"><h3>Business Location & Registration</h3><p>Establish the restaurant's jurisdiction before configuring tax rules.</p></div></div>
@@ -3190,8 +3263,13 @@ async function loadRestaurantProfile(){
   ]);
   if(error)throw error;
   if(businessError)throw businessError;
+  const hadUnsavedOperatingHours=operatingHoursDirty&&!!operatingHoursDraft;
   Object.assign(PROFILE,data||{});
   Object.assign(BUSINESS_SETTINGS,business||{});
+  if(!hadUnsavedOperatingHours){
+    operatingHoursDirty=false;
+    operatingHoursDraft=null;
+  }
   if(window.wpSyncFromProfile)wpSyncFromProfile();
   const country=$('#businessCountry'),region=$('#businessRegion'),city=$('#businessCity'),registration=$('#businessTaxRegistration'),currency=$('#businessCurrency'),timezone=$('#businessTimezone');
   if(country)country.value=BUSINESS_SETTINGS.country_code||'PH';
@@ -3217,14 +3295,19 @@ async function saveRestaurantProfile(){
   const countryCode=$('#businessCountry')?.value||'PH';
   const taxRegistration=$('#businessTaxRegistration')?.value||'NOT_SET';
   if((countryCode==='PH'&&!['NOT_SET','PH_VAT_REGISTERED','PH_NON_VAT'].includes(taxRegistration))||(countryCode==='US'&&!['NOT_SET','US_SALES_TAX'].includes(taxRegistration))){toast('Choose a tax registration type that matches the selected country.',1);return;}
-  const profilePayload={name,address:$('#profileAddress')?.value.trim()||null,contact_number:$('#profilePhone')?.value.trim()||null,email:email||null,website:website||null,appearance_settings,currency,timezone};
+  let operatingHoursPayload;
+  if(operatingHoursDirty){
+    try{operatingHoursPayload=collectOperatingHours();}
+    catch(validationError){toast(validationError.message||'Check the operating hours.',1);return;}
+  }
+  const profilePayload={name,address:$('#profileAddress')?.value.trim()||null,contact_number:$('#profilePhone')?.value.trim()||null,email:email||null,website:website||null,appearance_settings,currency,timezone,...(operatingHoursDirty?{operating_hours:operatingHoursPayload}:{})};
   const btn=$('#pg [data-a="profilesave"]');if(btn){btn.disabled=true;btn.textContent='Saving…';}
   const {data,error}=await sb.from('restaurants').update(profilePayload).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
   if(error||!data){if(btn){btn.disabled=false;btn.textContent='Save Changes';}toast(error?.message||'No restaurant profile was updated. Check your owner/admin access.',1);return;}
   const businessPayload={restaurant_id:HALINA_RESTAURANT_ID,country_code:countryCode,region:$('#businessRegion')?.value.trim()||null,city:$('#businessCity')?.value.trim()||null,tax_registration_type:taxRegistration,updated_at:new Date().toISOString()};
   const {error:businessError}=await sb.from('restaurant_business_settings').upsert(businessPayload,{onConflict:'restaurant_id'});
   if(businessError){if(btn){btn.disabled=false;btn.textContent='Save Changes';}toast('Profile saved, but business jurisdiction was not saved: '+businessError.message,1);return;}
-  await writeAdminAudit('Restaurant Profile','Updated restaurant profile and business settings','restaurant_profile',HALINA_RESTAURANT_ID,{name,currency,timezone,country_code:countryCode,region:businessPayload.region,city:businessPayload.city,tax_registration_type:taxRegistration});Object.assign(PROFILE,profilePayload);Object.assign(BUSINESS_SETTINGS,businessPayload);window.dispatchEvent(new CustomEvent('restaurantprofilechanged',{detail:PROFILE}));render();toast('Business profile and jurisdiction saved.');
+  await writeAdminAudit('Restaurant Profile','Updated restaurant profile and business settings','restaurant_profile',HALINA_RESTAURANT_ID,{name,currency,timezone,country_code:countryCode,region:businessPayload.region,city:businessPayload.city,tax_registration_type:taxRegistration,...(operatingHoursDirty?{operating_hours:operatingHoursPayload}:{})});Object.assign(PROFILE,profilePayload);Object.assign(BUSINESS_SETTINGS,businessPayload);operatingHoursDirty=false;operatingHoursDraft=null;window.dispatchEvent(new CustomEvent('restaurantprofilechanged',{detail:PROFILE}));render();toast('Business profile and jurisdiction saved.');
 }
 $('#pg').addEventListener('change',async e=>{
   if(e.target.id!=='profileLogoFile')return;
