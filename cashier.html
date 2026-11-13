@@ -7200,22 +7200,22 @@ background:
 
     <div>
       <span>Subtotal</span>
-      <strong>₱0.00</strong>
+      <strong>$0.00</strong>
     </div>
 
     <div>
       <span>VAT</span>
-      <strong>₱0.00</strong>
+      <strong>$0.00</strong>
     </div>
 
     <div>
       <span>Discount</span>
-      <strong>₱0.00</strong>
+      <strong>$0.00</strong>
     </div>
 
     <div class="pos-total">
       <span>Total</span>
-      <strong>₱0.00</strong>
+      <strong>$0.00</strong>
     </div>
 
   </div>
@@ -7279,21 +7279,21 @@ background:
         <div class="checkout-summary-lines">
           <div>
             <span>Subtotal</span>
-            <strong id="checkoutSubtotal">₱0.00</strong>
+            <strong id="checkoutSubtotal">$0.00</strong>
           </div>
           <div>
             <span>VAT</span>
-            <strong id="checkoutVat">₱0.00</strong>
+            <strong id="checkoutVat">$0.00</strong>
           </div>
           <div>
             <span>Discount</span>
-            <strong id="checkoutDiscount">₱0.00</strong>
+            <strong id="checkoutDiscount">$0.00</strong>
           </div>
         </div>
 
         <div class="checkout-total">
           <span>Total Amount</span>
-          <strong id="checkoutTotal">₱0.00</strong>
+          <strong id="checkoutTotal">$0.00</strong>
         </div>
 
       </div>
@@ -7316,17 +7316,17 @@ background:
         <div class="payment-success-details">
           <div class="payment-success-detail">
             <span>Total Paid</span>
-            <strong id="successTotalPaid">₱0.00</strong>
+            <strong id="successTotalPaid">$0.00</strong>
           </div>
 
           <div class="payment-success-detail">
             <span>Amount Received</span>
-            <strong id="successAmountReceived">₱0.00</strong>
+            <strong id="successAmountReceived">$0.00</strong>
           </div>
 
           <div class="payment-success-detail">
             <span>Change</span>
-            <strong id="successChange">₱0.00</strong>
+            <strong id="successChange">$0.00</strong>
           </div>
         </div>
 
@@ -7438,7 +7438,7 @@ background:
 
         <div class="checkout-cash-field">
           <label for="checkoutCashAmountDue">Amount Due</label>
-          <strong id="checkoutCashAmountDue">₱0.00</strong>
+          <strong id="checkoutCashAmountDue">$0.00</strong>
         </div>
 
         <div class="checkout-cash-field">
@@ -7455,7 +7455,7 @@ background:
 
         <div class="checkout-cash-field">
           <label>Change</label>
-          <strong id="checkoutCashChange">₱0.00</strong>
+          <strong id="checkoutCashChange">$0.00</strong>
         </div>
 
         <p
@@ -7500,7 +7500,7 @@ background:
 
             <div class="success-receipt-total">
               TOTAL:
-              <strong id="successReceiptTotal">₱0.00</strong>
+              <strong id="successReceiptTotal">$0.00</strong>
             </div>
 
             <p class="success-receipt-footer">
@@ -10225,7 +10225,7 @@ function renderSupabasePosMenu(items, categories) {
       ' data-stock-product-id="' + escapePosMenuText(item.stock_product_id || "") + '">' +
       '<div class="pos-menu-image">' + imageMarkup + '</div>' +
       '<h3>' + escapePosMenuText(name) + '</h3>' +
-      '<p>₱' + (Number.isFinite(price) ? price.toLocaleString("en-PH", {minimumFractionDigits: 0, maximumFractionDigits: 2}) : "0") + '</p>' +
+      '<p>' + formatCheckoutMoney(Number.isFinite(price) ? price : 0) + '</p>' +
       '<button type="button"' + ((!name || !Number.isFinite(price) || price < 0) ? ' disabled' : '') + '>Add</button>' +
       '</div>';
   }).join("");
@@ -10293,9 +10293,9 @@ if (posMenuGrid && !posMenuGrid.dataset.supabaseMenuBound) {
     if (!nameElement || !priceElement) return;
 
     const name = nameElement.textContent.trim();
-    const priceMatch = priceElement.textContent.match(/₱\s*([\d,]+(?:\.\d{1,2})?)/);
+    const priceMatch = priceElement.textContent.match(/([\d,]+(?:\.\d{1,2})?)/);
     if (!priceMatch) {
-      alert("Hindi mabasa ang presyo para sa " + name + ". I-check ang menu item sa Admin.");
+      alert("Could not read the price for " + name + ". Check the menu item in Admin.");
       return;
     }
 
@@ -10408,7 +10408,7 @@ function renderPosCart() {
           </strong>
 
           <span>
-            ₱${item.price.toLocaleString()}
+            ${formatCheckoutMoney(item.price)}
           </span>
 
         </div>
@@ -10446,7 +10446,7 @@ function renderPosCart() {
 
 
           <strong class="pos-cart-item-total">
-            ₱${itemTotal.toLocaleString()}
+            ${formatCheckoutMoney(itemTotal)}
           </strong>
 
 
@@ -10667,14 +10667,7 @@ function updatePosCartSummary() {
     if (value) {
 
       value.textContent =
-        "₱" +
-        subtotal.toLocaleString(
-          undefined,
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }
-        );
+        formatCheckoutMoney(subtotal);
 
     }
 
@@ -10691,14 +10684,7 @@ function updatePosCartSummary() {
     if (value) {
 
       value.textContent =
-        "₱" +
-        vat.toLocaleString(
-          undefined,
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }
-        );
+        formatCheckoutMoney(vat);
 
     }
 
@@ -10715,14 +10701,7 @@ function updatePosCartSummary() {
     if (value) {
 
       value.textContent =
-        "₱" +
-        discount.toLocaleString(
-          undefined,
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }
-        );
+        formatCheckoutMoney(discount);
 
     }
 
@@ -10745,14 +10724,7 @@ function updatePosCartSummary() {
     if (value) {
 
       value.textContent =
-        "₱" +
-        total.toLocaleString(
-          undefined,
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }
-        );
+        formatCheckoutMoney(total);
 
     }
 
@@ -11342,7 +11314,7 @@ function renderSelectedOrderDetails(order, detailsPanel) {
    return `
 <div class="order-item">
 <span>${escapeHtml(item.name || "Unknown Item")} × ${quantity}</span>
-<strong>₱${lineTotal.toLocaleString()}</strong>
+<strong>${formatCheckoutMoney(lineTotal)}</strong>
 </div>
    `;
  }).join("");
@@ -11423,7 +11395,7 @@ function renderSelectedOrderDetails(order, detailsPanel) {
 </div>
 <div class="order-details-total">
 <span>ORDER TOTAL</span>
-<strong>₱${total.toLocaleString()}</strong>
+<strong>${formatCheckoutMoney(total)}</strong>
 </div>
  ${acceptButtonHtml}
  ${confirmPaymentButtonHtml}
@@ -11494,7 +11466,7 @@ function createOrderCard(order, newOrderIds) {
 <span>${escapeHtml(paymentStatus.toUpperCase())}</span>
 </div>
 <div class="compact-order-footer">
-<strong>₱${total.toLocaleString()}</strong>
+<strong>${formatCheckoutMoney(total)}</strong>
 <button
        type="button"
        class="view-order-details-btn"
@@ -11773,9 +11745,7 @@ function createCompletedOrderCard(
           </span>
 
           <strong>
-            ₱${(
-              price * quantity
-            ).toLocaleString()}
+            ${formatCheckoutMoney(price * quantity)}
           </strong>
 
         </div>
@@ -11912,10 +11882,7 @@ function createCompletedOrderCard(
       </span>
 
       <strong>
-        ₱${Number(
-          order.total ||
-          0
-        ).toLocaleString()}
+        ${formatCheckoutMoney(Number(order.total || 0))}
       </strong>
 
     </div>
@@ -12020,7 +11987,7 @@ function renderTransactionHistory() {
         <td>${escapeHtml(String(order.payment_method || "—").toUpperCase())}</td>
         <td><span class="transaction-status transaction-${escapeHtml(category)}">${escapeHtml(categoryLabel.toUpperCase())}</span></td>
         <td>${escapeHtml(orderStatus.toUpperCase())}</td>
-        <td class="transaction-amount">₱${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        <td class="transaction-amount">${formatCheckoutMoney(total)}</td>
       </tr>
     `;
   }).join("");
