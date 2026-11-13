@@ -5,80 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dispatcher</title>
 <style>
-:root{--restaurant-font-family:Inter,Arial,sans-serif;--restaurant-font-scale:1;--restaurant-logo-scale:1.15}
-:root{--bg:#f4f6f2;--panel:#fff;--ink:#1f2b23;--muted:#788279;--line:#e4e9e2;--green:#238447;--green-soft:#e9f4eb;--amber:#fff3dc;--amber-ink:#946516;--blue:#edf2ff;--blue-ink:#41639c;--shadow:0 5px 18px rgba(31,53,36,.055)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--restaurant-font-family),Arial,sans-serif;font-size:calc(16px * var(--restaurant-font-scale))}
-button{font:inherit;cursor:pointer}
-.topbar{height:88px;background:#fff;border-bottom:1px solid var(--line);padding:12px clamp(18px,2.5vw,36px);display:flex;align-items:center;justify-content:space-between;gap:20px}
-.brand{display:flex;align-items:center;gap:13px;min-width:0}
-.logo{height:48px;width:48px;border-radius:14px;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-size:23px;flex:0 0 auto}
-.logo img{width:calc(34px * var(--restaurant-logo-scale));height:calc(34px * var(--restaurant-logo-scale));object-fit:contain}
-.brand h1{font-size:19px;line-height:1.2;margin:0;font-weight:800;letter-spacing:-.02em}
-.brand p{margin:3px 0 0;color:var(--muted);font-size:12px}
-.clock-wrap{text-align:right;flex:0 0 auto}
-.clock{font-size:clamp(25px,3vw,36px);font-weight:800;letter-spacing:-.045em;line-height:1;color:var(--green);font-variant-numeric:tabular-nums}
-.clock-date{font-size:12px;color:var(--muted);margin-top:5px}
-.live-label{display:inline-flex;align-items:center;gap:7px;color:var(--green);font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-top:5px}
-.dot{width:7px;height:7px;border-radius:50%;background:#38a65d;box-shadow:0 0 0 3px #e5f4e8}
-.wrap{height:calc(100vh - 88px);min-height:440px;padding:18px clamp(12px,1.8vw,26px) 20px;max-width:1900px;margin:0 auto}
-.notice{display:none;border:1px solid #f0d5a0;background:#fff9e9;color:#72551e;border-radius:10px;margin-bottom:12px;padding:10px 13px;font-size:12px}
-.notice.show{display:block}
-.board{height:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
-.lane{min-width:0;min-height:0;display:flex;flex-direction:column;border:1px solid #e1e8df;border-radius:19px;padding:12px;background:#f9fbf8;box-shadow:0 8px 24px rgba(32,55,37,.075),0 2px 5px rgba(32,55,37,.035)}
-.lane.incoming{background:linear-gradient(180deg,#f0f7f0,#f9fbf8 45%)}
-.lane.preparing{background:linear-gradient(180deg,#fff7e8,#fcfaf5 45%)}
-.lane.ready{background:linear-gradient(180deg,#edf7ed,#f8fbf7 45%)}
-.lane.served{background:linear-gradient(180deg,#f3f4f0,#fafaf8 45%)}
-.lane-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 7px 14px;flex:0 0 auto}
-.lane-title{font-size:clamp(15px,1.35vw,20px);font-weight:800;letter-spacing:-.025em;display:flex;align-items:center;gap:9px}
-.lane-icon{width:31px;height:31px;border-radius:10px;background:#fff;display:grid;place-items:center;color:var(--green);font-size:17px;box-shadow:0 2px 7px rgba(0,0,0,.04)}
-.preparing .lane-icon{color:#a8751d}.ready .lane-icon{color:#27834a}.served .lane-icon{color:#54705b}
-.lane-count{min-width:27px;height:27px;padding:0 8px;border-radius:999px;background:var(--green);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center}
-.preparing .lane-count{background:#bd8a34}.served .lane-count{background:#78917d}
-.lane-list{overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:10px;padding:0 2px 4px;scrollbar-width:thin;scrollbar-color:#cbd7ca transparent}
-.order-card{background:#fff;border:1px solid #e5ebe3;border-radius:15px;box-shadow:0 4px 14px rgba(31,53,36,.075),0 1px 3px rgba(31,53,36,.035);overflow:hidden;min-width:0;flex:0 0 auto;transition:box-shadow .18s ease,transform .18s ease}
-.order-card:hover{box-shadow:0 8px 20px rgba(31,53,36,.11),0 2px 5px rgba(31,53,36,.05);transform:translateY(-1px)}
-.order-top{padding:14px 14px 9px;display:flex;justify-content:space-between;align-items:flex-start;gap:9px}
-.order-main{min-width:0}
-.order-number{font-size:18px;font-weight:900;letter-spacing:-.035em;line-height:1.15;color:#17251b}
-.order-meta{margin-top:5px;color:#667268;font-size:12px;font-weight:600;line-height:1.45;display:flex;gap:5px;flex-wrap:wrap}
-.elapsed{flex:0 0 auto;padding:6px 9px;border-radius:999px;background:#fff0e9;color:#b44c32;font-size:11px;font-weight:850;white-space:nowrap}
-.preparing .elapsed{background:var(--amber);color:var(--amber-ink)}
-.ready .elapsed{background:var(--green-soft);color:var(--green)}
-.order-items{padding:1px 14px 12px}
-.item{display:flex;gap:9px;align-items:flex-start;padding:5px 0}
-.qty{flex:0 0 auto;font-size:14px;font-weight:900;color:#247d43;min-width:27px;line-height:1.4}
-.itemname{font-size:14px;font-weight:650;line-height:1.4;color:#29372e;overflow-wrap:anywhere}
-.instructions{margin:6px 0 2px;padding:8px 9px;border-radius:9px;background:#fff8e8;color:#745d2b;font-size:11px;line-height:1.45}
-.order-action{padding:1px 13px 13px}
-.action{width:100%;border:0;background:linear-gradient(180deg,#2b9250,#207a40);color:#fff;border-radius:11px;padding:11px 12px;font-size:13px;font-weight:850;letter-spacing:.005em;min-height:42px;box-shadow:0 3px 8px rgba(31,132,69,.18);transition:filter .15s ease,transform .15s ease,box-shadow .15s ease}
-.action:hover:not(:disabled){filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 5px 11px rgba(31,132,69,.22)}.action:active:not(:disabled){transform:translateY(0)}.action:focus-visible{outline:3px solid rgba(35,132,71,.25);outline-offset:2px}.action:disabled{opacity:.55;cursor:wait;box-shadow:none}
-.served .order-card{opacity:.96}
-.served .order-top{padding-bottom:12px}.served .order-number{font-size:16px}.served .itemname{font-size:13px}.served .qty{font-size:13px;min-width:25px}
-.served-check{color:#fff;background:#32924e;border-radius:50%;width:23px;height:23px;display:grid;place-items:center;font-size:13px;flex:0 0 auto}
-.empty{background:rgba(255,255,255,.65);border:1px dashed #dbe4d9;border-radius:12px;padding:17px 9px;text-align:center;color:#89938a;font-size:11px}
-@media(max-width:900px){.wrap{height:auto;min-height:calc(100vh - 80px)}.board{grid-template-columns:repeat(2,minmax(0,1fr))}.lane{min-height:380px}.itemname{font-size:13px}}
-@media(max-width:560px){.topbar{height:76px;padding:10px 12px}.logo{width:40px;height:40px}.brand h1{font-size:14px}.brand p{font-size:10px}.clock{font-size:23px}.clock-date{font-size:10px}.wrap{height:auto;padding:10px}.board{grid-template-columns:1fr}.lane{min-height:280px}}
-body:not(.restaurant-profile-ready) .brand h1{visibility:hidden!important}
+:root{--restaurant-font-family:Inter,"Segoe UI Variable",Segoe UI,Aptos,Arial,sans-serif;--restaurant-font-scale:1;--restaurant-logo-scale:1.15;--bg:#f3f6f2;--panel:#fff;--ink:#172b20;--muted:#718076;--line:#dfe8df;--green:#236b3d;--green-soft:#eaf3e9;--amber:#a87522;--amber-soft:#fff5e4;--shadow:0 8px 22px rgba(30,55,38,.065),0 2px 5px rgba(30,55,38,.035)}
+*{box-sizing:border-box}html,body{min-height:100%}body{margin:0;background:linear-gradient(180deg,#f7f9f6 0%,var(--bg) 100%);color:var(--ink);font-family:var(--restaurant-font-family);font-size:calc(16px * var(--restaurant-font-scale));-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}button{font:inherit;cursor:pointer}
+.topbar{min-height:116px;background:rgba(255,255,255,.96);border-bottom:1px solid #e4ebe3;padding:18px clamp(18px,2.4vw,38px);display:flex;align-items:center;justify-content:space-between;gap:28px;box-shadow:0 3px 18px rgba(31,53,36,.045)}
+.brand-block{display:flex;align-items:center;gap:16px;min-width:0}.logo{height:62px;width:62px;border-radius:17px;background:linear-gradient(145deg,#edf6ed,#dcebdd);border:1px solid #dbe8da;color:var(--green);display:grid;place-items:center;font-size:24px;flex:0 0 auto;box-shadow:inset 0 1px 0 #fff,0 3px 9px rgba(35,82,48,.07);overflow:hidden}.logo img{width:calc(44px * var(--restaurant-logo-scale));height:calc(44px * var(--restaurant-logo-scale));object-fit:contain}.brand-copy{min-width:0}.brand h1{font-size:clamp(20px,2vw,26px);line-height:1.12;margin:0;font-weight:850;letter-spacing:-.045em;color:#1b3325;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand p{margin:6px 0 0;color:#75847a;font-size:12px;font-weight:750;letter-spacing:.16em;text-transform:uppercase}
+.clock-panel{min-width:370px;max-width:490px;padding:12px 19px 11px 20px;border:1px solid #e1e9e1;border-radius:18px;background:linear-gradient(145deg,#fff 0%,#f7faf6 100%);box-shadow:inset 0 1px 0 #fff,0 5px 16px rgba(31,53,36,.055);text-align:right;flex:0 0 auto}.clock-status-row{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:5px}.clock-caption{font-size:9px;font-weight:850;letter-spacing:.19em;color:#87958b;text-transform:uppercase}.live-label{display:inline-flex;align-items:center;gap:7px;color:#267746;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%;background:#32a15a;box-shadow:0 0 0 4px rgba(50,161,90,.12);animation:livePulse 2.2s ease-in-out infinite}@keyframes livePulse{0%,100%{box-shadow:0 0 0 3px rgba(50,161,90,.10)}50%{box-shadow:0 0 0 6px rgba(50,161,90,.17)}}
+.clock-main{display:flex;align-items:baseline;justify-content:flex-end;gap:9px;line-height:1}.clock{font-family:var(--restaurant-font-family);font-size:clamp(38px,4vw,49px);font-weight:820;letter-spacing:-.065em;line-height:1;color:#1d5834;font-variant-numeric:tabular-nums lining-nums;text-shadow:0 1px 0 rgba(255,255,255,.9);white-space:nowrap}.clock-period{font-size:16px;font-weight:850;letter-spacing:.02em;color:#5f8168;white-space:nowrap}.clock-meta{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:7px;color:#75847a;font-size:11px;font-weight:650;white-space:nowrap}.clock-date{font-size:11px;color:#596b5e;font-weight:700}.timezone-chip{padding:4px 8px;border:1px solid #e0e9df;border-radius:999px;background:#eef5ed;color:#58735d;font-size:9px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.wrap{height:calc(100vh - 116px);min-height:480px;padding:20px clamp(12px,1.8vw,26px) 22px;max-width:1920px;margin:0 auto}.notice{display:none;border:1px solid #f0d5a0;background:#fff9e9;color:#72551e;border-radius:12px;margin-bottom:13px;padding:11px 14px;font-size:13px;font-weight:650}.notice.show{display:block}
+.board{height:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.13fr);gap:15px;align-items:stretch}.lane{min-width:0;min-height:0;display:flex;flex-direction:column;border:1px solid #e0e8df;border-radius:20px;padding:14px;background:linear-gradient(180deg,#fbfdfb 0%,#f7faf7 100%);box-shadow:var(--shadow)}.lane.incoming{background:linear-gradient(180deg,#f1f8f1 0%,#fbfdfb 46%)}.lane.preparing{background:linear-gradient(180deg,#fff8eb 0%,#fffdfa 46%);border-color:#eee4d1}.lane.ready{background:linear-gradient(180deg,#eef7f0 0%,#fbfdfb 46%)}.lane.served{background:linear-gradient(180deg,#f0f5ef 0%,#fafcf9 46%)}
+.lane-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:3px 3px 15px;min-height:59px;flex:0 0 auto;border-bottom:1px solid rgba(220,230,219,.85);margin-bottom:13px}.lane-title{font-size:clamp(16px,1.35vw,20px);font-weight:850;letter-spacing:-.035em;display:flex;align-items:center;gap:11px;line-height:1.15;color:#1d3325;min-width:0;margin:0}.lane-title-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lane-icon{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.92);border:1px solid #e4ece3;display:grid;place-items:center;color:var(--green);flex:0 0 auto;box-shadow:0 2px 7px rgba(0,0,0,.035)}.lane-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.preparing .lane-icon{color:var(--amber);background:#fffdf7;border-color:#f0e4cd}.ready .lane-icon{color:#28804a}.served .lane-icon{color:#56745d}
+.lane-count{min-width:30px;height:30px;padding:0 9px;border-radius:999px;background:#27824a;color:#fff;font-size:13px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;box-shadow:0 2px 6px rgba(35,132,71,.16);flex:0 0 auto}.preparing .lane-count{background:#bd882e;box-shadow:0 2px 6px rgba(189,136,46,.15)}.served .lane-count{background:#78907b;box-shadow:0 2px 6px rgba(75,105,79,.12)}
+.lane-list{overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:11px;padding:0 2px 5px;scrollbar-width:thin;scrollbar-color:#c4d2c4 transparent}.lane-list::-webkit-scrollbar{width:7px}.lane-list::-webkit-scrollbar-thumb{background:#c7d5c7;border-radius:99px}.lane-list::-webkit-scrollbar-track{background:transparent}
+.order-card{background:rgba(255,255,255,.97);border:1px solid #e3ebe2;border-radius:16px;box-shadow:0 3px 10px rgba(31,53,36,.055),0 1px 2px rgba(31,53,36,.025);overflow:hidden;min-width:0;flex:0 0 auto;transition:box-shadow .18s ease,transform .18s ease,border-color .18s ease}.order-card:hover{box-shadow:0 8px 18px rgba(31,53,36,.09),0 2px 4px rgba(31,53,36,.04);transform:translateY(-1px);border-color:#cddfce}.order-top{padding:13px 14px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.order-main{min-width:0}.order-number{font-size:20px;font-weight:900;letter-spacing:-.045em;line-height:1.08;color:#172b20;font-variant-numeric:tabular-nums}.order-meta{margin-top:6px;color:#68786d;font-size:12px;font-weight:700;line-height:1.45;display:flex;gap:5px 9px;flex-wrap:wrap;align-items:center}.order-meta span{display:inline-flex;align-items:center;gap:4px}.order-meta .meta-time{color:#89958c;font-weight:650}.elapsed{flex:0 0 auto;padding:6px 9px;border-radius:999px;background:#fff0e9;color:#b44c32;font-size:11px;font-weight:850;white-space:nowrap;font-variant-numeric:tabular-nums}.preparing .elapsed{background:var(--amber-soft);color:#946719}.ready .elapsed{background:var(--green-soft);color:var(--green)}
+.order-items{padding:2px 14px 12px}.item{display:grid;grid-template-columns:31px minmax(0,1fr);gap:7px;align-items:start;padding:7px 0;border-top:1px solid #f0f3ee}.item:first-child{border-top:0}.qty{font-size:13px;font-weight:900;color:#27834a;line-height:1.5;text-align:left;font-variant-numeric:tabular-nums;white-space:nowrap}.itemname{font-size:14px;font-weight:680;line-height:1.45;color:#314238;overflow-wrap:anywhere}.instructions{margin:7px 0 2px;padding:9px 10px;border-radius:10px;background:#fff8e8;color:#745d2b;font-size:12px;line-height:1.45;border:1px solid #f3e7cc}.order-action{padding:0 13px 13px}.action{width:100%;border:0;background:linear-gradient(180deg,#2d9252,#207a40);color:#fff;border-radius:11px;padding:12px;font-size:13px;font-weight:850;letter-spacing:.005em;min-height:43px;box-shadow:0 3px 8px rgba(31,132,69,.17);transition:filter .15s ease,transform .15s ease,box-shadow .15s ease}.action:hover:not(:disabled){filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 5px 11px rgba(31,132,69,.21)}.action:active:not(:disabled){transform:translateY(0)}.action:focus-visible{outline:3px solid rgba(35,132,71,.25);outline-offset:2px}.action:disabled{opacity:.55;cursor:wait;box-shadow:none}
+.served .order-card{opacity:1}.served .order-top{padding-bottom:9px}.served .order-number{font-size:18px}.served .itemname{font-size:13px}.served .qty{font-size:12px;min-width:24px}.served-check{color:#fff;background:#32924e;border-radius:50%;width:25px;height:25px;display:grid;place-items:center;font-size:13px;flex:0 0 auto;box-shadow:0 2px 5px rgba(50,146,78,.18)}.empty{background:rgba(255,255,255,.76);border:1px dashed #d5e2d5;border-radius:13px;padding:19px 11px;text-align:center;color:#839087;font-size:12px;font-weight:650;line-height:1.45}
+@media(max-width:1100px){.topbar{min-height:108px}.clock-panel{min-width:325px}.clock{font-size:40px}.wrap{height:auto;min-height:calc(100vh - 108px)}.board{height:auto;grid-template-columns:repeat(2,minmax(0,1fr))}.lane{min-height:430px}.lane.served{grid-column:span 2}.lane-title{font-size:19px}}
+@media(max-width:680px){.topbar{align-items:stretch;flex-direction:column;gap:13px;padding:14px}.brand-block{gap:12px}.logo{height:52px;width:52px}.brand h1{font-size:20px}.brand p{font-size:10px}.clock-panel{min-width:0;max-width:none;width:100%;text-align:left}.clock-status-row{margin-bottom:6px}.clock-main,.clock-meta{justify-content:flex-start}.clock{font-size:clamp(36px,9vw,44px)}.wrap{height:auto;padding:12px}.board{grid-template-columns:minmax(0,1fr);gap:12px}.lane,.lane.served{grid-column:auto;min-height:300px}.lane-title{font-size:18px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><div class="logo">✦</div><div><h1>HALINA BISTRO CAFE</h1><p>Dispatcher</p></div></div>
-  <div class="clock-wrap">
-    <div class="clock" id="restaurantClock">--:--:--</div>
-    <div class="clock-date" id="restaurantDate">Loading local time…</div>
-    <div class="live-label"><span class="dot"></span> Live</div>
+  <div class="brand-block">
+    <div class="logo" aria-label="Restaurant logo">✦</div>
+    <div class="brand-copy"><h1>HALINA BISTRO CAFE</h1><p>Dispatcher Operations</p></div>
   </div>
+  <section class="clock-panel" aria-label="Restaurant local time">
+    <div class="clock-status-row"><span class="clock-caption">Restaurant Local Time</span><span class="live-label" id="clockLiveStatus"><span class="dot"></span> Live</span></div>
+    <div class="clock-main"><span class="clock" id="restaurantClock" aria-live="off">--:--:--</span><span class="clock-period" id="clockPeriod">--</span></div>
+    <div class="clock-meta"><span class="clock-date" id="restaurantDate">Loading restaurant time…</span><span class="timezone-chip" id="restaurantTimezone">TIMEZONE</span></div>
+  </section>
 </header>
 <main class="wrap">
   <div id="notice" class="notice"></div>
   <section class="board" id="ordersBoard">
-    <section class="lane incoming"><div class="lane-head"><div class="lane-title"><span class="lane-icon">♧</span>Incoming Orders</div><span class="lane-count" id="incomingCount">0</span></div><div class="lane-list" id="incomingList"><div class="empty">Loading orders…</div></div></section>
-    <section class="lane preparing"><div class="lane-head"><div class="lane-title"><span class="lane-icon">♨</span>Preparing</div><span class="lane-count" id="preparingCount">0</span></div><div class="lane-list" id="preparingList"><div class="empty">Loading orders…</div></div></section>
-    <section class="lane ready"><div class="lane-head"><div class="lane-title"><span class="lane-icon">□</span>Ready</div><span class="lane-count" id="readyCount">0</span></div><div class="lane-list" id="readyList"><div class="empty">Loading orders…</div></div></section>
-    <section class="lane served"><div class="lane-head"><div class="lane-title"><span class="lane-icon">✓</span>Served</div><span class="lane-count" id="servedCount">0</span></div><div class="lane-list" id="servedList"><div class="empty">No served orders yet</div></div></section>
+    <section class="lane incoming" aria-labelledby="incomingHeading">
+      <div class="lane-head"><h2 class="lane-title" id="incomingHeading"><span class="lane-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 13.5h4l2 3h4l2-3h4"/><path d="M5 13.5 7 5h10l2 8.5"/><path d="M12 8v5m-2-2 2 2 2-2"/></svg></span><span class="lane-title-text">Incoming Orders</span></h2><span class="lane-count" id="incomingCount">0</span></div>
+      <div class="lane-list" id="incomingList"><div class="empty">Loading orders…</div></div>
+    </section>
+    <section class="lane preparing" aria-labelledby="preparingHeading">
+      <div class="lane-head"><h2 class="lane-title" id="preparingHeading"><span class="lane-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 15.5h14l-1.2 4H6.2l-1.2-4Z"/><path d="M7 15.5a5 5 0 0 1 10 0"/><path d="M9 9c-1-1 1-2 0-3m4 3c-1-1 1-2 0-3m4 3c-1-1 1-2 0-3"/></svg></span><span class="lane-title-text">Preparing</span></h2><span class="lane-count" id="preparingCount">0</span></div>
+      <div class="lane-list" id="preparingList"><div class="empty">No orders in this stage</div></div>
+    </section>
+    <section class="lane ready" aria-labelledby="readyHeading">
+      <div class="lane-head"><h2 class="lane-title" id="readyHeading"><span class="lane-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.2 2.6 2.6 5.5-5.7"/></svg></span><span class="lane-title-text">Ready</span></h2><span class="lane-count" id="readyCount">0</span></div>
+      <div class="lane-list" id="readyList"><div class="empty">No orders in this stage</div></div>
+    </section>
+    <section class="lane served" aria-labelledby="servedHeading">
+      <div class="lane-head"><h2 class="lane-title" id="servedHeading"><span class="lane-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 9.2 17 19 7"/><path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5"/></svg></span><span class="lane-title-text">Served</span></h2><span class="lane-count" id="servedCount">0</span></div>
+      <div class="lane-list" id="servedList"><div class="empty">No served orders yet</div></div>
+    </section>
   </section>
 </main>
 <script>
@@ -119,7 +95,14 @@ function  prettyStatus(status) {
 
   return status.replace(/_/g, " ").toUpperCase();
 }
-function timeLabel(value){if(!value)return 'Time unavailable';const d=new Date(value);if(Number.isNaN(d.getTime()))return 'Time unavailable';return d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}
+function timeLabel(value){
+  if(!value)return 'Time unavailable';
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime()))return 'Time unavailable';
+  const timezone=String(window.HALINA_RESTAURANT_PROFILE?.timezone||'').trim();
+  try{return new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',timeZone:timezone||undefined}).format(d);}
+  catch(error){return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+}
 function orderItems(order){let items=order.items;if(typeof items==='string'){try{items=JSON.parse(items)}catch{items=[]}}if(items && !Array.isArray(items) && Array.isArray(items.items))items=items.items;if(!Array.isArray(items))items=[];return items.map(it=>({name:it.item_name||it.name||it.title||it.product_name||'Menu item',qty:Number(it.quantity??it.qty??1)||1,instructions:it.special_instructions||it.instructions||''}));}
 function setNotice(message){notice.textContent=message;notice.classList.toggle('show',Boolean(message));}
 async function api(path,options={}){const response=await fetch(SUPABASE_URL+'/rest/v1/'+path,{...options,headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...(options.headers||{})}});const text=await response.text();let data;try{data=text?JSON.parse(text):null}catch{data=text}if(!response.ok)throw new Error(data?.message||data?.details||data?.hint||String(data||'Supabase request failed'));return data;}
@@ -161,7 +144,7 @@ function renderCard(o,isServed=false) {
   if(!isServed&&isNew(status))action=`<button class="action" data-action="preparing" data-id="${safe(o.id)}">Accept & Start Preparing</button>`;
   else if(!isServed&&status==='preparing')action=`<button class="action" data-action="ready" data-id="${safe(o.id)}">Mark Ready</button>`;
   else if(!isServed&&status==='ready')action=`<button class="action" data-action="served" data-id="${safe(o.id)}">Mark Served</button>`;
-  return `<article class="order-card"><div class="order-top"><div class="order-main"><div class="order-number">${safe(number)}</div><div class="order-meta"><span>${safe(type)}</span><span>·</span><span>${safe(table)}</span></div></div>${isServed?'<span class="served-check">✓</span>':`<span class="elapsed">${safe(elapsed)}</span>`}</div><div class="order-items">${itemHtml}${instructions}</div>${action?`<div class="order-action">${action}</div>`:''}</article>`;
+  return `<article class="order-card"><div class="order-top"><div class="order-main"><div class="order-number">${safe(number)}</div><div class="order-meta"><span>${safe(type)}</span><span>Table ${safe(table)}</span><span class="meta-time">${safe(timeLabel(o.created_at))}</span></div></div>${isServed?'<span class="served-check" aria-label="Served">✓</span>':`<span class="elapsed">${safe(elapsed)}</span>`}</div><div class="order-items">${itemHtml}${instructions}</div>${action?`<div class="order-action">${action}</div>`:''}</article>`;
 }
 async function updateStatus(id,status,button){
   if(!id||busyIds.has(id))return;
@@ -201,7 +184,7 @@ loadOrders();setInterval(loadOrders,10000);
   const API = 'https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/restaurants';
   const KEY = 'sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
   const RESTAURANT_ID = '5e562ca7-38aa-4894-8265-ddca2f4e61b6';
-  const NAME_SELECTORS = ['.brand h1'];
+  const NAME_SELECTORS = ['.brand-copy h1'];
   const LOGO_MODE = 'dispatcher';
   function setName(el, name) {
     if (!el || !name) return;
@@ -224,7 +207,7 @@ loadOrders();setInterval(loadOrders,10000);
     img.src = url;
   }
   function setDispatcherLogo(url) {
-    const mark = document.querySelector('.brand .logo');
+    const mark = document.querySelector('.brand-block .logo');
     if (!mark || !url) return;
     let img = mark.querySelector(':scope > img[data-restaurant-logo]');
     if (!img) {
@@ -257,10 +240,43 @@ loadOrders();setInterval(loadOrders,10000);
     restaurantNameObserver = new MutationObserver(() => replaceRestaurantNameInTextNodes(name));
     restaurantNameObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
+  let clockTimer = null;
+  function renderRestaurantClock() {
+    const clock = document.getElementById('restaurantClock');
+    const period = document.getElementById('clockPeriod');
+    const date = document.getElementById('restaurantDate');
+    const timezoneLabel = document.getElementById('restaurantTimezone');
+    const live = document.getElementById('clockLiveStatus');
+    if (!clock || !period || !date || !timezoneLabel) return;
+    const profile = window.HALINA_RESTAURANT_PROFILE || {};
+    const timezone = String(profile.timezone || '').trim();
+    if (!timezone) {
+      clock.textContent = '--:--:--'; period.textContent = '--';
+      date.textContent = 'Waiting for restaurant settings'; timezoneLabel.textContent = 'TIMEZONE NOT SET';
+      if (live) live.innerHTML = '<span class="dot"></span> CONNECTING';
+      return;
+    }
+    try {
+      const now = new Date();
+      const timeParts = new Intl.DateTimeFormat('en-US', {timeZone:timezone,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h12'}).formatToParts(now);
+      const part = type => timeParts.find(item => item.type === type)?.value || '';
+      clock.textContent = `${part('hour')}:${part('minute')}:${part('second')}`;
+      period.textContent = part('dayPeriod').toUpperCase();
+      date.textContent = new Intl.DateTimeFormat('en-US',{timeZone:timezone,weekday:'long',month:'short',day:'2-digit',year:'numeric'}).format(now);
+      timezoneLabel.textContent = timezone.replace(/_/g,' ');
+      if (live) live.innerHTML = '<span class="dot"></span> LIVE';
+    } catch (error) {
+      console.warn('Invalid restaurant timezone:',timezone,error);
+      clock.textContent='--:--:--'; period.textContent='--'; date.textContent='Check restaurant timezone setting';
+      timezoneLabel.textContent='INVALID TIMEZONE';
+      if (live) live.innerHTML='<span class="dot"></span> CHECK SETTINGS';
+    }
+  }
+  function startRestaurantClock(){renderRestaurantClock();if(clockTimer)clearInterval(clockTimer);clockTimer=setInterval(renderRestaurantClock,1000);}
   function applyProfile(profile) {
     if (!profile) return;
     const appearance = profile.appearance_settings || {};
-    const fontMap = {Inter:'Inter, Arial, sans-serif',Roboto:'Roboto, Arial, sans-serif',Poppins:'Poppins, Arial, sans-serif',Montserrat:'Montserrat, Arial, sans-serif',Lato:'Lato, Arial, sans-serif'};
+    const fontMap = {Inter:'Inter, "Segoe UI Variable", Segoe UI, Aptos, Arial, sans-serif',Roboto:'Roboto, Segoe UI, Arial, sans-serif',Poppins:'Poppins, Segoe UI, Arial, sans-serif',Montserrat:'Montserrat, Segoe UI, Arial, sans-serif',Lato:'Lato, Segoe UI, Arial, sans-serif'};
     const font = fontMap[appearance.font_family] || fontMap.Inter;
     const scale = Math.min(1.15, Math.max(0.9, Number(appearance.font_scale) || 1));
     const logoScale = Math.min(1.5, Math.max(0.8, Number(appearance.logo_scale) || 1.15));
@@ -280,8 +296,12 @@ loadOrders();setInterval(loadOrders,10000);
       else document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setInlineLogo(el, profile.logo_url));
     }
     window.HALINA_RESTAURANT_PROFILE = profile;
+    renderRestaurantClock();
   }
   window.applyRestaurantBranding = applyProfile;
+  window.addEventListener('restaurantprofileloaded', () => {
+    if (typeof render === 'function' && Array.isArray(allOrders) && allOrders.length) render();
+  });
   async function connect() {
     try {
       const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
@@ -293,13 +313,12 @@ loadOrders();setInterval(loadOrders,10000);
       if (!profile) return;
       applyProfile(profile);
       window.dispatchEvent(new CustomEvent('restaurantprofileloaded', { detail: profile }));
-    } catch (error) {
-      console.warn('Could not load centralized restaurant profile:', error);
-    }
+    } catch (error) { console.warn('Could not load centralized restaurant profile:', error); }
   }
   window.addEventListener('restaurantprofilechanged', e => applyProfile(e.detail));
   window.addEventListener('focus', connect);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) connect(); });
+  startRestaurantClock();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', connect, { once: true });
   else connect();
 })();
