@@ -7205,7 +7205,7 @@ background:
     </div>
 
     <div>
-      <span>VAT</span>
+      <span>Tax</span>
       <strong>$0.00</strong>
     </div>
 
@@ -13017,7 +13017,7 @@ if (acceptOrderBtn) {
       if (authError || !cashierAccessToken) throw new Error("Cashier login has expired. Sign in again.");
       const details = window.halinaGetOrderDetails();
       const breakdown = {currency:pricing.currency,calculated_at:new Date().toISOString(),subtotal:pricing.subtotal,discount_amount:pricing.discount,service_charge:pricing.serviceCharge,tax:pricing.tax,total:pricing.total,tax_rule_id:pricing.taxRuleId,tax_rule_name:pricing.taxRuleName,tax_calculation_method:pricing.taxCalculationMethod,service_charge_rule_id:pricing.serviceChargeRuleId,service_charge_label:pricing.serviceChargeLabel,discount_kind:pricing.discountKind,discount_id:pricing.discountId,voucher_code:pricing.voucherCode};
-      const payload = {p_restaurant_id:HALINA_RESTAURANT_ID,p_table_number:details.tableNumber,p_order_type:details.orderType,p_items:items,p_subtotal:pricing.subtotal,p_tax:pricing.tax,p_discount_amount:pricing.discount,p_service_charge:pricing.serviceCharge,p_total:pricing.total,p_payment_method:cashierSelectedPaymentMethod||"cash",p_payment_status:cashierSelectedPaymentMethod==="pending"?"pending":"paid",p_payment_reference:null,p_customer_name:details.customerName,p_customer_phone:details.customerPhone,p_special_instructions:details.deliveryAddress?"Delivery address: "+details.deliveryAddress:null,p_submission_key:getCashierOrderSubmissionKey({restaurant_id:HALINA_RESTAURANT_ID,order_type:details.orderType,items:items,pricing:{subtotal:pricing.subtotal,discount:pricing.discount,tax:pricing.tax,serviceCharge:pricing.serviceCharge,total:pricing.total,taxRuleId:pricing.taxRuleId,serviceChargeRuleId:pricing.serviceChargeRuleId,discountId:pricing.discountId},payment_method:cashierSelectedPaymentMethod||"cash"}),p_session_id:halinaStaffSessionId,p_pricing_breakdown:breakdown};
+      const payload = {p_restaurant_id:HALINA_RESTAURANT_ID,p_table_number:details.tableNumber,p_order_type:details.orderType,p_items:items,p_subtotal:pricing.subtotal,p_tax:pricing.tax,p_discount_amount:pricing.discount,p_service_charge:pricing.serviceCharge,p_total:pricing.total,p_payment_method:cashierSelectedPaymentMethod==="pending"?(cashierPricingConfig.paymentMethods[0]?.method_key||"cash"):(cashierSelectedPaymentMethod||"cash"),p_payment_status:cashierSelectedPaymentMethod==="pending"?"pending":"paid",p_payment_reference:null,p_customer_name:details.customerName,p_customer_phone:details.customerPhone,p_special_instructions:details.deliveryAddress?"Delivery address: "+details.deliveryAddress:null,p_submission_key:getCashierOrderSubmissionKey({restaurant_id:HALINA_RESTAURANT_ID,order_type:details.orderType,items:items,pricing:{subtotal:pricing.subtotal,discount:pricing.discount,tax:pricing.tax,serviceCharge:pricing.serviceCharge,total:pricing.total,taxRuleId:pricing.taxRuleId,serviceChargeRuleId:pricing.serviceChargeRuleId,discountId:pricing.discountId},payment_method:cashierSelectedPaymentMethod||"cash"}),p_session_id:halinaStaffSessionId,p_pricing_breakdown:breakdown};
       const {data:result,error:orderError}=await cashierAuthClient.rpc("place_order_with_pricing",payload);
       if(orderError)throw orderError;
       savedOrderId=result?.order_id;
