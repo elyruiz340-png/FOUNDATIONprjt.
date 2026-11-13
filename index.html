@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="./halina-config.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -1342,7 +1343,7 @@ function renderMenu() {
 
 
           <div class="menu-price">
-            ₱${item.price.toLocaleString()}
+            ${window.HALINA_CONFIG.formatMoney(item.price, window.HALINA_CONFIG.getCurrentProfile().currency)}
           </div>
 
 
@@ -1670,7 +1671,7 @@ function updateOrder() {
 
       row.innerHTML = `
         <span>${item.name} × ${item.qty}</span>
-        <span>₱${itemTotal.toLocaleString()}</span>
+        <span>${window.HALINA_CONFIG.formatMoney(itemTotal, window.HALINA_CONFIG.getCurrentProfile().currency)}</span>
       `;
 
 
@@ -1695,7 +1696,7 @@ function updateOrder() {
   document
     .getElementById("totalAmount")
     .textContent =
-      "₱" + total.toLocaleString();
+      window.HALINA_CONFIG.formatMoney(total, window.HALINA_CONFIG.getCurrentProfile().currency);
 }
 
 
@@ -2449,6 +2450,7 @@ document
       if (LOGO_MODE === 'dispatcher') setDispatcherLogo(profile.logo_url);
       else document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setInlineLogo(el, profile.logo_url));
     }
+    profile = window.HALINA_CONFIG.normalizeProfile(profile);
     window.HALINA_RESTAURANT_PROFILE = profile;
   }
   window.applyRestaurantBranding = applyProfile;
