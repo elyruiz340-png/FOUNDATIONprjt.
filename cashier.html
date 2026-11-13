@@ -12442,7 +12442,7 @@ cashierPricingConfig={taxRules:(t.data||[]).filter(cashierRuleIsCurrent).sort((a
 cashierUpdatePaymentButtons();if(typeof renderCheckoutSummary==='function')renderCheckoutSummary();window.dispatchEvent(new CustomEvent('halinapricingsettingsloaded'));return true;
 }catch(e){cashierPricingConfig={taxRules:[],serviceChargeRules:[],discountRules:[],vouchers:[],paymentMethods:[],loaded:false,error:e.message||String(e)};cashierUpdatePaymentButtons();console.error('Cashier pricing settings could not be loaded:',e);return false}}
 function cashierUpdatePaymentButtons(){const h=document.getElementById('checkoutPaymentMethods');if(!h)return;const k=new Set(cashierPricingConfig.paymentMethods.map(x=>String(x.method_key||'').toLowerCase()));const card=k.has('card')||k.has('qr_manual')||k.has('online')||k.has('debitcard');h.querySelectorAll('[data-payment-method]').forEach(b=>{const m=b.dataset.paymentMethod;if(m==='gift'||m==='discount')return;const ok=cashierPricingConfig.loaded&&(m==='cash'?k.has('cash'):m==='card'?card:m==='pending'?k.size>0:false);b.disabled=!ok;b.title=ok?'':'Enable this payment method in Admin Dashboard → Business Settings → Payment Methods.';b.setAttribute('aria-disabled',String(!ok))})}
-function getCashierPricing(){const subtotal=getCheckoutTotal(),det=typeof window.halinaGetOrderDetails==='function'?window.halinaGetOrderDetails():{},type=det.orderType||'dine_in';let discount=0,label='',error='',rec=null;
+function getCashierPricing(){const subtotal=getCheckoutTotal();let det={};try{if(typeof window.halinaGetOrderDetails==='function')det=window.halinaGetOrderDetails()}catch(_){det={orderType:window.halinaSelectedOrderType||'dine_in'}}const type=det.orderType||window.halinaSelectedOrderType||'dine_in';let discount=0,label='',error='',rec=null;
 if(cashierAppliedDiscount){if(cashierAppliedDiscount.kind==='voucher'){rec=cashierPricingConfig.vouchers.find(x=>x.id===cashierAppliedDiscount.id);if(!rec)error='Voucher is no longer active or valid.';else if(rec.usage_limit!==null||rec.per_customer_limit!==null)error='This voucher has usage limits. Redemption tracking must be enabled before it can be applied.';else if(Array.isArray(rec.applies_to)&&!rec.applies_to.includes(type))error='Voucher does not apply to this order type.';else if(subtotal<Number(rec.minimum_order_amount||0))error='Minimum order amount not reached.';else{discount=cashierDiscountAmount(rec.discount_type,rec.discount_value,subtotal,rec.max_discount_amount);label=rec.code}}else{rec=cashierPricingConfig.discountRules.find(x=>x.id===cashierAppliedDiscount.id);if(!rec)error='Discount rule is no longer active.';else if(Array.isArray(rec.applies_to)&&!rec.applies_to.includes(type))error='Discount does not apply to this order type.';else if(subtotal<Number(rec.minimum_subtotal||0))error='Minimum subtotal not reached.';else{discount=cashierDiscountAmount(rec.discount_type,rec.rate,subtotal,rec.max_discount_amount);label=rec.rule_name}}if(error)cashierAppliedDiscount=null}
 const base=Math.max(0,subtotal-discount),sr=cashierPricingConfig.serviceChargeRules.find(x=>!Array.isArray(x.applies_to)||!x.applies_to.length||x.applies_to.includes(type))||null;let serviceCharge=sr?(sr.charge_type==='percentage'?base*Number(sr.rate||0)/100:Number(sr.rate||0)):0;serviceCharge=Math.max(0,Math.round(serviceCharge*100)/100);
 const tr=cashierPricingConfig.taxRules[0]||null;let tax=0,method=tr?.calculation_method==='inclusive'?'inclusive':'exclusive',taxError='';if(tr){if(tr.tax_scope==='all_sales'){const rate=Number(tr.rate||0);tax=method==='inclusive'?(rate>0?base*rate/(100+rate):0):base*rate/100}else taxError='The active tax rule is limited to taxable items, but item-level tax classifications are not configured in this POS yet.'}
@@ -13085,7 +13085,8 @@ document.querySelectorAll("#newOrderBtn").forEach(function(button) {
     // Clear the previous cart for the next order.
     // This does not delete previously saved orders.
     posCart.length = 0;
-    cashierAppliedDiscount = null;\n    cashierSelectedPaymentMethod = "cash";
+    cashierAppliedDiscount = null;
+    cashierSelectedPaymentMethod = "cash";
 
     // Reset cash input.
     if (checkoutCashReceived) {
@@ -13992,10 +13993,10 @@ try {
 /* Restore an existing authenticated session after refresh. */
 if (cashierAuthClient) {
   cashierAuthClient.auth.getSession()
-    .then(({ data, error }) => {
+    .then(async ({ data, error }) => {
       if (error) throw error;
-
       if (data.session) {
+        await loadCashierPricingSettings();
         showCashierPOS();
       } else {
         showCashierLogin();
@@ -14010,7 +14011,12 @@ if (cashierAuthClient) {
 
   /* Return to login if the session is signed out. */
   cashierAuthClient.auth.onAuthStateChange((event) => {
+    if (["SIGNED_IN","TOKEN_REFRESHED","USER_UPDATED"].includes(event)) {
+      window.setTimeout(() => { loadCashierPricingSettings(); }, 0);
+    }
     if (event === "SIGNED_OUT") {
+      cashierPricingConfig = {taxRules:[],serviceChargeRules:[],discountRules:[],vouchers:[],paymentMethods:[],loaded:false,error:""};
+      cashierUpdatePaymentButtons();
       stopStaffHeartbeat();
       showCashierLogin("Your session has ended. Please sign in again.");
     }
