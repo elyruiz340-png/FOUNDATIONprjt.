@@ -7290,6 +7290,10 @@ background:
             <span>Discount</span>
             <strong id="checkoutDiscount">$0.00</strong>
           </div>
+          <div id="checkoutServiceChargeRow" hidden>
+            <span>Service Charge</span>
+            <strong id="checkoutServiceCharge">$0.00</strong>
+          </div>
         </div>
 
         <div class="checkout-total">
@@ -12384,11 +12388,12 @@ function renderCheckoutSummary() {
     });
   }
 
-  const subtotal = getCheckoutTotal();
-  const pricing = getCashierDiscountPricing();
-  const vat = 0;
+  const pricing = getCashierPricing();
+  const subtotal = pricing.subtotal;
+  const vat = pricing.tax;
   const discount = pricing.discount;
-  const total = Math.max(0, subtotal + vat - discount);
+  const serviceCharge = pricing.serviceCharge;
+  const total = pricing.total;
 
   if (checkoutSubtotal) {
     checkoutSubtotal.textContent =
@@ -12404,6 +12409,11 @@ function renderCheckoutSummary() {
     checkoutDiscount.textContent =
       formatCheckoutMoney(discount);
   }
+  if (checkoutServiceCharge) {
+    checkoutServiceCharge.textContent = formatCheckoutMoney(serviceCharge);
+    const serviceRow = document.getElementById("checkoutServiceChargeRow");
+    if (serviceRow) serviceRow.hidden = serviceCharge <= 0;
+  }
 
   if (checkoutTotal) {
     checkoutTotal.textContent =
@@ -12414,10 +12424,30 @@ function renderCheckoutSummary() {
 }
 
 
-let cashierAppliedDiscount=null;
-function getCashierDiscountPricing(){const subtotal=getCheckoutTotal(),details=typeof window.halinaGetOrderDetails==='function'?window.halinaGetOrderDetails():{},type=details.orderType||'dine_in';let discount=0,label='',error='';if(cashierAppliedDiscount&&window.HALINA_DISCOUNTS){const d=window.HALINA_DISCOUNTS.all(),result=cashierAppliedDiscount.kind==='voucher'?window.HALINA_DISCOUNTS.evaluateVoucher(d.vouchers.find(x=>x.id===cashierAppliedDiscount.id),subtotal,type):window.HALINA_DISCOUNTS.evaluateRule(d.rules.find(x=>x.id===cashierAppliedDiscount.id),subtotal,type);if(result.ok){discount=result.amount;label=result.label;}else{error=result.message;cashierAppliedDiscount=null;}}return{subtotal,discount,total:Math.max(0,subtotal-discount),label,error};}
-function setupCashierDiscountActions(){const host=document.getElementById('checkoutPaymentMethods');if(!host||host.dataset.discountActionsReady==='1')return;host.dataset.discountActionsReady='1';host.addEventListener('click',function(event){const button=event.target.closest('[data-payment-method]');if(!button)return;const method=button.dataset.paymentMethod;if(method!=='gift'&&method!=='discount')return;event.preventDefault();if(!window.HALINA_DISCOUNTS){alert('Discount module is not loaded.');return;}const details=typeof window.halinaGetOrderDetails==='function'?window.halinaGetOrderDetails():{},orderType=details.orderType||'dine_in',subtotal=getCheckoutTotal();if(method==='gift'){const code=prompt('Enter voucher code:');if(!code)return;const voucher=window.HALINA_DISCOUNTS.findVoucher(code),result=window.HALINA_DISCOUNTS.evaluateVoucher(voucher,subtotal,orderType);if(!result.ok){alert(result.message);return;}cashierAppliedDiscount={kind:'voucher',id:voucher.id};}else{const d=window.HALINA_DISCOUNTS.all(),eligible=d.rules.filter(x=>window.HALINA_DISCOUNTS.evaluateRule(x,subtotal,orderType).ok);if(!eligible.length){alert('No active eligible discount rules are available.');return;}const options=eligible.map((x,i)=>(i+1)+'. '+x.rule_name+' ('+(x.discount_type==='percentage'?x.rate+'%':formatCheckoutMoney(x.rate))+')').join('\n');const answer=prompt('Select an eligible discount by number:\n'+options);if(!answer)return;const index=Number(answer)-1;if(!Number.isInteger(index)||index<0||index>=eligible.length){alert('Invalid discount selection.');return;}const selected=eligible[index];if(selected.requires_verification&&!confirm('Confirm that eligibility has been checked before applying '+selected.rule_name+'?'))return;cashierAppliedDiscount={kind:'rule',id:selected.id};}renderCheckoutSummary();const p=getCashierDiscountPricing();alert('Discount applied: '+p.label+' — '+formatCheckoutMoney(p.discount));});}
-
+let cashierAppliedDiscount=null,cashierSelectedPaymentMethod='cash';
+let cashierPricingConfig={taxRules:[],serviceChargeRules:[],discountRules:[],vouchers:[],paymentMethods:[],loaded:false,error:''};
+function cashierRestaurantDate(){const z=String(window.HALINA_RESTAURANT_PROFILE?.timezone||'America/Chicago');try{return new Intl.DateTimeFormat('en-CA',{timeZone:z,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}catch(_){return new Date().toISOString().slice(0,10)}}
+function cashierRuleIsCurrent(r){const d=cashierRestaurantDate();return(!r.effective_from||String(r.effective_from)<=d)&&(!r.effective_to||String(r.effective_to)>=d)}
+function cashierDiscountAmount(t,v,b,m){let n=t==='percentage'?b*Number(v||0)/100:Number(v||0);if(m!==null&&m!==undefined)n=Math.min(n,Number(m));return Math.max(0,Math.min(b,n))}
+async function loadCashierPricingSettings(){if(!cashierAuthClient)return false;try{const {data:s,error:se}=await cashierAuthClient.auth.getSession();if(se)throw se;if(!s?.session?.user?.id)throw new Error('Cashier login is required to load pricing settings.');const id=HALINA_RESTAURANT_ID;const [t,sc,d,v,p]=await Promise.all([
+cashierAuthClient.from('restaurant_tax_rules').select('id,rule_name,rate,calculation_method,tax_scope,effective_from,effective_to,is_active').eq('restaurant_id',id).eq('is_active',true),
+cashierAuthClient.from('restaurant_service_charge_rules').select('id,rule_name,display_label,charge_type,rate,applies_to,is_mandatory,is_active,effective_from,effective_to').eq('restaurant_id',id).eq('is_active',true),
+cashierAuthClient.from('restaurant_discount_rules').select('id,rule_name,discount_category,discount_type,rate,max_discount_amount,minimum_subtotal,applies_to,requires_verification,effective_from,effective_to,is_active').eq('restaurant_id',id).eq('is_active',true),
+cashierAuthClient.from('restaurant_vouchers').select('id,code,description,discount_type,discount_value,max_discount_amount,minimum_order_amount,usage_limit,per_customer_limit,applies_to,starts_at,ends_at,is_active').eq('restaurant_id',id).eq('is_active',true),
+cashierAuthClient.from('restaurant_payment_methods').select('id,method_key,display_name,is_enabled,provider_name,fee_percent,fee_fixed,qr_image_url,instructions,sort_order').eq('restaurant_id',id).eq('is_enabled',true).order('sort_order',{ascending:true})]);
+for(const r of [t,sc,d,v,p])if(r.error)throw r.error;
+cashierPricingConfig={taxRules:(t.data||[]).filter(cashierRuleIsCurrent).sort((a,b)=>String(b.effective_from||'').localeCompare(String(a.effective_from||''))),serviceChargeRules:(sc.data||[]).filter(cashierRuleIsCurrent).sort((a,b)=>String(b.effective_from||'').localeCompare(String(a.effective_from||''))),discountRules:(d.data||[]).filter(cashierRuleIsCurrent),vouchers:(v.data||[]).filter(x=>{const n=Date.now();return(!x.starts_at||new Date(x.starts_at).getTime()<=n)&&(!x.ends_at||new Date(x.ends_at).getTime()>=n)}),paymentMethods:p.data||[],loaded:true,error:''};
+cashierUpdatePaymentButtons();if(typeof renderCheckoutSummary==='function')renderCheckoutSummary();window.dispatchEvent(new CustomEvent('halinapricingsettingsloaded'));return true;
+}catch(e){cashierPricingConfig={taxRules:[],serviceChargeRules:[],discountRules:[],vouchers:[],paymentMethods:[],loaded:false,error:e.message||String(e)};cashierUpdatePaymentButtons();console.error('Cashier pricing settings could not be loaded:',e);return false}}
+function cashierUpdatePaymentButtons(){const h=document.getElementById('checkoutPaymentMethods');if(!h)return;const k=new Set(cashierPricingConfig.paymentMethods.map(x=>String(x.method_key||'').toLowerCase()));const card=k.has('card')||k.has('qr_manual')||k.has('online')||k.has('debitcard');h.querySelectorAll('[data-payment-method]').forEach(b=>{const m=b.dataset.paymentMethod;if(m==='gift'||m==='discount')return;const ok=cashierPricingConfig.loaded&&(m==='cash'?k.has('cash'):m==='card'?card:m==='pending'?k.size>0:false);b.disabled=!ok;b.title=ok?'':'Enable this payment method in Admin Dashboard → Business Settings → Payment Methods.';b.setAttribute('aria-disabled',String(!ok))})}
+function getCashierPricing(){const subtotal=getCheckoutTotal(),det=typeof window.halinaGetOrderDetails==='function'?window.halinaGetOrderDetails():{},type=det.orderType||'dine_in';let discount=0,label='',error='',rec=null;
+if(cashierAppliedDiscount){if(cashierAppliedDiscount.kind==='voucher'){rec=cashierPricingConfig.vouchers.find(x=>x.id===cashierAppliedDiscount.id);if(!rec)error='Voucher is no longer active or valid.';else if(rec.usage_limit!==null||rec.per_customer_limit!==null)error='This voucher has usage limits. Redemption tracking must be enabled before it can be applied.';else if(Array.isArray(rec.applies_to)&&!rec.applies_to.includes(type))error='Voucher does not apply to this order type.';else if(subtotal<Number(rec.minimum_order_amount||0))error='Minimum order amount not reached.';else{discount=cashierDiscountAmount(rec.discount_type,rec.discount_value,subtotal,rec.max_discount_amount);label=rec.code}}else{rec=cashierPricingConfig.discountRules.find(x=>x.id===cashierAppliedDiscount.id);if(!rec)error='Discount rule is no longer active.';else if(Array.isArray(rec.applies_to)&&!rec.applies_to.includes(type))error='Discount does not apply to this order type.';else if(subtotal<Number(rec.minimum_subtotal||0))error='Minimum subtotal not reached.';else{discount=cashierDiscountAmount(rec.discount_type,rec.rate,subtotal,rec.max_discount_amount);label=rec.rule_name}}if(error)cashierAppliedDiscount=null}
+const base=Math.max(0,subtotal-discount),sr=cashierPricingConfig.serviceChargeRules.find(x=>!Array.isArray(x.applies_to)||!x.applies_to.length||x.applies_to.includes(type))||null;let serviceCharge=sr?(sr.charge_type==='percentage'?base*Number(sr.rate||0)/100:Number(sr.rate||0)):0;serviceCharge=Math.max(0,Math.round(serviceCharge*100)/100);
+const tr=cashierPricingConfig.taxRules[0]||null;let tax=0,method=tr?.calculation_method==='inclusive'?'inclusive':'exclusive',taxError='';if(tr){if(tr.tax_scope==='all_sales'){const rate=Number(tr.rate||0);tax=method==='inclusive'?(rate>0?base*rate/(100+rate):0):base*rate/100}else taxError='The active tax rule is limited to taxable items, but item-level tax classifications are not configured in this POS yet.'}
+tax=Math.max(0,Math.round(tax*100)/100);const total=Math.max(0,Math.round((method==='inclusive'?base+serviceCharge:base+serviceCharge+tax)*100)/100);
+return{subtotal,discount,tax,serviceCharge,total,label,error:error||taxError,taxRuleId:tr?.id||null,taxRuleName:tr?.rule_name||null,taxCalculationMethod:method,serviceChargeRuleId:sr?.id||null,serviceChargeLabel:sr?.display_label||'Service Charge',discountKind:cashierAppliedDiscount?.kind||null,discountId:cashierAppliedDiscount?.id||null,voucherCode:cashierAppliedDiscount?.kind==='voucher'?rec?.code||null:null,currency:window.HALINA_CONFIG.getCurrentProfile().currency||'USD'}}
+function getCashierDiscountPricing(){return getCashierPricing()}
+function setupCashierDiscountActions(){const h=document.getElementById('checkoutPaymentMethods');if(!h||h.dataset.discountActionsReady==='1')return;h.dataset.discountActionsReady='1';h.addEventListener('click',e=>{const b=e.target.closest('[data-payment-method]');if(!b)return;const m=b.dataset.paymentMethod;if(m!=='gift'&&m!=='discount')return;e.preventDefault();if(!cashierPricingConfig.loaded){alert(cashierPricingConfig.error||'Pricing settings are still loading.');return}const det=typeof window.halinaGetOrderDetails==='function'?window.halinaGetOrderDetails():{},type=det.orderType||'dine_in',sub=getCheckoutTotal();if(m==='gift'){const code=prompt('Enter voucher code:');if(!code)return;const v=cashierPricingConfig.vouchers.find(x=>String(x.code||'').toUpperCase()===String(code).trim().toUpperCase().replace(/\\s+/g,''));if(!v){alert('Voucher is invalid, inactive, or outside its validity period.');return}if(v.usage_limit!==null||v.per_customer_limit!==null){alert('This voucher has usage limits. Redemption tracking must be enabled before it can be applied.');return}if(Array.isArray(v.applies_to)&&!v.applies_to.includes(type)){alert('Voucher does not apply to this order type.');return}if(sub<Number(v.minimum_order_amount||0)){alert('Minimum order amount not reached.');return}cashierAppliedDiscount={kind:'voucher',id:v.id}}else{const list=cashierPricingConfig.discountRules.filter(x=>(!Array.isArray(x.applies_to)||x.applies_to.includes(type))&&sub>=Number(x.minimum_subtotal||0));if(!list.length){alert('No active eligible discount rules are available.');return}const opts=list.map((x,i)=>(i+1)+'. '+x.rule_name+' ('+(x.discount_type==='percentage'?x.rate+'%':formatCheckoutMoney(x.rate))+')').join('\\n');const a=prompt('Select an eligible discount by number:\\n'+opts);if(!a)return;const i=Number(a)-1;if(!Number.isInteger(i)||i<0||i>=list.length){alert('Invalid discount selection.');return}const x=list[i];if(x.requires_verification&&!confirm('Confirm that eligibility has been checked before applying '+x.rule_name+'?'))return;cashierAppliedDiscount={kind:'rule',id:x.id}}renderCheckoutSummary();const p=getCashierPricing();if(p.error){alert(p.error);return}alert('Discount applied: '+p.label+' — '+formatCheckoutMoney(p.discount))})}
 setupCashierDiscountActions();
 
 function updateCheckoutCashValues() {
@@ -12512,7 +12542,7 @@ function showCheckoutPaymentOptions() {
 }
 
 
-function showCheckoutCashPanel() {
+function showCheckoutCashPanel() {\n  cashierSelectedPaymentMethod = "cash";
   if (!checkoutPaymentOptions ||
       !checkoutPaymentMethods ||
       !checkoutCashPanel) {
@@ -12605,7 +12635,7 @@ if (checkoutPaymentMethods) {
       return;
     }
 
-    const total = getCashierDiscountPricing().total;
+    cashierSelectedPaymentMethod = method;\n    const total = getCashierPricing().total;
 
     if (total <= 0) {
       console.warn("Cannot continue with an empty order.");
@@ -12779,35 +12809,9 @@ if (checkoutCashReceived) {
 ========================= */
 
 function renderSuccessReceipt(total) {
-  if (successReceiptItems) {
-    successReceiptItems.innerHTML = "";
-
-    if (Array.isArray(posCart)) {
-      posCart.forEach(function(item) {
-        const receiptItem = document.createElement("div");
-        receiptItem.className = "success-receipt-item";
-
-        const itemName = document.createElement("span");
-        itemName.textContent =
-          item.name + " × " + item.quantity;
-
-        const itemPrice = document.createElement("strong");
-        itemPrice.textContent = formatCheckoutMoney(
-          Number(item.price) * Number(item.quantity)
-        );
-
-        receiptItem.appendChild(itemName);
-        receiptItem.appendChild(itemPrice);
-
-        successReceiptItems.appendChild(receiptItem);
-      });
-    }
-  }
-
-  if (successReceiptTotal) {
-    successReceiptTotal.textContent =
-      formatCheckoutMoney(total);
-  }
+ const p=getCashierPricing();
+ if(successReceiptItems){successReceiptItems.innerHTML='';const add=(l,v)=>{const row=document.createElement('div');row.className='success-receipt-item';const a=document.createElement('span');a.textContent=l;const b=document.createElement('strong');b.textContent=v;row.appendChild(a);row.appendChild(b);successReceiptItems.appendChild(row)};if(Array.isArray(posCart))posCart.forEach(x=>add(String(x.name||'Item')+' × '+x.quantity,formatCheckoutMoney(Number(x.price)*Number(x.quantity))));add('Subtotal',formatCheckoutMoney(p.subtotal));if(p.discount>0)add('Discount'+(p.label?' · '+p.label:''),'-'+formatCheckoutMoney(p.discount));if(p.serviceCharge>0)add(p.serviceChargeLabel,formatCheckoutMoney(p.serviceCharge));if(p.tax>0)add((p.taxRuleName||'Tax')+' ('+p.taxCalculationMethod+')',formatCheckoutMoney(p.tax))}
+ if(successReceiptTotal)successReceiptTotal.textContent=formatCheckoutMoney(total);
 }
 
 
@@ -12956,7 +12960,7 @@ if (acceptOrderBtn) {
       return;
     }
 
-    const total = getCashierDiscountPricing().total;
+    const pricing = getCashierPricing();\n    const total = pricing.total;\n    if (!cashierPricingConfig.loaded) { alert(cashierPricingConfig.error || "Pricing settings are not ready. Please refresh checkout."); return; }\n    if (pricing.error) { alert(pricing.error); return; }
 
     if (!Number.isFinite(total) || total <= 0) {
       alert("Invalid ang order total.");
@@ -13005,102 +13009,16 @@ if (acceptOrderBtn) {
     let savedOrderId = null;
 
     try {
-      const response = await fetch(
-        SUPABASE_URL + "/rest/v1/rpc/place_order_with_stock",
-        {
-          method: "POST",
-          headers: {
-            "apikey": SUPABASE_KEY,
-            "Authorization": "Bearer " + SUPABASE_KEY,
-            "Content-Type": "application/json"
-          },
-         body: JSON.stringify((function () {
- const details = window.halinaGetOrderDetails();
- const payload = {
-   p_restaurant_id: "5e562ca7-38aa-4894-8265-ddca2f4e61b6",
-   p_table_number: details.tableNumber,
-   p_order_type: details.orderType,
-   p_items: items,
-   p_total: total,
-   p_payment_method: "cash",
-   p_payment_status: "paid",
-   p_payment_reference: null,
-   p_special_instructions: details.deliveryAddress
-     ? "Delivery address: " + details.deliveryAddress
-     : null
- };
- payload.p_submission_key = getCashierOrderSubmissionKey(payload);
- return payload;
-})())
-        }
-        );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.message ||
-          result.details ||
-          result.hint ||
-          "Supabase failed to save the order and update stock."
-        );
-      }
-
-      savedOrderId = result.order_id;
-
-      if (!savedOrderId) {
-        throw new Error(
-          "Walang order ID na ibinalik ng Supabase."
-        );
-      }
-/* ==============================
-  SAVE CASHIER ORDER DETAILS
-============================== */
-const orderDetails = window.halinaGetOrderDetails();
-const orderUpdate = {
- order_type: orderDetails.orderType,
- table_number: orderDetails.tableNumber,
- customer_name: orderDetails.customerName,
- customer_phone: orderDetails.customerPhone,
- special_instructions: orderDetails.deliveryAddress
-   ? "Delivery address: " + orderDetails.deliveryAddress
-   : null
-};
-const detailsResponse = await fetch(
- SUPABASE_URL +
- "/rest/v1/orders?id=eq." +
- encodeURIComponent(savedOrderId) +
- "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6",
- {
-   method: "PATCH",
-   headers: {
-     apikey: SUPABASE_KEY,
-     Authorization: "Bearer " + SUPABASE_KEY,
-     "Content-Type": "application/json",
-     Prefer: "return=representation"
-   },
-   body: JSON.stringify(orderUpdate)
- }
-);
-const detailsResult = await detailsResponse.json();
-if (
- !detailsResponse.ok ||
- !Array.isArray(detailsResult) ||
- detailsResult.length === 0
-) {
- throw new Error(
-   "Na-create ang order pero hindi nakumpirma ang order details. " +
-   "Order ID: " + savedOrderId
- );
-}
-      if (!cashierAuthClient || !halinaStaffSessionId) {
-        throw new Error("The cashier login session is unavailable. The order was saved, but acceptance needs staff authentication.");
-      }
-      const { data: cashierAuthData, error: cashierAuthError } = await cashierAuthClient.auth.getSession();
-      const cashierAccessToken = cashierAuthData && cashierAuthData.session && cashierAuthData.session.access_token;
-      if (cashierAuthError || !cashierAccessToken) {
-        throw new Error("The cashier login has expired. The order was saved, but acceptance needs a fresh login.");
-      }
+      if (!cashierAuthClient || !halinaStaffSessionId) throw new Error("Cashier login session unavailable. Sign in again before saving.");
+      const { data: authData, error: authError } = await cashierAuthClient.auth.getSession();
+      if (authError || !authData?.session?.access_token) throw new Error("Cashier login has expired. Sign in again.");
+      const details = window.halinaGetOrderDetails();
+      const breakdown = {currency:pricing.currency,calculated_at:new Date().toISOString(),subtotal:pricing.subtotal,discount_amount:pricing.discount,service_charge:pricing.serviceCharge,tax:pricing.tax,total:pricing.total,tax_rule_id:pricing.taxRuleId,tax_rule_name:pricing.taxRuleName,tax_calculation_method:pricing.taxCalculationMethod,service_charge_rule_id:pricing.serviceChargeRuleId,service_charge_label:pricing.serviceChargeLabel,discount_kind:pricing.discountKind,discount_id:pricing.discountId,voucher_code:pricing.voucherCode};
+      const payload = {p_restaurant_id:HALINA_RESTAURANT_ID,p_table_number:details.tableNumber,p_order_type:details.orderType,p_items:items,p_subtotal:pricing.subtotal,p_tax:pricing.tax,p_discount_amount:pricing.discount,p_service_charge:pricing.serviceCharge,p_total:pricing.total,p_payment_method:cashierSelectedPaymentMethod||"cash",p_payment_status:cashierSelectedPaymentMethod==="pending"?"pending":"paid",p_payment_reference:null,p_customer_name:details.customerName,p_customer_phone:details.customerPhone,p_special_instructions:details.deliveryAddress?"Delivery address: "+details.deliveryAddress:null,p_submission_key:getCashierOrderSubmissionKey({restaurant_id:HALINA_RESTAURANT_ID,order_type:details.orderType,items:items,pricing:breakdown,payment_method:cashierSelectedPaymentMethod||"cash"}),p_session_id:halinaStaffSessionId,p_pricing_breakdown:breakdown};
+      const {data:result,error:orderError}=await cashierAuthClient.rpc("place_order_with_pricing",payload);
+      if(orderError)throw orderError;
+      savedOrderId=result?.order_id;
+      if(!savedOrderId)throw new Error("Supabase did not return an order ID.");
       const statusResponse = await fetch(
         SUPABASE_URL + "/rest/v1/rpc/cashier_accept_order",
         {
@@ -13122,9 +13040,6 @@ if (
           statusResult.message || statusResult.error ||
           "Order was saved and stock deducted, but it could not be accepted. Order ID: " + savedOrderId
         );
-      }
-      if (cashierAppliedDiscount && cashierAppliedDiscount.kind === 'voucher') {
-        window.HALINA_DISCOUNTS.redeem(cashierAppliedDiscount.id, savedOrderId);
       }
       cashierPendingSubmissionKey = null;
       cashierPendingSubmissionSignature = null;
@@ -13167,7 +13082,7 @@ document.querySelectorAll("#newOrderBtn").forEach(function(button) {
     // Clear the previous cart for the next order.
     // This does not delete previously saved orders.
     posCart.length = 0;
-    cashierAppliedDiscount = null;
+    cashierAppliedDiscount = null;\n    cashierSelectedPaymentMethod = "cash";
 
     // Reset cash input.
     if (checkoutCashReceived) {
