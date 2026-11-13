@@ -840,6 +840,23 @@ function escapeHtml(value) {
 /* CART */
 
 let cart = [];
+let pendingCustomerSubmissionKey = null;
+let pendingCustomerSubmissionSignature = null;
+function getCustomerOrderSubmissionKey(payload) {
+  const signature = JSON.stringify(payload);
+  if (!pendingCustomerSubmissionKey || pendingCustomerSubmissionSignature !== signature) {
+    pendingCustomerSubmissionKey = (window.crypto && typeof window.crypto.randomUUID === "function")
+      ? window.crypto.randomUUID()
+      : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(ch) {
+          const r = Math.random() * 16 | 0;
+          return (ch === "x" ? r : (r & 3 | 8)).toString(16);
+        });
+    pendingCustomerSubmissionSignature = signature;
+  }
+  return pendingCustomerSubmissionKey;
+}
+
+
 
 let activeCategory = "all";
 let orderType = "";
@@ -2045,33 +2062,21 @@ async function sendOrder() {
           },
 
           body:
-            JSON.stringify({
-
-              p_restaurant_id:
-                RESTAURANT_ID,
-
-              p_table_number:
-                dbTableNumber,
-
-              p_order_type:
-                orderType,
-
-              p_items:
-                orderItems,
-
-              p_total:
-                total,
-
-              p_payment_method:
-                dbPaymentMethod,
-
-              p_payment_status:
-                paymentStatus,
-
-              p_payment_reference:
-                paymentReference
-
-            })
+            JSON.stringify((function () {
+              const payload = {
+                p_restaurant_id: RESTAURANT_ID,
+                p_table_number: dbTableNumber,
+                p_order_type: orderType,
+                p_items: orderItems,
+                p_total: total,
+                p_payment_method: dbPaymentMethod,
+                p_payment_status: paymentStatus,
+                p_payment_reference: paymentReference,
+                p_special_instructions: null
+              };
+              payload.p_submission_key = getCustomerOrderSubmissionKey(payload);
+              return payload;
+            })())
         }
       );
 
@@ -2177,6 +2182,9 @@ async function sendOrder() {
         errorBox.classList.add("show");
       }
     }
+
+    pendingCustomerSubmissionKey = null;
+    pendingCustomerSubmissionSignature = null;
 
     successBox.classList.add("show");
 
