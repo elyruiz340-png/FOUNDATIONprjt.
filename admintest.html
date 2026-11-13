@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark" data-ui="glass">
 <head>
+  <script src="./halina-config.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EDMEL — Admin Dashboard</title>
@@ -2214,7 +2215,7 @@ const PAYMENT_METHODS=[];let paymentMethodsLoading=false,paymentMethodsError='';
 const DISCOUNT_RULES=[];let discountRulesLoading=false,discountRulesError='';
 const VOUCHERS=[];let vouchersLoading=false,vouchersError='';
 const S={page:'overview',br:0,per:'30d',theme:ss('th')||'dark',exp:!!ss('exp'),w:ss('w')||{},f:{},nt:'all',showArchived:false,settingsSection:null,cu0:'2026-10-10',cu1:'2026-10-24'};
-const $=s=>document.querySelector(s),M=n=>new Intl.NumberFormat((PROFILE.currency||'USD')==='USD'?'en-US':'en-PH',{style:'currency',currency:PROFILE.currency||'USD',maximumFractionDigits:2}).format(Number(n)||0);
+const $=s=>document.querySelector(s),M=n=>window.HALINA_CONFIG.formatMoney(n,PROFILE.currency||'USD');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const I=(n,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]}"/></svg>`;
 const bl=()=>S.br?[S.br-1]:BS.map((_,i)=>i),vis=a=>S.br?a.filter(x=>x.b==S.br):a,scope=()=>'HALINA BISTRO CAFE';
@@ -3317,6 +3318,7 @@ async function loadRestaurantProfile(){
   if(businessError)throw businessError;
   const hadUnsavedOperatingHours=operatingHoursDirty&&!!operatingHoursDraft;
   Object.assign(PROFILE,data||{});
+  Object.assign(PROFILE,window.HALINA_CONFIG.normalizeProfile(PROFILE));
   Object.assign(BUSINESS_SETTINGS,business||{});
   if(!hadUnsavedOperatingHours){
     operatingHoursDirty=false;
