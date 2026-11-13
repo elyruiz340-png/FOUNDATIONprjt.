@@ -12605,7 +12605,7 @@ if (checkoutPaymentMethods) {
       return;
     }
 
-    const total = getCheckoutTotal();
+    const total = getCashierDiscountPricing().total;
 
     if (total <= 0) {
       console.warn("Cannot continue with an empty order.");
