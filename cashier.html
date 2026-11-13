@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <script src="./halina-config.js"></script>
+  <script src="./halina-discounts.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cashier</title>
@@ -12384,9 +12385,10 @@ function renderCheckoutSummary() {
   }
 
   const subtotal = getCheckoutTotal();
+  const pricing = getCashierDiscountPricing();
   const vat = 0;
-  const discount = 0;
-  const total = subtotal + vat - discount;
+  const discount = pricing.discount;
+  const total = Math.max(0, subtotal + vat - discount);
 
   if (checkoutSubtotal) {
     checkoutSubtotal.textContent =
@@ -12412,8 +12414,14 @@ function renderCheckoutSummary() {
 }
 
 
+let cashierAppliedDiscount=null;
+function getCashierDiscountPricing(){const subtotal=getCheckoutTotal(),details=typeof window.halinaGetOrderDetails==='function'?window.halinaGetOrderDetails():{},type=details.orderType||'dine_in';let discount=0,label='',error='';if(cashierAppliedDiscount&&window.HALINA_DISCOUNTS){const d=window.HALINA_DISCOUNTS.all(),result=cashierAppliedDiscount.kind==='voucher'?window.HALINA_DISCOUNTS.evaluateVoucher(d.vouchers.find(x=>x.id===cashierAppliedDiscount.id),subtotal,type):window.HALINA_DISCOUNTS.evaluateRule(d.rules.find(x=>x.id===cashierAppliedDiscount.id),subtotal,type);if(result.ok){discount=result.amount;label=result.label;}else{error=result.message;cashierAppliedDiscount=null;}}return{subtotal,discount,total:Math.max(0,subtotal-discount),label,error};}
+function setupCashierDiscountActions(){const host=document.getElementById('checkoutPaymentMethods');if(!host||host.dataset.discountActionsReady==='1')return;host.dataset.discountActionsReady='1';host.addEventListener('click',function(event){const button=event.target.closest('[data-payment-method]');if(!button)return;const method=button.dataset.paymentMethod;if(method!=='gift'&&method!=='discount')return;event.preventDefault();if(!window.HALINA_DISCOUNTS){alert('Discount module is not loaded.');return;}const details=typeof window.halinaGetOrderDetails==='function'?window.halinaGetOrderDetails():{},orderType=details.orderType||'dine_in',subtotal=getCheckoutTotal();if(method==='gift'){const code=prompt('Enter voucher code:');if(!code)return;const voucher=window.HALINA_DISCOUNTS.findVoucher(code),result=window.HALINA_DISCOUNTS.evaluateVoucher(voucher,subtotal,orderType);if(!result.ok){alert(result.message);return;}cashierAppliedDiscount={kind:'voucher',id:voucher.id};}else{const d=window.HALINA_DISCOUNTS.all(),eligible=d.rules.filter(x=>window.HALINA_DISCOUNTS.evaluateRule(x,subtotal,orderType).ok);if(!eligible.length){alert('No active eligible discount rules are available.');return;}const options=eligible.map((x,i)=>(i+1)+'. '+x.rule_name+' ('+(x.discount_type==='percentage'?x.rate+'%':formatCheckoutMoney(x.rate))+')').join('\n');const answer=prompt('Select an eligible discount by number:\n'+options);if(!answer)return;const index=Number(answer)-1;if(!Number.isInteger(index)||index<0||index>=eligible.length){alert('Invalid discount selection.');return;}const selected=eligible[index];if(selected.requires_verification&&!confirm('Confirm that eligibility has been checked before applying '+selected.rule_name+'?'))return;cashierAppliedDiscount={kind:'rule',id:selected.id};}renderCheckoutSummary();const p=getCashierDiscountPricing();alert('Discount applied: '+p.label+' — '+formatCheckoutMoney(p.discount));});}
+
+setupCashierDiscountActions();
+
 function updateCheckoutCashValues() {
-  const total = getCheckoutTotal();
+  const total = getCashierDiscountPricing().total;
   const rawReceived = checkoutCashReceived
     ? checkoutCashReceived.value.trim()
     : "";
@@ -12943,7 +12951,7 @@ if (acceptOrderBtn) {
       return;
     }
 
-    const total = getCheckoutTotal();
+    const total = getCashierDiscountPricing().total;
 
     if (!Number.isFinite(total) || total <= 0) {
       alert("Invalid ang order total.");
@@ -13110,6 +13118,9 @@ if (
           "Order was saved and stock deducted, but it could not be accepted. Order ID: " + savedOrderId
         );
       }
+      if (cashierAppliedDiscount && cashierAppliedDiscount.kind === 'voucher') {
+        window.HALINA_DISCOUNTS.redeem(cashierAppliedDiscount.id, savedOrderId);
+      }
       cashierPendingSubmissionKey = null;
       cashierPendingSubmissionSignature = null;
 
@@ -13151,6 +13162,7 @@ document.querySelectorAll("#newOrderBtn").forEach(function(button) {
     // Clear the previous cart for the next order.
     // This does not delete previously saved orders.
     posCart.length = 0;
+    cashierAppliedDiscount = null;
 
     // Reset cash input.
     if (checkoutCashReceived) {
