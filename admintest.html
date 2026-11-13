@@ -2703,7 +2703,1336 @@ function taxSettingsPage(){
  <div class="bs-coming-note"><span class="bd ok">● Connected</span><b>Cashier tax calculation is connected</b><span>The active tax rule is applied to new cashier checkouts according to its calculation method, scope and effective dates. Existing orders are not recalculated.</span></div>`;
 }
 function serviceChargeSettingsPage(){
- const rules=SERVICE_CHARGE_RULES.map(r=>`<tr><td><b>${esc(r.rule_name)}</b><small class="mu" style="display:block">${esc(r.display_label)}</small></td><td>${r.charge_type==='percentage'?Number(r.rate).toFixed(2)+'%':'$'+Number(r.rate).toFixed(2)}</td><td>${(r.applies_to||[]).map(x=>x.replaceAll('_',' ')).join(', ')}</td><td>${r.is_mandatory?'Mandatory':'Optional'}</td><td>${esc(r.effective_from)}${r.effective_to?' – '+esc(r.effective_to):' – No end date'}</td><td>${r.is_active?bdg('Active'):bdg('Inactive')}</td><td><button class="btn" data-a="servicecharge-toggle" data-id="${r.id}">${r.is_active?'Deactivate':'Activate'}</button> <button class="btn danger" data-a="servicecharge-delete" data-id="${r.id}">Delete</button></td></tr>`).join('');
+ const rules=SERVICE_CHARGE_RULES.map(r=>`<tr><td><b>${esc(r.rule_name)}</b><small class="mu" style="display:block">${esc(r.display_label)}</small></td><td>${r.charge_type==='percentage'?Number(r.rate).toFixed(2)+'%':'
+ return `<section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Service charge policy</h3><p>Configure how a restaurant service charge is described and which order types it may apply to.</p></div></div><div class="bs-coming-note"><span class="bd ok">● Connected</span><b>Active service charges are applied at checkout</b><span>Only active rules within their effective dates and selected order types are applied to new cashier orders. Existing orders are not recalculated.</span></div></section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Add service charge rule</h3><p>Rules are saved per restaurant. New rules start inactive until explicitly activated.</p></div></div><form id="serviceChargeForm" class="bs-profile-grid">
+ <label class="bs-field">Rule Name<input id="scRuleName" maxlength="120" required placeholder="e.g. Dine-in service charge"></label>
+ <label class="bs-field">Receipt Label<input id="scLabel" maxlength="80" required value="Service Charge"></label>
+ <label class="bs-field">Charge Type<select id="scType"><option value="percentage">Percentage (%)</option><option value="fixed">Fixed amount (USD)</option></select></label>
+ <label class="bs-field">Rate / Amount<input id="scRate" type="number" min="0" max="1000000" step="0.0001" required placeholder="Enter confirmed amount"></label>
+ <fieldset class="bs-field" style="border:0;padding:0;margin:0"><legend>Applies to</legend><label><input type="checkbox" name="scApplies" value="dine_in" checked> Dine In</label> <label><input type="checkbox" name="scApplies" value="takeout"> Takeout</label> <label><input type="checkbox" name="scApplies" value="delivery"> Delivery</label></fieldset>
+ <label class="bs-field">Charge Policy<select id="scMandatory"><option value="true">Mandatory charge</option><option value="false">Optional charge</option></select></label>
+ <label class="bs-field">Tax Treatment<select id="scTaxTreatment" required><option value="not_configured">Select tax treatment</option><option value="taxable">Subject to configured tax</option><option value="non_taxable">Not subject to configured tax</option></select><small class="mu">Choose only after confirming the restaurant's jurisdictional treatment.</small></label>
+ <label class="bs-field">Effective From<input id="scFrom" type="date" required value="${new Date().toISOString().slice(0,10)}"></label>
+ <label class="bs-field">Effective To <small>(Optional)</small><input id="scTo" type="date"></label>
+ <label class="bs-field bs-address">Notes <small>(Optional)</small><textarea id="scNotes" rows="2" maxlength="1000" placeholder="Internal reference or approval notes"></textarea></label>
+ <div class="bs-address"><button class="btn pri" id="scSave" type="submit">Save Service Charge Rule</button></div></form></section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('log',22)}</div><div class="bs-head-copy"><h3>Saved service charge rules</h3><p>Review, activate or deactivate saved configurations.</p></div><button class="btn" data-a="servicecharge-refresh">Refresh</button></div>${serviceChargeLoading?'<p class="mu">Loading service charge rules…</p>':''}${serviceChargeError?`<p class="er">${esc(serviceChargeError)}</p>`:''}<div class="tw"><table class="inv-table"><thead><tr><th>Rule</th><th>Amount</th><th>Order types</th><th>Policy</th><th>Tax treatment</th><th>Effective period</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rules||'<tr><td colspan="8">No service charge rules have been configured.</td></tr>'}</tbody></table></div></section>`;
+}
+async function loadServiceChargeRules(){serviceChargeLoading=true;serviceChargeError='';try{const {data,error}=await sb.from('restaurant_service_charge_rules').select('id,rule_name,display_label,charge_type,rate,applies_to,is_mandatory,tax_treatment,is_active,effective_from,effective_to,notes').eq('restaurant_id',HALINA_RESTAURANT_ID).order('effective_from',{ascending:false});if(error)throw error;SERVICE_CHARGE_RULES.splice(0,SERVICE_CHARGE_RULES.length,...(data||[]));}catch(e){serviceChargeError=e.message||String(e);}finally{serviceChargeLoading=false;if(S.page==='settings'&&S.settingsSection==='servicecharge')render();}}
+async function saveServiceChargeRule(e){e.preventDefault();const name=$('#scRuleName').value.trim(),label=$('#scLabel').value.trim(),type=$('#scType').value,rate=Number($('#scRate').value),from=$('#scFrom').value,to=$('#scTo').value||null,applies=[...document.querySelectorAll('input[name="scApplies"]:checked')].map(x=>x.value),taxTreatment=$('#scTaxTreatment').value,notes=$('#scNotes').value.trim()||null;if(!name||!label||!Number.isFinite(rate)||rate<0||rate>1000000||(type==='percentage'&&rate>100)||!from||(to&&to<from)||!applies.length||!['taxable','non_taxable'].includes(taxTreatment)){toast('Check the rule name, label, amount, order types and effective dates.',1);return;}const btn=$('#scSave');btn.disabled=true;btn.textContent='Saving…';const user=await sb.auth.getUser();const payload={restaurant_id:HALINA_RESTAURANT_ID,rule_name:name,display_label:label,charge_type:type,rate,applies_to:applies,is_mandatory:$('#scMandatory').value==='true',tax_treatment:taxTreatment,is_active:false,effective_from:from,effective_to:to,notes,created_by:user.data?.user?.id||null};const {data:savedServiceCharge,error}=await sb.from('restaurant_service_charge_rules').insert(payload).select('id').single();if(error){btn.disabled=false;btn.textContent='Save Service Charge Rule';toast('Could not save service charge rule: '+error.message,1);return;}await writeAdminAudit('Service Charge','Created service charge rule','service_charge_rule',savedServiceCharge?.id||null,{rule_name:name,charge_type:type,rate,tax_treatment:taxTreatment,active:false});toast('Service charge rule saved inactive. Activate it when ready for cashier checkout.');await loadServiceChargeRules();}
+async function toggleServiceChargeRule(id){const r=SERVICE_CHARGE_RULES.find(x=>x.id===id);if(!r)return;if(!r.is_active&&r.tax_treatment==='not_configured'){toast('Set the service charge tax treatment before activating this rule.',1);return;}const {error}=await sb.from('restaurant_service_charge_rules').update({is_active:!r.is_active,updated_at:new Date().toISOString()}).eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);if(error){toast('Could not update service charge rule: '+error.message,1);return;}await writeAdminAudit('Service Charge',r.is_active?'Deactivated service charge rule':'Activated service charge rule','service_charge_rule',id,{rule_name:r.rule_name,active:!r.is_active});toast('Service charge rule status updated.');await loadServiceChargeRules();}
+async function deleteServiceChargeRule(id){if(!confirm('Delete this service charge rule? Past receipts and transactions are not changed.'))return;const {error}=await sb.from('restaurant_service_charge_rules').delete().eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);if(error){toast('Could not delete service charge rule: '+error.message,1);return;}await writeAdminAudit('Service Charge','Deleted service charge rule','service_charge_rule',id,{rule_name:r?.rule_name||'Service charge rule'});toast('Service charge rule deleted.');await loadServiceChargeRules();}
+
+function discountSettingsPage(){
+ const discountRows=DISCOUNT_RULES.map(r=>`<tr><td><b>${esc(r.rule_name)}</b><small class="mu" style="display:block">${esc((r.discount_category||'').replaceAll('_',' '))}</small></td><td>${r.discount_type==='percentage'?Number(r.rate).toFixed(2)+'%':Number(r.rate).toFixed(2)}</td><td>${(r.applies_to||[]).map(x=>esc(x.replaceAll('_',' '))).join(', ')}</td><td>${r.requires_verification?'Required':'Not required'}</td><td>${esc(r.effective_from||'—')}${r.effective_to?' – '+esc(r.effective_to):' – No end date'}</td><td>${r.is_active?bdg('Active'):bdg('Inactive')}</td><td><button class="btn" data-a="discount-toggle" data-id="${r.id}">${r.is_active?'Deactivate':'Activate'}</button> <button class="btn danger" data-a="discount-delete" data-id="${r.id}">Delete</button></td></tr>`).join('');
+ const voucherRows=VOUCHERS.map(v=>`<tr><td><b>${esc(v.code)}</b><small class="mu" style="display:block">${esc(v.description||'')}</small></td><td>${v.discount_type==='percentage'?Number(v.discount_value).toFixed(2)+'%':Number(v.discount_value).toFixed(2)}</td><td>${Number(v.usage_limit)||'Unlimited'}</td><td>${esc(v.starts_at?new Date(v.starts_at).toLocaleString():'Any time')} – ${esc(v.ends_at?new Date(v.ends_at).toLocaleString():'No expiry')}</td><td>${v.is_active?bdg('Active'):bdg('Inactive')}</td><td><button class="btn" data-a="voucher-toggle" data-id="${v.id}">${v.is_active?'Deactivate':'Activate'}</button> <button class="btn danger" data-a="voucher-delete" data-id="${v.id}">Delete</button></td></tr>`).join('');
+ return `<section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Discount configuration</h3><p>Create restaurant-specific discount rules. New rules are saved inactive.</p></div></div><div class="bs-coming-note"><span class="bd ok">● Connected</span><b>Restaurant database settings</b><span>Discount rules are synchronized through Supabase. New rules are saved inactive. Senior Citizen and PWD rules require eligibility verification at checkout.</span></div></section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Add discount rule</h3><p>Set the discount conditions and applicable order types.</p></div></div><form id="discountRuleForm" class="bs-profile-grid">
+ <label class="bs-field">Rule Name<input id="drName" maxlength="120" required placeholder="e.g. Senior Citizen Discount"></label>
+ <label class="bs-field">Discount Category<select id="drCategory"><option value="senior">Senior Citizen</option><option value="pwd">PWD</option><option value="promotion">Promotion</option><option value="staff">Staff</option><option value="other">Other</option></select></label>
+ <label class="bs-field">Discount Type<select id="drType"><option value="percentage">Percentage (%)</option><option value="fixed">Fixed amount</option></select></label>
+ <label class="bs-field">Rate / Amount<input id="drRate" type="number" min="0.01" step="0.01" required placeholder="Enter discount value"></label>
+ <label class="bs-field">Maximum Discount <small>(Optional)</small><input id="drMax" type="number" min="0" step="0.01" placeholder="No maximum"></label>
+ <label class="bs-field">Minimum Subtotal<input id="drMin" type="number" min="0" step="0.01" value="0"></label>
+ <fieldset class="bs-field" style="border:0;padding:0;margin:0"><legend>Applies to</legend><label><input type="checkbox" name="drApplies" value="dine_in" checked> Dine In</label> <label><input type="checkbox" name="drApplies" value="takeout" checked> Takeout</label> <label><input type="checkbox" name="drApplies" value="delivery" checked> Delivery</label></fieldset>
+ <label class="bs-field">Effective From<input id="drFrom" type="date" required value="${new Date().toISOString().slice(0,10)}"></label>
+ <label class="bs-field">Effective To <small>(Optional)</small><input id="drTo" type="date"></label>
+ <label class="bs-field bs-address">Verification <span><input id="drVerify" type="checkbox"> Require eligibility verification</span></label>
+ <label class="bs-field bs-address">Notes <small>(Optional)</small><textarea id="drNotes" rows="2" maxlength="1000" placeholder="Internal notes"></textarea></label>
+ <div class="bs-address"><button class="btn pri" id="drSave" type="submit">Save Discount Rule</button></div></form></section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('log',22)}</div><div class="bs-head-copy"><h3>Saved discount rules</h3><p>Activate or deactivate rules when approved.</p></div></div>${discountRulesLoading?'<p class="mu">Loading discount rules…</p>':''}${discountRulesError?`<p class="er">${esc(discountRulesError)}</p>`:''}<div class="tw"><table class="inv-table"><thead><tr><th>Rule</th><th>Value</th><th>Order types</th><th>Verification</th><th>Effective period</th><th>Status</th><th>Actions</th></tr></thead><tbody>${discountRows||'<tr><td colspan="7">No discount rules have been configured.</td></tr>'}</tbody></table></div></section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('wallet',22)}</div><div class="bs-head-copy"><h3>Create voucher</h3><p>Voucher codes are stored inactive until you activate them.</p></div></div><form id="voucherForm" class="bs-profile-grid">
+ <label class="bs-field">Voucher Code<input id="vCode" maxlength="40" required placeholder="e.g. WELCOME10" style="text-transform:uppercase"></label>
+ <label class="bs-field">Description<input id="vDescription" maxlength="160" placeholder="Optional description"></label>
+ <label class="bs-field">Discount Type<select id="vType"><option value="percentage">Percentage (%)</option><option value="fixed">Fixed amount</option></select></label>
+ <label class="bs-field">Discount Value<input id="vValue" type="number" min="0.01" step="0.01" required></label>
+ <label class="bs-field">Maximum Discount <small>(Optional)</small><input id="vMax" type="number" min="0" step="0.01"></label>
+ <label class="bs-field">Minimum Order Amount<input id="vMinimum" type="number" min="0" step="0.01" value="0"></label>
+ <label class="bs-field">Total Usage Limit <small>(Optional)</small><input id="vLimit" type="number" min="1" step="1" placeholder="Unlimited"></label>
+ <label class="bs-field">Per Customer Limit <small>(Optional)</small><input id="vCustomerLimit" type="number" min="1" step="1" placeholder="Unlimited"></label>
+ <fieldset class="bs-field" style="border:0;padding:0;margin:0"><legend>Applies to</legend><label><input type="checkbox" name="vApplies" value="dine_in" checked> Dine In</label> <label><input type="checkbox" name="vApplies" value="takeout" checked> Takeout</label> <label><input type="checkbox" name="vApplies" value="delivery" checked> Delivery</label></fieldset>
+ <label class="bs-field">Starts At <small>(Optional)</small><input id="vStarts" type="datetime-local"></label>
+ <label class="bs-field">Ends At <small>(Optional)</small><input id="vEnds" type="datetime-local"></label>
+ <label class="bs-field bs-address">Notes <small>(Optional)</small><textarea id="vNotes" rows="2" maxlength="1000"></textarea></label>
+ <div class="bs-address"><button class="btn pri" id="vSave" type="submit">Save Voucher</button></div></form></section>
+ <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('log',22)}</div><div class="bs-head-copy"><h3>Saved vouchers</h3><p>Review voucher status and configured usage limits.</p></div><button class="btn" data-a="discounts-refresh">Refresh</button></div>${vouchersLoading?'<p class="mu">Loading vouchers…</p>':''}${vouchersError?`<p class="er">${esc(vouchersError)}</p>`:''}<div class="tw"><table class="inv-table"><thead><tr><th>Code</th><th>Value</th><th>Usage limit</th><th>Validity</th><th>Status</th><th>Actions</th></tr></thead><tbody>${voucherRows||'<tr><td colspan="6">No vouchers have been configured.</td></tr>'}</tbody></table></div><p class="note">Voucher rules are synchronized through Supabase. Usage-limit enforcement and cross-device redemption tracking will be enabled with the secure redemption ledger before production use.</p></section>`;
+}
+async function loadDiscountSettings(){
+ discountRulesLoading=true;vouchersLoading=true;discountRulesError='';vouchersError='';
+ try{
+  const [rules,vouchers]=await Promise.all([
+   sb.from('restaurant_discount_rules').select('id,restaurant_id,rule_name,discount_category,discount_type,rate,max_discount_amount,minimum_subtotal,applies_to,requires_verification,effective_from,effective_to,is_active,notes,created_at,updated_at').eq('restaurant_id',HALINA_RESTAURANT_ID).order('created_at',{ascending:false}),
+   sb.from('restaurant_vouchers').select('id,restaurant_id,code,description,discount_type,discount_value,max_discount_amount,minimum_order_amount,usage_limit,per_customer_limit,applies_to,starts_at,ends_at,is_active,notes,created_at,updated_at').eq('restaurant_id',HALINA_RESTAURANT_ID).order('created_at',{ascending:false})
+  ]);
+  if(rules.error)throw rules.error;if(vouchers.error)throw vouchers.error;
+  DISCOUNT_RULES.splice(0,DISCOUNT_RULES.length,...(rules.data||[]));
+  VOUCHERS.splice(0,VOUCHERS.length,...(vouchers.data||[]));
+ }catch(e){discountRulesError=e.message||String(e);vouchersError=e.message||String(e);}
+ finally{discountRulesLoading=false;vouchersLoading=false;if(S.page==='settings'&&S.settingsSection==='discounts')render();}
+}
+async function saveDiscountRule(e){
+ e.preventDefault();
+ const name=$('#drName').value.trim(),category=$('#drCategory').value,type=$('#drType').value,rate=Number($('#drRate').value),max=$('#drMax').value===''?null:Number($('#drMax').value),minimum=Number($('#drMin').value||0),from=$('#drFrom').value,to=$('#drTo').value||null,applies=[...document.querySelectorAll('input[name="drApplies"]:checked')].map(x=>x.value);
+ if(!name||!Number.isFinite(rate)||rate<=0||(type==='percentage'&&rate>100)||(max!==null&&(!Number.isFinite(max)||max<0))||!Number.isFinite(minimum)||minimum<0||!from||(to&&to<from)||!applies.length){toast('Check the discount name, value, minimum, order types and dates.',1);return;}
+ const btn=$('#drSave');btn.disabled=true;btn.textContent='Saving…';
+ try{
+  const user=await sb.auth.getUser();
+  const payload={restaurant_id:HALINA_RESTAURANT_ID,rule_name:name,discount_category:category,discount_type:type,rate,max_discount_amount:max,minimum_subtotal:minimum,applies_to:applies,requires_verification:['senior','pwd'].includes(category)||$('#drVerify').checked,effective_from:from,effective_to:to,is_active:false,notes:$('#drNotes').value.trim()||null,created_by:user.data?.user?.id||null};
+  const {data,error}=await sb.from('restaurant_discount_rules').insert(payload).select('id').single();if(error)throw error;
+  await writeAdminAudit('Discounts','Created discount rule','discount_rule',data?.id||null,{rule_name:name,discount_type:type,rate,is_active:false});
+  e.target.reset();toast('Discount rule saved inactive to the restaurant database.');await loadDiscountSettings();
+ }catch(ex){toast('Could not save discount rule: '+(ex.message||String(ex)),1);}
+ finally{btn.disabled=false;btn.textContent='Save Discount Rule';}
+}
+async function saveVoucher(e){
+ e.preventDefault();
+ const code=$('#vCode').value.trim().toUpperCase().replace(/\\s+/g,''),type=$('#vType').value,value=Number($('#vValue').value),max=$('#vMax').value===''?null:Number($('#vMax').value),minimum=Number($('#vMinimum').value||0),limit=$('#vLimit').value===''?null:Number($('#vLimit').value),customerLimit=$('#vCustomerLimit').value===''?null:Number($('#vCustomerLimit').value),applies=[...document.querySelectorAll('input[name="vApplies"]:checked')].map(x=>x.value),starts=$('#vStarts').value?new Date($('#vStarts').value).toISOString():new Date().toISOString(),ends=$('#vEnds').value?new Date($('#vEnds').value).toISOString():null;
+ if(!code||!Number.isFinite(value)||value<=0||(type==='percentage'&&value>100)||(max!==null&&(!Number.isFinite(max)||max<0))||!Number.isFinite(minimum)||minimum<0||(limit!==null&&(!Number.isInteger(limit)||limit<1))||(customerLimit!==null&&(!Number.isInteger(customerLimit)||customerLimit<1))||(starts&&ends&&ends<=starts)||!applies.length){toast('Check the voucher code, value, limits, order types and validity dates.',1);return;}
+ const btn=$('#vSave');btn.disabled=true;btn.textContent='Saving…';
+ try{
+  const user=await sb.auth.getUser();
+  const payload={restaurant_id:HALINA_RESTAURANT_ID,code,description:$('#vDescription').value.trim()||null,discount_type:type,discount_value:value,max_discount_amount:max,minimum_order_amount:minimum,usage_limit:limit,per_customer_limit:customerLimit,applies_to:applies,starts_at:starts,ends_at:ends,is_active:false,notes:$('#vNotes').value.trim()||null,created_by:user.data?.user?.id||null};
+  const {data,error}=await sb.from('restaurant_vouchers').insert(payload).select('id').single();if(error)throw error;
+  await writeAdminAudit('Discounts','Created voucher','voucher',data?.id||null,{code,discount_type:type,discount_value:value,is_active:false});
+  e.target.reset();toast('Voucher saved inactive to the restaurant database.');await loadDiscountSettings();
+ }catch(ex){toast('Could not save voucher: '+(ex.message||String(ex)),1);}
+ finally{btn.disabled=false;btn.textContent='Save Voucher';}
+}
+async function toggleDiscountRule(id){
+ const r=DISCOUNT_RULES.find(x=>x.id===id);if(!r)return;
+ const {error}=await sb.from('restaurant_discount_rules').update({is_active:!r.is_active,updated_at:new Date().toISOString()}).eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);
+ if(error){toast('Could not update discount rule: '+error.message,1);return;}
+ await writeAdminAudit('Discounts',r.is_active?'Deactivated discount rule':'Activated discount rule','discount_rule',id,{rule_name:r.rule_name,is_active:!r.is_active});
+ toast('Discount rule status updated.');await loadDiscountSettings();
+}
+async function deleteDiscountRule(id){
+ const r=DISCOUNT_RULES.find(x=>x.id===id);if(!r||!confirm('Delete this discount rule? Existing order records are not changed.'))return;
+ const {error}=await sb.from('restaurant_discount_rules').delete().eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);
+ if(error){toast('Could not delete discount rule: '+error.message,1);return;}
+ await writeAdminAudit('Discounts','Deleted discount rule','discount_rule',id,{rule_name:r.rule_name});toast('Discount rule deleted.');await loadDiscountSettings();
+}
+async function toggleVoucher(id){
+ const v=VOUCHERS.find(x=>x.id===id);if(!v)return;
+ const {error}=await sb.from('restaurant_vouchers').update({is_active:!v.is_active,updated_at:new Date().toISOString()}).eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);
+ if(error){toast('Could not update voucher: '+error.message,1);return;}
+ await writeAdminAudit('Discounts',v.is_active?'Deactivated voucher':'Activated voucher','voucher',id,{code:v.code,is_active:!v.is_active});
+ toast('Voucher status updated.');await loadDiscountSettings();
+}
+async function deleteVoucher(id){
+ const v=VOUCHERS.find(x=>x.id===id);if(!v||!confirm('Delete this voucher? Existing order records are not changed.'))return;
+ const {error}=await sb.from('restaurant_vouchers').delete().eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);
+ if(error){toast('Could not delete voucher: '+error.message,1);return;}
+ await writeAdminAudit('Discounts','Deleted voucher','voucher',id,{code:v.code});toast('Voucher deleted.');await loadDiscountSettings();
+}
+async function loadTaxRules(){taxRulesLoading=true;taxRulesError='';try{const {data,error}=await sb.from('restaurant_tax_rules').select('id,rule_name,tax_type,rate,calculation_method,tax_scope,effective_from,effective_to,is_active,notes').eq('restaurant_id',HALINA_RESTAURANT_ID).order('effective_from',{ascending:false});if(error)throw error;TAX_RULES.splice(0,TAX_RULES.length,...(data||[]));}catch(e){taxRulesError=e.message||String(e);}finally{taxRulesLoading=false;if(S.page==='settings'&&S.settingsSection==='tax')render();}}
+async function saveTaxRule(e){e.preventDefault();const name=$('#taxRuleName').value.trim(),type=$('#taxRuleType').value,rate=Number($('#taxRuleRate').value),from=$('#taxRuleFrom').value,to=$('#taxRuleTo').value||null,method=$('#taxRuleMethod').value,scope=$('#taxRuleScope').value,notes=$('#taxRuleNotes').value.trim()||null;if(!name||!Number.isFinite(rate)||rate<0||rate>100||!from||(to&&to<from)){toast('Check the tax rule name, rate and effective dates.',1);return;}if((BUSINESS_SETTINGS.tax_registration_type||'NOT_SET')==='NOT_SET'){toast('Configure Business Tax Registration first.',1);return;}const btn=$('#taxRuleSave');btn.disabled=true;btn.textContent='Saving…';const payload={restaurant_id:HALINA_RESTAURANT_ID,rule_name:name,tax_type:type,rate,calculation_method:method,tax_scope:scope,effective_from:from,effective_to:to,notes,created_by:(await sb.auth.getUser()).data?.user?.id||null};const {data:savedTaxRule,error}=await sb.from('restaurant_tax_rules').insert(payload).select('id').single();if(error){btn.disabled=false;btn.textContent='Save Tax Rule';toast('Could not save tax rule: '+error.message,1);return;}await writeAdminAudit('Tax','Created tax rule','tax_rule',savedTaxRule?.id||null,{rule_name:name,tax_type:type,rate,calculation_method:method,tax_scope:scope});toast('Tax rule saved. Active rules are used by new cashier checkouts.');await loadTaxRules();}
+async function toggleTaxRule(id){const r=TAX_RULES.find(x=>x.id===id);if(!r)return;const {error}=await sb.from('restaurant_tax_rules').update({is_active:!r.is_active,updated_at:new Date().toISOString()}).eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);if(error){toast('Could not update tax rule: '+error.message,1);return;}await writeAdminAudit('Tax',r.is_active?'Deactivated tax rule':'Activated tax rule','tax_rule',id,{rule_name:r.rule_name,active:!r.is_active});toast('Tax rule status updated.');await loadTaxRules();}
+async function deleteTaxRule(id){if(!confirm('Delete this tax rule? This removes the configuration record and does not affect past receipts.'))return;const {error}=await sb.from('restaurant_tax_rules').delete().eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);if(error){toast('Could not delete tax rule: '+error.message,1);return;}await writeAdminAudit('Tax','Deleted tax rule','tax_rule',id,{rule_name:r?.rule_name||'Tax rule'});toast('Tax rule deleted.');await loadTaxRules();}
+
+let CURRENT_RESTAURANT_ID=null;
+let HALINA_TABLES=[];
+let HALINA_QR_BASE='';
+function tableManagementPage(){
+ const active=HALINA_TABLES.filter(x=>x.is_active).length;
+ const inactive=HALINA_TABLES.length-active;
+ const locked=HALINA_TABLES.filter(x=>x.is_locked).length;
+ const seats=HALINA_TABLES.reduce((n,x)=>n+(Number(x.seating_capacity)||4),0);
+ return `<div class="tm-wrap">
+  <section class="tm-hero">
+   <div class="tm-hero-copy"><div class="tm-hero-icon">${I('branch',25)}</div><div><h3>Manage Your Tables</h3><p>Organize seating, control table access, and manage customer ordering QR codes.</p></div></div>
+   <button class="btn" data-a="tablesrefresh">${I('pulse',15)} Refresh</button>
+  </section>
+  <section class="tm-stats">
+   <article class="tm-stat"><span class="tm-stat-icon">${I('branch',21)}</span><div><small>Total Tables</small><b>${HALINA_TABLES.length}</b></div></article>
+   <article class="tm-stat tm-stat-active"><span class="tm-stat-icon">${I('chart',21)}</span><div><small>Active Tables</small><b>${active}</b></div></article>
+   <article class="tm-stat tm-stat-inactive"><span class="tm-stat-icon">${I('users',21)}</span><div><small>Inactive Tables</small><b>${inactive}</b></div></article>
+   <article class="tm-stat tm-stat-seats"><span class="tm-stat-icon">${I('users',21)}</span><div><small>Total Seating Capacity</small><b>${seats}</b></div></article>
+  </section>
+  <section class="tm-tools">
+   <label class="tm-search">${I('search',17)}<input id="tmSearch" data-c="tmSearch" type="search" placeholder="Search table name or number..."></label>
+   <div class="tm-filter" role="group" aria-label="Filter tables"><button type="button" class="active" data-tm-filter="all">All Tables</button><button type="button" data-tm-filter="active">Active</button><button type="button" data-tm-filter="inactive">Inactive</button></div>
+   <div class="tm-tool-actions"><button class="btn" data-a="tablesdownloadall">${I('log',16)} Download All QR</button><button class="btn pri" data-a="tmShowAdd">${I('spark',16)} Add New Table</button></div>
+  </section>
+  <form class="tm-add tm-add-panel" id="tmAddForm"><div class="tm-add-title"><b>Add New Table</b><span class="tm-muted">Create a table and generate its unique QR code.</span></div><label>Table Name / Number<input id="tmNumber" maxlength="40" placeholder="e.g. Q1 or Table 1" required></label><label>Seating Capacity<input id="tmCapacity" type="number" min="1" max="50" value="4" required></label><button class="btn pri" type="submit">${I('spark',15)} Create Table</button></form>
+  <div class="tm-grid" id="tmGrid">${HALINA_TABLES.map(t=>{const qty=Array.isArray(t.cart_items)?t.cart_items.reduce((n,x)=>n+(Number(x.qty)||0),0):0;return `<article class="tm-card" data-table-card="${esc(t.id)}" data-active="${t.is_active?'true':'false'}" data-table-name="${esc(t.table_number.toLowerCase())}">
+   <div class="tm-card-top"><div class="tm-table-symbol">${I('branch',25)}</div><span class="tm-status ${t.is_active?'':'off'}"><i></i>${t.is_active?'Active':'Inactive'}</span></div>
+   <div class="tm-card-info"><h3>${esc(t.table_number)}</h3><p>${I('users',14)} ${Number(t.seating_capacity)||4} Seats <span class="tm-dot">·</span> ${qty} Cart Items</p></div>
+   <div class="tm-card-flags">${t.is_locked?`<span class="tm-flag locked">${I('cog',12)} Locked</span>`:`<span class="tm-flag">${I('branch',12)} Unlocked</span>`}<span class="tm-flag">QR Ready</span></div>
+   <div class="tm-qr" id="tmqr-${esc(t.id)}"><span class="tm-muted">QR preview</span></div>
+   <div class="tm-actions"><button class="btn tm-view-qr" data-a="tableqr" data-id="${esc(t.id)}">${I('branch',14)} View QR Code</button><button class="btn tm-edit" data-a="tableedit" data-id="${esc(t.id)}">${I('cog',14)} Edit</button></div>
+   <div class="tm-card-more"><button class="btn" data-a="tabletoggle" data-id="${esc(t.id)}">${t.is_active?'Deactivate':'Activate'}</button><button class="btn" data-a="tablelock" data-id="${esc(t.id)}">${t.is_locked?'Unlock':'Lock'}</button><button class="btn" data-a="tablerotate" data-id="${esc(t.id)}">Regenerate QR</button></div>
+  </article>`}).join('')||`<section class="bs-panel tm-empty"><div class="tm-empty-icon">${I('branch',28)}</div><b>No tables yet</b><p class="tm-muted">Add your first table to start accepting dine-in orders.</p></section>`}</div>
+  <section class="tm-footer"><div><b>${HALINA_TABLES.length} tables configured</b><p class="tm-muted">QR codes contain private table access tokens. Only display each QR code at its matching table.</p></div><button class="btn" data-a="tablesprintall">${I('receipt',16)} Print All QR Codes</button></section>
+ </div>`;
+}
+function tableQrUrl(t){const path=window.location.pathname.replace(/[^/]*$/,'index.html');const u=new URL(path,window.location.origin);u.searchParams.set('table',t.table_number);u.searchParams.set('table_id',t.id);u.searchParams.set('token',t.token);return u.href;}
+function drawTableQrs(){if(!window.QRCode)return;HALINA_TABLES.forEach(t=>{const el=document.getElementById('tmqr-'+t.id);if(el&&t.token){el.innerHTML='';new QRCode(el,{text:tableQrUrl(t),width:132,height:132,correctLevel:QRCode.CorrectLevel.M});}});}
+async function refreshTables(){if(!CURRENT_RESTAURANT_ID)return;const {data,error}=await sb.rpc('halina_list_restaurant_tables',{p_restaurant_id:CURRENT_RESTAURANT_ID});if(error)throw error;HALINA_TABLES=Array.isArray(data)?data:[];render();setTimeout(drawTableQrs,0);}
+async function tableRpc(name,args){const {data,error}=await sb.rpc(name,args);if(error)throw error;return data;}
+function tableById(id){return HALINA_TABLES.find(x=>x.id===id);}
+async function addTable(e){e.preventDefault();try{await tableRpc('halina_create_restaurant_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_number:$('#tmNumber').value.trim(),p_seating_capacity:Number($('#tmCapacity').value)});toast('Table created');await refreshTables();}catch(err){toast(err.message,1);}}
+async function updateTable(t,patch){await tableRpc('halina_update_restaurant_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_id:t.id,p_table_number:patch.table_number??t.table_number,p_seating_capacity:patch.seating_capacity??t.seating_capacity,p_is_active:patch.is_active??t.is_active,p_is_locked:patch.is_locked??t.is_locked});await refreshTables();}
+function tableDownload(t){const el=document.getElementById('tmqr-'+t.id);const img=el?.querySelector('img')||el?.querySelector('canvas');if(!img)return;const url=img.tagName==='CANVAS'?img.toDataURL('image/png'):img.src;const a=document.createElement('a');a.href=url;a.download='HALINA-'+t.table_number.replace(/[^a-z0-9_-]/gi,'_')+'-QR.png';a.click();}
+async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,250));const cards=HALINA_TABLES.map(t=>{const el=document.getElementById('tmqr-'+t.id),img=el?.querySelector('img');return img?`<article><h2>${esc(t.table_number)}</h2><img src="${img.src}"><p>Scan to order</p></article>`:''}).join('');const w=window.open('','_blank');if(!w){toast('Allow pop-ups to print QR codes',1);return;}w.document.write(`<html><head><title>HALINA Table QR Codes</title><style>body{font-family:Arial;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}article{border:1px solid #ddd;padding:16px;break-inside:avoid}img{width:180px;height:180px}
+</style></head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
+
+const G=$('#gate');
+function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.innerHTML=`<section class="login-shell" aria-label="HALINA owner sign in"><div class="login-showcase"><div class="login-brand"><span class="login-brand-mark">H</span><span>HALINA BISTRO CAFE</span></div><div class="login-hero-copy"><div class="login-eyebrow">Restaurant management</div><h1>Welcome back to a better way to manage.</h1><p>Your restaurant, your team, and your daily operations — thoughtfully brought together in one place.</p></div><div class="login-showcase-foot"><i></i><span>Owner &amp; administrator access</span></div></div><div class="login-panel"><form id="lf" class="login-form"><div class="login-mobile-brand"><span class="login-brand-mark">H</span></div><p class="login-kicker">HALINA BISTRO CAFE</p><h2>Sign in</h2><p class="login-intro">Enter your account details to continue to your dashboard.</p><div class="login-field"><label for="le">Email address</label><input id="le" type="email" autocomplete="username" placeholder="name@restaurant.com" required></div><div class="login-field"><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" placeholder="Enter your password" required></div>${err?`<p class="login-error" role="alert">${esc(err)}</p>`:''}<button class="login-submit" id="lb" type="submit">Sign in <span aria-hidden="true">→</span></button><div class="login-security"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Secure access for authorized owners and administrators</span></div></form></div></section>`;
+$('#lf').onsubmit=async e=>{e.preventDefault();$('#lb').disabled=true;$('#lb').innerHTML='Signing in…';const{error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});if(error){showLogin('Sign-in failed: '+error.message);return}start()}}
+async function start(){const{data:{session}}=await sb.auth.getSession();if(!session){showLogin();return}
+const{data:ru,error}=await sb.from('restaurant_users').select('role,restaurant_id').eq('user_id',session.user.id).maybeSingle();
+if(ru?.restaurant_id)CURRENT_RESTAURANT_ID=ru.restaurant_id;
+if(error||!ru||!['owner','admin'].includes(ru.role)){await sb.auth.signOut();showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to an owner or admin role.');return}
+G.hidden=true;S.user=session.user.email;await load()}
+async function load(manual){document.body.classList.remove('locked');const pg=$('#pg'),hasContent=!!pg.children.length;if(!hasContent)pg.innerHTML='<div class="bento" aria-busy="true"><span class="hl-sr">Loading your restaurant data…</span><div class="card hl-sk s8"></div><div class="card hl-sk s4"></div><div class="card hl-sk s3"></div><div class="card hl-sk s3"></div><div class="card hl-sk s2"></div><div class="card hl-sk s2"></div><div class="card hl-sk s2"></div><div class="card hl-sk tall s8"></div><div class="card hl-sk tall s4"></div></div>';else pg.classList.add('is-loading');
+try{if(!CURRENT_RESTAURANT_ID)throw new Error('Restaurant access could not be verified. Please sign in again.');const{data,error}=await sb.from('orders').select('id,restaurant_id,order_number,order_type,payment_method,payment_status,status,order_status,total,items,table_number,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('created_at',{ascending:false}).limit(5000);if(error)throw error;ORD.length=0;ORD.push(...(data||[]).map(mapO));
+const r=await sb.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,stock_total,stock_remaining,category,image_url,is_available,is_archived,created_at').order('id',{ascending:true});INV.length=0;S.stockErr=r.error?r.error.message:'';if(!r.error)INV.push(...r.data.map(x=>({id:x.id,pid:x.product_id||'',n:x.product_name||'',c:x.category||'',total:Number(x.stock_total)||0,q:Number(x.stock_remaining)||0,u:'',th:3,b:1,image:x.image_url||'',available:x.is_available!==false,archived:x.is_archived===true,upd:x.created_at||'',log:[]})));
+render();if(manual)toast('Data refreshed')}
+catch(err){if(hasContent){toast('Could not refresh data: '+(err.message||String(err)),1)}else{$('#pg').innerHTML=`<div class="card"><span class="bd er">● Could not load orders</span><p>${esc(err.message||String(err))}</p><div class="tb"><button class="btn" data-a="refresh">Try again</button><button class="btn" data-a="signout">Sign out</button></div></div>`}}finally{pg.classList.remove('is-loading')}}
+
+/* HALINA MENU & CATEGORIES — Supabase-backed */
+const HALINA_RESTAURANT_ID='5e562ca7-38aa-4894-8265-ddca2f4e61b6';
+let MENU_ROWS=[], CATEGORY_ROWS=[], MENU_STOCK_ROWS=[], menuLoadError='';
+const menuEsc=v=>esc(String(v??''));
+async function loadMenuData(){
+  const [cr,mr,sr]=await Promise.all([
+    sb.from('menu_categories').select('id,restaurant_id,name,description,image_url,sort_order,is_active,created_at').eq('restaurant_id',HALINA_RESTAURANT_ID).order('sort_order').order('name'),
+    sb.from('menu_items').select('id,restaurant_id,category_id,name,description,price,image_url,is_available,sort_order,stock_product_id,created_at').eq('restaurant_id',HALINA_RESTAURANT_ID).order('sort_order').order('name'),
+    sb.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,is_available,is_archived').not('product_id','is',null).order('product_name')
+  ]);
+  if(cr.error) throw cr.error;
+  if(mr.error) throw mr.error;
+  CATEGORY_ROWS=cr.data||[]; MENU_ROWS=mr.data||[];
+  MENU_STOCK_ROWS=(sr.error?[]:(sr.data||[])).filter(x=>x.product_id && x.is_archived!==true);
+  menuLoadError=sr.error?('Menu loaded, but stock links could not be loaded: '+sr.error.message):'';
+}
+function menuImageUploadField(id,label,current){
+  return `<div class="fl"><label for="${id}">${label} (JPG, PNG, WebP; max 5 MB)</label><input id="${id}" type="file" accept="image/jpeg,image/png,image/webp"></div>${current?`<p class="note">Current image: <a href="${menuEsc(current)}" target="_blank" rel="noopener">View image</a></p>`:''}`;
+}
+async function uploadMenuImage(file,kind){
+  if(!file)return null;
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024) throw new Error('Photo must be JPG, PNG, or WebP and no larger than 5 MB.');
+  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+  const path=HALINA_RESTAURANT_ID+'/'+kind+'/'+crypto.randomUUID()+'.'+ext;
+  const up=await sb.storage.from('halina-menu-images').upload(path,file,{contentType:file.type,upsert:false});
+  if(up.error)throw up.error;
+  return sb.storage.from('halina-menu-images').getPublicUrl(path).data.publicUrl;
+}
+function menuPage(){
+  const q=(S.f.q||'').trim().toLowerCase(),cat=S.f.mcat||'';
+  const rows=MENU_ROWS.filter(m=>(!q||(m.name+' '+(m.description||'')).toLowerCase().includes(q))&&(!cat||m.category_id===cat));
+  const catName=id=>CATEGORY_ROWS.find(c=>c.id===id)?.name||'No category';
+  return `<div class="tb"><input data-c="q" value="${menuEsc(S.f.q||'')}" placeholder="Search menu items…" aria-label="Search menu items"><select data-c="mcat" aria-label="Filter by category"><option value="">All categories</option>${CATEGORY_ROWS.map(c=>`<option value="${c.id}"${cat===c.id?' selected':''}>${menuEsc(c.name)}${c.is_active?'':' (inactive)'}</option>`).join('')}</select><button class="btn pri" data-a="menuadd">+ Add menu item</button><button class="btn" data-a="catmanage">Manage categories</button><button class="btn" data-a="menurefresh">Refresh</button></div>
+  <p class="mu">${CATEGORY_ROWS.length} categories · ${MENU_ROWS.length} menu items · HALINA BISTRO CAFE · Supabase</p>
+  ${menuLoadError?`<p class="note">${menuEsc(menuLoadError)}</p>`:''}
+  <div class="g g2">${rows.map(m=>`<div class="card"><div class="row" style="align-items:flex-start;gap:12px">${m.image_url?`<img src="${menuEsc(m.image_url)}" alt="" style="width:76px;height:76px;object-fit:cover;border-radius:10px">`:`<div style="width:76px;height:76px;border-radius:10px;background:var(--sf);display:grid;place-items:center;color:var(--mu)">No photo</div>`}<div style="flex:1;min-width:0"><div class="row"><b>${menuEsc(m.name)}</b>${bdg(m.is_available?'Available':'Unavailable')}</div><div class="mu">${menuEsc(catName(m.category_id))}</div><div class="big">${M(Number(m.price)||0)}</div></div></div>${m.description?`<p class="mu">${menuEsc(m.description)}</p>`:''}<div class="tb"><button class="btn" data-a="menuedit" data-i="${m.id}">Edit item</button><button class="btn" data-a="menutoggle" data-i="${m.id}">${m.is_available?'Make unavailable':'Make available'}</button></div></div>`).join('')||`<div class="card">${empty(q||cat?'No menu items match this filter.':'No HALINA menu items yet. Add a category first, then create your first menu item.')}</div>`}</div>`;
+}
+async function refreshMenu(){
+  try{await loadMenuData();render();}catch(e){toast('Could not load Menu & Categories: '+(e.message||e),1);menuLoadError=e.message||String(e);render();}
+}
+function menuItemForm(id){
+  const old=id?MENU_ROWS.find(x=>x.id===id):null;
+  if(id&&!old){toast('Menu item not found. Refresh and try again.',1);return;}
+  const cats=CATEGORY_ROWS.filter(c=>c.is_active || (old&&c.id===old.category_id));
+  const stock=MENU_STOCK_ROWS;
+  L.innerHTML=`<div class="bk" data-a="close"></div><form id="menuItemForm" class="md" role="dialog" aria-modal="true" aria-label="${old?'Edit':'Add'} menu item"><h3>${old?'Edit menu item':'Add menu item'}</h3><p class="note">Changes save to HALINA's Supabase records only. Stock quantities are not edited here.</p>
+  <div class="fl"><label for="miName">Menu item name *</label><input id="miName" required maxlength="120" value="${menuEsc(old?.name||'')}"></div>
+  <div class="fl"><label for="miDesc">Description</label><textarea id="miDesc" rows="2" maxlength="1000">${menuEsc(old?.description||'')}</textarea></div>
+  <div class="fl"><label for="miPrice">Price (₱) *</label><input id="miPrice" type="number" min="0" step="0.01" required value="${old?Number(old.price):''}"></div>
+  <div class="fl"><label for="miCat">Category *</label><select id="miCat" required><option value="">Choose category…</option>${cats.map(c=>`<option value="${c.id}"${old?.category_id===c.id?' selected':''}>${menuEsc(c.name)}</option>`).join('')}<option value="__new__">＋ Add new category…</option></select></div>
+  <div id="miNewCatWrap" class="fl" hidden><label for="miNewCat">New category name *</label><input id="miNewCat" maxlength="80" placeholder="Enter a new category name"><label for="miNewCatDesc">Category description</label><input id="miNewCatDesc" maxlength="300" placeholder="Optional description"><label for="miNewCatPhoto">Category photo (optional)</label><input id="miNewCatPhoto" type="file" accept="image/jpeg,image/png,image/webp"></div>
+  <div class="fl"><label for="miStock">Link existing inventory item (optional)</label><select id="miStock"><option value="">No stock link</option>${stock.map(x=>`<option value="${menuEsc(x.product_id)}"${old?.stock_product_id===x.product_id?' selected':''}>${menuEsc(x.product_name)} · ${menuEsc(x.product_id)}${x.is_available===false?' (unavailable)':''}</option>`).join('')}</select><p class="note">Only existing stock records appear here. Linking does not change stock quantity. Automatic deduction for new menu IDs still requires the ordering workflow to use this mapping.</p></div>
+  ${menuImageUploadField('miPhoto','Menu item photo',old?.image_url)}
+  <div class="fl"><label><input id="miAvailable" type="checkbox"${old?.is_available!==false?' checked':''}> Available for ordering</label></div>
+  <div class="tb"><button class="btn pri" type="submit" id="miSave">${old?'Save item':'Create item'}</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="miErr" class="er" role="alert"></p></form>`;
+  const catSel=$('#miCat'),newWrap=$('#miNewCatWrap');
+  catSel.onchange=()=>{newWrap.hidden=catSel.value!=='__new__';if(!newWrap.hidden)$('#miNewCat').focus();};
+  $('#menuItemForm').onsubmit=async e=>{
+    e.preventDefault();const btn=$('#miSave'),err=$('#miErr');err.textContent='';
+    const name=$('#miName').value.trim(),description=$('#miDesc').value.trim(),price=Number($('#miPrice').value),file=$('#miPhoto').files[0];
+    if(!name||!Number.isFinite(price)||price<0){err.textContent='Enter a valid name and non-negative price.';return;}
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      let categoryId=catSel.value;
+      if(categoryId==='__new__'){
+        const cn=$('#miNewCat').value.trim();
+        if(!cn)throw new Error('Enter the new category name.');
+        const dup=CATEGORY_ROWS.find(c=>c.name.trim().toLowerCase()===cn.toLowerCase());
+        if(dup)throw new Error('That category already exists. Choose it from the dropdown instead.');
+        let catImage=null;const cf=$('#miNewCatPhoto').files[0];if(cf)catImage=await uploadMenuImage(cf,'categories');
+        const insCat=await sb.from('menu_categories').insert({restaurant_id:HALINA_RESTAURANT_ID,name:cn,description:$('#miNewCatDesc').value.trim()||null,image_url:catImage,is_active:true}).select('id').single();
+        if(insCat.error)throw insCat.error;categoryId=insCat.data.id;
+      }
+      if(!categoryId)throw new Error('Choose a category.');
+      let imageUrl=old?.image_url||null;if(file)imageUrl=await uploadMenuImage(file,'items');
+      const payload={restaurant_id:HALINA_RESTAURANT_ID,category_id:categoryId,name,description:description||null,price,image_url:imageUrl,is_available:$('#miAvailable').checked,stock_product_id:$('#miStock').value||null};
+      const res=old?await sb.from('menu_items').update(payload).eq('id',old.id).eq('restaurant_id',HALINA_RESTAURANT_ID):await sb.from('menu_items').insert(payload);
+      if(res.error)throw res.error;
+      await loadMenuData();closeL();render();toast(old?'Menu item updated':'Menu item created');
+    }catch(ex){err.textContent=ex.message||'Could not save menu item.';btn.disabled=false;btn.textContent=old?'Save item':'Create item';}
+  };
+  $('#miName').focus();
+}
+function categoryForm(id){
+  const old=id?CATEGORY_ROWS.find(x=>x.id===id):null;
+  if(id&&!old){toast('Category not found. Refresh and try again.',1);return;}
+  L.innerHTML=`<div class="bk" data-a="close"></div><form id="catForm" class="md" role="dialog" aria-modal="true" aria-label="${old?'Edit':'Add'} category"><h3>${old?'Edit category':'Add category'}</h3><div class="fl"><label for="catName">Category name *</label><input id="catName" required maxlength="80" value="${menuEsc(old?.name||'')}"></div><div class="fl"><label for="catDesc">Description</label><textarea id="catDesc" rows="2" maxlength="300">${menuEsc(old?.description||'')}</textarea></div>${menuImageUploadField('catPhoto','Category photo',old?.image_url)}<div class="fl"><label><input id="catActive" type="checkbox"${old?.is_active!==false?' checked':''}> Active category</label></div><div class="tb"><button class="btn pri" id="catSave" type="submit">${old?'Save category':'Create category'}</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="catErr" class="er" role="alert"></p></form>`;
+  $('#catForm').onsubmit=async e=>{e.preventDefault();const btn=$('#catSave'),err=$('#catErr'),name=$('#catName').value.trim(),file=$('#catPhoto').files[0];err.textContent='';if(!name){err.textContent='Category name is required.';return}const dup=CATEGORY_ROWS.find(c=>c.name.trim().toLowerCase()===name.toLowerCase()&&c.id!==old?.id);if(dup){err.textContent='That category already exists.';return}btn.disabled=true;btn.textContent='Saving…';
+    try{let imageUrl=old?.image_url||null;if(file)imageUrl=await uploadMenuImage(file,'categories');const payload={restaurant_id:HALINA_RESTAURANT_ID,name,description:$('#catDesc').value.trim()||null,image_url:imageUrl,is_active:$('#catActive').checked};const res=old?await sb.from('menu_categories').update(payload).eq('id',old.id).eq('restaurant_id',HALINA_RESTAURANT_ID):await sb.from('menu_categories').insert(payload);if(res.error)throw res.error;await loadMenuData();closeL();render();toast(old?'Category updated':'Category created');}
+    catch(ex){err.textContent=ex.message||'Could not save category.';btn.disabled=false;btn.textContent=old?'Save category':'Create category';}
+  };$('#catName').focus();
+}
+function categoryManager(){
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-label="Manage categories"><h3>Manage categories</h3><p class="note">Deactivate categories instead of deleting them to preserve existing menu links.</p><div class="tb"><button class="btn pri" data-a="catadd">+ Add category</button><button class="btn" data-a="close">Close</button></div>${CATEGORY_ROWS.map(c=>`<div class="row" style="padding:10px 0;border-bottom:1px solid var(--bd);gap:10px">${c.image_url?`<img src="${menuEsc(c.image_url)}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px">`:''}<div style="flex:1"><b>${menuEsc(c.name)}</b><div class="mu">${MENU_ROWS.filter(m=>m.category_id===c.id).length} items · ${c.is_active?'Active':'Inactive'}</div></div><button class="btn" data-a="catedit" data-i="${c.id}">Edit</button></div>`).join('')||empty('No categories yet.')}</div>`;
+}
+async function toggleMenuItem(id){
+  const item=MENU_ROWS.find(x=>x.id===id);if(!item)return;
+  const res=await sb.from('menu_items').update({is_available:!item.is_available}).eq('id',id).eq('restaurant_id',HALINA_RESTAURANT_ID);
+  if(res.error){toast('Could not update availability: '+res.error.message,1);return}
+  await loadMenuData();render();toast(item.is_available?'Menu item marked unavailable':'Menu item is available');
+}
+A.menuadd=()=>menuItemForm(null);
+A.menuedit=t=>menuItemForm(t.dataset.i);
+A.menutoggle=t=>toggleMenuItem(t.dataset.i);
+A.menurefresh=()=>refreshMenu();
+A.catmanage=()=>categoryManager();
+A.catadd=()=>categoryForm(null);
+A.catedit=t=>categoryForm(t.dataset.i);
+A.addmenu=()=>menuItemForm(null);
+A.editmenu=t=>menuItemForm(t.dataset.i);
+A.addcat=()=>categoryForm(null);
+Object.assign(PG,{menu:menuPage});
+const originalStart=start;
+let CURRENT_AUTH_USER_ID='';
+let CURRENT_AUTH_ROLE='';
+start=async function(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){showLogin();return;}
+  const {data:ru,error}=await sb.from('restaurant_users').select('role,restaurant_id').eq('user_id',session.user.id).maybeSingle();
+  if(error||!ru||ru.restaurant_id!==HALINA_RESTAURANT_ID||!['owner','admin'].includes(ru.role)){
+    await sb.auth.signOut();
+    showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to a HALINA owner/admin role.');
+    return;
+  }
+  CURRENT_AUTH_USER_ID=session.user.id;
+  CURRENT_AUTH_ROLE=String(ru.role||'admin').toLowerCase();
+  CURRENT_RESTAURANT_ID=ru.restaurant_id;
+  G.hidden=true;S.user=session.user.email;await load();
+};
+const originalLoad=load;
+let STAFF_ROWS=[], staffLoadError='';
+
+let STAFF_SESSIONS=[], staffHistoryError='';
+let AUDIT_ROWS=[], auditLoadError='';
+
+async function loadAuditLogs(){
+  const {data,error}=await sb.from('audit_logs')
+    .select('id,restaurant_id,actor_user_id,actor_name,actor_role,action_category,action,record_type,record_id,result,details,created_at')
+    .eq('restaurant_id',CURRENT_RESTAURANT_ID||HALINA_RESTAURANT_ID)
+    .order('created_at',{ascending:false}).limit(1000);
+  if(error) throw error;
+  AUDIT_ROWS=data||[];
+  auditLoadError='';
+}
+function auditPage(){
+  const q=(S.f.auditQ||'').trim().toLowerCase(), category=S.f.auditCategory||'';
+  const result=S.f.auditResult||'', actor=S.f.auditActor||'', from=S.f.auditFrom||'', to=S.f.auditTo||'';
+  const rows=AUDIT_ROWS.filter(a=>{
+    const hay=[a.actor_name,a.actor_role,a.action_category,a.action,a.record_type,a.record_id,JSON.stringify(a.details||{})].join(' ').toLowerCase();
+    const day=String(a.created_at||'').slice(0,10);
+    return (!q||hay.includes(q))&&(!category||a.action_category===category)&&(!result||a.result===result)&&(!actor||String(a.actor_user_id||'')===actor)&&(!from||day>=from)&&(!to||day<=to);
+  });
+  const actors=[...new Map(AUDIT_ROWS.map(a=>[a.actor_user_id||('system:'+a.actor_name),{id:a.actor_user_id||'',name:a.actor_name||'System'}])).values()];
+  const cats=[...new Set(AUDIT_ROWS.map(a=>a.action_category).filter(Boolean))].sort();
+  const opt=(value,label,selected)=>`<option value="${esc(value)}"${selected===value?' selected':''}>${esc(label)}</option>`;
+  return `<div class="tb">
+    <input data-c="auditQ" value="${esc(S.f.auditQ||'')}" placeholder="Search actor, action, record…" aria-label="Search audit logs">
+    <select data-c="auditCategory" aria-label="Filter category">${opt('','All categories',category)}${cats.map(c=>opt(c,c,category)).join('')}</select>
+    <select data-c="auditResult" aria-label="Filter result">${opt('','All results',result)}${opt('success','Success',result)}${opt('failed','Failed',result)}</select>
+    <select data-c="auditActor" aria-label="Filter staff">${opt('','All actors',actor)}${actors.map(a=>opt(a.id,a.name,actor)).join('')}</select>
+    <input type="date" data-c="auditFrom" value="${esc(from)}" aria-label="From date">
+    <input type="date" data-c="auditTo" value="${esc(to)}" aria-label="To date">
+    <button class="btn" data-a="auditrefresh">Refresh</button>
+  </div>
+  <p class="note">${rows.length} record(s) shown · ${AUDIT_ROWS.length} loaded · newest first · HALINA BISTRO CAFE</p>
+  ${auditLoadError?`<div class="card"><span class="bd er">● Audit logs could not load</span><p>${esc(auditLoadError)}</p><p class="note">Check Supabase table access and owner/admin permissions.</p></div>`:
+  `<div class="card">${tbl(['Date & time','Staff','Action','Description','Result',''],rows.map(a=>{const dt=a.created_at?new Date(a.created_at):null,hum=v=>String(v||'').replace(/[_-]+/g,' ').replace(/^./,c=>c.toUpperCase());return{c:[
+    `<div class="au-cell"><b>${dt?esc(dt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'})):'—'}</b><small>${dt?esc(dt.toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'})):''}</small></div>`,
+    `<div class="au-cell"><b>${esc(a.actor_name||'System')}</b><small>${esc(hum(a.actor_role||'system'))}</small></div>`,
+    `<div class="au-cell"><b>${esc(hum(a.action||'—'))}</b><small>${esc(hum(a.action_category||''))}</small></div>`,
+    esc(a.description||hum(a.record_type)||'—'),
+    bdg(a.result==='failed'?'Failed':'Success'),
+    `<button class="btn" data-a="auditdetail" data-id="${esc(a.id)}">Details</button>`
+  ]}}))}</div>`}
+  <p class="note" style="margin-top:10px">Read-only audit history. Recorded activity includes inventory, orders, payments, menu items and categories, staff accounts and permissions, cashier credential changes, staff sessions, and table changes. Background session heartbeats are excluded to avoid noisy duplicate entries.</p>`;
+}
+function auditDetail(id){
+  const a=AUDIT_ROWS.find(x=>String(x.id)===String(id));
+  if(!a){toast('Audit record not found. Refresh and try again.',1);return;}
+  const details=a.details||{}, before=details.before||{}, after=details.after||{};
+  const dateText=a.created_at?new Date(a.created_at).toLocaleString('en-PH'):'—';
+  const roleText=String(a.actor_role||'system');
+  const categoryText=String(a.action_category||'Activity');
+  const actionText=String(a.action||'Activity recorded');
+  const actorText=String(a.actor_name||'Unknown user');
+  const isStock=String(a.record_type||'').toLowerCase()==='product_stock';
+  const preferred=isStock
+    ? ['product_name','stock_remaining','stock_total','is_available','is_archived']
+    : [...new Set([...Object.keys(before),...Object.keys(after)])];
+  const labels={
+    product_name:'Product',stock_remaining:'Remaining stock',stock_total:'Total stock',
+    is_available:'Available for sale',is_archived:'Archived',name:'Name',price:'Price',
+    category_id:'Category ID',is_active:'Active',sort_order:'Display order',
+    order_number:'Order number',order_status:'Order status',status:'Status',
+    payment_status:'Payment status',payment_method:'Payment method',total:'Order total',
+    display_name:'Display name',full_name:'Full name',cashier_username:'Username',
+    role:'Role',position:'Position',permissions:'Permissions',amount:'Amount',
+    provider:'Payment provider',order_id:'Order ID',
+    login_at:'Login time',logout_at:'Logout time',last_seen_at:'Last activity',end_reason:'Session end reason',
+    failed_attempts:'Failed PIN attempts',locked_at:'PIN lockout time',
+    table_number:'Table number',restaurant_user_id:'Staff account ID',user_id:'User ID'
+  };
+  const humanValue=(v,key)=>{
+    if(v===null||v===undefined||v==='')return '—';
+    if(typeof v==='boolean')return v?'Yes':'No';
+    if(key==='price'||key==='total'||key==='amount'){
+      const n=Number(v); return Number.isFinite(n)?n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}):String(v);
+    }
+    if(Array.isArray(v))return v.map(x=>typeof x==='object'?JSON.stringify(x):String(x)).join(', ');
+    if(typeof v==='object')return JSON.stringify(v);
+    return String(v);
+  };
+  const keys=preferred.filter(k=>k!=='permissions' || (before[k]!==undefined||after[k]!==undefined))
+    .filter(k=>before[k]!==undefined||after[k]!==undefined);
+  const changed=keys.filter(k=>JSON.stringify(before[k])!==JSON.stringify(after[k]));
+  const delta=isStock&&before.stock_remaining!==undefined&&after.stock_remaining!==undefined
+    ? Number(after.stock_remaining)-Number(before.stock_remaining) : null;
+  const deltaText=delta===null||!Number.isFinite(delta)?'':`${delta>0?'+':''}${delta}`;
+  const compareCards=changed.length
+    ? `<div class="g g2" style="margin-top:12px">${changed.map(k=>`<div class="card" style="padding:13px;min-width:0">
+        <div class="mu" style="font-size:12px;margin-bottom:9px">${esc(labels[k]||k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()))}</div>
+        <div class="mu" style="font-size:11px;margin-bottom:3px">Previous value</div>
+        <div style="font-weight:600;overflow-wrap:anywhere;margin-bottom:10px">${esc(humanValue(before[k],k))}</div>
+        <div class="mu" style="font-size:11px;margin-bottom:3px">New value</div>
+        <div style="font-weight:700;overflow-wrap:anywhere">${esc(humanValue(after[k],k))}</div>
+      </div>`).join('')}</div>`
+    : `<div class="card" style="margin-top:12px"><p style="margin:0">${String(a.action||'').toLowerCase().includes('pin')?'The security event was recorded. Sensitive PIN values are intentionally not stored in the audit details.':'No field-by-field changes are available for this record.'}</p></div>`;
+  const statusBadge=bdg(a.result==='failed'?'Failed':'Success');
+  const actorIcon=roleText.toLowerCase()==='system'?'⚙':'●';
+  drawer('Activity details',`
+    <div class="card" style="padding:16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--s);font-size:20px">${isStock?'📦':'🧾'}</div>
+        <div style="flex:1;min-width:150px">
+          <div style="font-size:17px;font-weight:750;line-height:1.35">${esc(actionText)}</div>
+          <div class="mu" style="font-size:12px;margin-top:4px">${esc(categoryText)}${isStock&&after.product_name?' · '+esc(after.product_name):''}</div>
+        </div>
+        <div>${statusBadge}</div>
+      </div>
+    </div>
+    ${isStock&&before.stock_remaining!==undefined&&after.stock_remaining!==undefined?`
+      <div class="g g2" style="gap:10px">
+        <div class="card" style="padding:15px;background:var(--s)">
+          <div class="mu" style="font-size:12px">Previous stock</div>
+          <div style="font-size:28px;font-weight:800;line-height:1.3;margin-top:5px">${esc(humanValue(before.stock_remaining,'stock_remaining'))}</div>
+          <div class="mu" style="font-size:11px;margin-top:3px">units</div>
+        </div>
+        <div class="card" style="padding:15px;background:var(--s)">
+          <div class="mu" style="font-size:12px">New stock</div>
+          <div style="font-size:28px;font-weight:800;line-height:1.3;margin-top:5px">${esc(humanValue(after.stock_remaining,'stock_remaining'))}</div>
+          <div style="font-size:12px;font-weight:700;margin-top:3px">${deltaText?esc(deltaText+' units'): 'Updated'}</div>
+        </div>
+      </div>`:''}
+    <h3 style="margin:16px 0 10px">Activity details</h3>
+    <div class="card" style="padding:14px">
+      <div class="row"><span class="mu">Actor</span><b style="text-align:right;overflow-wrap:anywhere">${esc(actorIcon+' '+actorText)}</b></div>
+      <div class="row"><span class="mu">Role</span><b>${esc(roleText.charAt(0).toUpperCase()+roleText.slice(1))}</b></div>
+      <div class="row"><span class="mu">Date and time</span><b style="text-align:right">${esc(dateText)}</b></div>
+      <div class="row"><span class="mu">Activity category</span><b style="text-align:right">${esc(categoryText)}</b></div>
+      <div class="row"><span class="mu">Record</span><b style="text-align:right;overflow-wrap:anywhere">${esc(a.record_type||'—')} · ${esc(a.record_id||'—')}</b></div>
+    </div>
+    <h3 style="margin:16px 0 4px">What changed?</h3>
+    ${compareCards}
+    <p class="note" style="margin-top:12px">This is a system activity record. Passwords, PINs, OTPs, credential hashes, and other secrets are never displayed in audit details.</p>
+  `);
+}
+async function loadStaffData(){
+  const {data,error}=await sb
+    .from('restaurant_users')
+    .select('id,user_id,restaurant_id,role,cashier_username,full_name,display_name,position,permissions,created_at,is_active,deactivated_at')
+    .eq('restaurant_id',HALINA_RESTAURANT_ID)
+    .order('created_at',{ascending:true});
+  if(error)throw error;
+  STAFF_ROWS=data||[];
+  const {data:sessions,error:sessionError}=await sb.from('staff_sessions')
+    .select('id,restaurant_id,restaurant_user_id,user_id,login_at,logout_at,last_seen_at,end_reason')
+    .eq('restaurant_id',HALINA_RESTAURANT_ID)
+    .order('login_at',{ascending:false}).limit(1000);
+  if(sessionError){STAFF_SESSIONS=[];staffHistoryError=sessionError.message||'Could not load session history';}
+  else {STAFF_SESSIONS=sessions||[];staffHistoryError='';}
+  staffLoadError='';
+}
+function staffDuration(start,end){
+  if(!start)return '—';
+  const ms=Math.max(0,new Date(end||Date.now())-new Date(start));
+  const mins=Math.floor(ms/60000), days=Math.floor(mins/1440), hours=Math.floor((mins%1440)/60), rem=mins%60;
+  return days?`${days}d ${hours}h ${rem}m`:hours?`${hours}h ${rem}m`:`${rem}m`;
+}
+function staffLatestSession(u){
+  return STAFF_SESSIONS.find(s=>s.restaurant_user_id===u.id && !s.logout_at && Date.now()-new Date(s.last_seen_at).getTime()<120000);
+}
+function staffPage(){
+  const permissionNames={orders:'Orders',tables:'Tables',stocks:'Stocks',dispatcher:'Dispatcher',settings:'Settings'};
+  const rows=STAFF_ROWS.map(u=>{
+    const isCurrentUser=!!CURRENT_AUTH_USER_ID&&u.user_id===CURRENT_AUTH_USER_ID;
+    const accountLabel=u.display_name||u.full_name||u.cashier_username||(
+      isCurrentUser&&S.user ? S.user :
+      String(u.role||'').toLowerCase()==='owner' ? 'Owner account' : 'Username not set'
+    );
+    const permissions=u.permissions||{};
+    const permissionLabel=Object.keys(permissionNames).filter(key=>permissions[key]===true).map(key=>permissionNames[key]).join(', ')||'None assigned';
+    const active=u.is_active!==false;
+    const online=active&&!!staffLatestSession(u);
+    const status=active?(online?'<span class="bd">● Online</span>':'<span class="bd">● Offline</span>'):'<span class="bd er">Deactivated</span>';
+    const actions=String(u.role||'').toLowerCase()==='staff'
+      ? `<button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" style="white-space:nowrap">Reset PIN</button> ${active?`<button class="btn" type="button" data-a="staffdeactivate" data-id="${esc(u.id)}" style="white-space:nowrap">Deactivate</button>`:'<span class="mu">Inactive</span>'}`
+      : '<span class="mu">—</span>';
+    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
+  });
+  return `<div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
+  ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p></div>`:
+    STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Status','Permissions','Date Added','Actions'],rows)}</div>`:
+    `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant.</p></div>`}
+  ${staffHistoryError?`<div class="card" style="margin-top:12px"><p class="mu">Login history unavailable: ${esc(staffHistoryError)}</p></div>`:''}
+  <div class="card" style="margin-top:14px"><h3>Account & Session Security</h3><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Deactivated staff accounts are retained with their session history.</p><p>• Online means an active session heartbeat was received within the last 2 minutes.</p></div>`;
+}
+PG.staff=staffPage;
+A.addstaff=()=>staffAddForm();
+A.staffrefresh=async()=>{
+  try{await loadStaffData();render();toast('Staff list refreshed');}
+  catch(e){staffLoadError=e.message||String(e);render();}
+};
+A.staffhistory=()=>{
+  const names=new Map(STAFF_ROWS.map(u=>[u.id,u.display_name||u.full_name||u.cashier_username||u.role||'Staff']));
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" style="max-width:980px;width:min(980px,96vw)"><h3>Staff Login History</h3><p class="note">Saved login/logout times and calculated session duration.</p><div class="fl"><label for="staffHistoryUser">Staff account</label><select id="staffHistoryUser"><option value="">All staff</option>${STAFF_ROWS.map(u=>`<option value="${esc(u.id)}">${esc(names.get(u.id))}</option>`).join('')}</select></div><div class="fl"><label for="staffHistoryDate">Date (login date)</label><input id="staffHistoryDate" type="date"></div><div id="staffHistoryRows" style="max-height:55vh;overflow:auto;margin-top:12px"></div><div class="tb"><button class="btn" type="button" data-a="close">Close</button></div></div>`;
+  const renderHistory=()=>{
+    const userId=L.querySelector('#staffHistoryUser').value,date=L.querySelector('#staffHistoryDate').value;
+    const records=STAFF_SESSIONS.filter(s=>(!userId||s.restaurant_user_id===userId)&&(!date||String(s.login_at||'').slice(0,10)===date));
+    const html=records.length?`<div class="card">${tbl(['Staff','Login','Logout','Duration','End Reason'],records.map(s=>({c:[esc(names.get(s.restaurant_user_id)||'Staff'),esc(s.login_at?new Date(s.login_at).toLocaleString('en-PH'):'—'),esc(s.logout_at?new Date(s.logout_at).toLocaleString('en-PH'):'Still active / timed out'),esc(staffDuration(s.login_at,s.logout_at||s.last_seen_at)),esc(s.end_reason|| (s.logout_at?'logout':'active/unknown'))]})))}</div>`:'<p class="mu">No sessions match these filters.</p>';
+    L.querySelector('#staffHistoryRows').innerHTML=html;
+  };
+  L.querySelector('#staffHistoryUser').addEventListener('change',renderHistory);
+  L.querySelector('#staffHistoryDate').addEventListener('change',renderHistory);
+  renderHistory();
+};
+A.staffdeactivate=async(button)=>{
+  const id=button.dataset.id,staff=STAFF_ROWS.find(u=>u.id===id);
+  if(!staff||String(staff.role||'').toLowerCase()!=='staff'||staff.is_active===false){toast('Staff account could not be verified');return;}
+  const name=staff.display_name||staff.full_name||staff.cashier_username||'this staff account';
+  if(!confirm(`Deactivate ${name}? They will no longer be able to log in. Their session history will be retained.`))return;
+  button.disabled=true;
+  try{
+    const {data,error}=await sb.functions.invoke('staff-session-action',{body:{action:'deactivate',restaurant_user_id:id}});
+    if(error)throw new Error(error.message||'Deactivation request failed');
+    if(!data?.success)throw new Error(data?.error||'Deactivation was not confirmed');
+    try{await writeAdminAudit('Staff & Permissions','Deactivated staff account','staff_account',id,{staff_name:name,username:staff.cashier_username||''});}catch(ae){toast('Staff deactivated, but audit logging failed: '+(ae.message||String(ae)),1);}await loadStaffData();render();toast('Staff account deactivated; history retained');
+  }catch(e){button.disabled=false;toast(e.message||'Unable to deactivate staff account');}
+};
+
+A.staffresetpin=(button)=>{
+  const staffId=button.dataset.id;
+  const staff=STAFF_ROWS.find(row=>row.id===staffId);
+  if(!staff||String(staff.role||'').toLowerCase()!=='staff'){
+    toast('That staff account could not be verified');return;
+  }
+  const staffName=staff.display_name||staff.full_name||staff.cashier_username||'this staff account';
+  let challengeId='',otpVerified=false;
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="resetPinTitle">
+    <h3 id="resetPinTitle">Reset Staff PIN</h3>
+    <p class="note">Reset PIN for <strong>${esc(staffName)}</strong> (${esc(staff.cashier_username||'username not set')}). Verify the one-time code before choosing a new PIN.</p>
+    <div class="card" style="padding:12px;margin:10px 0">
+      <strong>Step 1 — Email verification</strong>
+      <p class="note" style="margin:5px 0 10px">Testing mode: the code is sent to the email configured in RESEND_TEST_EMAIL. This may differ from the Owner/Admin login email.</p>
+      <button id="staffSendOtpBtn" class="btn pri" type="button">Send OTP</button>
+      <div id="staffOtpArea" hidden style="margin-top:12px">
+        <div class="fl"><label for="staffOtpCode">Six-digit verification code</label><input id="staffOtpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter OTP"></div>
+        <button id="staffVerifyOtpBtn" class="btn" type="button">Verify OTP</button>
+      </div>
+    </div>
+    <form id="staffResetPinForm" autocomplete="off">
+      <strong>Step 2 — Set a new PIN</strong>
+      <div class="fl" style="margin-top:10px"><label for="staffNewPin">New six-digit PIN *</label><input id="staffNewPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter new six-digit PIN" disabled></div>
+      <div class="fl"><label for="staffNewPinConfirm">Confirm new PIN *</label><input id="staffNewPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter new PIN" disabled></div>
+      <p id="staffResetPinMsg" class="note" role="status" aria-live="polite">Send and verify the OTP first. PIN reset remains locked until verification succeeds.</p>
+      <div class="tb"><button id="staffResetPinBtn" class="btn pri" type="submit" disabled>Save New PIN</button><button class="btn" type="button" data-a="close">Cancel</button></div>
+    </form>
+  </div>`;
+  const sendBtn=L.querySelector('#staffSendOtpBtn');
+  const otpArea=L.querySelector('#staffOtpArea');
+  const verifyBtn=L.querySelector('#staffVerifyOtpBtn');
+  const form=L.querySelector('#staffResetPinForm');
+  const submitBtn=L.querySelector('#staffResetPinBtn');
+  const message=L.querySelector('#staffResetPinMsg');
+  const otpInput=L.querySelector('#staffOtpCode');
+  const pinInput=L.querySelector('#staffNewPin');
+  const confirmInput=L.querySelector('#staffNewPinConfirm');
+  sendBtn.onclick=async()=>{
+    sendBtn.disabled=true;message.textContent='Requesting verification code…';
+    try{
+      const {data,error}=await sb.functions.invoke('staff-pin-reset-otp',{body:{action:'request',restaurant_user_id:staffId}});
+      if(error)throw error;
+      if(!data?.success||!data?.challenge_id)throw new Error(data?.error||'Could not request OTP.');
+      challengeId=data.challenge_id;otpVerified=false;otpArea.hidden=false;
+      pinInput.disabled=true;confirmInput.disabled=true;submitBtn.disabled=true;
+      message.textContent='OTP sent to the configured Resend test inbox. It expires in 10 minutes.';
+      otpInput.focus();sendBtn.textContent='Request another code';
+    }catch(error){message.textContent=error?.message||'Unable to send OTP.';}
+    finally{sendBtn.disabled=false;}
+  };
+  verifyBtn.onclick=async()=>{
+    const code=otpInput.value.trim();
+    if(!challengeId){message.textContent='Request an OTP first.';return;}
+    if(!/^\d{6}$/.test(code)){message.textContent='Enter the six-digit code.';otpInput.focus();return;}
+    verifyBtn.disabled=true;message.textContent='Verifying code…';
+    try{
+      const {data,error}=await sb.functions.invoke('staff-pin-reset-otp',{body:{action:'verify',challenge_id:challengeId,otp:code}});
+      if(error)throw error;
+      if(!data?.success)throw new Error(data?.error||'OTP verification failed.');
+      otpVerified=true;otpInput.disabled=true;verifyBtn.disabled=true;sendBtn.disabled=true;
+      pinInput.disabled=false;confirmInput.disabled=false;submitBtn.disabled=false;
+      message.textContent='OTP verified. You may now set the new PIN.';pinInput.focus();
+    }catch(error){message.textContent=error?.message||'Unable to verify OTP.';verifyBtn.disabled=false;}
+  };
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    if(!form.reportValidity())return;
+    if(!otpVerified||!challengeId){message.textContent='Verify the OTP before resetting the PIN.';return;}
+    const pin=pinInput.value,confirmPin=confirmInput.value;
+    if(!/^[0-9]{6}$/.test(pin)){message.textContent='PIN must contain exactly six digits.';return;}
+    if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
+    if(!CURRENT_AUTH_USER_ID){message.textContent='Your session could not be verified. Sign in again and retry.';return;}
+    submitBtn.disabled=true;message.textContent='Updating PIN securely…';
+    try{
+      const {error}=await sb.rpc('reset_cashier_pin_with_otp',{p_challenge_id:challengeId,p_new_pin:pin});
+      if(error)throw error;
+      pinInput.value='';confirmInput.value='';try{await writeAdminAudit('Staff & Permissions','Reset staff PIN after OTP verification','staff_pin',staffId,{staff_name:staffName,username:staff.cashier_username||'',otp_verified:true});}catch(ae){toast('PIN reset succeeded, but audit logging failed: '+(ae.message||String(ae)),1);}closeL();toast('Staff PIN reset successfully after OTP verification');
+    }catch(error){message.textContent=error?.message||'Unable to reset this staff PIN. No success was confirmed.';submitBtn.disabled=false;}
+  };
+};
+
+function staffAddForm(){
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="staffFormTitle">
+    <h3 id="staffFormTitle">Add Staff Member</h3><p class="note">Create a staff account with a username and initial six-digit PIN. No personal email is required.</p>
+    <form id="staffAddForm" autocomplete="off">
+      <div class="fl"><label for="staffFullName">Full Name *</label><input id="staffFullName" required maxlength="100" placeholder="Enter full name"></div>
+      <div class="fl"><label for="staffDisplayName">Display Name</label><input id="staffDisplayName" maxlength="60" placeholder="Optional display name"></div>
+      <div class="fl"><label for="staffPosition">Position *</label><select id="staffPosition" required><option value="Cashier">Cashier</option><option value="Manager">Manager</option><option value="Kitchen Staff">Kitchen Staff</option><option value="Dispatcher">Dispatcher</option></select></div>
+      <div class="fl"><label for="staffUsername">Username *</label><input id="staffUsername" required minlength="3" maxlength="40" autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9._-]+" placeholder="Create a unique username"></div>
+      <div class="fl"><label for="staffRole">Account Role</label><input id="staffRole" value="Staff" disabled></div>
+      <div class="fl"><label for="staffPin">Initial Cashier PIN *</label><input id="staffPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter six-digit PIN"></div>
+      <div class="fl"><label for="staffPinConfirm">Confirm Cashier PIN *</label><input id="staffPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter six-digit PIN"></div>
+      <div class="fl"><label>Permissions</label>
+        <label class="row" for="staffPermOrders"><span>Orders</span><input id="staffPermOrders" type="checkbox" checked></label>
+        <label class="row" for="staffPermTables"><span>Tables</span><input id="staffPermTables" type="checkbox" checked></label>
+        <label class="row" for="staffPermStocks"><span>Stocks</span><input id="staffPermStocks" type="checkbox" checked></label>
+        <label class="row" for="staffPermDispatcher"><span>Dispatcher</span><input id="staffPermDispatcher" type="checkbox"></label>
+        <label class="row" for="staffPermSettings"><span>Settings</span><input id="staffPermSettings" type="checkbox"></label>
+      </div>
+      <p class="mu">PIN values are sent only to the secure account-creation endpoint and must not be logged or stored as plain text.</p>
+      <p id="staffFormMsg" class="note" role="status" aria-live="polite"></p>
+      <div class="tb"><button id="staffCreateBtn" class="btn pri" type="submit">Create Staff Account</button><button class="btn" type="button" data-a="close">Cancel</button></div>
+    </form>
+  </div>`;
+  const form=L.querySelector('#staffAddForm'),submitBtn=L.querySelector('#staffCreateBtn'),message=L.querySelector('#staffFormMsg');
+  L.querySelector('#staffFullName').focus();
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    if(!form.reportValidity())return;
+    const fullName=L.querySelector('#staffFullName').value.trim();
+    const displayName=L.querySelector('#staffDisplayName').value.trim();
+    const position=L.querySelector('#staffPosition').value;
+    const username=L.querySelector('#staffUsername').value.trim();
+    const pin=L.querySelector('#staffPin').value;
+    const confirmPin=L.querySelector('#staffPinConfirm').value;
+    if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
+    const permissions={orders:L.querySelector('#staffPermOrders').checked,tables:L.querySelector('#staffPermTables').checked,stocks:L.querySelector('#staffPermStocks').checked,dispatcher:L.querySelector('#staffPermDispatcher').checked,settings:L.querySelector('#staffPermSettings').checked};
+    submitBtn.disabled=true;message.textContent='Creating staff account securely…';
+    try{
+      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:HALINA_RESTAURANT_ID,full_name:fullName,display_name:displayName,position,username,permissions,pin}});
+      if(error){let errorMessage=error.message||'Unable to create staff account.';if(error.context&&typeof error.context.json==='function'){try{const detail=await error.context.json();if(detail&&detail.error)errorMessage=detail.error;}catch(_){}}throw new Error(errorMessage);}
+      if(!data||data.success!==true)throw new Error(data?.error||'Staff account creation was not confirmed.');
+      L.querySelector('#staffPin').value='';L.querySelector('#staffPinConfirm').value='';
+      message.textContent='Staff account created. Refreshing staff list…';
+      try{await writeAdminAudit('Staff & Permissions','Created staff account','staff_account',data.restaurant_user_id||data.user_id||null,{full_name:fullName,display_name:displayName,position,username,permissions});}catch(ae){toast('Staff account created, but audit logging failed: '+(ae.message||String(ae)),1);}try{await loadStaffData();closeL();render();toast('Staff account created');}
+      catch(refreshError){staffLoadError=refreshError.message||String(refreshError);closeL();render();toast('Staff created, but the list could not refresh');}
+    }catch(error){L.querySelector('#staffPin').value='';L.querySelector('#staffPinConfirm').value='';message.textContent=error.message||'Unable to create staff account. Please try again.';submitBtn.disabled=false;}
+  };
+}
+
+async function loadRestaurantProfile(){
+  const [{data,error},{data:business,error:businessError}]=await Promise.all([
+    sb.from('restaurants').select('name,address,contact_number,email,website,logo_url,operating_hours,appearance_settings,currency,timezone').eq('id',HALINA_RESTAURANT_ID).single(),
+    sb.from('restaurant_business_settings').select('country_code,region,city,tax_registration_type').eq('restaurant_id',HALINA_RESTAURANT_ID).maybeSingle()
+  ]);
+  if(error)throw error;
+  if(businessError)throw businessError;
+  const hadUnsavedOperatingHours=operatingHoursDirty&&!!operatingHoursDraft;
+  Object.assign(PROFILE,data||{});
+  Object.assign(PROFILE,window.HALINA_CONFIG.normalizeProfile(PROFILE));
+  Object.assign(BUSINESS_SETTINGS,business||{});
+  if(!hadUnsavedOperatingHours){
+    operatingHoursDirty=false;
+    operatingHoursDraft=null;
+  }
+  if(window.wpSyncFromProfile)wpSyncFromProfile();
+  const country=$('#businessCountry'),region=$('#businessRegion'),city=$('#businessCity'),registration=$('#businessTaxRegistration'),currency=$('#businessCurrency'),timezone=$('#businessTimezone');
+  if(country)country.value=BUSINESS_SETTINGS.country_code||'PH';
+  if(region)region.value=BUSINESS_SETTINGS.region||'';
+  if(city)city.value=BUSINESS_SETTINGS.city||'';
+  if(registration)registration.value=BUSINESS_SETTINGS.tax_registration_type||'NOT_SET';
+  if(currency)currency.value=PROFILE.currency||'PHP';
+  if(timezone)timezone.value=PROFILE.timezone||'Asia/Manila';
+}
+function initAppearanceControls(){const a=PROFILE.appearance_settings||{};const f=$('#appearanceFont'),fs=$('#appearanceFontScale'),ls=$('#appearanceLogoScale');if(f)f.value=a.font_family||'Inter';if(fs)fs.value=Math.round((a.font_scale||1)*100);if(ls)ls.value=Math.round((a.logo_scale||1.15)*100);updateAppearancePreview();}
+function updateAppearancePreview(){const f=$('#appearanceFont'),fs=$('#appearanceFontScale'),ls=$('#appearanceLogoScale'),p=$('#appearancePreview');if(!f||!fs||!ls||!p)return;const scale=Number(fs.value)/100,logo=Number(ls.value);$('#fontScaleLabel').textContent=Math.round(scale*100)+'%';$('#logoScaleLabel').textContent=logo+'%';p.style.fontFamily=f.value+',Arial,sans-serif';p.style.fontSize=(16*scale)+'px';p.innerHTML=`<strong style="display:inline-flex;align-items:center;gap:10px"><span style="width:${30*logo/100}px;height:${30*logo/100}px;border-radius:8px;background:#2f7650;display:inline-block"></span>EDMEL Restaurant</strong><p style="margin:8px 0 0">Your dashboard appearance preview</p>`;}
+document.addEventListener('input',e=>{if(['appearanceFont','appearanceFontScale','appearanceLogoScale'].includes(e.target.id))updateAppearancePreview()});
+async function saveRestaurantProfile(){
+  const name=$('#profileName')?.value.trim()||'';
+  const email=$('#profileEmail')?.value.trim()||'';
+  const website=$('#profileWebsite')?.value.trim()||'';
+  if(!name){toast('Business name is required.',1);return;}
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast('Enter a valid business email.',1);return;}
+  if(website && !/^https?:\/\//i.test(website)){toast('Website must start with http:// or https://.',1);return;}
+  const appearance_settings={...(PROFILE.appearance_settings||{}),font_family:$('#appearanceFont')?.value||'Inter',font_scale:Math.min(1.15,Math.max(.9,(Number($('#appearanceFontScale')?.value)||100)/100)),logo_scale:Math.min(1.5,Math.max(.8,(Number($('#appearanceLogoScale')?.value)||115)/100))};
+  const currency=$('#businessCurrency')?.value||'PHP';
+  const timezone=$('#businessTimezone')?.value||'Asia/Manila';
+  const countryCode=$('#businessCountry')?.value||'PH';
+  const taxRegistration=$('#businessTaxRegistration')?.value||'NOT_SET';
+  if((countryCode==='PH'&&!['NOT_SET','PH_VAT_REGISTERED','PH_NON_VAT'].includes(taxRegistration))||(countryCode==='US'&&!['NOT_SET','US_SALES_TAX'].includes(taxRegistration))){toast('Choose a tax registration type that matches the selected country.',1);return;}
+  let operatingHoursPayload;
+  if(operatingHoursDirty){
+    try{operatingHoursPayload=collectOperatingHours();}
+    catch(validationError){toast(validationError.message||'Check the operating hours.',1);return;}
+  }
+  const profilePayload={name,address:$('#profileAddress')?.value.trim()||null,contact_number:$('#profilePhone')?.value.trim()||null,email:email||null,website:website||null,appearance_settings,currency,timezone,...(operatingHoursDirty?{operating_hours:operatingHoursPayload}:{})};
+  const btn=$('#pg [data-a="profilesave"]');if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const {data,error}=await sb.from('restaurants').update(profilePayload).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
+  if(error||!data){if(btn){btn.disabled=false;btn.textContent='Save Changes';}toast(error?.message||'No restaurant profile was updated. Check your owner/admin access.',1);return;}
+  const businessPayload={restaurant_id:HALINA_RESTAURANT_ID,country_code:countryCode,region:$('#businessRegion')?.value.trim()||null,city:$('#businessCity')?.value.trim()||null,tax_registration_type:taxRegistration,updated_at:new Date().toISOString()};
+  const {error:businessError}=await sb.from('restaurant_business_settings').upsert(businessPayload,{onConflict:'restaurant_id'});
+  if(businessError){if(btn){btn.disabled=false;btn.textContent='Save Changes';}toast('Profile saved, but business jurisdiction was not saved: '+businessError.message,1);return;}
+  await writeAdminAudit('Restaurant Profile','Updated restaurant profile and business settings','restaurant_profile',HALINA_RESTAURANT_ID,{name,currency,timezone,country_code:countryCode,region:businessPayload.region,city:businessPayload.city,tax_registration_type:taxRegistration,...(operatingHoursDirty?{operating_hours:operatingHoursPayload}:{})});Object.assign(PROFILE,profilePayload);Object.assign(BUSINESS_SETTINGS,businessPayload);operatingHoursDirty=false;operatingHoursDraft=null;window.dispatchEvent(new CustomEvent('restaurantprofilechanged',{detail:PROFILE}));render();toast('Business profile and jurisdiction saved.');
+}
+$('#pg').addEventListener('change',async e=>{
+  if(e.target.id!=='profileLogoFile')return;
+  const file=e.target.files?.[0];if(!file)return;
+  if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024){toast('Choose a PNG, JPG or WebP image up to 5 MB.',1);e.target.value='';return;}
+  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+  const path=HALINA_RESTAURANT_ID+'/restaurant-logo/'+crypto.randomUUID()+'.'+ext;
+  const {error:uploadError}=await sb.storage.from('halina-menu-images').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});
+  if(uploadError){toast('Logo upload failed: '+uploadError.message,1);e.target.value='';return;}
+  const {data:{publicUrl}}=sb.storage.from('halina-menu-images').getPublicUrl(path);
+  const {data,error}=await sb.from('restaurants').update({logo_url:publicUrl}).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
+  if(error||!data){toast(error?.message||'Logo uploaded but profile could not be updated. Please retry Save.',1);e.target.value='';return;}
+  await writeAdminAudit('Restaurant Profile','Updated restaurant logo','restaurant_logo',HALINA_RESTAURANT_ID,{logo_updated:true});PROFILE.logo_url=publicUrl;window.dispatchEvent(new CustomEvent('restaurantprofilechanged',{detail:{...PROFILE,logo_url:publicUrl}}));render();toast('Restaurant logo updated.');
+});
+load=async function(manual){
+  await originalLoad(manual);
+  if(!G.hidden)return;
+  try{await loadRestaurantProfile();if(S.page==='settings'){render();initAppearanceControls();}}catch(e){toast('Could not load restaurant profile: '+(e.message||String(e)),1);}
+  try{await loadMenuData();if(S.page==='menu')render();}
+  catch(e){menuLoadError=e.message||String(e);if(S.page==='menu')render();}
+  try{await loadStaffData();if(S.page==='staff')render();}
+  catch(e){staffLoadError=e.message||String(e);if(S.page==='staff')render();}
+  try{await loadAuditLogs();if(S.page==='audit')render();}
+  catch(e){auditLoadError=e.message||String(e);if(S.page==='audit')render();}
+};
+
+/* 10. THEME + SIDEBAR SETUP */
+function applyTheme(){
+const T=['light','neodark','dark'];if(!T.includes(S.theme))S.theme='dark';
+const r=document.documentElement;r.dataset.theme=S.theme=='neodark'?'light':S.theme;
+if(S.theme=='neodark')r.dataset.skin='neodark';else delete r.dataset.skin;
+r.dataset.ui=S.theme=='neodark'?'dark':S.theme=='dark'?'glass':'light';
+if(typeof wpApply==='function')wpApply();
+const th=$('#th');if(!th)return;
+if(!th.dataset.built){
+const L=[['light','Light mode',I('sun',18)],['neodark','Dark mode',I('moon',18)],['dark','Liquid Glass mode','<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17.5 9 5 9-5"/></svg>']];
+th.innerHTML='<span class="tsw-pill" aria-hidden="true"></span>'+L.map(x=>`<button type="button" class="tsw-b" role="radio" data-a="theme" data-v="${x[0]}" title="${x[1]}" aria-label="${x[1]}">${x[2]}</button>`).join('');
+th.dataset.built='1'}
+th.dataset.i=T.indexOf(S.theme);
+th.querySelectorAll('.tsw-b').forEach(b=>b.setAttribute('aria-checked',b.dataset.v==S.theme?'true':'false'))}
+function fillBr(){$('#br').innerHTML=`<option value="0">All Branches</option>`+BS.map((b,i)=>`<option value="${i+1}"${S.br==i+1?' selected':''}>${b}</option>`).join('')}
+$('#dockNav').innerHTML=NAV.map(n=>`<button type="button" data-p="${n[0]}" data-a="go" data-label="${n[1]}" aria-label="${n[1]}">${NAV_ICON[n[0]]||I(n[2])}</button>`).join('');
+$('#si').innerHTML=I('search',16);$('#bi').innerHTML=I('bell');
+applyTheme();fillBr();start();
+</script>
+
+<!-- CENTRAL RESTAURANT PROFILE CONNECTION -->
+<script>
+/* CENTRAL RESTAURANT BRANDING — restaurants is the single source of truth. */
+(function () {
+  const API = 'https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/restaurants';
+  const KEY = 'sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
+  const RESTAURANT_ID = '5e562ca7-38aa-4894-8265-ddca2f4e61b6';
+  const NAME_SELECTORS = ['header .sub'];
+  const LOGO_MODE = 'admin';
+  function setName(el, name) {
+    if (!el || !name) return;
+    let img = el.querySelector(':scope > img[data-restaurant-logo]');
+    el.textContent = '';
+    if (img) el.appendChild(img);
+    el.appendChild(document.createTextNode(name));
+  }
+  function setInlineLogo(el, url) {
+    if (!el || !url) return;
+    let img = el.querySelector(':scope > img[data-restaurant-logo]');
+    if (!img) {
+      img = document.createElement('img');
+      img.dataset.restaurantLogo = 'true';
+      img.alt = 'Restaurant logo';
+      img.loading = 'eager';
+      img.style.cssText = 'width:30px;height:30px;object-fit:contain;border-radius:8px;vertical-align:middle;margin-right:9px';
+      el.insertBefore(img, el.firstChild);
+    }
+    img.src = url;
+  }
+  function setDispatcherLogo(url) {
+    const mark = document.querySelector('.brand .logo');
+    if (!mark || !url) return;
+    let img = mark.querySelector(':scope > img[data-restaurant-logo]');
+    if (!img) {
+      mark.textContent = '';
+      img = document.createElement('img');
+      img.dataset.restaurantLogo = 'true';
+      img.alt = 'Restaurant logo';
+      img.loading = 'eager';
+      img.style.cssText = 'width:34px;height:34px;object-fit:contain;border-radius:9px;display:block';
+      mark.appendChild(img);
+    }
+    img.src = url;
+  }
+  function replaceRestaurantNameInTextNodes(name, root = document.body) {
+    if (!name || !root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent || /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|INPUT)$/i.test(parent.tagName)) return NodeFilter.FILTER_REJECT;
+        return /HALINA BISTRO CAFE/i.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => { node.nodeValue = node.nodeValue.replace(/HALINA BISTRO CAFE/gi, name); });
+  }
+  let restaurantNameObserver;
+  function watchRestaurantName(name) {
+    if (!name || !document.body || restaurantNameObserver) return;
+    restaurantNameObserver = new MutationObserver(() => replaceRestaurantNameInTextNodes(name));
+    restaurantNameObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+  function applyProfile(profile) {
+    if (!profile) return;
+    const appearance = profile.appearance_settings || {};
+    const fontMap = {Inter:'Inter, Arial, sans-serif',Roboto:'Roboto, Arial, sans-serif',Poppins:'Poppins, Arial, sans-serif',Montserrat:'Montserrat, Arial, sans-serif',Lato:'Lato, Arial, sans-serif'};
+    const font = fontMap[appearance.font_family] || fontMap.Inter;
+    const scale = Math.min(1.15, Math.max(0.9, Number(appearance.font_scale) || 1));
+    const logoScale = Math.min(1.5, Math.max(0.8, Number(appearance.logo_scale) || 1.15));
+    document.documentElement.style.setProperty('--restaurant-font-family', font);
+    document.documentElement.style.setProperty('--restaurant-font-scale', String(scale));
+    document.documentElement.style.setProperty('--restaurant-logo-scale', String(logoScale));
+    const name = String(profile.name || '').trim();
+    if (name) {
+      document.body.classList.add('restaurant-profile-ready');
+      document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setName(el, name));
+      document.title = `${name} — Admin Dashboard`;
+      replaceRestaurantNameInTextNodes(name);
+      watchRestaurantName(name);
+    }
+    if (profile.logo_url) {
+      if (LOGO_MODE === 'dispatcher') setDispatcherLogo(profile.logo_url);
+      else document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setInlineLogo(el, profile.logo_url));
+    }
+    window.HALINA_RESTAURANT_PROFILE = profile;
+  }
+  window.applyRestaurantBranding = applyProfile;
+  async function connect() {
+    try {
+      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
+        headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }, cache: 'no-store'
+      });
+      if (!response.ok) throw new Error('Profile request failed: ' + response.status);
+      const rows = await response.json();
+      const profile = rows && rows[0];
+      if (!profile) return;
+      applyProfile(profile);
+      window.dispatchEvent(new CustomEvent('restaurantprofileloaded', { detail: profile }));
+    } catch (error) {
+      console.warn('Could not load centralized restaurant profile:', error);
+    }
+  }
+  window.addEventListener('restaurantprofilechanged', e => applyProfile(e.detail));
+  window.addEventListener('focus', connect);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) connect(); });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', connect, { once: true });
+  else connect();
+})();
+</script>
+
+<script id="halina-appearance">
+/* =====================================================================
+   HALINA APPEARANCE — radial theme reveal + per-theme wallpaper
+   (runs after the main script; uses its S, PROFILE, sb, toast, esc, I, $)
+   ===================================================================== */
+(function(){
+'use strict';
+const DUR=780,EASE='cubic-bezier(.22,.72,.18,1)';
+let revealing=false;
+
+/* ---------- Radial reveal ---------- */
+window.startThemeReveal=function(btn,change){
+  if(revealing){change();return}
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){change();return}
+  const r=btn.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+  const R=Math.ceil(Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)))+4;
+  const root=document.documentElement;
+  if(typeof document.startViewTransition==='function'){
+    revealing=true;root.classList.add('theme-vt');
+    let vt;
+    try{vt=document.startViewTransition(()=>{change()})}catch(e){root.classList.remove('theme-vt');revealing=false;change();return}
+    vt.ready.then(()=>{root.animate({clipPath:[`circle(0px at ${x}px ${y}px)`,`circle(${R}px at ${x}px ${y}px)`]},{duration:DUR,easing:EASE,pseudoElement:'::view-transition-new(root)'})}).catch(()=>{});
+    vt.finished.catch(()=>{}).then(()=>{root.classList.remove('theme-vt');revealing=false});
+    return;
+  }
+  /* Fallback (no View Transition API): an expanding circle in the incoming theme's base color grows
+     from the toggle, the theme is applied once it covers the screen, then the circle lifts away. */
+  revealing=true;
+  const COL={light:'#e9eaf0',neodark:'#16171a',dark:'#0d2a3a'};
+  const fx=document.createElement('div');fx.className='theme-reveal-fx';
+  const target=btn.dataset&&btn.dataset.v;fx.style.background=COL[target]||'#0d2a3a';
+  fx.style.clipPath=`circle(0px at ${x}px ${y}px)`;document.body.appendChild(fx);
+  const grow=fx.animate({clipPath:[`circle(0px at ${x}px ${y}px)`,`circle(${R}px at ${x}px ${y}px)`]},{duration:Math.round(DUR*.7),easing:EASE,fill:'forwards'});
+  grow.onfinish=()=>{change();fx.animate({opacity:[1,0]},{duration:Math.round(DUR*.3),easing:'ease-out',fill:'forwards'}).onfinish=()=>{fx.remove();revealing=false}};
+  grow.oncancel=()=>{fx.remove();revealing=false};
+};
+
+/* ---------- Wallpaper model ---------- */
+const KEYS=['light','dark','glass'],LABEL={light:'Light Mode',dark:'Dark Mode',glass:'Liquid Glass Mode'};
+const CK='halina_wp_v1',BUCKET='halina-menu-images',MAXIN=10*1024*1024,MAXOUT=5*1024*1024,MAXPX=2560;
+const POS={center:'center center',top:'center top',bottom:'center bottom',left:'left center',right:'right center'};
+const PRESETS=[
+ {id:'forest',name:'Forest',css:'linear-gradient(135deg,#173f2b,#2f7650 55%,#8fc7a1)'},
+ {id:'ivory',name:'Ivory',css:'linear-gradient(135deg,#f7f1e8,#e8dcc6 60%,#cdbd9f)'},
+ {id:'midnight',name:'Midnight',css:'linear-gradient(135deg,#0d1b2a,#1b3a4b 55%,#274c5e)'},
+ {id:'ocean',name:'Ocean',css:'radial-gradient(at 20% 15%,#2d6e86,transparent 55%),linear-gradient(135deg,#0f2a3a,#1d5873)'},
+ {id:'sunset',name:'Sunset',css:'linear-gradient(135deg,#3a2433,#8a4a3b 55%,#e3a869)'},
+ {id:'slate',name:'Slate',css:'linear-gradient(135deg,#1d1f24,#32363f 60%,#4b505c)'}
+];
+const uiNow=()=>document.documentElement.dataset.ui||'glass';
+const DEF=()=>({mode:'default',fit:'cover',pos:'center'});
+const okUrl=u=>typeof u==='string'&&/^https:\/\/[^\s"'()\\]+$/.test(u);
+function clean(c){
+  const o=DEF();if(!c||typeof c!=='object')return o;
+  if(['default','none','preset','custom'].includes(c.mode))o.mode=c.mode;
+  if(o.mode==='preset'){if(PRESETS.some(p=>p.id===c.preset))o.preset=c.preset;else o.mode='default'}
+  if(o.mode==='custom'){if(okUrl(c.url)){o.url=c.url;if(typeof c.path==='string')o.path=c.path}else o.mode='default'}
+  o.fit=c.fit==='contain'?'contain':'cover';o.pos=POS[c.pos]?c.pos:'center';return o;
+}
+let CFG={};KEYS.forEach(k=>CFG[k]=DEF());
+(function(){try{const c=JSON.parse(localStorage.getItem(CK))||{};KEYS.forEach(k=>CFG[k]=clean(c[k]))}catch(e){}})();
+const writeCache=()=>{try{localStorage.setItem(CK,JSON.stringify(CFG))}catch(e){}};
+let profileLoaded=false;window.wpProfileReady=()=>profileLoaded;
+
+function resolve(ui,c){
+  if(c.mode==='custom'&&c.url)return `url('${c.url}')`;
+  if(c.mode==='preset'){const p=PRESETS.find(x=>x.id===c.preset);return p?p.css:'none'}
+  if(c.mode==='default')return ui==='glass'?'var(--wp-default-glass)':'none';
+  return 'none';
+}
+function paint(el,ui,c){
+  const img=resolve(ui,c);el.style.backgroundImage=img;
+  el.style.backgroundSize=c.fit==='contain'?'contain':'cover';
+  el.style.backgroundPosition=POS[c.pos]||POS.center;return img!=='none';
+}
+window.wpApply=function(){
+  const el=document.getElementById('wpl');if(!el)return;
+  const ui=uiNow(),on=paint(el,ui,CFG[ui]||DEF());
+  document.documentElement.dataset.wp=on?'1':'0';
+};
+window.wpSyncFromProfile=function(){
+  const w=(PROFILE.appearance_settings||{}).wallpapers;
+  KEYS.forEach(k=>CFG[k]=clean(w&&w[k]));profileLoaded=true;writeCache();wpApply();
+  if(S.page==='settings'&&S.settingsSection==='appearance')wpRender();
+};
+
+/* ---------- Saving (restaurants.appearance_settings.wallpapers + halina-menu-images bucket) ---------- */
+async function save(k,cfg){
+  if(!profileLoaded)throw new Error('Restaurant settings are still loading. Please try again in a moment.');
+  const prev=CFG[k],all={};KEYS.forEach(x=>all[x]=x===k?cfg:CFG[x]);
+  const as={...(PROFILE.appearance_settings||{}),wallpapers:all};
+  const {data,error}=await sb.from('restaurants').update({appearance_settings:as}).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
+  if(error||!data)throw new Error((error&&error.message)||'Wallpaper was not saved. Check your owner/admin access.');
+  await writeAdminAudit('Appearance','Updated wallpaper setting','appearance_wallpaper',k,{wallpaper_configured:!!cfg?.path});PROFILE.appearance_settings=as;CFG[k]=cfg;writeCache();wpApply();
+  const pre=HALINA_RESTAURANT_ID+'/wallpapers/';
+  if(prev&&prev.path&&prev.path!==cfg.path&&prev.path.startsWith(pre)){try{await sb.storage.from(BUCKET).remove([prev.path])}catch(e){}}
+}
+async function prepare(file){
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Wallpaper must be a JPG, PNG or WebP image.');
+  if(file.size>MAXIN)throw new Error('That image is larger than 10 MB. Choose a smaller one.');
+  let bmp;try{bmp=await createImageBitmap(file)}catch(e){throw new Error('That image could not be read. Try another file.')}
+  const sc=Math.min(1,MAXPX/Math.max(bmp.width,bmp.height)),w=Math.max(1,Math.round(bmp.width*sc)),h=Math.max(1,Math.round(bmp.height*sc));
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,w,h);g.drawImage(bmp,0,0,w,h);
+  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.86));
+  if(!blob)throw new Error('The image could not be prepared.');
+  if(blob.size>MAXOUT)throw new Error('The optimized image is still over 5 MB. Choose a simpler image.');
+  return {blob,url:URL.createObjectURL(blob)};
+}
+
+/* ---------- Settings → Appearance → Wallpaper panel ---------- */
+const WP={edit:null,pend:{},busy:false};
+window.wpOpen=function(){Object.values(WP.pend).forEach(p=>p&&p.obj&&URL.revokeObjectURL(p.obj));WP.edit=uiNow();WP.pend={};WP.busy=false};
+const eff=k=>WP.pend[k]||CFG[k];
+function previewStyle(k){
+  const c=eff(k),img=c.obj?`url('${c.obj}')`:resolve(k,c);
+  return `background-image:${img};background-size:${c.fit==='contain'?'contain':'cover'};background-position:${POS[c.pos]||POS.center}`;
+}
+window.wpPanelHtml=function(){
+  if(!WP.edit)WP.edit=uiNow();
+  return `<section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Wallpaper</h3><p>Each theme keeps its own wallpaper. Pick a theme, preview a change, then apply it.</p></div></div><div id="wpRoot">${wpInner()}</div></section>`;
+};
+function wpInner(){
+  const k=WP.edit||uiNow(),c=eff(k),dirty=!!WP.pend[k];
+  const tabs=KEYS.map(x=>`<button type="button" data-wp="tab" data-v="${x}" aria-pressed="${x===k}">${LABEL[x]}${x===uiNow()?'<small>· active</small>':''}</button>`).join('');
+  const presets=(k==='glass'?[{id:'__default',name:'Restaurant photo',css:'var(--wp-default-glass)'}]:[]).concat(PRESETS).map(p=>{
+    const on=p.id==='__default'?(c.mode==='default'):(c.mode==='preset'&&c.preset===p.id);
+    return `<button type="button" data-wp="${p.id==='__default'?'default':'preset'}" data-v="${p.id}" aria-pressed="${on}" style="background-image:${p.css}">${p.name}</button>`}).join('');
+  const label=c.obj?'New image (not applied yet)':c.mode==='custom'?'Custom image':c.mode==='preset'?'Preset':c.mode==='none'?'No wallpaper':(k==='glass'?'Default (restaurant photo)':'Default (no wallpaper)');
+  return `<div class="wp-tabs" role="group" aria-label="Theme">${tabs}</div>
+  <div class="wp-grid"><div>
+    <div class="wp-prev" style="${previewStyle(k)}" role="img" aria-label="Wallpaper preview for ${LABEL[k]}"><div class="wp-prev-ui"><b>Sample card</b><span>Text stays readable over the wallpaper</span><button type="button" class="btn" tabindex="-1">Button</button></div></div>
+    <p class="wp-note">${LABEL[k]} · ${label}${dirty?' · <b>unsaved changes</b>':''}</p>
+  </div><div>
+    <label class="bs-field">Upload custom wallpaper<input id="wpFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+    <p class="wp-note">JPG, PNG or WebP, up to 10 MB. Large images are optimized to ${MAXPX}px before upload.</p>
+    <div class="bs-field"><b>Presets</b><div class="wp-presets">${presets}</div></div>
+    <div class="wp-row"><label class="bs-field">Sizing<select id="wpFit"><option value="cover"${c.fit==='cover'?' selected':''}>Cover (fill screen)</option><option value="contain"${c.fit==='contain'?' selected':''}>Fit (show whole image)</option></select></label>
+    <label class="bs-field">Position<select id="wpPos">${Object.keys(POS).map(p=>`<option value="${p}"${c.pos===p?' selected':''}>${p[0].toUpperCase()+p.slice(1)}</option>`).join('')}</select></label></div>
+    <div class="wp-actions"><button type="button" class="btn pri" data-wp="apply"${dirty&&!WP.busy?'':' disabled'}>${WP.busy?'Saving…':'Apply wallpaper'}</button>
+    <button type="button" class="btn" data-wp="resetpos">Reset position</button>
+    <button type="button" class="btn" data-wp="remove"${WP.busy?' disabled':''}>Remove wallpaper</button>
+    <button type="button" class="btn" data-wp="reset"${WP.busy?' disabled':''}>Reset to default</button></div>
+  </div></div>`;
+}
+window.wpRender=function(){const r=document.getElementById('wpRoot');if(r)r.innerHTML=wpInner()};
+function pend(k,patch){const base=WP.pend[k]||{...CFG[k]};WP.pend[k]={...base,...patch};wpRender()}
+async function commit(k,cfg,msg){
+  if(WP.busy)return;WP.busy=true;wpRender();
+  try{await save(k,cfg);const p=WP.pend[k];if(p&&p.obj)URL.revokeObjectURL(p.obj);delete WP.pend[k];toast(msg)}
+  catch(e){toast(e.message||String(e),1)}
+  WP.busy=false;wpRender();
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-wp]');if(!b||!b.closest('#wpRoot'))return;
+  const k=WP.edit||uiNow(),a=b.dataset.wp;
+  if(a==='tab'){WP.edit=b.dataset.v;wpRender();return}
+  if(a==='preset'){pend(k,{mode:'preset',preset:b.dataset.v,url:undefined,path:undefined,obj:undefined,blob:undefined});return}
+  if(a==='default'){pend(k,{mode:'default',url:undefined,path:undefined,obj:undefined,blob:undefined});return}
+  if(a==='resetpos'){pend(k,{fit:'cover',pos:'center'});return}
+  if(a==='remove'){if(confirm('Remove the '+LABEL[k]+' wallpaper?'))commit(k,{...DEF(),mode:'none'},LABEL[k]+' wallpaper removed.');return}
+  if(a==='reset'){if(confirm('Reset the '+LABEL[k]+' wallpaper to its default?'))commit(k,DEF(),LABEL[k]+' wallpaper reset to default.');return}
+  if(a==='apply'){
+    const p=WP.pend[k];if(!p)return;let cfg=clean(p);
+    if(p.blob){
+      WP.busy=true;wpRender();
+      try{
+        const path=HALINA_RESTAURANT_ID+'/wallpapers/'+k+'/'+crypto.randomUUID()+'.jpg';
+        const up=await sb.storage.from(BUCKET).upload(path,p.blob,{contentType:'image/jpeg',upsert:false,cacheControl:'3600'});
+        if(up.error)throw up.error;
+        const url=sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+        cfg=clean({mode:'custom',url,path,fit:p.fit,pos:p.pos});
+        if(cfg.mode!=='custom')throw new Error('The uploaded image URL was not accepted.');
+      }catch(err){WP.busy=false;wpRender();toast('Wallpaper upload failed: '+(err.message||err),1);return}
+      WP.busy=false;
+    }
+    commit(k,cfg,LABEL[k]+' wallpaper applied.');
+  }
+});
+document.addEventListener('change',async e=>{
+  const t=e.target;if(!t.closest||!t.closest('#wpRoot'))return;const k=WP.edit||uiNow();
+  if(t.id==='wpFit'){pend(k,{fit:t.value==='contain'?'contain':'cover'});return}
+  if(t.id==='wpPos'){pend(k,{pos:t.value});return}
+  if(t.id==='wpFile'){
+    const f=t.files&&t.files[0];if(!f)return;
+    try{const r=await prepare(f);const old=WP.pend[k]&&WP.pend[k].obj;if(old)URL.revokeObjectURL(old);pend(k,{mode:'custom',blob:r.blob,obj:r.url,url:undefined,path:undefined})}
+    catch(err){toast(err.message||String(err),1);t.value=''}
+  }
+});
+
+/* initial paint from the local cache; the profile sync (after login) replaces it */
+wpApply();
+})();
+</script>
+<script id="halina-ui-polish-js">
+/* =====================================================================
+   HALINA UI POLISH — custom popups, tooltips, accordion, appearance
+   controls and load motion. Visual layer only: native <select>/<input>
+   stay the source of truth and fire real input/change events.
+   ===================================================================== */
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const reduce=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const CHECK='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+/* ---------- popup manager (portal on <body>, never clipped) ---------- */
+let cur=null;
+function closePop(){
+  if(!cur)return;const p=cur;cur=null;
+  p.el.classList.remove('open');p.el.classList.add('closing');
+  if(p.anchor&&p.anchor.setAttribute)p.anchor.setAttribute('aria-expanded','false');
+  setTimeout(()=>p.el.remove(),160);
+}
+function place(el,anchor){
+  const r=anchor.getBoundingClientRect(),vw=innerWidth,vh=innerHeight,m=8;
+  el.style.minWidth=Math.max(r.width,+el.dataset.minw||0)+'px';el.style.maxHeight='';
+  const h=el.offsetHeight,w=el.offsetWidth;let top=r.bottom+6,up=false;
+  if(top+h>vh-m){ if(r.top-6-h>m){top=r.top-6-h;up=true}else{ if(r.top>vh-r.bottom){up=true;el.style.maxHeight=Math.max(120,r.top-6-m)+'px';top=m}else el.style.maxHeight=Math.max(120,vh-top-m)+'px'} }
+  if(up&&el.style.maxHeight)top=Math.max(m,r.top-6-el.offsetHeight);
+  el.style.top=top+'px';el.style.left=Math.min(Math.max(m,r.left),Math.max(m,vw-w-m))+'px';el.dataset.dir=up?'up':'down';
+}
+function mount(el,anchor){
+  closePop();document.body.appendChild(el);cur={el,anchor};
+  anchor.setAttribute('aria-expanded','true');place(el,anchor);requestAnimationFrame(()=>el.classList.add('open'));
+}
+addEventListener('mousedown',e=>{if(cur&&!cur.el.contains(e.target)&&!(cur.anchor&&cur.anchor.contains&&cur.anchor.contains(e.target)))closePop()},true);
+addEventListener('resize',closePop);
+addEventListener('scroll',e=>{if(cur&&!cur.el.contains(e.target))closePop()},true);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&cur){const a=cur.anchor;closePop();a&&a.focus&&a.focus({preventScroll:true})}},true);
+
+/* ---------- custom select list ---------- */
+function openSelect(sel){
+  if(sel.disabled||sel.multiple||(sel.size&&sel.size>1))return;
+  if(cur&&cur.anchor===sel){closePop();return}
+  const el=document.createElement('div');el.className='hpop hsel-pop';el.setAttribute('role','listbox');
+  const opts=[...sel.options];let act=Math.max(0,sel.selectedIndex);
+  opts.forEach((o,i)=>{const d=document.createElement('div');d.className='hopt'+(i===sel.selectedIndex?' sel':'')+(o.disabled?' dis':'');d.setAttribute('role','option');d.setAttribute('aria-selected',i===sel.selectedIndex);d.dataset.i=i;const t=document.createElement('span');t.className='hopt-t';t.textContent=o.textContent;d.appendChild(t);d.insertAdjacentHTML('beforeend',CHECK);el.appendChild(d)});
+  el.addEventListener('mousedown',e=>e.preventDefault());
+  el.addEventListener('click',e=>{const d=e.target.closest('.hopt');if(d&&!d.classList.contains('dis'))choose(sel,+d.dataset.i)});
+  el.addEventListener('mousemove',e=>{const d=e.target.closest('.hopt');if(d)setAct(+d.dataset.i)});
+  function setAct(i){act=i;$$('.hopt',el).forEach((n,k)=>n.classList.toggle('act',k===i));const n=$$('.hopt',el)[i];if(n)n.scrollIntoView({block:'nearest'})}
+  el._nav=k=>{let i=act;if(k==='ArrowDown')i=Math.min(opts.length-1,act+1);else if(k==='ArrowUp')i=Math.max(0,act-1);else if(k==='Home')i=0;else if(k==='End')i=opts.length-1;while(opts[i]&&opts[i].disabled&&i>0&&i<opts.length-1)i+=(k==='ArrowUp'?-1:1);setAct(i)};
+  el._pick=()=>{if(opts[act]&&!opts[act].disabled)choose(sel,act)};
+  mount(el,sel);setAct(act);
+}
+function choose(sel,i){
+  const changed=sel.selectedIndex!==i;closePop();
+  if(changed){sel.selectedIndex=i;sel.dispatchEvent(new Event('input',{bubbles:true}));sel.dispatchEvent(new Event('change',{bubbles:true}))}
+  if(sel.isConnected)sel.focus({preventScroll:true});
+}
+document.addEventListener('mousedown',e=>{
+  const s=e.target.closest&&e.target.closest('select');if(!s||e.button!==0||s.multiple||(s.size&&s.size>1))return;
+  e.preventDefault();s.focus({preventScroll:true});openSelect(s);
+},true);
+document.addEventListener('keydown',e=>{
+  const s=e.target;if(!s||s.tagName!=='SELECT')return;
+  if(cur&&cur.anchor===s){
+    if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();cur.el._nav(e.key)}
+    else if(e.key==='Enter'||e.key===' '){e.preventDefault();cur.el._pick()}
+    else if(e.key==='Tab')closePop();
+  }else if(e.key==='Enter'||e.key===' '||(e.altKey&&e.key==='ArrowDown')){e.preventDefault();openSelect(s)}
+},true);
+
+/* ---------- calendar ---------- */
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'],WD=['Su','Mo','Tu','We','Th','Fr','Sa'];
+const iso=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+const parseISO=v=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||'');return m?{y:+m[1],m:+m[2]-1,d:+m[3]}:null};
+function setVal(inp,v){inp.value=v;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}))}
+function openDate(inp){
+  if(inp.disabled||inp.readOnly)return;if(cur&&cur.anchor===inp){closePop();return}
+  const t=new Date(),sel=parseISO(inp.value),today={y:t.getFullYear(),m:t.getMonth(),d:t.getDate()},min=inp.min||'',max=inp.max||'';
+  let vy=(sel||today).y,vm=(sel||today).m;
+  const el=document.createElement('div');el.className='hpop hcal';el.dataset.minw=292;
+  function draw(){
+    const first=new Date(vy,vm,1).getDay(),dim=new Date(vy,vm+1,0).getDate(),prev=new Date(vy,vm,0).getDate();let cells='';
+    for(let i=0;i<42;i++){let d=i-first+1,y=vy,m=vm,out=false;if(d<1){d=prev+d;m=vm-1;out=true}else if(d>dim){d=d-dim;m=vm+1;out=true}
+      if(m<0){m=11;y=vy-1}else if(m>11){m=0;y=vy+1}
+      const v=iso(y,m,d),dis=(min&&v<min)||(max&&v>max),cls='hcal-d'+(out?' out':'')+(v===iso(today.y,today.m,today.d)?' today':'')+(sel&&v===iso(sel.y,sel.m,sel.d)?' sel':'');
+      cells+=`<button type="button" class="${cls}" data-v="${v}"${dis?' disabled':''}>${d}</button>`}
+    el.innerHTML=`<div class="hcal-h"><button type="button" class="hcal-nav" data-n="-12" aria-label="Previous year">«</button><button type="button" class="hcal-nav" data-n="-1" aria-label="Previous month">‹</button><b>${MN[vm]} ${vy}</b><button type="button" class="hcal-nav" data-n="1" aria-label="Next month">›</button><button type="button" class="hcal-nav" data-n="12" aria-label="Next year">»</button></div><div class="hcal-g">${WD.map(w=>`<div class="hcal-w">${w}</div>`).join('')}${cells}</div><div class="hcal-f"><button type="button" data-t="today">Today</button>${inp.required?'<span></span>':'<button type="button" data-t="clear">Clear</button>'}</div>`;
+  }
+  draw();
+  el.addEventListener('mousedown',e=>e.preventDefault());
+  el.addEventListener('click',e=>{
+    const n=e.target.closest('[data-n]'),d=e.target.closest('.hcal-d'),f=e.target.closest('[data-t]');
+    if(n){const k=+n.dataset.n,x=new Date(vy,vm+k,1);vy=x.getFullYear();vm=x.getMonth();draw();place(el,inp)}
+    else if(d&&!d.disabled){closePop();setVal(inp,d.dataset.v)}
+    else if(f){closePop();setVal(inp,f.dataset.t==='today'?iso(today.y,today.m,today.d):'')}
+  });
+  mount(el,inp);
+}
+/* ---------- time ---------- */
+function openTime(inp){
+  if(inp.disabled||inp.readOnly)return;if(cur&&cur.anchor===inp){closePop();return}
+  const m=/^(\d{2}):(\d{2})/.exec(inp.value||'');let hh=m?m[1]:'',mm=m?m[2]:'';
+  const el=document.createElement('div');el.className='hpop htime';
+  const col=(arr,k,v)=>`<div class="htime-c" data-k="${k}">${arr.map(x=>`<button type="button" data-v="${x}" class="${x===v?'sel':''}">${x}</button>`).join('')}</div>`;
+  el.innerHTML=col(Array.from({length:24},(_,i)=>String(i).padStart(2,'0')),'h',hh)+col(Array.from({length:60},(_,i)=>String(i).padStart(2,'0')),'m',mm);
+  el.addEventListener('mousedown',e=>e.preventDefault());
+  el.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(!b)return;const k=b.parentElement.dataset.k;if(k==='h'){hh=b.dataset.v;if(!mm)mm='00'}else mm=b.dataset.v;
+    $$('button',b.parentElement).forEach(x=>x.classList.toggle('sel',x===b));setVal(inp,hh+':'+mm);if(k==='m')closePop()});
+  mount(el,inp);requestAnimationFrame(()=>$$('.htime-c .sel',el).forEach(s=>s.scrollIntoView({block:'center'})));
+}
+function inIcon(e,inp){const r=inp.getBoundingClientRect();return e.clientX>r.right-44}
+document.addEventListener('mousedown',e=>{
+  const i=e.target.closest&&e.target.closest('input[type="date"],input[type="time"]');if(!i||e.button!==0||!inIcon(e,i))return;
+  e.preventDefault();i.focus({preventScroll:true});(i.type==='date'?openDate:openTime)(i);
+},true);
+document.addEventListener('keydown',e=>{const i=e.target;if(i&&i.tagName==='INPUT'&&(i.type==='date'||i.type==='time')&&e.altKey&&e.key==='ArrowDown'){e.preventDefault();(i.type==='date'?openDate:openTime)(i)}},true);
+
+/* ---------- tooltips (portal; replaces native title tooltips) ---------- */
+const tip=document.createElement('div');tip.id='halinaTip';tip.setAttribute('role','tooltip');
+let tipT=null,tipEl=null;
+function tipText(el){return el.dataset.htip||el.dataset.tip||el.getAttribute('aria-label')||''}
+function showTip(el){
+  const t=tipText(el);if(!t)return;
+  if(el.closest('#sb')&&document.getElementById('app')&&$('#app').classList.contains('exp')&&!el.matches('.tg'))return;
+  if(!tip.isConnected)document.body.appendChild(tip);tip.textContent=t;tip.className='';tip.style.left='0px';tip.style.top='0px';
+  const r=el.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight,m=8;let side,x,y;
+  if(el.closest('#sb')){side='right';x=r.right+12;y=r.top+r.height/2-th/2;if(x+tw>innerWidth-m){side='top';x=r.left+r.width/2-tw/2;y=r.top-th-8}}
+  else{side='bottom';x=r.left+r.width/2-tw/2;y=r.bottom+8;if(y+th>innerHeight-m){side='top';y=r.top-th-8}}
+  x=Math.min(Math.max(m,x),innerWidth-tw-m);y=Math.min(Math.max(m,y),innerHeight-th-m);
+  tip.style.left=x+'px';tip.style.top=y+'px';tip.dataset.side=side;tipEl=el;requestAnimationFrame(()=>tip.classList.add('show'));
+}
+function hideTip(){clearTimeout(tipT);tipEl=null;tip.classList.remove('show')}
+document.addEventListener('mouseover',e=>{
+  const el=e.target.closest&&e.target.closest('[title],[data-htip]');if(!el||el===tipEl)return;
+  if(el.hasAttribute('title')){if(el.title){el.dataset.htip=el.title}el.removeAttribute('title')}
+  clearTimeout(tipT);tipT=setTimeout(()=>showTip(el),el.closest('#sb')?60:380);
+});
+document.addEventListener('mouseout',e=>{const el=e.target.closest&&e.target.closest('[data-htip]');if(el&&!el.contains(e.relatedTarget))hideTip()});
+document.addEventListener('focusin',e=>{const el=e.target.closest&&e.target.closest('[data-htip]');if(el&&el.matches(':focus-visible'))showTip(el)});
+document.addEventListener('focusout',hideTip);document.addEventListener('mousedown',hideTip,true);addEventListener('scroll',hideTip,true);
+
+/* ---------- Business Settings accordion ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-bsgt]');if(!b)return;
+  const g=b.closest('.bs-group'),open=!g.classList.contains('open');
+  g.classList.toggle('open',open);b.setAttribute('aria-expanded',open);
+  (S.bsOpen=S.bsOpen||{})[g.dataset.bsg]=open;
+});
+
+/* ---------- appearance: Liquid Glass opacity + text size ---------- */
+const UK='halina_ui_v1',DEF={glass:10,title:100,body:100,small:100};
+const RNG={glass:[10,95],title:[90,125],body:[90,125],small:[90,130]};
+const norm=o=>{const r={...DEF};if(o&&typeof o==='object')for(const k in DEF){const v=Number(o[k]);if(isFinite(v))r[k]=Math.min(RNG[k][1],Math.max(RNG[k][0],Math.round(v)))}return r};
+let saved=DEF,UI=DEF;
+try{saved=norm(JSON.parse(localStorage.getItem(UK)));UI={...saved}}catch(e){}
+function applyUI(){
+  const s=document.documentElement.style;
+  const ga=Math.max(0,(UI.glass-10)/85);s.setProperty('--ga',ga.toFixed(3));s.setProperty('--glass-k',(1+ga).toFixed(3));document.documentElement.dataset.glassAdj=ga>0?'1':'0';s.setProperty('--k-title',(UI.title/100).toFixed(3));s.setProperty('--k-body',(UI.body/100).toFixed(3));s.setProperty('--k-small',(UI.small/100).toFixed(3));
+}
+applyUI();
+const prevSync=window.wpSyncFromProfile;
+window.wpSyncFromProfile=function(){
+  if(prevSync)prevSync();
+  const a=(typeof PROFILE!=='undefined'&&PROFILE.appearance_settings)||{};
+  saved=norm({glass:a.glass_opacity,...(a.type_scale||{})});UI={...saved};applyUI();
+  try{localStorage.setItem(UK,JSON.stringify(saved))}catch(e){}
+  if(S.page==='settings'&&S.settingsSection==='appearance')refreshPanels();
+};
+const dirty=()=>JSON.stringify(UI)!==JSON.stringify(saved);
+function panelsHtml(){
+  const row=(k,l)=>`<div class="ui2-row"><label for="ui2-${k}">${l}</label><input id="ui2-${k}" type="range" data-ui2="${k}" min="${RNG[k][0]}" max="${RNG[k][1]}" step="1" value="${UI[k]}"><output id="ui2o-${k}">${UI[k]}%</output></div>`;
+  const ui=document.documentElement.dataset.ui;
+  return `<section class="bs-panel" id="ui2Glass"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Liquid Glass transparency</h3><p>How see-through or solid the glass surfaces look. 10% is the default clear glass; higher is more frosted and solid. Affects Liquid Glass Mode only.</p></div></div>
+  ${row('glass','Glass opacity')}
+  <div class="ui2-prev g"><h4>Glass preview</h4><p>Cards, panels, menus and the sidebar follow this setting.</p><small>Higher opacity hides more of the wallpaper and gives text more contrast.</small></div>
+  <p class="ui2-note">${ui==='glass'?'You are in Liquid Glass Mode, so changes show across the dashboard right away.':'Switch to Liquid Glass Mode to see this on the dashboard. Light and Dark are never changed by this slider.'}</p>
+  <div class="wp-actions"><button type="button" class="btn pri" data-ui2="save" ${dirty()?'':'disabled'}>Save</button><button type="button" class="btn" data-ui2="reset-glass">Reset to default</button></div></section>
+  <section class="bs-panel" id="ui2Type"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Text size</h3><p>Adjust titles, body text and small labels across the dashboard.</p></div></div>
+  ${row('title','Titles')}${row('body','Body text')}${row('small','Small text / labels')}
+  <div class="ui2-prev"><h4>Order #1024 · Table 5</h4><p>Body text looks like this in tables, forms and descriptions.</p><small>Small label · updated just now</small></div>
+  <div class="wp-actions"><button type="button" class="btn pri" data-ui2="save" ${dirty()?'':'disabled'}>Save</button><button type="button" class="btn" data-ui2="reset-type">Reset to default</button></div></section>`;
+}
+function refreshPanels(){const a=$('#ui2Wrap');if(a)a.innerHTML=panelsHtml()}
+const prevPanel=window.wpPanelHtml;
+window.wpPanelHtml=function(){return prevPanel()+'<div id="ui2Wrap" style="display:contents">'+panelsHtml()+'</div>'};
+document.addEventListener('input',e=>{
+  const k=e.target.dataset&&e.target.dataset.ui2;if(!k||!(k in DEF))return;
+  UI[k]=Number(e.target.value);applyUI();const o=$('#ui2o-'+k);if(o)o.textContent=UI[k]+'%';
+  $$('[data-ui2="save"]').forEach(b=>b.disabled=!dirty());
+});
+async function saveUI(){
+  if(!(window.wpProfileReady&&wpProfileReady())){toast('Restaurant settings are still loading. Please try again in a moment.',1);return}
+  const as={...(PROFILE.appearance_settings||{}),glass_opacity:UI.glass,type_scale:{title:UI.title,body:UI.body,small:UI.small}};
+  const {data,error}=await sb.from('restaurants').update({appearance_settings:as}).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
+  if(error||!data){toast((error&&error.message)||'Appearance was not saved. Check your owner/admin access.',1);return}
+  PROFILE.appearance_settings=as;saved={...UI};try{localStorage.setItem(UK,JSON.stringify(saved))}catch(e){}
+  toast('Appearance saved.');refreshPanels();
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-ui2]');if(!b||b.type==='range')return;const a=b.dataset.ui2;
+  if(a==='save')saveUI();
+  else if(a==='reset-glass'){UI.glass=DEF.glass;applyUI();saveUI()}
+  else if(a==='reset-type'){UI.title=UI.body=UI.small=100;applyUI();saveUI()}
+});
+
+/* ---------- after-render hook: page marker, intro, KPI count-up ---------- */
+let sbIntro=false,pgIntro=false;const cuDone={};
+function afterRender(){
+  const pg=$('#pg');if(!pg)return;pg.dataset.page=S.page||'';
+  if(!(S.page==='settings'&&S.settingsSection==='appearance')&&dirty()){UI={...saved};applyUI()}
+  if(!sbIntro&&!document.body.classList.contains('locked')&&!reduce()){sbIntro=true;const r=document.documentElement;r.classList.add('hl-intro-sb');setTimeout(()=>r.classList.remove('hl-intro-sb'),1300)}
+  if(pg.querySelector('.hl-sk')||pg.classList.contains('is-loading'))return;
+  if(!pgIntro&&pg.children.length&&!reduce()){pgIntro=true;const r=document.documentElement;
+    $$(':scope>.card,:scope>.tb,:scope>.bento>*,:scope>.g>*',pg).forEach((el,i)=>el.style.setProperty('--i',Math.min(i,12)));
+    r.classList.add('hl-intro');setTimeout(()=>{r.classList.remove('hl-intro');$$('[style*="--i"]',pg).forEach(el=>el.style.removeProperty('--i'))},1500)}
+  countUp(pg);
+}
+function countUp(pg){
+  const key=S.page;if(reduce()||cuDone[key]||!['overview','sales','exp'].includes(key))return;
+  let n=0;
+  $$('.big',pg).forEach(el=>{
+    const txt=el.textContent.trim(),m=/^([^\d\-]*)(-?[\d,]*\.?\d+)(.*)$/.exec(txt);if(!m)return;
+    const end=parseFloat(m[2].replace(/,/g,'')),dec=(m[2].split('.')[1]||'').length;if(!isFinite(end)||end===0)return;
+    n++;const start=end*.8,t0=performance.now(),D=750;
+    const fmt=v=>m[1]+v.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec})+m[3];
+    (function step(t){const p=Math.min(1,(t-t0)/D),e=1-Math.pow(1-p,3);if(!el.isConnected)return;if(p<1){el.textContent=fmt(start+(end-start)*e);requestAnimationFrame(step)}else el.textContent=txt})(t0);
+  });
+  if(n)cuDone[key]=true;
+}
+const _render=window.render;
+window.render=function(){const r=_render.apply(this,arguments);try{afterRender()}catch(err){console.error(err)}return r};
+const _load=window.load;
+if(typeof _load==='function'){window.load=async function(){const r=await _load.apply(this,arguments);try{afterRender()}catch(err){console.error(err)}return r}}
+})();
+</script>
+<script id="halina-dock-js">
+/* Fixed dock interaction: active state only; water-glass labels and subtle icon-only hover zoom. */
+(function(){
+  'use strict';
+  const nav=document.getElementById('dockNav');
+  if(!nav)return;
+  /* The main render() function still calls this legacy hook; no moving indicator is used. */
+  window.moveNavIndicator=function(){};
+  nav.addEventListener('keydown',e=>{
+    const buttons=[...nav.querySelectorAll('button')];
+    const index=buttons.indexOf(document.activeElement);
+    if(index<0)return;
+    let next=-1;
+    if(e.key==='ArrowRight'||e.key==='ArrowDown')next=(index+1)%buttons.length;
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp')next=(index-1+buttons.length)%buttons.length;
+    else if(e.key==='Home')next=0;
+    else if(e.key==='End')next=buttons.length-1;
+    if(next>=0){e.preventDefault();buttons[next].focus()}
+  });
+})();
+</script>
+</body>
+</html>
++Number(r.rate).toFixed(2)}</td><td>${(r.applies_to||[]).map(x=>x.replaceAll('_',' ')).join(', ')}</td><td>${r.is_mandatory?'Mandatory':'Optional'}</td><td>${r.tax_treatment==='taxable'?'Taxable':r.tax_treatment==='non_taxable'?'Non-taxable':'Not configured'}</td><td>${esc(r.effective_from)}${r.effective_to?' – '+esc(r.effective_to):' – No end date'}</td><td>${r.is_active?bdg('Active'):bdg('Inactive')}</td><td><button class="btn" data-a="servicecharge-toggle" data-id="${r.id}">${r.is_active?'Deactivate':'Activate'}</button> <button class="btn danger" data-a="servicecharge-delete" data-id="${r.id}">Delete</button></td></tr>`).join('');
  return `<section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Service charge policy</h3><p>Configure how a restaurant service charge is described and which order types it may apply to.</p></div></div><div class="bs-coming-note"><span class="bd ok">● Connected</span><b>Active service charges are applied at checkout</b><span>Only active rules within their effective dates and selected order types are applied to new cashier orders. Existing orders are not recalculated.</span></div></section>
  <section class="bs-panel"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Add service charge rule</h3><p>Rules are saved per restaurant. New rules start inactive until explicitly activated.</p></div></div><form id="serviceChargeForm" class="bs-profile-grid">
  <label class="bs-field">Rule Name<input id="scRuleName" maxlength="120" required placeholder="e.g. Dine-in service charge"></label>
