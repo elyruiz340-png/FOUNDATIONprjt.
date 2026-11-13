@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="./halina-config.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dispatcher</title>
@@ -309,6 +310,7 @@ loadOrders();setInterval(loadOrders,10000);
       if (LOGO_MODE === 'dispatcher') setDispatcherLogo(profile.logo_url);
       else document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setInlineLogo(el, profile.logo_url));
     }
+    profile = window.HALINA_CONFIG.normalizeProfile(profile);
     window.HALINA_RESTAURANT_PROFILE = profile;
     renderRestaurantClock();
   }
