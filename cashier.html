@@ -12823,7 +12823,7 @@ if (checkoutConfirmCash) {
       return;
     }
 
-    const total = getCheckoutTotal();
+    const total = getCashierDiscountPricing().total;
     const rawReceived = checkoutCashReceived
       ? checkoutCashReceived.value.trim()
       : "";
