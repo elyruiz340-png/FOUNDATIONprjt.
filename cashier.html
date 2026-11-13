@@ -12946,6 +12946,11 @@ if (acceptOrderBtn) {
   acceptOrderBtn.addEventListener("click", async function() {
     if (acceptOrderBtn.disabled) return;
 
+    if (window.HALINA_DISCOUNTS && window.HALINA_DISCOUNTS.developmentOnly) {
+      alert("Development preview only. Order saving and stock deduction are disabled until an isolated development database is connected.");
+      return;
+    }
+
     if (!Array.isArray(posCart) || posCart.length === 0) {
       alert("Walang items ang order.");
       return;
