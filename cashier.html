@@ -10818,7 +10818,7 @@ async function loadOrders() {
       await fetch(
         SUPABASE_URL +
         "/rest/v1/orders" +
-        "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,payment_reference,created_at" +
+        "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,payment_reference,created_at,accepted_by_user_id,accepted_by_session_id,accepted_at,settled_by_user_id,settled_by_session_id,settled_at" +
         "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
         "&order=created_at.desc" +
         "&limit=50",
@@ -11508,200 +11508,114 @@ function createOrderCard(order, newOrderIds) {
 /* =========================
    ACCEPT ORDER
 ========================= */
-async function acceptOrder(
-  orderId,
-  button
-) {
-  if (!orderId) {
+async function acceptOrder(orderId, button) {
+  if (!orderId || !button || button.disabled) return;
+  if (!cashierAuthClient || !halinaStaffSessionId) {
+    showError("Your cashier session is not ready. Please sign in again.");
     return;
   }
- button.disabled = true;
-button.textContent =
-  "Accepting...";
 
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = "Accepting...";
+  const orderCard = button.closest(".order-card");
+  if (orderCard) orderCard.classList.add("accept-moving");
 
-/* =========================
-   ACCEPT ORDER ANIMATION
-========================= */
-
-const orderCard =
-  button.closest(
-    ".order-card"
-  );
-
-if (orderCard) {
-
-  orderCard.classList.add(
-    "accept-moving"
-  );
-
-}
   try {
-    const response =
-      await fetch(
-        SUPABASE_URL +
-        "/rest/v1/orders?id=eq." +
-        encodeURIComponent(
-          orderId
-        ) +
-        "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6",
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type":
-              "application/json",
-            "apikey":
-              SUPABASE_KEY,
-            "Authorization":
-              "Bearer " +
-              SUPABASE_KEY,
-            "Prefer":
-              "return=representation"
-          },
-          body:
-            JSON.stringify({
-              status:
-                "accepted"
-            })
-        }
-      );
-    const data =
-      await response.json();
-    if (!response.ok) {
-      throw new Error(
-        data.message ||
-        data.error ||
-        data.hint ||
-        "Unable to accept order."
-      );
+    const { data: authData, error: authError } = await cashierAuthClient.auth.getSession();
+    const accessToken = authData && authData.session && authData.session.access_token;
+    if (authError || !accessToken) {
+      throw new Error("Your cashier login has expired. Please sign in again.");
     }
-    if (
-      !Array.isArray(data) ||
-      data.length === 0
-    ) {
-      throw new Error(
-        "Order was not updated. Please check the UPDATE policy in Supabase."
-      );
+
+    const response = await fetch(SUPABASE_URL + "/rest/v1/rpc/cashier_accept_order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + accessToken
+      },
+      body: JSON.stringify({
+        p_order_id: orderId,
+        p_session_id: halinaStaffSessionId
+      })
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || result.error || result.hint || "Unable to accept order.");
+    }
+    if (result.success !== true) {
+      throw new Error(result.message || "This order has already been accepted or is no longer new.");
     }
     await loadOrders();
   } catch (error) {
-    console.error(
-      "Accept order error:",
-      error
-    );
+    console.error("Accept order error:", error);
     button.disabled = false;
-    button.textContent =
-      "🟢 ACCEPT ORDER";
-    showError(
-      error.message
-    );
+    button.textContent = originalText || "🟢 ACCEPT ORDER";
+    if (orderCard) orderCard.classList.remove("accept-moving");
+    showError(error.message || "Unable to accept order.");
   }
 }
+
 /* =========================
    CONFIRM PENDING PAYMENT
    Explicit cashier confirmation
 ========================= */
 async function confirmOrderPayment(orderId, button) {
   if (!orderId || !button || button.disabled) return;
+  if (!cashierAuthClient || !halinaStaffSessionId) {
+    showError("Your cashier session is not ready. Please sign in again.");
+    return;
+  }
 
   const originalText = button.textContent;
   button.disabled = true;
   button.textContent = "CONFIRMING...";
 
   try {
-    const currentResponse = await fetch(
-      SUPABASE_URL +
-      "/rest/v1/orders?select=id,payment_status&id=eq." +
-      encodeURIComponent(orderId) +
-      "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
-      "&limit=1",
-      {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_KEY,
-          "Authorization": "Bearer " + SUPABASE_KEY
-        }
-      }
-    );
-    const currentRows = await currentResponse.json();
-    if (!currentResponse.ok) {
-      throw new Error(
-        currentRows.message || currentRows.error || currentRows.hint ||
-        "Unable to verify the current payment status."
-      );
-    }
-    if (!Array.isArray(currentRows) || currentRows.length !== 1) {
-      throw new Error("The order could not be found. Refresh the order list.");
+    const { data: authData, error: authError } = await cashierAuthClient.auth.getSession();
+    const accessToken = authData && authData.session && authData.session.access_token;
+    if (authError || !accessToken) {
+      throw new Error("Your cashier login has expired. Please sign in again.");
     }
 
-    const currentPaymentStatus = String(currentRows[0].payment_status || "")
-      .trim().toLowerCase();
-    if (["paid", "successful", "succeeded", "verified"].includes(currentPaymentStatus)) {
-      throw new Error("This payment has already been confirmed.");
-    }
-    if (!["pending", "unpaid", ""].includes(currentPaymentStatus)) {
-      throw new Error("This payment cannot be confirmed from its current status: " + currentPaymentStatus + ".");
-    }
-
-    const paymentFilter = currentRows[0].payment_status == null
-      ? "&payment_status=is.null"
-      : "&payment_status=eq." + encodeURIComponent(currentRows[0].payment_status);
-    const response = await fetch(
-      SUPABASE_URL +
-      "/rest/v1/orders?id=eq." +
-      encodeURIComponent(orderId) +
-      "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
-      paymentFilter,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_KEY,
-          "Authorization": "Bearer " + SUPABASE_KEY,
-          "Prefer": "return=representation"
-        },
-        body: JSON.stringify({ payment_status: "paid" })
-      }
-    );
-
-    const data = await response.json();
-
+    const response = await fetch(SUPABASE_URL + "/rest/v1/rpc/cashier_settle_order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + accessToken
+      },
+      body: JSON.stringify({
+        p_order_id: orderId,
+        p_session_id: halinaStaffSessionId
+      })
+    });
+    const result = await response.json();
     if (!response.ok) {
-      throw new Error(
-        data.message || data.error || data.hint ||
-        "Unable to confirm this payment."
-      );
+      throw new Error(result.message || result.error || result.hint || "Unable to confirm this payment.");
     }
-
-    if (!Array.isArray(data) || data.length === 0) {
-      throw new Error(
-        "The payment status changed before confirmation. Refresh the order and check its latest status."
-      );
+    if (result.success !== true) {
+      throw new Error(result.message || "This order is already settled or is not ready for payment.");
     }
 
     window.cashierOrdersCache = (window.cashierOrdersCache || []).map(function(order) {
       return String(order.id) === String(orderId)
-        ? Object.assign({}, order, { payment_status: "paid" })
+        ? Object.assign({}, order, { payment_status: "paid", settled_at: result.settled_at })
         : order;
     });
-
     await loadOrders();
 
     const historySection = document.getElementById("transactionsSection");
     if (historySection && historySection.classList.contains("active")) {
       await loadTransactionHistory();
     }
-
-    if (typeof showSuccess === "function") {
-      showSuccess("Payment confirmed successfully.");
-    }
+    if (typeof showSuccess === "function") showSuccess("Payment confirmed successfully.");
   } catch (error) {
     console.error("Confirm payment error:", error);
     button.disabled = false;
     button.textContent = originalText;
-    if (typeof showError === "function") {
-      showError(error.message);
-    }
+    if (typeof showError === "function") showError(error.message || "Unable to confirm payment.");
   }
 }
 
@@ -12126,7 +12040,7 @@ async function loadTransactionHistory() {
       const response = await fetch(
         SUPABASE_URL +
         "/rest/v1/orders" +
-        "?select=id,order_number,table_number,order_type,total,status,payment_method,payment_status,payment_reference,created_at,completed_at" +
+        "?select=id,order_number,table_number,order_type,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_at,settled_by_user_id,settled_by_session_id,settled_at" +
         "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
         "&order=created_at.desc&limit=" + pageSize + "&offset=" + offset,
         {
@@ -12319,6 +12233,23 @@ if (
   );
 
 }
+/* Stable idempotency key: reuses the key only when retrying the same checkout payload. */
+let cashierPendingSubmissionKey = null;
+let cashierPendingSubmissionSignature = null;
+function getCashierOrderSubmissionKey(payload) {
+  const signature = JSON.stringify(payload);
+  if (!cashierPendingSubmissionKey || cashierPendingSubmissionSignature !== signature) {
+    cashierPendingSubmissionKey = (window.crypto && typeof window.crypto.randomUUID === "function")
+      ? window.crypto.randomUUID()
+      : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(ch) {
+          const r = Math.random() * 16 | 0;
+          return (ch === "x" ? r : (r & 3 | 8)).toString(16);
+        });
+    cashierPendingSubmissionSignature = signature;
+  }
+  return cashierPendingSubmissionKey;
+}
+
 /* =========================
    CHECKOUT POPUP
 ========================= */
@@ -13106,7 +13037,7 @@ if (acceptOrderBtn) {
           },
          body: JSON.stringify((function () {
  const details = window.halinaGetOrderDetails();
- return {
+ const payload = {
    p_restaurant_id: "5e562ca7-38aa-4894-8265-ddca2f4e61b6",
    p_table_number: details.tableNumber,
    p_order_type: details.orderType,
@@ -13114,8 +13045,13 @@ if (acceptOrderBtn) {
    p_total: total,
    p_payment_method: "cash",
    p_payment_status: "paid",
-   p_payment_reference: null
+   p_payment_reference: null,
+   p_special_instructions: details.deliveryAddress
+     ? "Delivery address: " + details.deliveryAddress
+     : null
  };
+ payload.p_submission_key = getCashierOrderSubmissionKey(payload);
+ return payload;
 })())
         }
         );
@@ -13178,34 +13114,38 @@ if (
    "Order ID: " + savedOrderId
  );
 }
+      if (!cashierAuthClient || !halinaStaffSessionId) {
+        throw new Error("The cashier login session is unavailable. The order was saved, but acceptance needs staff authentication.");
+      }
+      const { data: cashierAuthData, error: cashierAuthError } = await cashierAuthClient.auth.getSession();
+      const cashierAccessToken = cashierAuthData && cashierAuthData.session && cashierAuthData.session.access_token;
+      if (cashierAuthError || !cashierAccessToken) {
+        throw new Error("The cashier login has expired. The order was saved, but acceptance needs a fresh login.");
+      }
       const statusResponse = await fetch(
-        SUPABASE_URL +
-        "/rest/v1/orders?id=eq." +
-        encodeURIComponent(savedOrderId) +
-        "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6",
+        SUPABASE_URL + "/rest/v1/rpc/cashier_accept_order",
         {
-          method: "PATCH",
+          method: "POST",
           headers: {
             "apikey": SUPABASE_KEY,
-            "Authorization": "Bearer " + SUPABASE_KEY,
-            "Content-Type": "application/json",
-            "Prefer": "return=representation"
+            "Authorization": "Bearer " + cashierAccessToken,
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            status: "accepted"
+            p_order_id: savedOrderId,
+            p_session_id: halinaStaffSessionId
           })
         }
       );
-
       const statusResult = await statusResponse.json();
-
-      if (!statusResponse.ok || !Array.isArray(statusResult) ||
-          statusResult.length === 0) {
+      if (!statusResponse.ok || statusResult.success !== true) {
         throw new Error(
-          "Na-save ang order at stock, pero hindi nakumpirma ang Accepted status. Order ID: " +
-          savedOrderId
+          statusResult.message || statusResult.error ||
+          "Order was saved and stock deducted, but it could not be accepted. Order ID: " + savedOrderId
         );
       }
+      cashierPendingSubmissionKey = null;
+      cashierPendingSubmissionSignature = null;
 
       acceptOrderBtn.textContent = "Accepted";
       showSuccessReceipt();
