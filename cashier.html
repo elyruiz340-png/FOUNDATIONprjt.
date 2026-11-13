@@ -6970,30 +6970,29 @@ background:
            POS TOP BAR
       ====================== -->
       <div class="pos-topbar">
-
         <div class="pos-topbar-heading">
           <div class="pos-topbar-title-block">
-            <h2>Cashier POS</h2>
-
-            <div class="pos-brand">
-              HALINA BISTRO CAFE
+            <div class="pos-brand" aria-label="Restaurant name and logo">
+              EDMEL BISTRO CAFE
             </div>
-
-            <p>
-              Select items to create an order
-            </p>
           </div>
+
           <div class="cashier-session-widget" data-cashier-session-widget hidden>
             <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
             <div class="cashier-session-copy">
-              <span class="cashier-session-label">SIGNED IN AS</span>
               <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
               <small class="cashier-session-role" data-cashier-role>Cashier</small>
             </div>
             <span class="cashier-session-divider" aria-hidden="true"></span>
             <div class="cashier-session-clock">
-              <strong data-cashier-live-time>--:--:--</strong>
-              <small data-cashier-live-date>Loading time…</small>
+              <svg class="cashier-session-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 7v5l3 2"></path>
+              </svg>
+              <div class="cashier-session-clock-copy">
+                <strong data-cashier-live-time>--:--:--</strong>
+                <small data-cashier-live-date>Loading time…</small>
+              </div>
             </div>
           </div>
         </div>
@@ -7020,11 +7019,10 @@ background:
             type="search"
             id="posSearch"
             class="pos-search"
-            placeholder="Search menu items..."
+            placeholder="Search menu..."
           >
 
         </div>
-
       </div>
 
 
@@ -7536,20 +7534,6 @@ background:
 >
   <div class="top-bar">
     <h2>Table Management</h2>
-    <div class="cashier-session-widget" data-cashier-session-widget hidden>
-      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
-      <div class="cashier-session-copy">
-        <span class="cashier-session-label">SIGNED IN AS</span>
-        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
-        <small class="cashier-session-role" data-cashier-role>Cashier</small>
-      </div>
-      <span class="cashier-session-divider" aria-hidden="true"></span>
-      <div class="cashier-session-clock">
-        <strong data-cashier-live-time>--:--:--</strong>
-        <small data-cashier-live-date>Loading time…</small>
-      </div>
-    </div>
-
     <button
       class="refresh-btn"
       id="refreshBtn"
@@ -7584,20 +7568,6 @@ background:
       Manage your product stocks and inventory
     </p>
   </div>
-
-  <div class="cashier-session-widget" data-cashier-session-widget hidden>
-      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
-      <div class="cashier-session-copy">
-        <span class="cashier-session-label">SIGNED IN AS</span>
-        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
-        <small class="cashier-session-role" data-cashier-role>Cashier</small>
-      </div>
-      <span class="cashier-session-divider" aria-hidden="true"></span>
-      <div class="cashier-session-clock">
-        <strong data-cashier-live-time>--:--:--</strong>
-        <small data-cashier-live-date>Loading time…</small>
-      </div>
-    </div>
 
   <div class="stocks-header-actions">
     <button
@@ -7754,21 +7724,7 @@ background:
   class="page-section"
 >
   <div class="top-bar">
-    <h2>Incoming Orders</h2>
-    <div class="cashier-session-widget" data-cashier-session-widget hidden>
-      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
-      <div class="cashier-session-copy">
-        <span class="cashier-session-label">SIGNED IN AS</span>
-        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
-        <small class="cashier-session-role" data-cashier-role>Cashier</small>
-      </div>
-      <span class="cashier-session-divider" aria-hidden="true"></span>
-      <div class="cashier-session-clock">
-        <strong data-cashier-live-time>--:--:--</strong>
-        <small data-cashier-live-date>Loading time…</small>
-      </div>
-    </div>
-  </div>
+    <h2>Incoming Orders</h2>  </div>
 
   <div
     class="orders-filter-tabs"
@@ -7912,21 +7868,7 @@ background:
     <div>
       <h2>Transaction History</h2>
       <p>Permanent records of completed, refunded, and voided transactions.</p>
-    </div>
-    <div class="cashier-session-widget" data-cashier-session-widget hidden>
-      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
-      <div class="cashier-session-copy">
-        <span class="cashier-session-label">SIGNED IN AS</span>
-        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
-        <small class="cashier-session-role" data-cashier-role>Cashier</small>
-      </div>
-      <span class="cashier-session-divider" aria-hidden="true"></span>
-      <div class="cashier-session-clock">
-        <strong data-cashier-live-time>--:--:--</strong>
-        <small data-cashier-live-date>Loading time…</small>
-      </div>
-    </div>
-    <button type="button" id="refreshTransactionHistory" class="refresh-btn">
+    </div>    <button type="button" id="refreshTransactionHistory" class="refresh-btn">
       Refresh
     </button>
   </div>
@@ -7982,21 +7924,7 @@ background:
     class="page-section"
   >
     <div class="top-bar">
-      <h2>Settings</h2>
-      <div class="cashier-session-widget" data-cashier-session-widget hidden>
-      <div class="cashier-session-avatar" data-cashier-avatar aria-hidden="true">C</div>
-      <div class="cashier-session-copy">
-        <span class="cashier-session-label">SIGNED IN AS</span>
-        <strong class="cashier-session-name" data-cashier-display-name>Cashier</strong>
-        <small class="cashier-session-role" data-cashier-role>Cashier</small>
-      </div>
-      <span class="cashier-session-divider" aria-hidden="true"></span>
-      <div class="cashier-session-clock">
-        <strong data-cashier-live-time>--:--:--</strong>
-        <small data-cashier-live-date>Loading time…</small>
-      </div>
-    </div>
-    </div>
+      <h2>Settings</h2>    </div>
     <div class="coming-soon">
       <div class="icon">
         ⚙️
@@ -15132,6 +15060,207 @@ if (cashierLoginForm) {
   }
 })();
 </script>
+
+
+<style id="cashier-approved-pos-layout">
+/* Approved POS header: restaurant identity + cashier + restaurant clock.
+   This header is intentionally limited to the left/menu column. */
+.pos-topbar {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 13px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 14px;
+}
+.pos-topbar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+  width: 100%;
+  min-height: 62px;
+}
+.pos-topbar-title-block {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.pos-topbar .pos-brand {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  min-width: 0;
+  margin: 0;
+  color: #173c2b;
+  font-size: clamp(17px, 1.65vw, 23px);
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .075em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.pos-topbar .pos-brand img[data-restaurant-logo] {
+  width: 54px !important;
+  height: 54px !important;
+  min-width: 54px;
+  margin: 0 13px 0 0 !important;
+  padding: 3px;
+  object-fit: contain;
+  border: 1px solid #dbe5d7;
+  border-radius: 14px;
+  background: #fffdf8;
+  box-shadow: 0 3px 9px rgba(37, 66, 45, .09);
+}
+.pos-topbar .pos-search-wrap {
+  width: 100%;
+  align-self: stretch;
+  margin: 0;
+}
+.pos-topbar .pos-search {
+  height: 42px;
+  border-radius: 13px;
+  background: #fffefa;
+  border-color: #dce3da;
+  box-shadow: 0 2px 8px rgba(42, 62, 44, .04);
+}
+.cashier-session-widget {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: min(100%, 330px);
+  padding: 8px 12px;
+  border: 1px solid #e4dfd2;
+  border-radius: 15px;
+  background: rgba(255, 253, 248, .97);
+  box-shadow: 0 4px 12px rgba(57, 57, 36, .07), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.cashier-session-widget[hidden] { display: none !important; }
+.cashier-session-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #d7e3d4;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #edf4e9, #dce9d8);
+  color: #31513b;
+  font-size: 14px;
+  font-weight: 850;
+}
+.cashier-session-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cashier-session-copy,
+.cashier-session-clock-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  gap: 3px;
+}
+.cashier-session-copy { max-width: 125px; }
+.cashier-session-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #263b2d;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 850;
+}
+.cashier-session-role {
+  color: #7a806f;
+  font-size: 10px;
+  line-height: 1.15;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+.cashier-session-divider {
+  width: 1px;
+  height: 34px;
+  flex: 0 0 1px;
+  margin: 0 2px;
+  background: #e5dfd3;
+}
+.cashier-session-clock {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.cashier-session-clock-icon {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  fill: none;
+  stroke: #31513b;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cashier-session-clock-copy { min-width: 112px; }
+.cashier-session-clock strong {
+  color: #263e2e;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cashier-session-clock small {
+  color: #858676;
+  font-size: 9px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+/* Keep the checkout card independently aligned to the top-right. */
+.pos-cart {
+  top: 12px;
+  height: calc(100vh - 24px);
+  padding: 14px;
+  border-radius: 18px;
+  border-color: #e3e6dd;
+  background: #fffefa;
+  box-shadow: 0 4px 14px rgba(40, 58, 43, .055);
+}
+@media (max-width: 1050px) {
+  .cashier-session-widget { gap: 8px; padding: 7px 9px; }
+  .cashier-session-avatar { width: 38px; height: 38px; flex-basis: 38px; }
+  .cashier-session-copy { max-width: 105px; }
+  .cashier-session-clock-copy { min-width: 100px; }
+}
+@media (max-width: 760px) {
+  .pos-topbar-heading { align-items: flex-start; flex-wrap: wrap; }
+  .pos-topbar-title-block { flex: 1 1 100%; }
+  .cashier-session-widget { max-width: 100%; }
+  .pos-topbar .pos-brand { font-size: 19px; }
+  .pos-cart { position: relative; top: auto; height: auto; min-height: 560px; }
+}
+@media (max-width: 520px) {
+  .pos-topbar { gap: 10px; }
+  .pos-topbar-heading { gap: 9px; }
+  .pos-topbar .pos-brand { font-size: 16px; letter-spacing: .045em; }
+  .pos-topbar .pos-brand img[data-restaurant-logo] {
+    width: 46px !important; height: 46px !important; min-width: 46px; margin-right: 9px !important;
+  }
+  .cashier-session-widget { gap: 7px; padding: 6px 8px; }
+  .cashier-session-avatar { width: 34px; height: 34px; flex-basis: 34px; }
+  .cashier-session-copy { max-width: 92px; }
+  .cashier-session-clock-copy { min-width: 96px; }
+  .cashier-session-clock strong { font-size: 11px; }
+  .cashier-session-clock small { font-size: 8px; }
+}
+</style>
 
 </body>
 </html>
