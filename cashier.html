@@ -10797,7 +10797,7 @@ async function loadOrders() {
       await fetch(
         SUPABASE_URL +
         "/rest/v1/orders" +
-        "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,payment_reference,created_at,accepted_by_user_id,accepted_by_session_id,accepted_at,settled_by_user_id,settled_by_session_id,settled_at" +
+        "?select=id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,accepted_by_user_id,accepted_by_session_id,accepted_at,settled_by_user_id,settled_by_session_id,settled_at" +
         "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
         "&order=created_at.desc" +
         "&limit=50",
@@ -11284,6 +11284,43 @@ function renderOrders(orders, newOrderIds) {
 }
 
 setupOrderFilterTabs();
+function printSavedOrderReceipt(order) {
+  if (!order || !order.id) { showError("Order details are unavailable."); return; }
+  const paid = ["paid", "successful", "succeeded", "verified"].includes(String(order.payment_status || "").trim().toLowerCase());
+  if (!paid) { showError("A receipt can only be printed for a confirmed payment."); return; }
+  let items = [];
+  try { items = Array.isArray(order.items) ? order.items : JSON.parse(order.items || "[]"); } catch (e) { items = []; }
+  const safe = function(v) { return escapeHtml(String(v == null ? "" : v)); };
+  const money = function(v) { return formatCheckoutMoney(Number(v || 0)); };
+  const b = order.pricing_breakdown && typeof order.pricing_breakdown === "object" ? order.pricing_breakdown : {};
+  const subtotal = Number(order.subtotal != null ? order.subtotal : b.subtotal || 0);
+  const tax = Number(order.tax != null ? order.tax : b.tax || 0);
+  const discount = Number(order.discount_amount != null ? order.discount_amount : b.discount_amount || 0);
+  const service = Number(order.service_charge != null ? order.service_charge : b.service_charge || 0);
+  const total = Number(order.total || b.total || 0);
+  const dateText = order.created_at ? formatRestaurantDateTime(order.created_at) : "—";
+  const profile = window.HALINA_CONFIG && window.HALINA_CONFIG.getCurrentProfile ? window.HALINA_CONFIG.getCurrentProfile() : {};
+  const restaurant = profile.restaurantName || "EDMEL BISTRO CAFE";
+  const itemRows = items.map(function(it) {
+    const qty = Number(it.quantity || it.qty || 1);
+    return "<tr><td>" + safe(it.name || "Item") + " × " + qty + "</td><td class='amt'>" + money(Number(it.price || 0) * qty) + "</td></tr>";
+  }).join("");
+  let summary = "<tr><td>Subtotal</td><td class='amt'>" + money(subtotal) + "</td></tr>";
+  if (discount > 0) summary += "<tr><td>Discount</td><td class='amt'>-" + money(discount) + "</td></tr>";
+  if (service > 0) summary += "<tr><td>" + safe(b.service_charge_label || "Service Charge") + "</td><td class='amt'>" + money(service) + "</td></tr>";
+  if (tax > 0) summary += "<tr><td>" + safe(b.tax_rule_name || "Tax") + " (" + safe(b.tax_rate != null ? b.tax_rate + "%" : "") + ")</td><td class='amt'>" + money(tax) + "</td></tr>";
+  const win = window.open("", "_blank", "width=420,height=720");
+  if (!win) { showError("Allow pop-ups for this cashier page to print receipts."); return; }
+  const html = "<!doctype html><html><head><meta charset='utf-8'><title>Receipt</title><style>@page{size:80mm auto;margin:4mm}*{box-sizing:border-box}body{width:72mm;margin:0 auto;color:#111;font:12px/1.4 'Courier New',monospace}h2{text-align:center;font-size:16px}.center{text-align:center}.rule{border-top:1px dashed #111;margin:8px 0}table{width:100%;border-collapse:collapse}td{padding:3px 0;vertical-align:top}.amt{text-align:right;white-space:nowrap}.total td{font-size:15px;font-weight:bold;padding-top:7px}.foot{text-align:center;margin-top:12px}</style></head><body>" +
+    "<h2>" + safe(restaurant) + "</h2><div class='center'>PAYMENT RECEIPT</div><div class='rule'></div>" +
+    "<div>Order: #" + safe(order.order_number || "—") + "</div><div>Date: " + safe(dateText) + "</div><div>Table: " + safe(order.table_number || "—") + "</div><div>Type: " + safe(String(order.order_type || "Dine In").toUpperCase()) + "</div><div class='rule'></div>" +
+    "<table>" + itemRows + "</table><div class='rule'></div><table>" + summary + "<tr class='total'><td>TOTAL</td><td class='amt'>" + money(total) + "</td></tr></table><div class='rule'></div>" +
+    "<div>Payment: " + safe(String(order.payment_method || "—").toUpperCase()) + "</div><div>Status: " + safe(String(order.payment_status || "—").toUpperCase()) + "</div>" +
+    (order.payment_reference ? "<div>Reference: " + safe(order.payment_reference) + "</div>" : "") +
+    "<div class='foot'>Thank you for dining with us!</div><script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};</script></body></html>";
+  win.document.open(); win.document.write(html); win.document.close();
+}
+
 /* =========================
   SELECTED ORDER DETAILS
 ========================= */
@@ -11405,6 +11442,7 @@ function renderSelectedOrderDetails(order, detailsPanel) {
 </div>
  ${acceptButtonHtml}
  ${confirmPaymentButtonHtml}
+ ${["paid", "successful", "succeeded", "verified"].includes(String(paymentStatus).trim().toLowerCase()) ? '<div class="order-actions receipt-actions"><button type="button" class="reprint-order-receipt-btn">PRINT RECEIPT</button></div>' : ""}
 </div>
  `;
  const acceptButton = detailsPanel.querySelector(".accept-order-btn");
@@ -11414,6 +11452,12 @@ function renderSelectedOrderDetails(order, detailsPanel) {
        acceptButton.dataset.orderId,
        acceptButton
      );
+   });
+ }
+ const reprintReceiptButton = detailsPanel.querySelector(".reprint-order-receipt-btn");
+ if (reprintReceiptButton) {
+   reprintReceiptButton.addEventListener("click", function() {
+     printSavedOrderReceipt(order);
    });
  }
  const confirmPaymentButton = detailsPanel.querySelector(".confirm-payment-btn");
@@ -11620,7 +11664,7 @@ async function loadCompletedOrders() {
     const response = await fetch(
       SUPABASE_URL +
       "/rest/v1/orders" +
-      "?select=id,order_number,table_number,order_type,items,total,status,payment_method,payment_status,created_at,completed_at" +
+      "?select=id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,created_at,completed_at" +
       "&status=in.(served,completed)" +
       "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
       "&order=created_at.desc" +
