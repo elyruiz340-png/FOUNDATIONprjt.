@@ -11317,7 +11317,7 @@ function printSavedOrderReceipt(order) {
     "<table>" + itemRows + "</table><div class='rule'></div><table>" + summary + "<tr class='total'><td>TOTAL</td><td class='amt'>" + money(total) + "</td></tr></table><div class='rule'></div>" +
     "<div>Payment: " + safe(String(order.payment_method || "—").toUpperCase()) + "</div><div>Status: " + safe(String(order.payment_status || "—").toUpperCase()) + "</div>" +
     (order.payment_reference ? "<div>Reference: " + safe(order.payment_reference) + "</div>" : "") +
-    "<div class='foot'>Thank you for dining with us!</div><script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};</script></body></html>";
+    "<div class='foot'>Thank you for dining with us!</div><script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};<\/script></body></html>";
   win.document.open(); win.document.write(html); win.document.close();
 }
 
