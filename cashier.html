@@ -11284,10 +11284,95 @@ function renderOrders(orders, newOrderIds) {
 }
 
 setupOrderFilterTabs();
-function printSavedOrderReceipt(order) {
+async function loadCashierReceiptSettings() {
+  const fallback = {
+    restaurantName: "EDMEL BISTRO CAFE",
+    title: "PAYMENT RECEIPT",
+    fontSize: "12",
+    alignment: "center",
+    paperWidth: "80",
+    customWidth: "",
+    connection: "browser",
+    printerName: "",
+    printerModel: "",
+    showLogo: false,
+    showAddress: false,
+    showPhone: false,
+    showEmail: false,
+    showOrder: true,
+    showDate: true,
+    showOrderType: true,
+    showItems: true,
+    showSubtotal: true,
+    showDiscount: true,
+    showTax: true,
+    showService: true,
+    showTotal: true,
+    showPayment: true,
+    address: "",
+    phone: "",
+    email: "",
+    footer: "Thank you for dining with us!",
+    logo: ""
+  };
+  if (!cashierAuthClient) throw new Error("Cashier authentication is unavailable.");
+  const { data: sessionData, error: sessionError } = await cashierAuthClient.auth.getSession();
+  if (sessionError || !sessionData?.session?.access_token) {
+    throw new Error("Your cashier session has expired. Sign in again before printing.");
+  }
+
+  const deviceKey = "halina_receipt_device_id_v1";
+  let deviceId = localStorage.getItem(deviceKey);
+  if (!deviceId) {
+    if (!window.crypto?.randomUUID) throw new Error("This browser cannot register a receipt printer device.");
+    deviceId = window.crypto.randomUUID();
+    localStorage.setItem(deviceKey, deviceId);
+  }
+
+  const [sharedResult, deviceResult] = await Promise.all([
+    cashierAuthClient.from("restaurant_receipt_settings")
+      .select("settings,logo_url")
+      .eq("restaurant_id", HALINA_RESTAURANT_ID)
+      .maybeSingle(),
+    cashierAuthClient.from("restaurant_printer_devices")
+      .select("printer_name,printer_model,connection_type,paper_width,custom_width_mm,is_active")
+      .eq("restaurant_id", HALINA_RESTAURANT_ID)
+      .eq("device_id", deviceId)
+      .maybeSingle()
+  ]);
+  if (sharedResult.error) throw sharedResult.error;
+  if (deviceResult.error) throw deviceResult.error;
+
+  const shared = sharedResult.data?.settings || {};
+  const device = deviceResult.data || {};
+  const config = Object.assign({}, fallback, shared, {
+    logo: sharedResult.data?.logo_url || shared.logo || "",
+    printerName: device.printer_name || "",
+    printerModel: device.printer_model || "",
+    connection: device.connection_type || shared.connection || "browser",
+    paperWidth: device.paper_width || shared.paperWidth || "80",
+    customWidth: device.custom_width_mm == null ? (shared.customWidth || "") : String(device.custom_width_mm)
+  });
+  if (deviceResult.data && device.is_active === false) {
+    throw new Error("The printer profile for this POS device is inactive. Ask an admin to activate it.");
+  }
+  return config;
+}
+
+async function printSavedOrderReceipt(order) {
   if (!order || !order.id) { showError("Order details are unavailable."); return; }
   const paid = ["paid", "successful", "succeeded", "verified"].includes(String(order.payment_status || "").trim().toLowerCase());
   if (!paid) { showError("A receipt can only be printed for a confirmed payment."); return; }
+
+  let config;
+  try {
+    config = await loadCashierReceiptSettings();
+  } catch (error) {
+    console.error("Could not load saved receipt settings:", error);
+    showError("Could not load saved receipt and printer settings: " + (error.message || String(error)));
+    return;
+  }
+
   let items = [];
   try { items = Array.isArray(order.items) ? order.items : JSON.parse(order.items || "[]"); } catch (e) { items = []; }
   const safe = function(v) { return escapeHtml(String(v == null ? "" : v)); };
@@ -11299,26 +11384,76 @@ function printSavedOrderReceipt(order) {
   const service = Number(order.service_charge != null ? order.service_charge : b.service_charge || 0);
   const total = Number(order.total || b.total || 0);
   const dateText = order.created_at ? formatRestaurantDateTime(order.created_at) : "—";
-  const profile = window.HALINA_CONFIG && window.HALINA_CONFIG.getCurrentProfile ? window.HALINA_CONFIG.getCurrentProfile() : {};
-  const restaurant = profile.restaurantName || "EDMEL BISTRO CAFE";
+  const orderType = String(order.order_type || "").replace(/_/g, " ").toUpperCase();
+  const alignment = ["left", "center", "right"].includes(config.alignment) ? config.alignment : "center";
+  const fontSize = Math.min(16, Math.max(10, Number(config.fontSize) || 12));
+  const paperWidth = config.paperWidth === "custom"
+    ? Math.min(300, Math.max(30, Number(config.customWidth) || 80))
+    : (config.paperWidth === "58" ? 58 : 80);
+  const paperContentWidth = Math.max(30, paperWidth - 6);
+  const rows = [];
+  if (config.showSubtotal !== false) rows.push("<tr><td>Subtotal</td><td class='amt'>" + money(subtotal) + "</td></tr>");
+  if (config.showDiscount !== false && discount > 0) rows.push("<tr><td>Discount</td><td class='amt'>-" + money(discount) + "</td></tr>");
+  if (config.showService !== false && service > 0) rows.push("<tr><td>" + safe(b.service_charge_label || "Service Charge") + "</td><td class='amt'>" + money(service) + "</td></tr>");
+  if (config.showTax !== false && tax > 0) rows.push("<tr><td>" + safe(b.tax_rule_name || "Tax") + (b.tax_rate != null ? " (" + safe(b.tax_rate) + "%)" : "") + "</td><td class='amt'>" + money(tax) + "</td></tr>");
+
   const itemRows = items.map(function(it) {
     const qty = Number(it.quantity || it.qty || 1);
-    return "<tr><td>" + safe(it.name || "Item") + " × " + qty + "</td><td class='amt'>" + money(Number(it.price || 0) * qty) + "</td></tr>";
+    const lineTotal = Number(it.price || 0) * qty;
+    return "<tr><td>" + safe(it.name || "Item") + " × " + qty + "</td><td class='amt'>" + money(lineTotal) + "</td></tr>";
   }).join("");
-  let summary = "<tr><td>Subtotal</td><td class='amt'>" + money(subtotal) + "</td></tr>";
-  if (discount > 0) summary += "<tr><td>Discount</td><td class='amt'>-" + money(discount) + "</td></tr>";
-  if (service > 0) summary += "<tr><td>" + safe(b.service_charge_label || "Service Charge") + "</td><td class='amt'>" + money(service) + "</td></tr>";
-  if (tax > 0) summary += "<tr><td>" + safe(b.tax_rule_name || "Tax") + " (" + safe(b.tax_rate != null ? b.tax_rate + "%" : "") + ")</td><td class='amt'>" + money(tax) + "</td></tr>";
-  const win = window.open("", "_blank", "width=420,height=720");
-  if (!win) { showError("Allow pop-ups for this cashier page to print receipts."); return; }
-  const html = "<!doctype html><html><head><meta charset='utf-8'><title>Receipt</title><style>@page{size:80mm auto;margin:4mm}*{box-sizing:border-box}body{width:72mm;margin:0 auto;color:#111;font:12px/1.4 'Courier New',monospace}h2{text-align:center;font-size:16px}.center{text-align:center}.rule{border-top:1px dashed #111;margin:8px 0}table{width:100%;border-collapse:collapse}td{padding:3px 0;vertical-align:top}.amt{text-align:right;white-space:nowrap}.total td{font-size:15px;font-weight:bold;padding-top:7px}.foot{text-align:center;margin-top:12px}</style></head><body>" +
-    "<h2>" + safe(restaurant) + "</h2><div class='center'>PAYMENT RECEIPT</div><div class='rule'></div>" +
-    "<div>Order: #" + safe(order.order_number || "—") + "</div><div>Date: " + safe(dateText) + "</div><div>Table: " + safe(order.table_number || "—") + "</div><div>Type: " + safe(String(order.order_type || "Dine In").toUpperCase()) + "</div><div class='rule'></div>" +
-    "<table>" + itemRows + "</table><div class='rule'></div><table>" + summary + "<tr class='total'><td>TOTAL</td><td class='amt'>" + money(total) + "</td></tr></table><div class='rule'></div>" +
-    "<div>Payment: " + safe(String(order.payment_method || "—").toUpperCase()) + "</div><div>Status: " + safe(String(order.payment_status || "—").toUpperCase()) + "</div>" +
-    (order.payment_reference ? "<div>Reference: " + safe(order.payment_reference) + "</div>" : "") +
-    "<div class='foot'>Thank you for dining with us!</div><script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};<\/script></body></html>";
-  win.document.open(); win.document.write(html); win.document.close();
+
+  const win = window.open("", "_blank", "width=480,height=720");
+  if (!win) { showError("Allow pop-ups for this cashier page to open the receipt print dialog."); return; }
+
+  const header = [
+    config.showLogo && config.logo ? "<img class='logo' src='" + safe(config.logo) + "' alt='Restaurant logo'>" : "",
+    "<h2>" + safe(config.restaurantName || "EDMEL BISTRO CAFE") + "</h2>",
+    config.title ? "<div class='center title'>" + safe(config.title) + "</div>" : "",
+    config.showAddress && config.address ? "<div class='center'>" + safe(config.address) + "</div>" : "",
+    config.showPhone && config.phone ? "<div class='center'>" + safe(config.phone) + "</div>" : "",
+    config.showEmail && config.email ? "<div class='center'>" + safe(config.email) + "</div>" : ""
+  ].join("");
+
+  const metadata = [
+    config.showOrder !== false ? "<div>Order: #" + safe(order.order_number || "—") + "</div>" : "",
+    config.showDate !== false ? "<div>Date: " + safe(dateText) + "</div>" : "",
+    "<div>Table: " + safe(order.table_number || "—") + "</div>",
+    config.showOrderType !== false ? "<div>Type: " + safe(orderType || "—") + "</div>" : ""
+  ].join("");
+
+  const payment = config.showPayment !== false
+    ? "<div>Payment: " + safe(String(order.payment_method || "—").toUpperCase()) + "</div><div>Status: " + safe(String(order.payment_status || "—").toUpperCase()) + "</div>" +
+      (order.payment_reference ? "<div>Reference: " + safe(order.payment_reference) + "</div>" : "")
+    : "";
+
+  const html = "<!doctype html><html><head><meta charset='utf-8'><title>Receipt #" +
+    safe(order.order_number || order.id) + "</title><style>" +
+    "@page{size:" + paperWidth + "mm auto;margin:3mm}*{box-sizing:border-box}" +
+    "body{width:" + paperContentWidth + "mm;margin:0 auto;color:#111;font:" + fontSize + "px/" + (fontSize <= 10 ? "1.3" : "1.4") + " 'Courier New',monospace}" +
+    "h2{text-align:" + alignment + ";font-size:" + (fontSize + 3) + "px;margin:0 0 5px}.center{text-align:center}.title{margin-bottom:5px}" +
+    ".logo{display:block;max-width:72px;max-height:58px;object-fit:contain;margin:0 auto 7px}" +
+    ".rule{border-top:1px dashed #111;margin:7px 0}table{width:100%;border-collapse:collapse;table-layout:fixed}" +
+    "td{padding:3px 0;vertical-align:top;overflow-wrap:anywhere}.amt{text-align:right;white-space:nowrap;width:34%;padding-left:4px}" +
+    ".total td{font-size:" + (fontSize + 3) + "px;font-weight:bold;padding-top:7px}.foot{text-align:" + alignment + ";margin-top:12px;white-space:pre-wrap}" +
+    "</style></head><body>" + header + "<div class='rule'></div>" + metadata +
+    (config.showItems !== false ? "<div class='rule'></div><table>" + (itemRows || "<tr><td>No item details</td></tr>") + "</table>" : "") +
+    (rows.length || config.showTotal !== false ? "<div class='rule'></div><table>" + rows.join("") +
+      (config.showTotal !== false ? "<tr class='total'><td>TOTAL</td><td class='amt'>" + money(total) + "</td></tr>" : "") +
+      "</table>" : "") +
+    (payment ? "<div class='rule'></div>" + payment : "") +
+    (config.footer ? "<div class='foot'>" + safe(config.footer) + "</div>" : "") +
+    "<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};<\/script></body></html>";
+
+  if (config.connection && config.connection !== "browser") {
+    console.warn("Configured printer connection requires a local print bridge; using browser printing for this receipt.", {
+      connection: config.connection, printerName: config.printerName, printerModel: config.printerModel
+    });
+    showError("This printer connection needs a local print bridge. Opening the browser print dialog as a fallback.");
+  }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
 
 /* =========================
