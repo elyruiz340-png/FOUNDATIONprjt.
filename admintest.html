@@ -87,6 +87,13 @@ input,select{background:var(--s);border:1px solid var(--bd);border-radius:10px;p
 .dr,.md,.pn{position:fixed;z-index:41;background:var(--bg2);border:1px solid var(--bd);box-shadow:var(--sh);overflow:auto}
 .dr{top:0;right:0;bottom:0;width:min(430px,100%);padding:18px;animation:si .25s}
 .md{left:50%;top:12vh;transform:translateX(-50%);width:min(440px,92vw);max-height:80vh;padding:18px;border-radius:16px;animation:fi .2s}
+/* Staff profile editor — centered focus panel, inherits the active theme tokens. */
+.md.staff-focus-panel{top:50%;transform:translate(-50%,-50%);width:min(500px,calc(100vw - 28px));max-height:min(86vh,760px);padding:22px;border-radius:22px;background:var(--gf);border:1px solid var(--ge);box-shadow:var(--sh),inset 0 1px 0 var(--hl)}
+.staff-focus-panel .staff-focus-kicker{display:inline-flex;align-items:center;gap:7px;color:var(--ac);font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;margin-bottom:8px}
+.staff-focus-panel .staff-focus-title{font-size:20px;letter-spacing:-.35px;margin:0 0 5px}
+.staff-focus-panel .staff-focus-description{font-size:13px;color:var(--mu);margin:0 0 18px;line-height:1.55}
+.staff-focus-panel .staff-focus-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.staff-focus-panel .staff-focus-close{width:34px;height:34px;border-radius:50%;border:1px solid var(--bd);background:var(--s);color:var(--tx);font-size:19px;line-height:1}
 .pn{top:62px;right:16px;width:min(380px,94vw);max-height:70vh;padding:14px;border-radius:16px;animation:up .2s}
 .pn.s{left:50%;right:auto;transform:translateX(-50%);width:min(560px,94vw)}
 .fl{display:grid;gap:4px;margin-bottom:10px}.fl input,.fl select{width:100%}
@@ -3242,7 +3249,7 @@ function staffPage(){
     const online=active&&!!staffLatestSession(u);
     const status=active?(online?'<span class="bd">● Online</span>':'<span class="bd">● Offline</span>'):'<span class="bd er">Deactivated</span>';
     const actions=String(u.role||'').toLowerCase()==='staff'
-      ? `<button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" style="white-space:nowrap">Reset PIN</button> ${active?`<button class="btn" type="button" data-a="staffdeactivate" data-id="${esc(u.id)}" style="white-space:nowrap">Deactivate</button>`:'<span class="mu">Inactive</span>'}`
+      ? `<div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn" type="button" data-a="staffeditprofile" data-id="${esc(u.id)}" style="white-space:nowrap">Edit Profile</button><button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" style="white-space:nowrap">Reset PIN</button> ${active?`<button class="btn" type="button" data-a="staffdeactivate" data-id="${esc(u.id)}" style="white-space:nowrap">Deactivate</button>`:'<span class="mu">Inactive</span>'}</div>`
       : '<span class="mu">—</span>';
     return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
   });
@@ -3258,6 +3265,91 @@ A.addstaff=()=>staffAddForm();
 A.staffrefresh=async()=>{
   try{await loadStaffData();render();toast('Staff list refreshed');}
   catch(e){staffLoadError=e.message||String(e);render();}
+};
+A.staffeditprofile=(button)=>{
+  const staff=STAFF_ROWS.find(row=>row.id===button.dataset.id);
+  if(!staff||String(staff.role||'').toLowerCase()!=='staff'){
+    toast('Staff account could not be verified');return;
+  }
+  const currentName=staff.display_name||staff.full_name||staff.cashier_username||'Staff member';
+  L.innerHTML=`<div class="bk" data-a="close"></div>
+    <div class="md staff-focus-panel" role="dialog" aria-modal="true" aria-labelledby="staffProfileTitle" aria-describedby="staffProfileDescription">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px">
+        <div>
+          <div class="staff-focus-kicker">Staff & Permissions</div>
+          <h3 id="staffProfileTitle" class="staff-focus-title">Edit Staff Profile</h3>
+        </div>
+        <button class="staff-focus-close" type="button" data-a="close" aria-label="Close">×</button>
+      </div>
+      <p id="staffProfileDescription" class="staff-focus-description">Update the staff member’s name details. Username, PIN, permissions, and account identity will remain unchanged.</p>
+      <div class="card" style="padding:12px;margin:0 0 16px">
+        <div class="row"><span class="mu">Username</span><strong>${esc(staff.cashier_username||'Not set')}</strong></div>
+        <div class="row"><span class="mu">Position</span><strong>${esc(staff.position||'—')}</strong></div>
+        <div class="row"><span class="mu">Account status</span><strong>${staff.is_active===false?'Deactivated':'Active'}</strong></div>
+      </div>
+      <form id="staffProfileEditForm" autocomplete="off">
+        <div class="fl">
+          <label for="staffProfileFullName">Full Name *</label>
+          <input id="staffProfileFullName" name="full_name" required maxlength="100" value="${esc(staff.full_name||'')}" placeholder="Enter full name">
+        </div>
+        <div class="fl">
+          <label for="staffProfileDisplayName">Display Name</label>
+          <input id="staffProfileDisplayName" name="display_name" maxlength="60" value="${esc(staff.display_name||'')}" placeholder="Optional display name">
+        </div>
+        <p id="staffProfileMessage" class="note" role="status" aria-live="polite"></p>
+        <div class="staff-focus-actions">
+          <button class="btn" type="button" data-a="close">Cancel</button>
+          <button id="staffProfileSaveBtn" class="btn pri" type="submit">Save Profile</button>
+        </div>
+      </form>
+    </div>`;
+  const form=L.querySelector('#staffProfileEditForm');
+  const saveBtn=L.querySelector('#staffProfileSaveBtn');
+  const message=L.querySelector('#staffProfileMessage');
+  const fullNameInput=L.querySelector('#staffProfileFullName');
+  fullNameInput.focus();
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    if(!form.reportValidity())return;
+    const fullName=fullNameInput.value.trim();
+    const displayName=L.querySelector('#staffProfileDisplayName').value.trim();
+    if(!fullName||fullName.length>100||displayName.length>60){
+      message.textContent='Check the name fields. Full Name is required; Display Name must be 60 characters or fewer.';
+      return;
+    }
+    saveBtn.disabled=true;
+    message.textContent='Saving staff profile securely…';
+    try{
+      const {data,error}=await sb.functions.invoke('update-staff-profile',{
+        body:{restaurant_user_id:staff.id,full_name:fullName,display_name:displayName}
+      });
+      if(error){
+        let errorMessage=error.message||'Unable to update staff profile.';
+        if(error.context&&typeof error.context.json==='function'){
+          try{const detail=await error.context.json();if(detail&&detail.error)errorMessage=detail.error;}catch(_){}
+        }
+        throw new Error(errorMessage);
+      }
+      if(!data||data.success!==true)throw new Error(data?.error||'Staff profile update was not confirmed.');
+      try{
+        await writeAdminAudit('Staff & Permissions','Updated staff profile name','staff_profile',staff.id,{
+          previous_full_name:staff.full_name||'',
+          previous_display_name:staff.display_name||'',
+          full_name:fullName,
+          display_name:displayName
+        });
+      }catch(auditError){
+        toast('Profile saved, but audit logging failed: '+(auditError.message||String(auditError)),1);
+      }
+      await loadStaffData();
+      closeL();
+      render();
+      toast('Staff profile updated');
+    }catch(error){
+      message.textContent=error.message||'Unable to save staff profile. Please try again.';
+      saveBtn.disabled=false;
+    }
+  };
 };
 A.staffhistory=()=>{
   const names=new Map(STAFF_ROWS.map(u=>[u.id,u.display_name||u.full_name||u.cashier_username||u.role||'Staff']));
