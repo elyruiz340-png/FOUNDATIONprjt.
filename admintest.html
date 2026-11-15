@@ -2702,7 +2702,9 @@ function testReceiptPrint(multiItem=false){
  body{font-family:Arial,sans-serif;color:#111;font-size:${Number(d.fontSize)||12}px}
  .paper{box-sizing:border-box;width:${paperWidth}mm;margin:0 auto;text-align:${esc(d.alignment)};overflow-wrap:anywhere}
  .paper img{display:block;width:auto!important;height:auto!important;max-width:72px!important;max-height:58px!important;object-fit:contain;margin:0 auto 8px}
- .rp-row{display:flex;justify-content:space-between;gap:8px}
+ .rp-row{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;width:100%}
+ .rp-row>span:first-child{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+ .rp-row>span:last-child{flex:0 0 auto;white-space:nowrap;text-align:right}
  .rp-line{border-top:1px dashed #777;margin:9px 0}
  .rp-center{text-align:center}
  .rp-total{font-size:1.2em;font-weight:bold}
