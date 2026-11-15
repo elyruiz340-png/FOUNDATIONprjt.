@@ -2099,14 +2099,18 @@ async function sendOrder() {
 
 
     /*
-      Get the order number from the
-      newly created order.
+      Prefer the authoritative order number returned by the database.
+      The lookup below remains as a compatibility fallback for older RPC versions.
     */
 
-    let orderNumber = "";
+    let orderNumber =
+      data && data.order_number != null
+        ? data.order_number
+        : "";
 
 
     if (
+      !orderNumber &&
       data &&
       data.order_id
     ) {
