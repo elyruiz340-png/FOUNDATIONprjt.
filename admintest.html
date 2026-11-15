@@ -2928,9 +2928,8 @@ function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.i
 $('#lf').onsubmit=async e=>{e.preventDefault();$('#lb').disabled=true;$('#lb').innerHTML='Signing in…';const{error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});if(error){showLogin('Sign-in failed: '+error.message);return}start()}}
 async function start(){const{data:{session}}=await sb.auth.getSession();if(!session){showLogin();return}
 const{data:ru,error}=await sb.from('restaurant_users').select('role,restaurant_id').eq('user_id',session.user.id).maybeSingle();
-if(error||!ru||!ru.restaurant_id||!['owner','admin'].includes(String(ru.role||'').toLowerCase())){CURRENT_RESTAURANT_ID=null;HALINA_RESTAURANT_ID=null;await sb.auth.signOut();showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to an owner or admin role.');return}
-CURRENT_RESTAURANT_ID=ru.restaurant_id;
-HALINA_RESTAURANT_ID=ru.restaurant_id;
+if(ru?.restaurant_id)CURRENT_RESTAURANT_ID=ru.restaurant_id;
+if(error||!ru||!['owner','admin'].includes(ru.role)){await sb.auth.signOut();showLogin(error?'Could not verify your access: '+error.message:'This account is not linked to an owner or admin role.');return}
 G.hidden=true;S.user=session.user.email;await load()}
 async function load(manual){document.body.classList.remove('locked');const pg=$('#pg'),hasContent=!!pg.children.length;if(!hasContent)pg.innerHTML='<div class="bento" aria-busy="true"><span class="hl-sr">Loading your restaurant data…</span><div class="card hl-sk s8"></div><div class="card hl-sk s4"></div><div class="card hl-sk s3"></div><div class="card hl-sk s3"></div><div class="card hl-sk s2"></div><div class="card hl-sk s2"></div><div class="card hl-sk s2"></div><div class="card hl-sk tall s8"></div><div class="card hl-sk tall s4"></div></div>';else pg.classList.add('is-loading');
 try{if(!CURRENT_RESTAURANT_ID)throw new Error('Restaurant access could not be verified. Please sign in again.');const{data,error}=await sb.from('orders').select('id,restaurant_id,order_number,order_type,payment_method,payment_status,status,order_status,total,items,table_number,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('created_at',{ascending:false}).limit(5000);if(error)throw error;ORD.length=0;ORD.push(...(data||[]).map(mapO));
@@ -2939,7 +2938,7 @@ render();if(manual)toast('Data refreshed')}
 catch(err){if(hasContent){toast('Could not refresh data: '+(err.message||String(err)),1)}else{$('#pg').innerHTML=`<div class="card"><span class="bd er">● Could not load orders</span><p>${esc(err.message||String(err))}</p><div class="tb"><button class="btn" data-a="refresh">Try again</button><button class="btn" data-a="signout">Sign out</button></div></div>`}}finally{pg.classList.remove('is-loading')}}
 
 /* HALINA MENU & CATEGORIES — Supabase-backed */
-let HALINA_RESTAURANT_ID=null;
+const HALINA_RESTAURANT_ID='5e562ca7-38aa-4894-8265-ddca2f4e61b6';
 let MENU_ROWS=[], CATEGORY_ROWS=[], MENU_STOCK_ROWS=[], menuLoadError='';
 const menuEsc=v=>esc(String(v??''));
 async function loadMenuData(){
