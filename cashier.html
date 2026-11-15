@@ -10943,13 +10943,8 @@ async function cashierFetchOperatingDayOrders() {
     return timeDifference || String(a.id).localeCompare(String(b.id));
   });
 
-  allOrders.forEach(function(order, index) {
-    order.database_order_number = order.order_number;
-    order.daily_order_number = index + 1;
-    order.order_number = index + 1;
-    order.operating_day_started_at = sessionStart.toISOString();
-  });
-
+  // Keep the database-generated order number unchanged across every dashboard.
+  // This function scopes the list to the operating day; it must not renumber orders.
   return allOrders.reverse();
 }
 
