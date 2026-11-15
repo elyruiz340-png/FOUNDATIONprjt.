@@ -3271,7 +3271,6 @@ A.staffeditprofile=(button)=>{
   if(!staff||String(staff.role||'').toLowerCase()!=='staff'){
     toast('Staff account could not be verified');return;
   }
-  const currentName=staff.display_name||staff.full_name||staff.cashier_username||'Staff member';
   L.innerHTML=`<div class="bk" data-a="close"></div>
     <div class="md staff-focus-panel" role="dialog" aria-modal="true" aria-labelledby="staffProfileTitle" aria-describedby="staffProfileDescription">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px">
