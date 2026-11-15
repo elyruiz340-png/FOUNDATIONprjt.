@@ -12404,7 +12404,10 @@ function renderTransactionHistory() {
       order.payment_reference,
       order.payment_method,
       order.table_number,
-      order.order_type
+      order.order_type,
+      order.created_by_name,
+      order.accepted_by_name,
+      order.settled_by_name
     ].join(" ").toLowerCase();
     return matchesFilter && (!query || haystack.includes(query));
   });
@@ -12455,9 +12458,9 @@ function renderTransactionHistory() {
         <td>${escapeHtml(orderStatus.toUpperCase())}</td>
         <td>
           <div class="transaction-history-cashier-activity">
-            <small>Created by: ${escapeHtml(String(order.created_by_name || "—"))}</small>
-            <small>Accepted by: ${escapeHtml(String(order.accepted_by_name || "—"))}</small>
-            <small>Payment confirmed by: ${escapeHtml(String(order.settled_by_name || "—"))}</small>
+            <small>Created by: ${escapeHtml(String(order.created_by_name || "Not set"))}</small>
+            <small>Accepted by: ${escapeHtml(String(order.accepted_by_name || "Not set"))}</small>
+            <small>Payment confirmed by: ${escapeHtml(String(order.settled_by_name || "Not set"))}</small>
           </div>
         </td>
         <td class="transaction-amount">${formatCheckoutMoney(total)}</td>
