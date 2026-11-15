@@ -2678,24 +2678,39 @@ render();}catch(e){toast('Could not save receipt settings: '+(e.message||String(
 function resetReceiptDeviceId(){if(!confirm('Register this browser as a new POS device? Its previous printer profile will remain saved in Supabase.'))return;localStorage.removeItem(RECEIPT_DEVICE_KEY);receiptDeviceId();receiptRemoteLoaded=false;loadReceiptSettings();toast('New device identity created.');}
 function testReceiptPrint(){
  const d=receiptFormData();
- const width=d.paperWidth==='custom'?(Number(d.customWidth)||80):Number(d.paperWidth||80);
- const safeWidth=Math.max(30,Math.min(300,width));
+ const rawWidth=d.paperWidth==='custom'?(Number(d.customWidth)||80):Number(d.paperWidth||80);
+ const safeWidth=Math.max(30,Math.min(300,rawWidth));
+ const paperWidth=Math.max(24,safeWidth-6);
  const w=window.open('','_blank','width=480,height=720');
  if(!w){toast('Allow pop-ups to open the test receipt.',1);return}
- w.document.write(`<!doctype html><html><head><title>Receipt Test Print</title><style id="receiptPrintPage">@page{size:${safeWidth}mm 120mm;margin:3mm}html,body{margin:0;padding:0}body{font-family:Arial,sans-serif;color:#111;font-size:${Number(d.fontSize)||12}px}.paper{box-sizing:border-box;width:${Math.max(30,safeWidth-6)}mm;margin:0 auto;text-align:${esc(d.alignment)};overflow-wrap:anywhere}img{max-width:72px;max-height:58px;display:block;margin:0 auto 8px}.rp-row{display:flex;justify-content:space-between;gap:8px}.rp-line{border-top:1px dashed #777;margin:9px 0}.rp-center{text-align:center}.rp-total{font-size:1.2em;font-weight:bold}</style></head><body><div class="paper">${receiptPreviewHtml(d)}</div><script>
-(async()=>{
- const images=[...document.images];
- await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;})));
- if(document.fonts?.ready)await document.fonts.ready;
- requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  const paper=document.querySelector('.paper');
-  const heightMm=Math.max(50,Math.ceil((paper.getBoundingClientRect().height*25.4/96)+6));
-  document.getElementById('receiptPrintPage').textContent='@page{size:${safeWidth}mm '+heightMm+'mm;margin:3mm}'+
-   'html,body{margin:0;padding:0}';
-  setTimeout(()=>window.print(),150);
- }));
-})().catch(()=>window.print());
-<\/script></body></html>`);
+ w.document.write(`<!doctype html><html><head><title>Receipt Test Print</title>
+ <style id="receiptPrintPage">@page{size:${safeWidth}mm 120mm;margin:3mm}</style>
+ <style id="receiptPrintLayout">
+ html,body{margin:0;padding:0}
+ body{font-family:Arial,sans-serif;color:#111;font-size:${Number(d.fontSize)||12}px}
+ .paper{box-sizing:border-box;width:${paperWidth}mm;margin:0 auto;text-align:${esc(d.alignment)};overflow-wrap:anywhere}
+ .paper img{display:block;width:auto!important;height:auto!important;max-width:72px!important;max-height:58px!important;object-fit:contain;margin:0 auto 8px}
+ .rp-row{display:flex;justify-content:space-between;gap:8px}
+ .rp-line{border-top:1px dashed #777;margin:9px 0}
+ .rp-center{text-align:center}
+ .rp-total{font-size:1.2em;font-weight:bold}
+ </style></head><body><div class="paper">${receiptPreviewHtml(d)}</div><script>
+ (async()=>{
+  const images=[...document.images];
+  await Promise.all(images.map(async img=>{
+   if(!img.complete)await new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;});
+   if(img.decode)try{await img.decode()}catch(_){}
+  }));
+  if(document.fonts?.ready)await document.fonts.ready;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   const paper=document.querySelector('.paper');
+   const contentHeight=paper.getBoundingClientRect().height*25.4/96;
+   const pageHeight=Math.max(50,Math.ceil(contentHeight+10));
+   document.getElementById('receiptPrintPage').textContent='@page{size:${safeWidth}mm '+pageHeight+'mm;margin:3mm}';
+   setTimeout(()=>window.print(),250);
+  }));
+ })().catch(()=>setTimeout(()=>window.print(),250));
+ <\/script></body></html>`);
  w.document.close();
 }
 document.addEventListener('input',e=>{if(e.target.closest('.bs-content')&&e.target.id?.startsWith('rc_'))updateReceiptPreview()});
