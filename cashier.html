@@ -7913,6 +7913,7 @@ background:
           <th>Payment Method</th>
           <th>Payment Status</th>
           <th>Order Status</th>
+          <th>Cashier Activity</th>
           <th class="transaction-amount-heading">Total</th>
         </tr>
       </thead>
@@ -11239,7 +11240,7 @@ function renderPaymentCenter(orders, outstandingPayments) {
     "No successful payments yet."
   );
 }
-function renderOrders(orders, newOrderIds) {
+function renderOrders(orders, newOrderIds, outstandingPayments) {
   const ordersContainer =
     document.getElementById("ordersContainer");
   const detailsPanel =
@@ -11250,6 +11251,9 @@ function renderOrders(orders, newOrderIds) {
   }
 
   window.cashierOrdersCache = orders;
+  if (Array.isArray(outstandingPayments)) {
+    window.cashierPendingPaymentCache = outstandingPayments;
+  }
 
   const newOrders = [];
   const activeOrders = [];
