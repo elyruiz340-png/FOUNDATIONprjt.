@@ -3,6 +3,7 @@
 <head>
   <script src="./halina-config.js"></script>
   <script src="./halina-discounts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.min.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cashier</title>
@@ -11284,6 +11285,42 @@ function renderOrders(orders, newOrderIds) {
 }
 
 setupOrderFilterTabs();
+/* =========================
+   QZ TRAY CONNECTION / PRINTER DISCOVERY
+   Discovery only. Printing stays on browser preview until signed
+   QZ requests and a real printer are configured and tested.
+========================= */
+let halinaQzConnectPromise = null;
+
+async function connectQzTrayAndFindPrinters() {
+  if (!window.qz || !window.qz.websocket || !window.qz.printers) {
+    throw new Error("QZ Tray connector library did not load. Refresh the Cashier page and try again.");
+  }
+
+  if (!qz.websocket.isActive()) {
+    if (!halinaQzConnectPromise) {
+      halinaQzConnectPromise = qz.websocket.connect({ retries: 2, delay: 1 })
+        .finally(function() { halinaQzConnectPromise = null; });
+    }
+    await halinaQzConnectPromise;
+  }
+
+  const printers = await qz.printers.find();
+  let defaultPrinter = null;
+  try {
+    defaultPrinter = await qz.printers.getDefault();
+  } catch (error) {
+    console.warn("QZ Tray could not read the Windows default printer:", error);
+  }
+
+  return {
+    connected: qz.websocket.isActive(),
+    printers: Array.isArray(printers) ? printers : (printers ? [printers] : []),
+    defaultPrinter: defaultPrinter || null,
+    connection: qz.websocket.getConnectionInfo()
+  };
+}
+
 async function loadCashierReceiptSettings() {
   const fallback = {
     restaurantName: "EDMEL BISTRO CAFE",
@@ -11578,6 +11615,7 @@ function renderSelectedOrderDetails(order, detailsPanel) {
  ${acceptButtonHtml}
  ${confirmPaymentButtonHtml}
  ${["paid", "successful", "succeeded", "verified"].includes(String(paymentStatus).trim().toLowerCase()) ? '<div class="order-actions receipt-actions"><button type="button" class="reprint-order-receipt-btn">PRINT RECEIPT</button></div>' : ""}
+ ${["paid", "successful", "succeeded", "verified"].includes(String(paymentStatus).trim().toLowerCase()) ? '<div class="order-actions receipt-actions"><button type="button" class="qz-printer-check-btn">CONNECT QZ TRAY</button></div>' : ""}
 </div>
  `;
  const acceptButton = detailsPanel.querySelector(".accept-order-btn");
@@ -11587,6 +11625,32 @@ function renderSelectedOrderDetails(order, detailsPanel) {
        acceptButton.dataset.orderId,
        acceptButton
      );
+   });
+ }
+ const qzPrinterCheckButton = detailsPanel.querySelector(".qz-printer-check-btn");
+ if (qzPrinterCheckButton) {
+   qzPrinterCheckButton.addEventListener("click", async function() {
+     if (qzPrinterCheckButton.disabled) return;
+     const originalText = qzPrinterCheckButton.textContent;
+     qzPrinterCheckButton.disabled = true;
+     qzPrinterCheckButton.textContent = "CONNECTING...";
+     clearMessage();
+     try {
+       const result = await connectQzTrayAndFindPrinters();
+       const printerList = result.printers.length ? result.printers.join(", ") : "No printers detected";
+       const defaultText = result.defaultPrinter ? " Windows default: " + result.defaultPrinter + "." : "";
+       if (result.printers.length) {
+         showSuccess("QZ Tray connected. Detected printers: " + printerList + "." + defaultText);
+       } else {
+         showSuccess("QZ Tray connected successfully, but Windows reports no available printers. Install a printer before testing physical receipt printing.");
+       }
+     } catch (error) {
+       console.error("QZ Tray connection test failed:", error);
+       showError("QZ Tray test failed: " + (error.message || String(error)));
+     } finally {
+       qzPrinterCheckButton.disabled = false;
+       qzPrinterCheckButton.textContent = originalText;
+     }
    });
  }
  const reprintReceiptButton = detailsPanel.querySelector(".reprint-order-receipt-btn");
