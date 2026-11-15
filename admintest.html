@@ -2676,7 +2676,28 @@ if(auditWarning){toast('Receipt settings saved, but audit logging failed: '+audi
 else{toast('Receipt settings and audit log saved to Supabase.');}
 render();}catch(e){toast('Could not save receipt settings: '+(e.message||String(e)),1);if(btn){btn.disabled=false;btn.textContent='Save Receipt Settings'}}}
 function resetReceiptDeviceId(){if(!confirm('Register this browser as a new POS device? Its previous printer profile will remain saved in Supabase.'))return;localStorage.removeItem(RECEIPT_DEVICE_KEY);receiptDeviceId();receiptRemoteLoaded=false;loadReceiptSettings();toast('New device identity created.');}
-function testReceiptPrint(){const d=receiptFormData();const width=d.paperWidth==='custom'?(Number(d.customWidth)||80):Number(d.paperWidth||80);const w=window.open('','_blank','width=480,height=720');if(!w){toast('Allow pop-ups to open the test receipt.',1);return}w.document.write(`<!doctype html><html><head><title>Receipt Test Print</title><style>@page{size:${width}mm auto;margin:3mm}body{font-family:Arial,sans-serif;color:#111;margin:0;padding:0;font-size:${Number(d.fontSize)||12}px}.paper{width:${Math.max(30,width-6)}mm;margin:auto;text-align:${esc(d.alignment)}}img{max-width:72px;max-height:58px;display:block;margin:0 auto 8px}.rp-row{display:flex;justify-content:space-between;gap:8px}.rp-line{border-top:1px dashed #777;margin:9px 0}.rp-center{text-align:center}.rp-total{font-size:1.2em;font-weight:bold}</style></head><body><div class="paper">${receiptPreviewHtml(d)}</div><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>`);w.document.close()}
+function testReceiptPrint(){
+ const d=receiptFormData();
+ const width=d.paperWidth==='custom'?(Number(d.customWidth)||80):Number(d.paperWidth||80);
+ const safeWidth=Math.max(30,Math.min(300,width));
+ const w=window.open('','_blank','width=480,height=720');
+ if(!w){toast('Allow pop-ups to open the test receipt.',1);return}
+ w.document.write(`<!doctype html><html><head><title>Receipt Test Print</title><style id="receiptPrintPage">@page{size:${safeWidth}mm 120mm;margin:3mm}html,body{margin:0;padding:0}body{font-family:Arial,sans-serif;color:#111;font-size:${Number(d.fontSize)||12}px}.paper{box-sizing:border-box;width:${Math.max(30,safeWidth-6)}mm;margin:0 auto;text-align:${esc(d.alignment)};overflow-wrap:anywhere}img{max-width:72px;max-height:58px;display:block;margin:0 auto 8px}.rp-row{display:flex;justify-content:space-between;gap:8px}.rp-line{border-top:1px dashed #777;margin:9px 0}.rp-center{text-align:center}.rp-total{font-size:1.2em;font-weight:bold}</style></head><body><div class="paper">${receiptPreviewHtml(d)}</div><script>
+(async()=>{
+ const images=[...document.images];
+ await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;})));
+ if(document.fonts?.ready)await document.fonts.ready;
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const paper=document.querySelector('.paper');
+  const heightMm=Math.max(50,Math.ceil((paper.getBoundingClientRect().height*25.4/96)+6));
+  document.getElementById('receiptPrintPage').textContent='@page{size:${safeWidth}mm '+heightMm+'mm;margin:3mm}'+
+   'html,body{margin:0;padding:0}';
+  setTimeout(()=>window.print(),150);
+ }));
+})().catch(()=>window.print());
+<\/script></body></html>`);
+ w.document.close();
+}
 document.addEventListener('input',e=>{if(e.target.closest('.bs-content')&&e.target.id?.startsWith('rc_'))updateReceiptPreview()});
 document.addEventListener('change',e=>{if(e.target.closest('.bs-content')&&e.target.id?.startsWith('rc_'))updateReceiptPreview();if(e.target.id==='receiptLogoFile'){const f=e.target.files?.[0];if(!f)return;if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>2*1024*1024){toast('Logo must be PNG, JPG or WebP and no larger than 2 MB.',1);e.target.value='';return}const reader=new FileReader();reader.onload=()=>{const d=receiptFormData();d.logo=String(reader.result);localStorage.setItem(RECEIPT_LOCAL_KEY,JSON.stringify(d));render()};reader.readAsDataURL(f)}});
 
