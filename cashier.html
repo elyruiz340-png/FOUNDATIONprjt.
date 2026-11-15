@@ -5968,6 +5968,8 @@ body:not(.restaurant-profile-ready) .cashier-login-brand, body:not(.restaurant-p
   font-size:12px; white-space:nowrap; vertical-align:middle;
 }
 .transaction-history-table td:first-child { white-space:normal; min-width:150px; }
+ .transaction-history-cashier-activity { display:flex; flex-direction:column; gap:3px; white-space:normal; min-width:170px; }
+.transaction-history-cashier-activity small { display:block; color:#7d8376; font-size:10px; margin:0; }
 .transaction-history-table td:first-child small {
   display:block; max-width:180px; overflow:hidden; text-overflow:ellipsis;
   color:#a0a093; font-size:9px; margin-top:4px;
@@ -7915,7 +7917,7 @@ background:
         </tr>
       </thead>
       <tbody id="transactionHistoryRows">
-        <tr><td colspan="7" class="transaction-history-empty">Loading transaction records...</td></tr>
+        <tr><td colspan="8" class="transaction-history-empty">Loading transaction records...</td></tr>
       </tbody>
     </table>
   </div>
@@ -10897,7 +10899,7 @@ function cashierGetOperatingDayStart(now) {
 
 async function cashierFetchOperatingDayOrders() {
   const sessionStart = cashierGetOperatingDayStart(new Date());
-  const fields = "id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_at,settled_by_user_id,settled_by_session_id,settled_at";
+  const fields = "id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name";
   const pageSize = 1000;
   let offset = 0;
   const allOrders = [];
@@ -10950,12 +10952,47 @@ async function cashierFetchOperatingDayOrders() {
   return allOrders.reverse();
 }
 
+async function cashierFetchOutstandingPaymentOrders() {
+  const fields = "id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name";
+  const pageSize = 1000;
+  let offset = 0;
+  const allOrders = [];
+
+  while (true) {
+    const url = SUPABASE_URL + "/rest/v1/orders" +
+      "?select=" + fields +
+      "&restaurant_id=eq." + encodeURIComponent(HALINA_RESTAURANT_ID) +
+      "&status=in.(served,completed)" +
+      "&payment_status=eq.pending" +
+      "&order=created_at.asc,id.asc" +
+      "&limit=" + pageSize +
+      "&offset=" + offset;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY
+      },
+      cache: "no-store"
+    });
+    const page = await response.json();
+    if (!response.ok) throw new Error(page.message || page.error || page.hint || "Unable to load outstanding payments.");
+    if (!Array.isArray(page)) throw new Error("Unexpected outstanding payments response.");
+    allOrders.push.apply(allOrders, page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+  return allOrders.reverse();
+}
+
 async function loadOrders() {
   const ordersContainer = document.getElementById("ordersContainer");
   if (!ordersContainer) return;
 
   try {
-    const data = await cashierFetchOperatingDayOrders();
+    const results = await Promise.all([cashierFetchOperatingDayOrders(), cashierFetchOutstandingPaymentOrders()]);
+    const data = results[0];
+    window.cashierPendingPaymentCache = results[1];
     const newOrderIds = new Set();
 
     if (!firstOrdersLoad) {
@@ -10968,7 +11005,7 @@ async function loadOrders() {
       });
     }
 
-    renderOrders(data, newOrderIds);
+    renderOrders(data, newOrderIds, window.cashierPendingPaymentCache);
 
     data.forEach(function(order) {
       knownOrderIds.add(String(order.id));
@@ -11092,9 +11129,7 @@ function setupOrderFilterTabs() {
           paymentContainer.style.display = "grid";
         }
 
-        renderPaymentCenter(
-          window.cashierOrdersCache || []
-        );
+        renderPaymentCenter(window.cashierOrdersCache || [], window.cashierPendingPaymentCache || []);
         return;
       }
 
@@ -11110,7 +11145,7 @@ function setupOrderFilterTabs() {
   });
 }
 
-function renderPaymentCenter(orders) {
+function renderPaymentCenter(orders, outstandingPayments) {
   const pendingContainer =
     document.getElementById("pendingPaymentOrders");
   const successfulContainer =
@@ -11142,9 +11177,7 @@ function renderPaymentCenter(orders) {
   };
 
   const servedOrders = orders.filter(isServed);
-  const pending = servedOrders.filter(function(order) {
-    return !isPaid(order);
-  });
+  const pending = Array.isArray(outstandingPayments) ? outstandingPayments : (window.cashierPendingPaymentCache || []);
   const successful = servedOrders.filter(isPaid);
 
   const pendingCount =
@@ -11247,7 +11280,12 @@ function renderOrders(orders, newOrderIds) {
     new: newOrders.length,
     active: activeOrders.length,
     served: servedOrders.length,
-    "payment-center": orders.length
+    "payment-center": (window.cashierPendingPaymentCache || []).length +
+      orders.filter(function(order) {
+        const status = String(order.status || "").trim().toLowerCase();
+        const payment = String(order.payment_status || "").trim().toLowerCase();
+        return (status === "served" || status === "completed") && ["paid", "successful", "succeeded", "verified"].includes(payment);
+      }).length
   };
 
   updateOrderFilterTabs(counts);
@@ -11257,7 +11295,7 @@ function renderOrders(orders, newOrderIds) {
 
   if (filter === "served" || filter === "payment-center") {
     if (filter === "payment-center") {
-      renderPaymentCenter(orders);
+      renderPaymentCenter(orders, window.cashierPendingPaymentCache || []);
     }
     return;
   }
@@ -12384,7 +12422,7 @@ function renderTransactionHistory() {
     "<span><strong>" + voidedCount + "</strong> voided</span>";
 
   if (!filtered.length) {
-    rows.innerHTML = '<tr><td colspan="7" class="transaction-history-empty">No matching transaction records found.</td></tr>';
+    rows.innerHTML = '<tr><td colspan="8" class="transaction-history-empty">No matching transaction records found.</td></tr>';
     return;
   }
 
@@ -12411,6 +12449,13 @@ function renderTransactionHistory() {
         <td>${escapeHtml(String(order.payment_method || "—").toUpperCase())}</td>
         <td><span class="transaction-status transaction-${escapeHtml(category)}">${escapeHtml(categoryLabel.toUpperCase())}</span></td>
         <td>${escapeHtml(orderStatus.toUpperCase())}</td>
+        <td>
+          <div class="transaction-history-cashier-activity">
+            <small>Created by: ${escapeHtml(String(order.created_by_name || "—"))}</small>
+            <small>Accepted by: ${escapeHtml(String(order.accepted_by_name || "—"))}</small>
+            <small>Payment confirmed by: ${escapeHtml(String(order.settled_by_name || "—"))}</small>
+          </div>
+        </td>
         <td class="transaction-amount">${formatCheckoutMoney(total)}</td>
       </tr>
     `;
@@ -12421,7 +12466,7 @@ async function loadTransactionHistory() {
   const rows = document.getElementById("transactionHistoryRows");
   if (!rows) return;
 
-  rows.innerHTML = '<tr><td colspan="7" class="transaction-history-empty">Loading transaction records...</td></tr>';
+  rows.innerHTML = '<tr><td colspan="8" class="transaction-history-empty">Loading transaction records...</td></tr>';
 
   try {
     const allRecords = [];
@@ -12432,7 +12477,7 @@ async function loadTransactionHistory() {
       const response = await fetch(
         SUPABASE_URL +
         "/rest/v1/orders" +
-        "?select=id,order_number,table_number,order_type,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_at,settled_by_user_id,settled_by_session_id,settled_at" +
+        "?select=id,order_number,table_number,order_type,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name" +
         "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
         "&order=created_at.desc&limit=" + pageSize + "&offset=" + offset,
         {
@@ -12462,7 +12507,7 @@ async function loadTransactionHistory() {
   } catch (error) {
     console.error("Transaction history loading error:", error);
     rows.innerHTML =
-      '<tr><td colspan="7" class="transaction-history-empty">Unable to load transaction records.<br><small>' +
+      '<tr><td colspan="8" class="transaction-history-empty">Unable to load transaction records.<br><small>' +
       escapeHtml(error.message) +
       '</small></td></tr>';
   }
