@@ -11292,10 +11292,88 @@ setupOrderFilterTabs();
 ========================= */
 let halinaQzConnectPromise = null;
 
+const HALINA_QZ_FUNCTION_URL = SUPABASE_URL + "/functions/v1/qz-signing";
+let halinaQzSecurityConfigured = false;
+
+async function getQzAuthSession() {
+  if (!cashierAuthClient) throw new Error("Cashier authentication is unavailable.");
+  const { data, error } = await cashierAuthClient.auth.getSession();
+  const session = data && data.session;
+  if (error || !session || !session.access_token) {
+    throw new Error("Your cashier session has expired. Sign in again before connecting the printer.");
+  }
+  return session;
+}
+
+async function configureHalinaQzSecurity() {
+  if (halinaQzSecurityConfigured) return;
+  if (!window.qz || !qz.security) {
+    throw new Error("QZ Tray connector library did not load. Refresh the Cashier page and try again.");
+  }
+
+  qz.security.setSignatureAlgorithm("SHA512");
+
+  qz.security.setCertificatePromise(function(resolve, reject) {
+    getQzAuthSession()
+      .then(function(session) {
+        return fetch(HALINA_QZ_FUNCTION_URL + "/certificate", {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + session.access_token,
+            "Accept": "text/plain"
+          }
+        });
+      })
+      .then(async function(response) {
+        const certificate = await response.text();
+        if (!response.ok) throw new Error(certificate || "Unable to load the QZ certificate.");
+        if (!certificate.includes("-----BEGIN CERTIFICATE-----")) {
+          throw new Error("The QZ certificate response is invalid.");
+        }
+        resolve(certificate);
+      })
+      .catch(reject);
+  }, { rejectOnFailure: true });
+
+  qz.security.setSignaturePromise(function(toSign) {
+    return function(resolve, reject) {
+      getQzAuthSession()
+        .then(function(session) {
+          return fetch(HALINA_QZ_FUNCTION_URL + "/sign", {
+            method: "POST",
+            cache: "no-store",
+            headers: {
+              "apikey": SUPABASE_KEY,
+              "Authorization": "Bearer " + session.access_token,
+              "Content-Type": "application/json",
+              "Accept": "text/plain"
+            },
+            body: JSON.stringify({ request: toSign })
+          });
+        })
+        .then(async function(response) {
+          const signature = await response.text();
+          if (!response.ok) throw new Error(signature || "The QZ signing service rejected the request.");
+          if (!signature || !/^[A-Za-z0-9+/]+={0,2}$/.test(signature)) {
+            throw new Error("The QZ signing service returned an invalid signature.");
+          }
+          resolve(signature);
+        })
+        .catch(reject);
+    };
+  });
+
+  halinaQzSecurityConfigured = true;
+}
+
 async function connectQzTrayAndFindPrinters() {
   if (!window.qz || !window.qz.websocket || !window.qz.printers) {
     throw new Error("QZ Tray connector library did not load. Refresh the Cashier page and try again.");
   }
+
+  await configureHalinaQzSecurity();
 
   if (!qz.websocket.isActive()) {
     if (!halinaQzConnectPromise) {
