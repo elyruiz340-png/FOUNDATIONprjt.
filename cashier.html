@@ -10799,139 +10799,192 @@ function formatRestaurantDateTime(value){
   }
   return date.toLocaleString('en-US');
 }
-async function loadOrders() {
 
-  const ordersContainer =
-    document.getElementById(
-      "ordersContainer"
+/* =========================
+   OPERATING-DAY ORDER SCOPE
+   Orders remain permanently stored in Supabase.
+   Cashier operational views show only orders created since
+   the most recent scheduled opening in the restaurant timezone.
+========================= */
+function cashierGetZonedDateParts(date, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(date);
+  const values = {};
+  parts.forEach(function(part) {
+    if (part.type !== "literal") values[part.type] = part.value;
+  });
+  return values;
+}
+
+function cashierLocalDateTimeToUtc(dateKey, timeText, timeZone) {
+  const dateParts = String(dateKey).split("-").map(Number);
+  const timeParts = String(timeText).split(":").map(Number);
+  const targetUtc = Date.UTC(
+    dateParts[0], dateParts[1] - 1, dateParts[2],
+    timeParts[0], timeParts[1], 0
+  );
+  let guess = targetUtc;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const local = cashierGetZonedDateParts(new Date(guess), timeZone);
+    const representedUtc = Date.UTC(
+      Number(local.year), Number(local.month) - 1, Number(local.day),
+      Number(local.hour), Number(local.minute), 0
     );
+    const difference = targetUtc - representedUtc;
+    if (!difference) break;
+    guess += difference;
+  }
+  return new Date(guess);
+}
 
-  if (!ordersContainer) {
-    return;
+function cashierGetOperatingDayStart(now) {
+  const currentTime = now instanceof Date ? now : new Date();
+  const profile = window.HALINA_RESTAURANT_PROFILE || {};
+  const timeZone = String(profile.timezone || "America/Chicago");
+  const hours = profile.operating_hours && typeof profile.operating_hours === "object"
+    ? profile.operating_hours
+    : {};
+  const currentParts = cashierGetZonedDateParts(currentTime, timeZone);
+  const baseDate = new Date(Date.UTC(
+    Number(currentParts.year),
+    Number(currentParts.month) - 1,
+    Number(currentParts.day),
+    12, 0, 0
+  ));
+  const weekdayKeys = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  let latestOpening = null;
+
+  for (let offset = 0; offset <= 7; offset += 1) {
+    const candidateDate = new Date(baseDate.getTime() - offset * 86400000);
+    const dateKey = [
+      candidateDate.getUTCFullYear(),
+      String(candidateDate.getUTCMonth() + 1).padStart(2, "0"),
+      String(candidateDate.getUTCDate()).padStart(2, "0")
+    ].join("-");
+    const weekdayKey = weekdayKeys[candidateDate.getUTCDay()];
+    const dayHours = hours[weekdayKey];
+
+    if (!dayHours || dayHours.is_open === false || dayHours.is_open === "false") {
+      continue;
+    }
+
+    const openingTime = String(dayHours.open_time || "00:00");
+    if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(openingTime)) continue;
+
+    const opening = cashierLocalDateTimeToUtc(dateKey, openingTime, timeZone);
+    if (opening <= currentTime && (!latestOpening || opening > latestOpening)) {
+      latestOpening = opening;
+    }
   }
 
-  try {
+  if (latestOpening) return latestOpening;
 
-    const response =
-      await fetch(
-        SUPABASE_URL +
-        "/rest/v1/orders" +
-        "?select=id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,accepted_by_user_id,accepted_by_session_id,accepted_at,settled_by_user_id,settled_by_session_id,settled_at" +
-        "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
-        "&order=created_at.desc" +
-        "&limit=50",
-        {
-          method: "GET",
+  const todayKey = [
+    currentParts.year,
+    currentParts.month,
+    currentParts.day
+  ].join("-");
+  return cashierLocalDateTimeToUtc(todayKey, "00:00", timeZone);
+}
 
-          headers: {
-            "apikey":
-              SUPABASE_KEY,
+async function cashierFetchOperatingDayOrders() {
+  const sessionStart = cashierGetOperatingDayStart(new Date());
+  const fields = "id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_at,settled_by_user_id,settled_by_session_id,settled_at";
+  const pageSize = 1000;
+  let offset = 0;
+  const allOrders = [];
 
-            "Authorization":
-              "Bearer " +
-              SUPABASE_KEY
-          }
-        }
-      );
-
-    const data =
-      await response.json();
+  while (true) {
+    const url = SUPABASE_URL + "/rest/v1/orders" +
+      "?select=" + fields +
+      "&restaurant_id=eq." + encodeURIComponent(HALINA_RESTAURANT_ID) +
+      "&created_at=gte." + encodeURIComponent(sessionStart.toISOString()) +
+      "&order=created_at.asc,id.asc" +
+      "&limit=" + pageSize +
+      "&offset=" + offset;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY
+      },
+      cache: "no-store"
+    });
+    const page = await response.json();
 
     if (!response.ok) {
-
       throw new Error(
-        data.message ||
-        data.error ||
-        data.hint ||
-        "Unable to load orders."
+        page.message || page.error || page.hint ||
+        "Unable to load this operating day's orders."
       );
-
+    }
+    if (!Array.isArray(page)) {
+      throw new Error("Unexpected operating-day orders response.");
     }
 
+    allOrders.push.apply(allOrders, page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
 
-    /* =========================
-       FIND NEW ORDERS
-    ========================= */
+  allOrders.sort(function(a, b) {
+    const timeDifference = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return timeDifference || String(a.id).localeCompare(String(b.id));
+  });
 
-    const newOrderIds =
-      new Set();
+  allOrders.forEach(function(order, index) {
+    order.database_order_number = order.order_number;
+    order.daily_order_number = index + 1;
+    order.order_number = index + 1;
+    order.operating_day_started_at = sessionStart.toISOString();
+  });
+
+  return allOrders.reverse();
+}
+
+async function loadOrders() {
+  const ordersContainer = document.getElementById("ordersContainer");
+  if (!ordersContainer) return;
+
+  try {
+    const data = await cashierFetchOperatingDayOrders();
+    const newOrderIds = new Set();
 
     if (!firstOrdersLoad) {
-
-      data.forEach(
-        function(order) {
-
-          const orderId =
-            String(order.id);
-
-          const status =
-            String(
-              order.status ||
-              "new"
-            ).toLowerCase();
-
-          if (
-            !knownOrderIds.has(
-              orderId
-            ) &&
-            status === "new"
-          ) {
-
-            newOrderIds.add(
-              orderId
-            );
-
-          }
-
+      data.forEach(function(order) {
+        const orderId = String(order.id);
+        const status = String(order.status || "new").toLowerCase();
+        if (!knownOrderIds.has(orderId) && status === "new") {
+          newOrderIds.add(orderId);
         }
-      );
-
+      });
     }
 
+    renderOrders(data, newOrderIds);
 
-    renderOrders(
-      data,
-      newOrderIds
-    );
-
-
-    /* =========================
-       REMEMBER ORDERS
-    ========================= */
-
-    data.forEach(
-      function(order) {
-
-        knownOrderIds.add(
-          String(order.id)
-        );
-
-      }
-    );
-
+    data.forEach(function(order) {
+      knownOrderIds.add(String(order.id));
+    });
 
     firstOrdersLoad = false;
-
-
   } catch (error) {
-
-    console.error(
-      "Orders loading error:",
-      error
-    );
-
+    console.error("Orders loading error:", error);
     ordersContainer.innerHTML = `
       <div class="loading">
         Unable to load incoming orders.
         <br><br>
-        ${escapeHtml(
-          error.message
-        )}
+        ${escapeHtml(error.message)}
       </div>
     `;
-
   }
-
 }
 
 
@@ -12011,76 +12064,32 @@ async function confirmOrderPayment(orderId, button) {
 ========================= */
 
 async function loadCompletedOrders() {
-  const completedContainer =
-    document.getElementById("completedOrdersContainer");
+  const completedContainer = document.getElementById("completedOrdersContainer");
+  if (!completedContainer) return;
 
-  if (!completedContainer) {
-    return;
-  }
-
-  completedContainer.innerHTML = `
-    <div class="loading">
-      Loading served orders...
-    </div>
-  `;
+  completedContainer.innerHTML = '<div class="loading">Loading served orders...</div>';
 
   try {
-    const response = await fetch(
-      SUPABASE_URL +
-      "/rest/v1/orders" +
-      "?select=id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,created_at,completed_at" +
-      "&status=in.(served,completed)" +
-      "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
-      "&order=created_at.desc" +
-      "&limit=100",
-      {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_KEY,
-          "Authorization": "Bearer " + SUPABASE_KEY
-        }
-      }
-    );
+    const operatingDayOrders = await cashierFetchOperatingDayOrders();
+    const data = operatingDayOrders.filter(function(order) {
+      const status = String(order.status || "").trim().toLowerCase();
+      return status === "served" || status === "completed";
+    });
 
-    const data = await response.json();
+    const servedCountElement = document.getElementById("servedOrdersCount");
+    if (servedCountElement) servedCountElement.textContent = String(data.length);
 
-    if (!response.ok) {
-      throw new Error(
-        data.message ||
-        data.error ||
-        data.hint ||
-        "Unable to load served orders."
-      );
-    }
-
-    const servedCountElement =
-      document.getElementById("servedOrdersCount");
-
-    if (servedCountElement) {
-      servedCountElement.textContent = Array.isArray(data)
-        ? String(data.length)
-        : "0";
-    }
-
-    if (!Array.isArray(data) || data.length === 0) {
-      completedContainer.innerHTML = `
-        <div class="loading">
-          📋 No served orders yet.
-        </div>
-      `;
+    if (!data.length) {
+      completedContainer.innerHTML = '<div class="loading">📋 No served orders yet.</div>';
       return;
     }
 
     completedContainer.innerHTML = "";
-
     data.forEach(function(order) {
-      const card = createCompletedOrderCard(order);
-      completedContainer.appendChild(card);
+      completedContainer.appendChild(createCompletedOrderCard(order));
     });
-
   } catch (error) {
     console.error("Served orders loading error:", error);
-
     completedContainer.innerHTML = `
       <div class="loading">
         Unable to load served orders.
@@ -12090,6 +12099,7 @@ async function loadCompletedOrders() {
     `;
   }
 }
+
 
 /* =========================
    CREATE COMPLETED ORDER CARD
@@ -15047,9 +15057,7 @@ if (cashierLoginForm) {
   }
   window.addEventListener('restaurantprofilechanged', e => applyProfile(e.detail));
   window.addEventListener('restaurantprofileloaded', () => {
-    if(typeof renderOrders==='function'&&Array.isArray(window.cashierOrdersCache)){
-      renderOrders(window.cashierOrdersCache,new Set());
-    }
+    if (typeof loadOrders === 'function') loadOrders();
     const ordersSection=document.getElementById('ordersSection');
     if(ordersSection&&ordersSection.classList.contains('active')&&window.cashierOrderFilter==='served'&&typeof loadCompletedOrders==='function'){
       loadCompletedOrders();
