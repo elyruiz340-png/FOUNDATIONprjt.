@@ -3340,10 +3340,14 @@ A.staffeditprofile=(button)=>{
       }catch(auditError){
         toast('Profile saved, but audit logging failed: '+(auditError.message||String(auditError)),1);
       }
-      await loadStaffData();
+      try{
+        await loadStaffData();
+      }catch(refreshError){
+        staffLoadError=refreshError.message||String(refreshError);
+      }
       closeL();
       render();
-      toast('Staff profile updated');
+      toast(staffLoadError?'Profile saved, but the staff list could not refresh':'Staff profile updated',staffLoadError?1:0);
     }catch(error){
       message.textContent=error.message||'Unable to save staff profile. Please try again.';
       saveBtn.disabled=false;
