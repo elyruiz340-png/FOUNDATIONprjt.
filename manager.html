@@ -400,9 +400,11 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
    input.checked=current[key]===true;
    input.disabled=ownPermissions[key]!==true&&current[key]!==true;
    input.onchange=()=>{
-    if(input.checked&&ownPermissions[key]!==true){
+    if(input.checked&&ownPermissions[key]!==true&&current[key]!==true){
      input.checked=false;
      $("permissionFormMessage").textContent="You cannot grant permissions beyond your own branch access.";
+    }else{
+     $("permissionFormMessage").textContent="";
     }
    };
   }
