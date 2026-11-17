@@ -176,12 +176,16 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   }
   const legacy={
    orders:["orders"],tables:["tables"],inventory:["stocks"],dispatcher:["dispatcher"],
-   settings:["settings"],menu:["settings"],discounts:["settings"],vouchers:["settings"],
+   settings:["settings","tables","stocks","dispatcher"],menu:["settings"],discounts:["settings"],vouchers:["settings"],
    tax:["settings"],service_charge:["settings"],receipts:["settings"],printers:["settings"],
    payments:["settings"],transactions:["orders"]
   };
   if(key==="staff")return p.staff_management===true;
   if(key==="orders")return p.orders===true;
+  if(key==="settings"&&p.modules&&typeof p.modules==="object"){
+   const businessModules=["settings","inventory","tables","dispatcher","payments","menu","discounts","vouchers","tax","service_charge","receipts","printers","transactions"];
+   return businessModules.some(name=>{const grant=p.modules[name];return !!(grant&&typeof grant==="object"&&(grant.view===true||grant.manage===true));});
+  }
   return (legacy[key]||[]).some(k=>p[k]===true);
  }
  function hasAnyManagerPermission(){
