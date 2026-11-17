@@ -15,8 +15,7 @@ BEGIN;
 DROP POLICY IF EXISTS "Allow public to view product stock" ON public."PRODUCT_STOCK";
 DROP POLICY IF EXISTS "Allow cashier to update product stock" ON public."PRODUCT_STOCK";
 
-REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
-  ON TABLE public."PRODUCT_STOCK" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."PRODUCT_STOCK" FROM anon;
 
 -- ---------------------------------------------------------------------------
 -- 2. Replace unrestricted public table reads with authenticated branch access.
@@ -26,6 +25,7 @@ REVOKE SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
 
 DROP POLICY IF EXISTS "Public can view active restaurant tables"
   ON public.restaurant_tables;
+REVOKE SELECT ON TABLE public.restaurant_tables FROM anon;
 
 -- ---------------------------------------------------------------------------
 -- 3. Backward-compatible granular permission evaluator.
@@ -128,6 +128,12 @@ BEGIN
        OR coalesce((v_permissions->>'orders')::boolean, false);
   END IF;
 
+  -- Historically, the single Orders permission covered the cashier payment workflow.
+  -- Preserve that behavior for legacy accounts; new-format permissions separate Payments.
+  IF p_module = 'payments' THEN
+    RETURN coalesce((v_permissions->>'orders')::boolean, false);
+  END IF;
+
   RETURN coalesce((v_permissions->>p_module)::boolean, false);
 EXCEPTION
   WHEN invalid_text_representation THEN
@@ -178,7 +184,7 @@ CREATE OR REPLACE FUNCTION public.cashier_accept_order(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
 DECLARE
   v_restaurant_user_id uuid;
