@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <script src="./halina-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dispatcher</title>
@@ -31,13 +32,14 @@
 @media(max-width:1100px){.topbar{height:68px;min-height:68px}.clock-panel{gap:8px;padding:6px 10px}.clock{font-size:20px}.clock-date{font-size:9px}.wrap{height:auto;min-height:calc(100vh - 68px)}.board{height:auto;grid-template-columns:repeat(2,minmax(0,1fr))}.lane{min-height:430px}.lane.served{grid-column:span 2}.lane-title{font-size:19px}}
 @media(max-width:680px){.topbar{height:auto;min-height:68px;align-items:center;gap:8px;padding:8px 10px}.brand-block{gap:8px}.logo{height:34px;width:34px}.brand h1{font-size:clamp(13px,3.4vw,18px)}.clock-panel{gap:6px;padding:5px 7px}.clock-divider{height:18px}.clock{font-size:clamp(15px,4vw,19px)}.clock-period{font-size:9px}.clock-date{font-size:8px}.live-label{font-size:8px;gap:4px}.dot{width:6px;height:6px}.wrap{height:auto;padding:10px}.board{grid-template-columns:minmax(0,1fr);gap:10px}.lane,.lane.served{grid-column:auto;min-height:300px}.lane-title{font-size:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
-</style>
+#dispatcherLogin{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:linear-gradient(145deg,#eef5ed,#f8faf7)}.dispatcher-login-card{width:min(420px,100%);padding:30px;border:1px solid #dce8dc;border-radius:22px;background:#fff;box-shadow:0 18px 55px rgba(24,58,35,.13)}.dispatcher-login-card h2{margin:0 0 8px;font-size:24px;color:#1b3325}.dispatcher-login-card p{margin:0 0 22px;color:#718076;font-size:13px;line-height:1.5}.dispatcher-login-card label{display:block;margin:14px 0 6px;font-size:12px;font-weight:800;color:#425448}.dispatcher-login-card input{width:100%;height:46px;padding:0 13px;border:1px solid #dce6dc;border-radius:10px;background:#fbfdfb;font:inherit;color:#172b20;outline:none}.dispatcher-login-card input:focus{border-color:#398552;box-shadow:0 0 0 3px rgba(57,133,82,.12)}.dispatcher-login-card button{width:100%;margin-top:18px;min-height:46px;border:0;border-radius:11px;background:#236b3d;color:#fff;font-weight:850}#dispatcherLoginMessage{min-height:18px;margin-top:12px;color:#a34832;font-size:12px}#dispatcherLogout{border:1px solid #dce7dc;border-radius:999px;background:#fff;color:#31513a;padding:8px 13px;font-size:12px;font-weight:800}body:not(.dispatcher-authenticated) .topbar,body:not(.dispatcher-authenticated) .wrap{visibility:hidden}</style>
 </head>
 <body>
+<section id="dispatcherLogin" aria-label="Dispatcher sign in"><form class="dispatcher-login-card" id="dispatcherLoginForm"><h2>Dispatcher Sign In</h2><p>Use your staff username and six-digit PIN to access the kitchen order board.</p><label for="dispatcherUsername">Username</label><input id="dispatcherUsername" name="username" required maxlength="80" autocomplete="username"><label for="dispatcherPin">6-Digit PIN</label><input id="dispatcherPin" name="pin" required inputmode="numeric" type="password" minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="current-password"><button id="dispatcherLoginButton" type="submit">Sign In</button><div id="dispatcherLoginMessage" role="status" aria-live="polite"></div></form></section>
 <header class="topbar">
   <div class="brand-block">
     <div class="logo" aria-label="Restaurant logo">✦</div>
-    <div class="brand-copy"><h1>HALINA BISTRO CAFE</h1></div>
+    <div class="brand-copy"><h1>HALINA BISTRO CAFE</h1></div><button id="dispatcherLogout" type="button">Sign Out</button>
   </div>
   <section class="clock-panel" aria-label="Restaurant local time">
     <span class="live-label" id="clockLiveStatus"><span class="dot"></span> LIVE</span>
@@ -117,7 +119,17 @@ function timeLabel(value){
 }
 function orderItems(order){let items=order.items;if(typeof items==='string'){try{items=JSON.parse(items)}catch{items=[]}}if(items && !Array.isArray(items) && Array.isArray(items.items))items=items.items;if(!Array.isArray(items))items=[];return items.map(it=>({name:it.item_name||it.name||it.title||it.product_name||'Menu item',qty:Number(it.quantity??it.qty??1)||1,instructions:it.special_instructions||it.instructions||''}));}
 function setNotice(message){notice.textContent=message;notice.classList.toggle('show',Boolean(message));}
-async function api(path,options={}){const response=await fetch(SUPABASE_URL+'/rest/v1/'+path,{...options,headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...(options.headers||{})}});const text=await response.text();let data;try{data=text?JSON.parse(text):null}catch{data=text}if(!response.ok)throw new Error(data?.message||data?.details||data?.hint||String(data||'Supabase request failed'));return data;}
+let dispatcherAuthClient=null,dispatcherSessionId=null,dispatcherHeartbeat=null,dispatcherAccessToken=null;
+const dispatcherLoginForm=document.getElementById('dispatcherLoginForm');
+function dispatcherAuthHeaders(){if(!dispatcherAccessToken)throw new Error('Please sign in to continue.');return {apikey:SUPABASE_KEY,Authorization:'Bearer '+dispatcherAccessToken,'Content-Type':'application/json'};}
+async function dispatcherSessionAction(action,sessionId){const response=await fetch(SUPABASE_URL+'/functions/v1/staff-session-action',{method:'POST',headers:dispatcherAuthHeaders(),body:JSON.stringify({action,...(sessionId?{session_id:sessionId}:{})})});const data=await response.json().catch(()=>({}));if(!response.ok||data.success!==true)throw new Error(data.error||'Staff session could not be verified.');return data;}
+async function dispatcherSignOut(message=''){if(dispatcherHeartbeat)clearInterval(dispatcherHeartbeat);dispatcherHeartbeat=null;const old=dispatcherSessionId;dispatcherSessionId=null;document.body.classList.remove('dispatcher-authenticated');if(old){try{await dispatcherSessionAction('end',old);}catch(_){}}dispatcherAccessToken=null;if(dispatcherAuthClient){try{await dispatcherAuthClient.auth.signOut({scope:'local'});}catch(_){}}document.getElementById('dispatcherLogin').style.display='grid';document.getElementById('dispatcherPin').value='';document.getElementById('dispatcherLoginMessage').textContent=message;}
+async function api(path,options={}){const response=await fetch(SUPABASE_URL+'/rest/v1/'+path,{...options,headers:{...dispatcherAuthHeaders(),...(options.headers||{})}});const text=await response.text();let data;try{data=text?JSON.parse(text):null}catch{data=text}if(!response.ok)throw new Error(data?.message||data?.details||data?.hint||String(data||'Supabase request failed'));return data;}
+async function dispatcherLogin(event){event.preventDefault();const username=document.getElementById('dispatcherUsername').value.trim(),pin=document.getElementById('dispatcherPin').value,button=document.getElementById('dispatcherLoginButton'),message=document.getElementById('dispatcherLoginMessage');if(!username||!/^[0-9]{6}$/.test(pin)){message.textContent='Enter your username and six-digit PIN.';return;}button.disabled=true;button.textContent='Verifying…';message.textContent='';try{const response=await fetch(SUPABASE_URL+'/functions/v1/dispatcher-login',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({username,pin})});const result=await response.json().catch(()=>({}));if(!response.ok||!result.token_hash)throw new Error(result.error||'Unable to sign in.');const {data,error}=await dispatcherAuthClient.auth.verifyOtp({token_hash:result.token_hash,type:'magiclink'});if(error||!data?.session?.access_token)throw new Error(error?.message||'Authentication could not be completed.');dispatcherAccessToken=data.session.access_token;const started=await dispatcherSessionAction('start');dispatcherSessionId=started.session_id;document.getElementById('dispatcherLogin').style.display='none';document.body.classList.add('dispatcher-authenticated');dispatcherHeartbeat=setInterval(async()=>{try{await dispatcherSessionAction('heartbeat',dispatcherSessionId);}catch(_){await dispatcherSignOut('Your session expired. Please sign in again.');}},45000);await loadOrders();}catch(error){message.textContent=error.message||'Unable to sign in.';dispatcherAccessToken=null;try{await dispatcherAuthClient.auth.signOut({scope:'local'});}catch(_){}}finally{button.disabled=false;button.textContent='Sign In';}}
+if(window.supabase?.createClient){dispatcherAuthClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false}});}
+if(dispatcherLoginForm)dispatcherLoginForm.addEventListener('submit',dispatcherLogin);
+document.getElementById('dispatcherLogout')?.addEventListener('click',()=>dispatcherSignOut());
+
 async function loadOrders(){try{
   const rows=await api('orders?select=id,restaurant_id,order_number,table_number,table_id,order_type,items,status,order_status,special_instructions,created_at&restaurant_id=eq.'+encodeURIComponent(RESTAURANT_ID)+'&order=created_at.desc&limit=100');
   const source=Array.isArray(rows)?rows:[];
@@ -167,15 +179,8 @@ async function updateStatus(id,status,button){
   try{
     // Record the completion timestamp only when an order is marked Served.
     // Other status transitions retain their existing payload and behavior.
-    const updatePayload = status === 'served'
-      ? { status, completed_at: new Date().toISOString() }
-      : { status };
-    const updated=await api('orders?id=eq.'+encodeURIComponent(id),{
-      method:'PATCH',
-      headers:{Prefer:'return=representation'},
-      body:JSON.stringify(updatePayload)
-    });
-    if(!Array.isArray(updated)||!updated.length)throw new Error('No order was updated. Check the Supabase UPDATE policy.');
+    const updated=await api('rpc/edmel_dispatcher_update_order',{method:'POST',body:JSON.stringify({p_order_id:id,p_session_id:dispatcherSessionId,p_status:status})});
+     if(!updated||updated.success!==true)throw new Error(updated?.message||'Order status update was not confirmed.');
     await loadOrders();
   }catch(e){
     setNotice('Could not update order status: '+e.message);
@@ -186,7 +191,7 @@ async function updateStatus(id,status,button){
   }
 }
 const refreshButton=document.getElementById('refreshBtn');if(refreshButton)refreshButton.addEventListener('click',loadOrders);const filtersElement=document.getElementById('filters');if(filtersElement)filtersElement.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;activeFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render();});
-loadOrders();setInterval(loadOrders,10000);
+setInterval(()=>{if(dispatcherSessionId)loadOrders();},10000);
 </script>
 
 <!-- CENTRAL RESTAURANT PROFILE CONNECTION -->
