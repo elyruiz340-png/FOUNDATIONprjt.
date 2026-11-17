@@ -3275,6 +3275,10 @@ function managerPermissionsEditor(manager){
       if(!p.modules[moduleKey]||typeof p.modules[moduleKey]!=='object'||Array.isArray(p.modules[moduleKey]))p.modules[moduleKey]={};
       if(typeof p.modules[moduleKey].view!=='boolean')p.modules[moduleKey].view=true;
     });
+    if(p.staff_management===true){
+      if(!p.modules.staff||typeof p.modules.staff!=='object'||Array.isArray(p.modules.staff))p.modules.staff={};
+      if(typeof p.modules.staff.manage!=='boolean')p.modules.staff.manage=true;
+    }
     return p;
   };
   const currentDraft=()=>drafts[branchSelect.value]||(drafts[branchSelect.value]={modules:{}});
@@ -3296,13 +3300,23 @@ function managerPermissionsEditor(manager){
   L.querySelector('#managerApplyProfile').onclick=()=>{const profile=L.querySelector('#managerPermissionProfile').value;if(profile==='Custom Access'){status.textContent='Custom Access selected. Existing drafts are unchanged.';return;}const template=MANAGER_PERMISSION_PROFILES[profile]||{};if(!branchSelect.value){status.textContent='Select a branch before applying a profile.';return;}const modules={};Object.entries(template).forEach(([key,actions])=>{modules[key]={};actions.forEach(a=>modules[key][a]=true);});drafts[branchSelect.value]={...currentDraft(),modules};renderMatrix();status.textContent=profile+' applied to the selected branch draft only.';};
   branchSelect.onchange=renderMatrix;
   const staffAuthority=L.querySelector('[data-authority="staff_management"]');
-  staffAuthority?.addEventListener('change',()=>{if(!branchSelect.value){staffAuthority.checked=false;status.textContent='Select a branch before changing management authority.';return;}currentDraft().staff_management=staffAuthority.checked;});
+  staffAuthority?.addEventListener('change',()=>{
+    if(!branchSelect.value){staffAuthority.checked=false;status.textContent='Select a branch before changing management authority.';return;}
+    const permissions=currentDraft();
+    permissions.staff_management=staffAuthority.checked;
+    if(!permissions.modules||typeof permissions.modules!=='object'||Array.isArray(permissions.modules))permissions.modules={};
+    if(!permissions.modules.staff||typeof permissions.modules.staff!=='object'||Array.isArray(permissions.modules.staff))permissions.modules.staff={};
+    permissions.modules.staff.manage=staffAuthority.checked;
+  });
   save.onclick=async()=>{
     if(save.disabled)return;
     if(!selectedBranches.size){status.textContent='Select at least one branch before saving.';return;}
     const assignments=Array.from(selectedBranches).map(branchId=>{
       const permissions=clone(drafts[branchId]||{modules:{}});
-      if(!permissions.modules||typeof permissions.modules!=='object')permissions.modules={};
+      if(!permissions.modules||typeof permissions.modules!=='object'||Array.isArray(permissions.modules))permissions.modules={};
+      if(!permissions.modules.staff||typeof permissions.modules.staff!=='object'||Array.isArray(permissions.modules.staff))permissions.modules.staff={};
+      const staffAuthorityEnabled=permissions.staff_management===true;
+      permissions.modules.staff.manage=staffAuthorityEnabled;
       const legacyMap={orders:'orders',tables:'tables',stocks:'inventory',dispatcher:'dispatcher',settings:'settings'};
       Object.entries(legacyMap).forEach(([legacyKey,moduleKey])=>{
         const view=permissions.modules[moduleKey]?.view===true;
