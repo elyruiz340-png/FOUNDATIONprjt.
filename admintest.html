@@ -3236,7 +3236,7 @@ function staffLatestSession(u){
   return STAFF_SESSIONS.find(s=>s.restaurant_user_id===u.id && !s.logout_at && Date.now()-new Date(s.last_seen_at).getTime()<120000);
 }
 function staffPage(){
-  const permissionNames={orders:'Orders',tables:'Tables',stocks:'Stocks',dispatcher:'Dispatcher',settings:'Settings'};
+  const permissionNames={orders:'Orders',void:'Void Orders',tables:'Tables',stocks:'Stocks',dispatcher:'Dispatcher',settings:'Settings'};
   const rows=STAFF_ROWS.map(u=>{
     const isCurrentUser=!!CURRENT_AUTH_USER_ID&&u.user_id===CURRENT_AUTH_USER_ID;
     const accountLabel=u.display_name||u.full_name||u.cashier_username||(
