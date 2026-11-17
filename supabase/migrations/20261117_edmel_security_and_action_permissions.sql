@@ -326,7 +326,7 @@ BEGIN
     AND ss.restaurant_id = v_restaurant_id
     AND ss.logout_at IS NULL;
 
-  IF NOT v_session_found THEN
+  IF coalesce(v_session_found, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'Active staff session required';
   END IF;
 
@@ -456,7 +456,7 @@ BEGIN
     AND ss.restaurant_id = v_restaurant_id
     AND ss.logout_at IS NULL;
 
-  IF NOT v_session_found THEN
+  IF coalesce(v_session_found, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'Active staff session required';
   END IF;
 
