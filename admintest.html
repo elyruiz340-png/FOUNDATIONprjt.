@@ -3310,9 +3310,12 @@ function staffPage(){
     const active=u.is_active!==false;
     const online=active&&!!staffLatestSession(u);
     const status=active?(online?'<span class="bd">● Online</span>':'<span class="bd">● Offline</span>'):'<span class="bd er">Deactivated</span>';
-    const actions=String(u.role||'').toLowerCase()==='staff'
-      ? `<div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn" type="button" data-a="staffeditprofile" data-id="${esc(u.id)}" style="white-space:nowrap">Edit Profile</button><button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" style="white-space:nowrap">Reset PIN</button> ${active?`<button class="btn" type="button" data-a="staffdeactivate" data-id="${esc(u.id)}" style="white-space:nowrap">Deactivate</button>`:'<span class="mu">Inactive</span>'}</div>`
-      : String(u.role||'').toLowerCase()==='manager' ? `<button class="btn pri" type="button" data-a="managerpermissions" data-id="${esc(u.id)}">Manage Permissions</button>` : '<span class="mu">—</span>';
+    const isManagerPosition=String(u.position||'').trim().toLowerCase()==='manager';
+    const actions=isManagerPosition
+      ? `<div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn pri" type="button" data-a="managerpermissions" data-id="${esc(u.id)}" style="white-space:nowrap">Manage Permissions</button>${active?'': '<span class="mu">Inactive</span>'}</div>`
+      : String(u.role||'').toLowerCase()==='staff'
+        ? `<div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn" type="button" data-a="staffeditprofile" data-id="${esc(u.id)}" style="white-space:nowrap">Edit Profile</button><button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" style="white-space:nowrap">Reset PIN</button> ${active?`<button class="btn" type="button" data-a="staffdeactivate" data-id="${esc(u.id)}" style="white-space:nowrap">Deactivate</button>`:'<span class="mu">Inactive</span>'}</div>`
+        : '<span class="mu">—</span>';
     return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
   });
   return `<div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
