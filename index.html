@@ -1835,14 +1835,10 @@ function generateQR() {
 
 function markAsPaid() {
 
-  paymentStatus = "paid";
+  paymentStatus = "reported";
+  paymentReference = null;
 
-
-  paymentReference =
-    "DEMO-" + Date.now();
-
-
-  alert("Payment marked as paid.");
+  alert("Payment reported. Restaurant staff must verify the payment before it can be marked as paid.");
 
 }
 
@@ -1933,7 +1929,7 @@ async function sendOrder() {
 
   if (
     selectedPayment === "QR" &&
-    paymentStatus !== "paid"
+    paymentStatus !== "reported"
   ) {
 
     errorBox.textContent =
@@ -2051,7 +2047,7 @@ async function sendOrder() {
     const response =
       await fetch(
         SUPABASE_URL +
-        "/rest/v1/rpc/place_order_with_stock",
+        "/rest/v1/rpc/edmel_customer_place_order",
         {
           method: "POST",
 
@@ -2067,12 +2063,13 @@ async function sendOrder() {
               const payload = {
                 p_restaurant_id: RESTAURANT_ID,
                 p_table_number: dbTableNumber,
+                p_table_id: sharedCartEnabled ? sharedTableId : null,
+                p_qr_token: sharedCartEnabled ? sharedQrToken : null,
                 p_order_type: orderType,
-                p_items: orderItems,
-                p_total: total,
+                p_items: orderItems.map(function(item) {
+                  return { id: item.id, qty: item.qty };
+                }),
                 p_payment_method: dbPaymentMethod,
-                p_payment_status: paymentStatus,
-                p_payment_reference: paymentReference,
                 p_special_instructions: null
               };
               payload.p_submission_key = getCustomerOrderSubmissionKey(payload);
@@ -2109,74 +2106,13 @@ async function sendOrder() {
         : "";
 
 
-    if (
-      !orderNumber &&
-      data &&
-      data.order_id
-    ) {
-
-      try {
-
-        const orderResponse =
-          await fetch(
-            SUPABASE_URL +
-            "/rest/v1/orders?id=eq." +
-            encodeURIComponent(
-              data.order_id
-            ) +
-            "&select=order_number",
-            {
-              method: "GET",
-
-              headers: {
-                "apikey":
-                  SUPABASE_KEY,
-
-                "Authorization":
-                  "Bearer " +
-                  SUPABASE_KEY
-              }
-            }
-          );
-
-
-        if (orderResponse.ok) {
-
-          const orderData =
-            await orderResponse.json();
-
-
-          if (
-            Array.isArray(orderData) &&
-            orderData.length > 0 &&
-            orderData[0].order_number
-          ) {
-
-            orderNumber =
-              orderData[0].order_number;
-
-          }
-
-        }
-
-      } catch (orderNumberError) {
-
-        console.error(
-          "Unable to get order number:",
-          orderNumberError
-        );
-
-      }
-
-    }
-
-
     if (sharedCartEnabled && sharedCheckoutLocked) {
       try {
         await sharedCartRpc("halina_finish_shared_cart_checkout", {
           p_table_id: sharedTableId,
           p_qr_token: sharedQrToken,
-          p_clear: true
+          p_clear: true,
+          p_submission_key: pendingCustomerSubmissionKey
         });
         sharedCheckoutLocked = false;
         sharedCartRevision += 1;
@@ -2235,7 +2171,8 @@ async function sendOrder() {
         await sharedCartRpc("halina_finish_shared_cart_checkout", {
           p_table_id: sharedTableId,
           p_qr_token: sharedQrToken,
-          p_clear: false
+          p_clear: false,
+          p_submission_key: pendingCustomerSubmissionKey
         });
         sharedCheckoutLocked = false;
       } catch (unlockError) {
