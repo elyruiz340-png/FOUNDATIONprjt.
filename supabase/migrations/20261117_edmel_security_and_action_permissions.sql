@@ -419,7 +419,7 @@ CREATE OR REPLACE FUNCTION public.cashier_settle_order(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
 DECLARE
   v_restaurant_user_id uuid;
