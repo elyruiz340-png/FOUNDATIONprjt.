@@ -148,12 +148,109 @@ GRANT EXECUTE ON FUNCTION public.edmel_has_branch_action_permission(uuid,text,te
 
 -- Authenticated owners/admins can view all tables in their own restaurant.
 -- Staff and managers can view tables only in an assigned branch with table access.
+-- Legacy single-branch tenants without branch records remain accessible within
+-- their own restaurant. This fallback is disabled as soon as a tenant has an active
+-- branch, so it cannot bypass branch membership in a branched tenant.
+CREATE OR REPLACE FUNCTION public.edmel_has_legacy_restaurant_action_permission(
+  p_restaurant_id uuid,
+  p_module text,
+  p_action text
+)
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+DECLARE
+  v_role text;
+  v_permissions jsonb;
+  v_module_permissions jsonb;
+BEGIN
+  IF (SELECT auth.uid()) IS NULL
+     OR p_restaurant_id IS NULL
+     OR p_module IS NULL
+     OR p_action IS NULL
+     OR p_action NOT IN ('view','create','edit','delete','approve','manage','void') THEN
+    RETURN false;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.restaurant_branches b
+    WHERE b.restaurant_id = p_restaurant_id AND b.is_active = true
+  ) THEN
+    RETURN false;
+  END IF;
+
+  SELECT lower(coalesce(ru.role,'')), ru.permissions
+    INTO v_role, v_permissions
+  FROM public.restaurant_users ru
+  WHERE ru.user_id = (SELECT auth.uid())
+    AND ru.restaurant_id = p_restaurant_id
+    AND ru.is_active = true
+  ORDER BY CASE lower(ru.role)
+    WHEN 'owner' THEN 1
+    WHEN 'admin' THEN 2
+    ELSE 3
+  END
+  LIMIT 1;
+
+  IF v_role IS NULL THEN
+    RETURN false;
+  END IF;
+
+  IF v_role IN ('owner','admin') THEN
+    RETURN true;
+  END IF;
+
+  IF v_permissions IS NULL OR jsonb_typeof(v_permissions) <> 'object' THEN
+    RETURN false;
+  END IF;
+
+  IF v_permissions ? 'modules' THEN
+    IF jsonb_typeof(v_permissions->'modules') <> 'object' THEN
+      RETURN false;
+    END IF;
+    v_module_permissions := v_permissions->'modules'->p_module;
+    IF v_module_permissions IS NULL OR jsonb_typeof(v_module_permissions) <> 'object' THEN
+      RETURN false;
+    END IF;
+    RETURN coalesce((v_module_permissions->>p_action)::boolean, false);
+  END IF;
+
+  IF p_module = 'orders' AND p_action = 'void' THEN
+    RETURN coalesce((v_permissions->>'void')::boolean, false)
+       OR coalesce((v_permissions->>'orders')::boolean, false);
+  END IF;
+  IF p_module = 'payments' THEN
+    RETURN coalesce((v_permissions->>'orders')::boolean, false);
+  END IF;
+  RETURN coalesce((v_permissions->>p_module)::boolean, false);
+EXCEPTION
+  WHEN invalid_text_representation THEN
+    RETURN false;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.edmel_has_legacy_restaurant_action_permission(uuid,text,text)
+  FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.edmel_has_legacy_restaurant_action_permission(uuid,text,text)
+  TO authenticated, service_role;
+
 CREATE POLICY "EDMEL authenticated branch table visibility"
 ON public.restaurant_tables
 FOR SELECT
 TO authenticated
 USING (
-  public.edmel_has_branch_action_permission(branch_id, 'tables', 'view')
+  (
+    branch_id IS NOT NULL
+    AND public.edmel_has_branch_action_permission(branch_id, 'tables', 'view')
+  )
+  OR
+  (
+    branch_id IS NULL
+    AND public.edmel_has_legacy_restaurant_action_permission(restaurant_id, 'tables', 'view')
+  )
 );
 
 -- ---------------------------------------------------------------------------
@@ -169,7 +266,15 @@ ON public.orders
 FOR SELECT
 TO authenticated
 USING (
-  public.edmel_has_branch_action_permission(branch_id, 'orders', 'view')
+  (
+    branch_id IS NOT NULL
+    AND public.edmel_has_branch_action_permission(branch_id, 'orders', 'view')
+  )
+  OR
+  (
+    branch_id IS NULL
+    AND public.edmel_has_legacy_restaurant_action_permission(restaurant_id, 'orders', 'view')
+  )
 );
 
 -- ---------------------------------------------------------------------------
@@ -191,6 +296,7 @@ DECLARE
   v_restaurant_id uuid;
   v_actor_name text;
   v_session_branch_id uuid;
+  v_session_found boolean := false;
   v_order public.orders%rowtype;
 BEGIN
   IF auth.uid() IS NULL THEN
@@ -211,8 +317,8 @@ BEGIN
     RAISE EXCEPTION 'Active staff account not found';
   END IF;
 
-  SELECT ss.branch_id
-    INTO v_session_branch_id
+  SELECT true, ss.branch_id
+    INTO v_session_found, v_session_branch_id
   FROM public.staff_sessions ss
   WHERE ss.id = p_session_id
     AND ss.user_id = auth.uid()
@@ -220,7 +326,7 @@ BEGIN
     AND ss.restaurant_id = v_restaurant_id
     AND ss.logout_at IS NULL;
 
-  IF v_session_branch_id IS NULL THEN
+  IF NOT v_session_found THEN
     RAISE EXCEPTION 'Active staff session required';
   END IF;
 
@@ -228,14 +334,31 @@ BEGIN
   FROM public.orders o
   WHERE o.id = p_order_id
     AND o.restaurant_id = v_restaurant_id
-    AND o.branch_id = v_session_branch_id
+    AND (
+      o.branch_id = v_session_branch_id
+      OR (
+        o.branch_id IS NULL
+        AND v_session_branch_id IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM public.restaurant_branches b
+          WHERE b.restaurant_id = v_restaurant_id AND b.is_active = true
+        )
+      )
+    )
   FOR UPDATE;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Order not found for this branch';
   END IF;
 
-  IF NOT public.edmel_has_branch_action_permission(v_session_branch_id, 'orders', 'approve') THEN
+  IF NOT (
+    CASE
+      WHEN v_session_branch_id IS NULL THEN
+        public.edmel_has_legacy_restaurant_action_permission(v_restaurant_id, 'orders', 'approve')
+      ELSE
+        public.edmel_has_branch_action_permission(v_session_branch_id, 'orders', 'approve')
+    END
+  ) THEN
     RAISE EXCEPTION 'You do not have permission to accept orders' USING ERRCODE = '42501';
   END IF;
 
@@ -258,7 +381,17 @@ BEGIN
       updated_at = now()
   WHERE o.id = p_order_id
     AND o.restaurant_id = v_restaurant_id
-    AND o.branch_id = v_session_branch_id
+    AND (
+      o.branch_id = v_session_branch_id
+      OR (
+        o.branch_id IS NULL
+        AND v_session_branch_id IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM public.restaurant_branches b
+          WHERE b.restaurant_id = v_restaurant_id AND b.is_active = true
+        )
+      )
+    )
     AND lower(coalesce(o.status, 'new')) IN ('new','pending','confirmed')
     AND o.accepted_at IS NULL
   RETURNING o.* INTO v_order;
@@ -337,7 +470,14 @@ BEGIN
     RAISE EXCEPTION 'Order not found for this branch';
   END IF;
 
-  IF NOT public.edmel_has_branch_action_permission(v_session_branch_id, 'payments', 'approve') THEN
+  IF NOT (
+    CASE
+      WHEN v_session_branch_id IS NULL THEN
+        public.edmel_has_legacy_restaurant_action_permission(v_restaurant_id, 'payments', 'approve')
+      ELSE
+        public.edmel_has_branch_action_permission(v_session_branch_id, 'payments', 'approve')
+    END
+  ) THEN
     RAISE EXCEPTION 'You do not have permission to settle payments' USING ERRCODE = '42501';
   END IF;
 
@@ -360,7 +500,17 @@ BEGIN
       updated_at = now()
   WHERE o.id = p_order_id
     AND o.restaurant_id = v_restaurant_id
-    AND o.branch_id = v_session_branch_id
+    AND (
+      o.branch_id = v_session_branch_id
+      OR (
+        o.branch_id IS NULL
+        AND v_session_branch_id IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM public.restaurant_branches b
+          WHERE b.restaurant_id = v_restaurant_id AND b.is_active = true
+        )
+      )
+    )
     AND lower(coalesce(o.status, '')) IN ('served','completed')
     AND lower(coalesce(o.payment_status, 'pending')) IN ('pending','unpaid','')
     AND o.settled_at IS NULL
