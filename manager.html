@@ -14,6 +14,37 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}.stat{padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.9);box-shadow:0 7px 22px rgba(30,61,39,.04)}.stat span{display:block;color:var(--muted);font-size:12px;font-weight:750}.stat strong{display:block;margin-top:5px;font-size:26px;letter-spacing:-.7px}.panel{border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:0 8px 24px rgba(30,61,39,.04);overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}.panel-head h2{margin:0;font-size:16px}.panel-head p{margin:3px 0 0;font-size:12px;color:var(--muted)}.panel-body{padding:0 20px 16px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th{text-align:left;padding:13px 10px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line)}td{padding:14px 10px;border-bottom:1px solid #edf1eb;vertical-align:middle}tr:last-child td{border-bottom:0}.staff-name{font-weight:850}.staff-user{font-size:11px;color:var(--muted)}.status{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;background:#f0f3ef;color:#69756b}.status:before{content:"";width:6px;height:6px;border-radius:50%;background:#9aa59a}.status.online{background:#e8f5eb;color:#22623b}.status.online:before{background:#39a15b}.status.removed{background:#fff3e4;color:#8a5b1a}.status.removed:before{background:#d39a3f}.chips{display:flex;gap:5px;flex-wrap:wrap}.chip{padding:4px 7px;border-radius:7px;background:#f1f5f0;color:#526353;font-size:10px;font-weight:750}.empty{padding:34px 12px;text-align:center;color:var(--muted)}.history{margin-top:18px}.history-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #edf1eb}.history-row:last-child{border-bottom:0}.history-row strong{font-size:12px}.history-row small{display:block;color:var(--muted);font-size:11px}
 #staffModal,#permissionModal{position:fixed;inset:0;z-index:20;display:none;place-items:center;padding:18px;background:rgba(19,34,24,.38);backdrop-filter:blur(5px)}#staffModal.open,#permissionModal.open{display:grid}.modal{width:min(620px,100%);max-height:min(90vh,820px);overflow:auto;border:1px solid rgba(255,255,255,.8);border-radius:20px;background:#fff;box-shadow:0 25px 80px rgba(10,30,17,.22)}.modal-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head h2{margin:0;font-size:18px}.modal-body{padding:20px 22px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.permissions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 18px}.permission{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);font-size:12px;font-weight:750}.permission input{accent-color:var(--green)}.modal-actions{display:flex;justify-content:flex-end;gap:9px;padding:15px 22px;border-top:1px solid var(--line)}.hint{padding:11px 13px;border-radius:10px;background:#f1f6f0;color:#506351;font-size:11px;margin:12px 0}.staff-actions{display:flex;gap:6px;flex-wrap:wrap}.staff-actions .secondary,.staff-actions .danger{white-space:nowrap}
 @media(max-width:700px){.topbar{height:64px}.welcome{align-items:flex-start;flex-direction:column}.branch-select{width:100%;justify-content:space-between}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}.form-grid{grid-template-columns:1fr}.top-actions .user-pill{display:none}main{width:calc(100% - 24px);margin-top:20px}.panel-head{align-items:flex-start;flex-direction:column}.panel-body{padding:0 12px 12px}}
+
+/* Admin-aligned Manager workspace shell */
+#appView{min-height:100vh;background:radial-gradient(ellipse at 10% 0%,rgba(48,126,80,.16),transparent 34%),var(--bg)}
+.manager-sidebar{position:fixed;z-index:20;inset:12px auto 12px 12px;width:68px;padding:12px 8px;display:flex;flex-direction:column;gap:8px;border:1px solid rgba(140,180,150,.25);border-radius:22px;background:rgba(20,43,29,.92);box-shadow:0 16px 42px rgba(10,35,20,.22);backdrop-filter:blur(20px)}
+.manager-brand{height:44px;display:grid;place-items:center;color:#fff;font-weight:900;letter-spacing:.08em}
+.manager-brand span{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(145deg,#4b9b68,#205b39);box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.manager-nav{display:flex;flex-direction:column;gap:6px;flex:1}
+.manager-nav button{width:46px;height:46px;margin:0 auto;display:grid;place-items:center;border:1px solid transparent;border-radius:15px;background:transparent;color:#a9c3b0;font-size:17px;transition:background .18s,border-color .18s,color .18s,transform .18s}
+.manager-nav button:hover{background:rgba(255,255,255,.09);color:#fff;transform:translateY(-1px)}
+.manager-nav button.active{background:linear-gradient(145deg,#33885a,#205b3d);border-color:rgba(173,232,188,.38);color:#fff;box-shadow:0 7px 18px rgba(24,119,69,.28)}
+.manager-nav button:focus-visible{outline:2px solid #9cdbad;outline-offset:2px}
+.manager-nav button[hidden]{display:none}
+.manager-content{margin-left:88px}
+.manager-content .topbar{padding-left:clamp(16px,3vw,38px);padding-right:clamp(16px,3vw,38px);background:rgba(255,255,255,.72)}
+.manager-content main{width:min(1360px,calc(100% - 36px));margin:24px auto 50px}
+.manager-page-placeholder{min-height:300px;padding:clamp(22px,4vw,42px);border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.82);box-shadow:0 12px 34px rgba(30,61,39,.06)}
+.manager-page-placeholder .module-kicker{font-size:11px;font-weight:850;letter-spacing:.14em;text-transform:uppercase;color:#43845a}
+.manager-page-placeholder h1{margin:9px 0;font-size:clamp(24px,3vw,34px)}
+.manager-page-placeholder p{max-width:680px;color:var(--muted);line-height:1.7}
+.manager-page-placeholder .permission-note{margin-top:22px;padding:14px 16px;border:1px solid var(--line);border-radius:13px;background:#f6faf5;color:#536a59;font-size:13px}
+.manager-page-placeholder[hidden],#staffWorkspace[hidden]{display:none!important}
+@media(max-width:700px){
+ .manager-sidebar{inset:auto 10px 10px;width:auto;height:66px;flex-direction:row;padding:7px 9px;border-radius:20px;overflow-x:auto}
+ .manager-brand{display:none}
+ .manager-nav{flex-direction:row;justify-content:flex-start;gap:5px;min-width:max-content}
+ .manager-nav button{width:44px;height:44px;border-radius:14px}
+ .manager-content{margin-left:0;padding-bottom:76px}
+ .manager-content .topbar{padding-left:14px;padding-right:14px}
+ .manager-content main{width:calc(100% - 24px);margin-top:18px}
+ .manager-content .top-title small{display:none}
+}
 </style>
 </head>
 <body>
@@ -31,11 +62,23 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
 </section>
 
 <section id="appView" class="hidden">
+ <aside class="manager-sidebar" aria-label="Manager navigation">
+  <div class="manager-brand" aria-label="EDMEL"><span>E</span></div>
+  <nav class="manager-nav" id="managerNav" aria-label="Dashboard modules"></nav>
+ </aside>
+ <div class="manager-content">
  <header class="topbar">
   <div class="top-left"><div class="brand-mark" style="width:36px;height:36px;border-radius:11px">E</div><div class="top-title">EDMEL <small>MANAGER WORKSPACE</small></div></div>
   <div class="top-actions"><span class="user-pill" id="managerName">Manager</span><button class="secondary" id="logoutButton">Sign Out</button></div>
  </header>
  <main>
+  <section class="manager-page-placeholder" id="modulePlaceholder" hidden aria-live="polite">
+   <div class="module-kicker">Manager Workspace</div>
+   <h1 id="moduleTitle">Dashboard</h1>
+   <p id="moduleDescription">This module is available according to the permissions assigned by the Owner or Admin.</p>
+   <div class="permission-note" id="modulePermissionNote">Access is restricted to your assigned branch. Operational data and actions will be enabled only after their branch-scoped integrations are verified.</div>
+  </section>
+  <div id="staffWorkspace">
   <div class="welcome">
    <div><h1>Team Management</h1><p>Manage subordinate staff and branch access.</p></div>
    <div class="branch-select"><label for="branchSelect">Branch</label><select id="branchSelect"></select></div>
@@ -56,7 +99,10 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
    <div class="panel-head"><div><h2>Recent Staff Sessions</h2><p>Login and logout activity for this branch.</p></div><button class="secondary" id="refreshButton">Refresh</button></div>
    <div class="panel-body" id="sessionRows"><div class="empty">Loading session history...</div></div>
   </section>
+
+  </div>
  </main>
+ </div>
 </section>
 
 <div id="staffModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -116,6 +162,69 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  const $ = id => document.getElementById(id);
  const esc = value => String(value ?? "").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
  const permissionLabels = {orders:"Orders",void:"Void",tables:"Tables",stocks:"Stocks",dispatcher:"Dispatcher",settings:"Settings"};
+ const managerModules = [
+  ["overview","Overview","⌂"],["sales","Sales & Analytics","▥"],["settings","Business Settings","⚙"],
+  ["orders","Orders & Transactions","▤"],["expenses","Expenses & Profit","₱"],["staff","Staff & Permissions","♙"],
+  ["audit","Audit Logs","≡"],["branches","Multi-Branch Management","⌘"],["health","System Health & Integrations","⌁"],["ai","EDY — AI Assistant","✦"]
+ ];
+ let currentManagerPage="";
+ function moduleAccess(key, action="view"){
+  const p=ownPermissions||{};
+  if(p.modules&&typeof p.modules==="object"){
+   const grant=p.modules[key];
+   return !!(grant&&typeof grant==="object"&&(grant[action]===true||grant.manage===true));
+  }
+  const legacy={
+   orders:["orders"],tables:["tables"],inventory:["stocks"],dispatcher:["dispatcher"],
+   settings:["settings"],menu:["settings"],discounts:["settings"],vouchers:["settings"],
+   tax:["settings"],service_charge:["settings"],receipts:["settings"],printers:["settings"],
+   payments:["settings"],transactions:["orders"]
+  };
+  if(key==="staff")return p.staff_management===true;
+  if(key==="orders")return p.orders===true;
+  return (legacy[key]||[]).some(k=>p[k]===true);
+ }
+ function hasAnyManagerPermission(){
+  if(ownPermissions?.modules&&typeof ownPermissions.modules==="object")return Object.values(ownPermissions.modules).some(v=>v&&typeof v==="object"&&Object.values(v).some(x=>x===true));
+  return Object.values(ownPermissions||{}).some(v=>v===true);
+ }
+ function renderManagerNavigation(){
+  const nav=$("managerNav");
+  const allowed=managerModules.filter(([key])=>moduleAccess(key,"view"));
+  nav.innerHTML=allowed.map(([key,label,icon])=>'<button type="button" data-manager-page="'+esc(key)+'" aria-label="'+esc(label)+'" title="'+esc(label)+'"><span aria-hidden="true">'+icon+'</span></button>').join("");
+  nav.querySelectorAll("[data-manager-page]").forEach(button=>button.addEventListener("click",()=>showManagerPage(button.dataset.managerPage)));
+  if(!allowed.length){
+   $("moduleTitle").textContent="No Dashboard Access";
+   $("moduleDescription").textContent="No dashboard modules have been enabled for this account. Contact the Owner or Admin to request access.";
+   $("modulePermissionNote").textContent="Your assigned branch access remains restricted. No data or management actions are available.";
+   $("modulePlaceholder").hidden=false;$("staffWorkspace").hidden=true;
+   return;
+  }
+  const requested=allowed.some(x=>x[0]===currentManagerPage)?currentManagerPage:allowed[0][0];
+  showManagerPage(requested);
+ }
+ function showManagerPage(key){
+  const item=managerModules.find(x=>x[0]===key);
+  if(!item||!moduleAccess(key,"view"))return;
+  currentManagerPage=key;
+  $("managerNav").querySelectorAll("[data-manager-page]").forEach(button=>{
+   const active=button.dataset.managerPage===key;button.classList.toggle("active",active);
+   if(active)button.setAttribute("aria-current","page");else button.removeAttribute("aria-current");
+  });
+  const realStaffWorkspace=key==="staff"&&ownPermissions?.staff_management===true;
+  $("staffWorkspace").hidden=!realStaffWorkspace;
+  $("modulePlaceholder").hidden=realStaffWorkspace;
+  if(realStaffWorkspace){
+   $("moduleTitle").textContent="Staff & Permissions";
+   return;
+  }
+  $("moduleTitle").textContent=item[1];
+  $("moduleDescription").textContent=key==="staff"
+   ?"Staff module visibility is granted, but the existing staff-management workflow requires the dedicated branch staff-management permission. Ask the Owner or Admin to enable it."
+   :"This module is visible because the Owner or Admin granted access. The current Admin page contains illustrative demo data, so this Manager view will not display sample figures or expose unverified actions.";
+  $("modulePermissionNote").textContent="Branch: "+(activeBranch?.name||"Assigned branch")+". This view is limited to branches assigned to your Manager account. Module actions will be connected only after branch-level data access and backend authorization are verified.";
+ }
+
  let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true;
 
  function showLogin(message=""){ $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden"); $("loginMessage").textContent=message; }
@@ -151,8 +260,8 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   if(!branchIds.length)throw new Error("No active branch has been assigned to this Manager account.");
   const {data:branchRows,error:branchError}=await sb.from("restaurant_branches").select("id,name,code,is_default,is_active").in("id",branchIds).eq("is_active",true);
   if(branchError)throw branchError;
-  branches=(branchRows||[]).filter(branch=>managerAccess.some(access=>access.branch_id===branch.id&&access.permissions?.staff_management===true));
-  if(!branches.length)throw new Error("Staff management is not enabled for any assigned branch.");
+  branches=(branchRows||[]);
+  if(!branches.length)throw new Error("No active assigned branch is available for this Manager account.");
   const preferred=sessionStorage.getItem("edmel_manager_branch");
   activeBranch=branches.find(b=>b.id===preferred)||branches.find(b=>b.is_default)||branches[0];
   ownPermissions=managerAccess.find(a=>a.branch_id===activeBranch.id)?.permissions||{};
@@ -160,8 +269,9 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   $("branchSelect").innerHTML=branches.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join("");
   $("branchSelect").value=activeBranch.id;
   showApp();
+  renderManagerNavigation();
   await startPresence(activeBranch.id);
-  await loadBranchData();
+  if(ownPermissions.staff_management===true)await loadBranchData();
  }
 
  function permissionChips(permissions){
@@ -339,7 +449,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   const next=branches.find(b=>b.id===$("branchSelect").value);if(!next)return;
   activeBranch=next;ownPermissions=managerAccess.find(a=>a.branch_id===next.id)?.permissions||{};
   sessionStorage.setItem("edmel_manager_branch",next.id);
-  await endPresence();await startPresence(next.id);await loadBranchData();
+  await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
  });
  $("refreshButton").addEventListener("click",()=>loadBranchData().catch(error=>notify(error.message,true)));
  $("logoutButton").addEventListener("click",async()=>{await endPresence();await sb.auth.signOut({scope:"local"});showLogin("You have signed out.");});
