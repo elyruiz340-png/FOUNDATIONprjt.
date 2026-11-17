@@ -3260,8 +3260,8 @@ function managerPermissionsEditor(manager){
     <section class="card"><h3>Recommended Profile</h3><div class="fl"><label for="managerPermissionProfile">Choose a starting profile</label><select id="managerPermissionProfile"><option value="Custom Access">Custom Access</option><option>Operations Manager</option><option>Branch Supervisor</option><option>Inventory Manager</option><option>Sales & Reporting Manager</option></select></div><button id="managerApplyProfile" class="btn" type="button">Apply Profile to Draft</button><p class="note" style="margin:10px 0 0">Existing branch permissions are not silently overwritten.</p></section></div>
     <section class="card"><h3>Branch Assignment</h3><p class="note">Select the branches this Manager may access. Permissions are configured separately for each selected branch.</p><div id="managerBranchList" class="g g2"><span class="mu">Loading branches…</span></div></section>
     <section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3 style="margin-bottom:3px">Module Permissions</h3><p class="note">Choose a branch above to inspect and edit its permission draft.</p></div><select id="managerPermissionBranch" aria-label="Permission branch"><option value="">Select a branch</option></select></div><div id="managerPermissionMatrix" class="tw"><p class="mu">Loading branch permissions…</p></div></section>
-    <section class="card"><h3>Management Authority</h3><p class="note">These controls are separate from ordinary module visibility. Granting authority requires server-side validation.</p><div id="managerAuthorityControls"><label class="row"><span>Manage subordinate staff</span><input type="checkbox" data-authority="staff_management" disabled></label><label class="row"><span>Assign staff to branches</span><input type="checkbox" data-authority="branch_assignment" disabled></label><label class="row"><span>Edit subordinate permissions</span><input type="checkbox" data-authority="permission_management" disabled></label></div><p class="note">Authority controls are preview-only until the Admin authorization endpoint is connected.</p></section>
-    <div class="tb" style="justify-content:space-between"><span id="managerPermissionStatus" class="note" role="status">Loading current branch access…</span><div style="display:flex;gap:8px"><button class="btn" type="button" data-a="close">Cancel</button><button class="btn pri" id="managerPermissionSave" type="button" disabled>Save Permissions (Backend Pending)</button></div></div>
+    <section class="card"><h3>Management Authority</h3><p class="note">These controls are separate from ordinary module visibility. Granting authority requires server-side validation.</p><div id="managerAuthorityControls"><label class="row"><span>Manage subordinate staff</span><input type="checkbox" data-authority="staff_management"></label><label class="row"><span>Assign staff to branches</span><input type="checkbox" data-authority="branch_assignment" disabled></label><label class="row"><span>Edit subordinate permissions</span><input type="checkbox" data-authority="permission_management" disabled></label></div><p class="note">Authority controls are preview-only until the Admin authorization endpoint is connected.</p></section>
+    <div class="tb" style="justify-content:space-between"><span id="managerPermissionStatus" class="note" role="status">Loading current branch access…</span><div style="display:flex;gap:8px"><button class="btn" type="button" data-a="close">Cancel</button><button class="btn pri" id="managerPermissionSave" type="button" disabled>Save Permissions</button></div></div>
   </div>`;
   const branchList=L.querySelector('#managerBranchList'),branchSelect=L.querySelector('#managerPermissionBranch'),matrix=L.querySelector('#managerPermissionMatrix'),status=L.querySelector('#managerPermissionStatus'),save=L.querySelector('#managerPermissionSave');
   let branches=[],accessRows=[],drafts={},selectedBranches=new Set();
@@ -3282,6 +3282,8 @@ function managerPermissionsEditor(manager){
     const branchId=branchSelect.value;
     if(!branchId){matrix.innerHTML='<p class="mu">Select a branch to configure its permissions.</p>';return;}
     const p=currentDraft();
+    const staffAuthority=L.querySelector('[data-authority="staff_management"]');
+    if(staffAuthority)staffAuthority.checked=p.staff_management===true;
     matrix.innerHTML=`<table><thead><tr><th>Module</th>${MANAGER_PERMISSION_ACTIONS.map(a=>`<th>${a[0].toUpperCase()+a.slice(1)}</th>`).join('')}</tr></thead><tbody>${MANAGER_PERMISSION_MODULES.map(([key,label])=>`<tr><td><strong>${label}</strong></td>${MANAGER_PERMISSION_ACTIONS.map(action=>`<td><input type="checkbox" data-module="${key}" data-action="${action}" aria-label="${label} ${action}" ${p.modules[key]?.[action]===true?'checked':''}></td>`).join('')}</tr>`).join('')}</tbody></table>`;
     matrix.querySelectorAll('input[data-module]').forEach(input=>input.addEventListener('change',()=>{const mod=input.dataset.module,act=input.dataset.action;if(!p.modules[mod])p.modules[mod]={};p.modules[mod][act]=input.checked;}));
   }
@@ -3291,8 +3293,55 @@ function managerPermissionsEditor(manager){
     branchList.querySelectorAll('input[data-branch]').forEach(input=>input.addEventListener('change',()=>{const id=input.dataset.branch;if(input.checked)selectedBranches.add(id);else selectedBranches.delete(id);renderBranches();if(!selectedBranches.has(branchSelect.value))branchSelect.value='';renderMatrix();}));
     renderMatrix();
   }
-  L.querySelector('#managerApplyProfile').onclick=()=>{const profile=L.querySelector('#managerPermissionProfile').value;if(profile==='Custom Access'){status.textContent='Custom Access selected. Existing drafts are unchanged.';return;}const template=MANAGER_PERMISSION_PROFILES[profile]||{};if(!branchSelect.value){status.textContent='Select a branch before applying a profile.';return;}const modules={};Object.entries(template).forEach(([key,actions])=>{modules[key]={};actions.forEach(a=>modules[key][a]=true);});drafts[branchSelect.value]={modules};renderMatrix();status.textContent=profile+' applied to the selected branch draft only.';};
+  L.querySelector('#managerApplyProfile').onclick=()=>{const profile=L.querySelector('#managerPermissionProfile').value;if(profile==='Custom Access'){status.textContent='Custom Access selected. Existing drafts are unchanged.';return;}const template=MANAGER_PERMISSION_PROFILES[profile]||{};if(!branchSelect.value){status.textContent='Select a branch before applying a profile.';return;}const modules={};Object.entries(template).forEach(([key,actions])=>{modules[key]={};actions.forEach(a=>modules[key][a]=true);});drafts[branchSelect.value]={...currentDraft(),modules};renderMatrix();status.textContent=profile+' applied to the selected branch draft only.';};
   branchSelect.onchange=renderMatrix;
+  const staffAuthority=L.querySelector('[data-authority="staff_management"]');
+  staffAuthority?.addEventListener('change',()=>{if(!branchSelect.value){staffAuthority.checked=false;status.textContent='Select a branch before changing management authority.';return;}currentDraft().staff_management=staffAuthority.checked;});
+  save.onclick=async()=>{
+    if(save.disabled)return;
+    if(!selectedBranches.size){status.textContent='Select at least one branch before saving.';return;}
+    const assignments=Array.from(selectedBranches).map(branchId=>{
+      const permissions=clone(drafts[branchId]||{modules:{}});
+      if(!permissions.modules||typeof permissions.modules!=='object')permissions.modules={};
+      const legacyMap={orders:'orders',tables:'tables',stocks:'inventory',dispatcher:'dispatcher',settings:'settings'};
+      Object.entries(legacyMap).forEach(([legacyKey,moduleKey])=>{
+        const view=permissions.modules[moduleKey]?.view===true;
+        if(Object.prototype.hasOwnProperty.call(permissions,legacyKey))permissions[legacyKey]=view;
+      });
+      return {branch_id:branchId,permissions};
+    });
+    save.disabled=true;save.textContent='Saving…';status.textContent='Saving Manager permissions securely…';
+    try{
+      const {data:sessionData,error:sessionError}=await sb.auth.getSession();
+      const accessToken=sessionData?.session?.access_token;
+      if(sessionError||!accessToken)throw new Error('Your Admin session has expired. Sign in again.');
+      const response=await fetch(SB_URL+'/functions/v1/admin-save-manager-permissions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+accessToken,'apikey':SB_KEY},
+        body:JSON.stringify({restaurant_id:HALINA_RESTAURANT_ID,manager_id:manager.id,assignments})
+      });
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||result.success!==true)throw new Error(result.error||'Unable to save Manager permissions.');
+      const previousBranch=branchSelect.value;
+      const {data:updatedAccess,error:reloadError}=await sb.from('staff_branch_access')
+        .select('branch_id,permissions,is_active').eq('restaurant_user_id',manager.id);
+      if(reloadError)throw new Error('Permissions saved, but the refreshed view could not load: '+reloadError.message);
+      accessRows=(updatedAccess||[]).filter(x=>x.is_active!==false);
+      selectedBranches=new Set(accessRows.map(x=>x.branch_id));
+      drafts={};
+      accessRows.forEach(row=>{drafts[row.branch_id]=normalize(row.permissions);});
+      renderBranches();
+      if(selectedBranches.has(previousBranch))branchSelect.value=previousBranch;
+      renderMatrix();
+      status.textContent='Saved successfully · '+(result.result?.branches_saved||assignments.length)+' branch assignment(s) updated.';
+      toast('Manager permissions saved');
+    }catch(error){
+      status.textContent=error.message||String(error);
+      toast(error.message||'Unable to save Manager permissions');
+    }finally{
+      save.disabled=false;save.textContent='Save Permissions';
+    }
+  };
   (async()=>{
     try{
       const [{data:branchData,error:branchError},{data:accessData,error:accessError}]=await Promise.all([
@@ -3302,7 +3351,7 @@ function managerPermissionsEditor(manager){
       if(branchError)throw branchError;if(accessError)throw accessError;
       branches=branchData||[];accessRows=(accessData||[]).filter(x=>x.is_active!==false);
       accessRows.forEach(row=>{selectedBranches.add(row.branch_id);drafts[row.branch_id]=normalize(row.permissions);});
-      renderBranches();status.textContent=accessRows.length+' active branch assignment(s) loaded. Changes are draft-only.';
+      renderBranches();save.disabled=false;status.textContent=accessRows.length+' active branch assignment(s) loaded. Review changes, then save.';
     }catch(error){branchList.innerHTML='<p class="er">Unable to load branch assignments: '+esc(error.message||String(error))+'</p>';matrix.innerHTML='<p class="mu">Permission editor could not load its data.</p>';status.textContent='Read failed. No changes were saved.';}
   })();
 }
