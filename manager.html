@@ -172,7 +172,12 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   const p=ownPermissions||{};
   if(p.modules&&typeof p.modules==="object"){
    const grant=p.modules[key];
-   return !!(grant&&typeof grant==="object"&&(grant[action]===true||grant.manage===true));
+   if(grant&&typeof grant==="object"&&(grant[action]===true||grant.manage===true))return true;
+   if(key==="settings"){
+    const businessModules=["settings","inventory","tables","dispatcher","payments","menu","discounts","vouchers","tax","service_charge","receipts","printers","transactions"];
+    return businessModules.some(name=>{const item=p.modules[name];return !!(item&&typeof item==="object"&&(item.view===true||item.manage===true));});
+   }
+   return false;
   }
   const legacy={
    orders:["orders"],tables:["tables"],inventory:["stocks"],dispatcher:["dispatcher"],
