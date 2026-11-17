@@ -3266,7 +3266,17 @@ function managerPermissionsEditor(manager){
   const branchList=L.querySelector('#managerBranchList'),branchSelect=L.querySelector('#managerPermissionBranch'),matrix=L.querySelector('#managerPermissionMatrix'),status=L.querySelector('#managerPermissionStatus'),save=L.querySelector('#managerPermissionSave');
   let branches=[],accessRows=[],drafts={},selectedBranches=new Set();
   const clone=o=>JSON.parse(JSON.stringify(o||{}));
-  const normalize=raw=>{const p=clone(raw);if(!p.modules)p.modules={};return p;};
+  const normalize=raw=>{
+    const p=clone(raw);
+    if(!p.modules||typeof p.modules!=='object'||Array.isArray(p.modules))p.modules={};
+    const legacyModuleMap={orders:'orders',tables:'tables',stocks:'inventory',dispatcher:'dispatcher',settings:'settings'};
+    Object.entries(legacyModuleMap).forEach(([legacyKey,moduleKey])=>{
+      if(p[legacyKey]!==true)return;
+      if(!p.modules[moduleKey]||typeof p.modules[moduleKey]!=='object'||Array.isArray(p.modules[moduleKey]))p.modules[moduleKey]={};
+      if(typeof p.modules[moduleKey].view!=='boolean')p.modules[moduleKey].view=true;
+    });
+    return p;
+  };
   const currentDraft=()=>drafts[branchSelect.value]||(drafts[branchSelect.value]={modules:{}});
   function renderMatrix(){
     const branchId=branchSelect.value;
