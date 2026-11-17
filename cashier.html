@@ -10203,7 +10203,7 @@ function escapePosMenuText(value) {
 function menuRequestHeaders() {
   return {
     "apikey": SUPABASE_KEY,
-    "Authorization": "Bearer " + ((await cashierAuthClient.auth.getSession()).data?.session?.access_token || SUPABASE_KEY)
+    "Authorization": "Bearer " + SUPABASE_KEY
   };
 }
 
@@ -12486,7 +12486,7 @@ async function loadTransactionHistory() {
           method: "GET",
           headers: {
             "apikey": SUPABASE_KEY,
-            "Authorization": "Bearer " + SUPABASE_KEY
+            "Authorization": "Bearer " + ((await cashierAuthClient.auth.getSession()).data?.session?.access_token || SUPABASE_KEY)
           }
         }
       );
