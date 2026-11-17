@@ -7,7 +7,47 @@ const corsHeaders = {
 };
 
 const legacyPermissionKeys = ["orders", "tables", "stocks", "dispatcher", "settings", "void"];
-const requiredPermissionKeys = ["orders", "tables", "stocks", "dispatcher", "settings"];
+const requiredLegacyPermissionKeys = ["orders", "tables", "stocks", "dispatcher", "settings"];
+const allowedModules = new Set([
+  "overview", "sales", "settings", "orders", "expenses", "staff", "audit", "branches", "health", "ai",
+  "inventory", "tables", "dispatcher", "payments", "menu", "discounts", "vouchers", "tax",
+  "service_charge", "receipts", "printers", "transactions",
+]);
+const allowedActions = new Set(["view", "create", "edit", "delete", "approve", "manage"]);
+const allowedTopLevelKeys = new Set([...legacyPermissionKeys, "staff_management", "modules"]);
+
+function isBooleanRecord(value: unknown): value is Record<string, boolean> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function validatePermissions(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const permissions = value as Record<string, unknown>;
+  const keys = Object.keys(permissions);
+  if (keys.some((key) => !allowedTopLevelKeys.has(key))) return false;
+
+  if (permissions.staff_management !== undefined && typeof permissions.staff_management !== "boolean") {
+    return false;
+  }
+
+  if (permissions.modules !== undefined) {
+    if (!permissions.modules || typeof permissions.modules !== "object" || Array.isArray(permissions.modules)) {
+      return false;
+    }
+    const modules = permissions.modules as Record<string, unknown>;
+    if (Object.keys(modules).length > allowedModules.size) return false;
+    for (const [moduleName, actionValue] of Object.entries(modules)) {
+      if (!allowedModules.has(moduleName) || !isBooleanRecord(actionValue)) return false;
+      for (const [actionName, enabled] of Object.entries(actionValue)) {
+        if (!allowedActions.has(actionName) || typeof enabled !== "boolean") return false;
+      }
+    }
+    return Object.keys(modules).length > 0;
+  }
+
+  if (!requiredLegacyPermissionKeys.every((key) => typeof permissions[key] === "boolean")) return false;
+  return keys.every((key) => key === "staff_management" || legacyPermissionKeys.includes(key));
+}
 
 Deno.serve(async (req: Request) => {
   const json = (body: Record<string, unknown>, status = 200) =>
@@ -49,13 +89,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Invalid restaurant, branch, or staff account" }, 400);
     }
 
-    if (!permissions || typeof permissions !== "object" || Array.isArray(permissions)) {
-      return json({ error: "Invalid staff permissions" }, 400);
-    }
-    const suppliedKeys = Object.keys(permissions);
-    if (!requiredPermissionKeys.every((key) => typeof permissions[key] === "boolean") ||
-        suppliedKeys.some((key) => !legacyPermissionKeys.includes(key)) ||
-        (Object.prototype.hasOwnProperty.call(permissions, "void") && typeof permissions.void !== "boolean")) {
+    if (!validatePermissions(permissions)) {
       return json({ error: "Invalid staff permissions" }, 400);
     }
 
