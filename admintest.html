@@ -3252,7 +3252,7 @@ const MANAGER_PERMISSION_PROFILES={
   'Sales & Reporting Manager':{overview:['view'],sales:['view'],orders:['view'],expenses:['view'],payments:['view'],audit:['view'],ai:['view']}
 };
 function managerPermissionsEditor(manager){
-  if(!manager||String(manager.role||'').toLowerCase()!=='manager'){toast('Manager account could not be verified');return;}
+  if(!manager||String(manager.position||'').trim().toLowerCase()!=='manager'){toast('Manager account could not be verified');return;}
   const managerName=manager.display_name||manager.full_name||manager.cashier_username||'Manager';
   L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="managerPermTitle" style="max-width:1080px;width:min(1080px,96vw);max-height:90vh;overflow:auto">
     <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><div class="mu" style="font-size:12px;letter-spacing:.08em;text-transform:uppercase">Admin · Staff & Permissions</div><h3 id="managerPermTitle" style="font-size:21px;margin:4px 0">Manager Permissions</h3><p class="note">Configure branch-specific access for <strong>${esc(managerName)}</strong>.</p></div><button class="btn" type="button" data-a="close" aria-label="Close">Close</button></div>
