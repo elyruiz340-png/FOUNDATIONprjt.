@@ -229,9 +229,13 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   $("saveStaffButton").disabled=true;$("formMessage").textContent="Creating staff account securely...";
   try{
    const {data,error}=await sb.functions.invoke("create-staff",{body:{restaurant_id:RESTAURANT_ID,branch_id:activeBranch.id,full_name:fullName,display_name:displayName,position,username,permissions,pin}});
-   if(error)throw new Error(data?.error||error.message||"Unable to create staff account.");
+   if(error){
+    let errorMessage=data?.error||error.message||"Unable to create staff account.";
+    if(error.context&&typeof error.context.json==="function"){try{const detail=await error.context.json();if(detail?.error)errorMessage=detail.error;}catch(_){}}
+    throw new Error(errorMessage);
+   }
    if(!data?.success)throw new Error(data?.error||"Staff account creation was not confirmed.");
-   closeModal();await loadBranchData();notify("Staff account created successfully.");
+   closeModal();await loadBranchData();notify(data.audit_logged===false?"Staff account created, but audit logging needs attention.":"Staff account created successfully.",data.audit_logged===false);
   }catch(error){$("formMessage").textContent=error.message||"Unable to create staff account.";}
   finally{$("saveStaffButton").disabled=false;$("staffPin").value="";$("staffPinConfirm").value="";}
  });
@@ -243,9 +247,13 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   button.disabled=true;
   try{
    const {data,error}=await sb.functions.invoke("staff-session-action",{body:{action:"remove_branch_access",restaurant_user_id:id,branch_id:activeBranch.id}});
-   if(error)throw new Error(data?.error||error.message||"Unable to remove branch access.");
+   if(error){
+    let errorMessage=data?.error||error.message||"Unable to remove branch access.";
+    if(error.context&&typeof error.context.json==="function"){try{const detail=await error.context.json();if(detail?.error)errorMessage=detail.error;}catch(_){}}
+    throw new Error(errorMessage);
+   }
    if(!data?.success)throw new Error(data?.error||"Branch access removal was not confirmed.");
-   await loadBranchData();notify("Staff access removed from this branch.");
+   await loadBranchData();notify(data.audit_logged===false?"Access removed, but audit logging needs attention.":"Staff access removed from this branch.",data.audit_logged===false);
   }catch(error){button.disabled=false;notify(error.message||"Unable to remove branch access.",true);}
  }
 
