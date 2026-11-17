@@ -426,6 +426,7 @@ DECLARE
   v_restaurant_id uuid;
   v_actor_name text;
   v_session_branch_id uuid;
+  v_session_found boolean := false;
   v_order public.orders%rowtype;
 BEGIN
   IF auth.uid() IS NULL THEN
@@ -446,8 +447,8 @@ BEGIN
     RAISE EXCEPTION 'Active staff account not found';
   END IF;
 
-  SELECT ss.branch_id
-    INTO v_session_branch_id
+  SELECT true, ss.branch_id
+    INTO v_session_found, v_session_branch_id
   FROM public.staff_sessions ss
   WHERE ss.id = p_session_id
     AND ss.user_id = auth.uid()
@@ -455,7 +456,7 @@ BEGIN
     AND ss.restaurant_id = v_restaurant_id
     AND ss.logout_at IS NULL;
 
-  IF v_session_branch_id IS NULL THEN
+  IF NOT v_session_found THEN
     RAISE EXCEPTION 'Active staff session required';
   END IF;
 
@@ -463,7 +464,17 @@ BEGIN
   FROM public.orders o
   WHERE o.id = p_order_id
     AND o.restaurant_id = v_restaurant_id
-    AND o.branch_id = v_session_branch_id
+    AND (
+      o.branch_id = v_session_branch_id
+      OR (
+        o.branch_id IS NULL
+        AND v_session_branch_id IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM public.restaurant_branches b
+          WHERE b.restaurant_id = v_restaurant_id AND b.is_active = true
+        )
+      )
+    )
   FOR UPDATE;
 
   IF NOT FOUND THEN
