@@ -14520,7 +14520,7 @@ if (cashierLogoutButton) {
         checkoutOverlay.getAttribute("aria-hidden") === "false"
       )
     ) {
-      window.alert(
+      voidToast(
         "You have a checkout in progress. Please finish or close checkout before logging out."
       );
       return;
@@ -14603,7 +14603,7 @@ if (cashierLogoutButton) {
     } catch (error) {
       console.error("Cashier logout failed:", error);
 
-      window.alert(
+      voidToast(
         "Unable to log out securely. Please try again."
       );
 
@@ -14804,6 +14804,7 @@ if (cashierLoginForm) {
 
 /* Secure order void actions and manager approval queue. */
 (function(){
+ function voidToast(message,isError=false){let host=document.getElementById('edmelVoidToast');if(!host){host=document.createElement('div');host.id='edmelVoidToast';host.style.cssText='position:fixed;right:22px;bottom:22px;z-index:99999;max-width:min(420px,calc(100vw - 32px));padding:13px 17px;border-radius:13px;background:#203c2a;color:#fff;box-shadow:0 12px 35px rgba(0,0,0,.2);font:600 13px/1.45 Inter,Arial,sans-serif;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none';document.body.appendChild(host);}host.style.background=isError?'#8f3d32':'#203c2a';host.textContent=message;host.style.opacity='1';host.style.transform='translateY(0)';clearTimeout(host._hideTimer);host._hideTimer=setTimeout(()=>{host.style.opacity='0';host.style.transform='translateY(8px)';},4200);}
  const style=document.createElement('style');
  style.textContent='.transaction-void-action{display:block;margin-top:7px;border:1px solid #d9a59a;background:#fff5f2;color:#9a4638;border-radius:8px;padding:5px 9px;font-size:11px;font-weight:800}.transaction-void-action:hover{background:#ffe9e3}.void-approval-panel{margin:12px 0;padding:13px;border:1px solid #ead9b7;border-radius:12px;background:#fffaf0}.void-approval-panel h3{margin:0 0 9px;font-size:14px;color:#684d20}.void-approval-row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid #f0e5d0;font-size:12px}.void-approval-row button{border:0;border-radius:7px;padding:6px 9px;font-size:11px;font-weight:800}.void-approve{background:#e8f4e9;color:#24633a}.void-reject{background:#fff0ed;color:#9a4638}';
  document.head.appendChild(style);
@@ -14811,8 +14812,8 @@ if (cashierLoginForm) {
  if(wrap&&!document.getElementById('pendingVoidRequests'))wrap.insertAdjacentHTML('beforebegin','<div id="pendingVoidRequests"></div>');
  async function rpc(orderId,action,reason,requestId){if(!cashierAuthClient||!halinaStaffSessionId)throw new Error('An active staff session is required.');const {data,error}=await cashierAuthClient.rpc('edmel_void_order',{p_order_id:orderId,p_session_id:halinaStaffSessionId,p_reason:reason,p_action:action,p_void_request_id:requestId||null});if(error)throw error;if(!data||data.success!==true)throw new Error(data?.message||'Void action was not confirmed.');return data;}
  async function loadPending(){const panel=document.getElementById('pendingVoidRequests');if(!panel||!cashierAuthClient||!halinaStaffSessionId)return;try{const {data,error}=await cashierAuthClient.from('order_void_requests').select('id,order_id,reason,requested_by_name,requested_order_status,created_at').eq('request_status','pending').order('created_at',{ascending:true});if(error)throw error;if(!data?.length){panel.innerHTML='';return;}panel.innerHTML='<section class="void-approval-panel"><h3>Pending Void Approvals</h3>'+data.map(r=>'<div class="void-approval-row"><div><strong>Order '+escapeHtml(String(r.order_id).slice(0,8))+'</strong><br><span>'+escapeHtml(r.reason)+'</span><br><small>Requested by '+escapeHtml(r.requested_by_name||'Staff')+' · '+escapeHtml(r.requested_order_status)+'</small></div><div><button class="void-approve" data-void-review="approve" data-order="'+escapeHtml(r.order_id)+'" data-request="'+escapeHtml(r.id)+'">Approve</button> <button class="void-reject" data-void-review="reject" data-order="'+escapeHtml(r.order_id)+'" data-request="'+escapeHtml(r.id)+'">Reject</button></div></div>').join('')+'</section>';}catch(e){console.warn('Pending void requests could not load:',e.message);}}
- document.addEventListener('click',async event=>{const voidBtn=event.target.closest('[data-void-order]');if(voidBtn){const id=voidBtn.dataset.voidOrder,reason=window.prompt('Enter the reason for voiding this order:');if(reason===null)return;if(reason.trim().length<3){window.alert('Please enter a reason with at least 3 characters.');return;}voidBtn.disabled=true;try{const result=await rpc(id,'request',reason.trim());window.alert(result.approval_required?'Void request sent for Manager/Owner approval.':'Order voided successfully. Stock was not adjusted because the stock mapping is not yet verified.');await loadTransactionHistory();await loadPending();}catch(e){window.alert(e.message||'Unable to void this order.');voidBtn.disabled=false;}return;}
- const review=event.target.closest('[data-void-review]');if(review){const reason=window.prompt(review.dataset.voidReview==='approve'?'Approval note (required):':'Reason for rejection (required):');if(reason===null)return;if(reason.trim().length<3){window.alert('Enter at least 3 characters.');return;}review.disabled=true;try{await rpc(review.dataset.order,review.dataset.voidReview,reason.trim(),review.dataset.request);window.alert(review.dataset.voidReview==='approve'?'Void approved. Order is now voided.':'Void request rejected.');await loadTransactionHistory();await loadPending();}catch(e){window.alert(e.message||'Unable to process approval.');review.disabled=false;}}});
+ document.addEventListener('click',async event=>{const voidBtn=event.target.closest('[data-void-order]');if(voidBtn){const id=voidBtn.dataset.voidOrder,reason=window.prompt('Enter the reason for voiding this order:');if(reason===null)return;if(reason.trim().length<3){voidToast('Please enter a reason with at least 3 characters.');return;}voidBtn.disabled=true;try{const result=await rpc(id,'request',reason.trim());voidToast(result.approval_required?'Void request sent for Manager/Owner approval.':'Order voided successfully. Stock was not adjusted because the stock mapping is not yet verified.');await loadTransactionHistory();await loadPending();}catch(e){voidToast(e.message||'Unable to void this order.');voidBtn.disabled=false;}return;}
+ const review=event.target.closest('[data-void-review]');if(review){const reason=window.prompt(review.dataset.voidReview==='approve'?'Approval note (required):':'Reason for rejection (required):');if(reason===null)return;if(reason.trim().length<3){voidToast('Enter at least 3 characters.');return;}review.disabled=true;try{await rpc(review.dataset.order,review.dataset.voidReview,reason.trim(),review.dataset.request);voidToast(review.dataset.voidReview==='approve'?'Void approved. Order is now voided.':'Void request rejected.');await loadTransactionHistory();await loadPending();}catch(e){voidToast(e.message||'Unable to process approval.');review.disabled=false;}}});
  document.addEventListener('click',e=>{if(e.target.closest('#refreshTransactionHistory'))loadPending();});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadPending();});
  const originalLoad=window.loadTransactionHistory;
