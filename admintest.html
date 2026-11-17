@@ -3235,6 +3235,68 @@ function staffDuration(start,end){
 function staffLatestSession(u){
   return STAFF_SESSIONS.find(s=>s.restaurant_user_id===u.id && !s.logout_at && Date.now()-new Date(s.last_seen_at).getTime()<120000);
 }
+
+const MANAGER_PERMISSION_MODULES=[
+  ['overview','Overview'],['sales','Sales & Analytics'],['settings','Business Settings'],
+  ['orders','Orders & Transactions'],['expenses','Expenses & Profit'],['staff','Staff & Permissions'],
+  ['audit','Audit Logs'],['branches','Multi-Branch Management'],['health','System Health'],
+  ['inventory','Inventory'],['tables','Tables'],['dispatcher','Dispatcher'],['payments','Payments'],
+  ['menu','Menu'],['discounts','Discounts & Vouchers'],['tax','Tax & Service Charge'],
+  ['receipts','Receipts & Printers'],['ai','EDY — AI Assistant']
+];
+const MANAGER_PERMISSION_ACTIONS=['view','create','edit','delete','approve','manage'];
+const MANAGER_PERMISSION_PROFILES={
+  'Operations Manager':{overview:['view'],sales:['view'],settings:['view'],orders:['view','create','edit','approve'],expenses:['view','create','edit'],staff:['view'],audit:['view'],inventory:['view','edit'],tables:['view','edit'],dispatcher:['view','edit'],payments:['view'],menu:['view'],discounts:['view'],tax:['view'],receipts:['view'],ai:['view']},
+  'Branch Supervisor':{overview:['view'],sales:['view'],orders:['view','edit','approve'],expenses:['view'],staff:['view'],audit:['view'],inventory:['view'],tables:['view','edit'],dispatcher:['view','edit'],payments:['view'],menu:['view'],receipts:['view'],ai:['view']},
+  'Inventory Manager':{overview:['view'],inventory:['view','create','edit','delete'],menu:['view'],orders:['view'],sales:['view'],ai:['view']},
+  'Sales & Reporting Manager':{overview:['view'],sales:['view'],orders:['view'],expenses:['view'],payments:['view'],audit:['view'],ai:['view']}
+};
+function managerPermissionsEditor(manager){
+  if(!manager||String(manager.role||'').toLowerCase()!=='manager'){toast('Manager account could not be verified');return;}
+  const managerName=manager.display_name||manager.full_name||manager.cashier_username||'Manager';
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="managerPermTitle" style="max-width:1080px;width:min(1080px,96vw);max-height:90vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><div class="mu" style="font-size:12px;letter-spacing:.08em;text-transform:uppercase">Admin · Staff & Permissions</div><h3 id="managerPermTitle" style="font-size:21px;margin:4px 0">Manager Permissions</h3><p class="note">Configure branch-specific access for <strong>${esc(managerName)}</strong>.</p></div><button class="btn" type="button" data-a="close" aria-label="Close">Close</button></div>
+    <div class="g g2"><section class="card"><h3>Manager Account</h3><div class="row"><span class="mu">Name</span><strong>${esc(managerName)}</strong></div><div class="row"><span class="mu">Username</span><strong>${esc(manager.cashier_username||'—')}</strong></div><div class="row"><span class="mu">Role</span><strong>Manager</strong></div><p class="note" style="margin-top:10px">Recommended profiles are starting templates. Applying a profile only changes this editor's draft until saved through the secure Admin permission service.</p></section>
+    <section class="card"><h3>Recommended Profile</h3><div class="fl"><label for="managerPermissionProfile">Choose a starting profile</label><select id="managerPermissionProfile"><option value="Custom Access">Custom Access</option><option>Operations Manager</option><option>Branch Supervisor</option><option>Inventory Manager</option><option>Sales & Reporting Manager</option></select></div><button id="managerApplyProfile" class="btn" type="button">Apply Profile to Draft</button><p class="note" style="margin:10px 0 0">Existing branch permissions are not silently overwritten.</p></section></div>
+    <section class="card"><h3>Branch Assignment</h3><p class="note">Select the branches this Manager may access. Permissions are configured separately for each selected branch.</p><div id="managerBranchList" class="g g2"><span class="mu">Loading branches…</span></div></section>
+    <section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3 style="margin-bottom:3px">Module Permissions</h3><p class="note">Choose a branch above to inspect and edit its permission draft.</p></div><select id="managerPermissionBranch" aria-label="Permission branch"><option value="">Select a branch</option></select></div><div id="managerPermissionMatrix" class="tw"><p class="mu">Loading branch permissions…</p></div></section>
+    <section class="card"><h3>Management Authority</h3><p class="note">These controls are separate from ordinary module visibility. Granting authority requires server-side validation.</p><div id="managerAuthorityControls"><label class="row"><span>Manage subordinate staff</span><input type="checkbox" data-authority="staff_management" disabled></label><label class="row"><span>Assign staff to branches</span><input type="checkbox" data-authority="branch_assignment" disabled></label><label class="row"><span>Edit subordinate permissions</span><input type="checkbox" data-authority="permission_management" disabled></label></div><p class="note">Authority controls are preview-only until the Admin authorization endpoint is connected.</p></section>
+    <div class="tb" style="justify-content:space-between"><span id="managerPermissionStatus" class="note" role="status">Loading current branch access…</span><div style="display:flex;gap:8px"><button class="btn" type="button" data-a="close">Cancel</button><button class="btn pri" id="managerPermissionSave" type="button" disabled>Save Permissions (Backend Pending)</button></div></div>
+  </div>`;
+  const branchList=L.querySelector('#managerBranchList'),branchSelect=L.querySelector('#managerPermissionBranch'),matrix=L.querySelector('#managerPermissionMatrix'),status=L.querySelector('#managerPermissionStatus'),save=L.querySelector('#managerPermissionSave');
+  let branches=[],accessRows=[],drafts={},selectedBranches=new Set();
+  const clone=o=>JSON.parse(JSON.stringify(o||{}));
+  const normalize=raw=>{const p=clone(raw);if(!p.modules)p.modules={};return p;};
+  const currentDraft=()=>drafts[branchSelect.value]||(drafts[branchSelect.value]={modules:{}});
+  function renderMatrix(){
+    const branchId=branchSelect.value;
+    if(!branchId){matrix.innerHTML='<p class="mu">Select a branch to configure its permissions.</p>';return;}
+    const p=currentDraft();
+    matrix.innerHTML=`<table><thead><tr><th>Module</th>${MANAGER_PERMISSION_ACTIONS.map(a=>`<th>${a[0].toUpperCase()+a.slice(1)}</th>`).join('')}</tr></thead><tbody>${MANAGER_PERMISSION_MODULES.map(([key,label])=>`<tr><td><strong>${label}</strong></td>${MANAGER_PERMISSION_ACTIONS.map(action=>`<td><input type="checkbox" data-module="${key}" data-action="${action}" aria-label="${label} ${action}" ${p.modules[key]?.[action]===true?'checked':''}></td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    matrix.querySelectorAll('input[data-module]').forEach(input=>input.addEventListener('change',()=>{const mod=input.dataset.module,act=input.dataset.action;if(!p.modules[mod])p.modules[mod]={};p.modules[mod][act]=input.checked;}));
+  }
+  function renderBranches(){
+    branchList.innerHTML=branches.length?branches.map(b=>`<label class="row" style="justify-content:flex-start;gap:10px"><input type="checkbox" data-branch="${esc(b.id)}" ${selectedBranches.has(b.id)?'checked':''}><span><strong>${esc(b.name)}</strong><span class="mu" style="display:block;font-size:12px">${esc(b.code||'Branch')}</span></span></label>`).join(''):'<p class="mu">No active branches were found for this restaurant.</p>';
+    branchSelect.innerHTML='<option value="">Select a branch</option>'+branches.filter(b=>selectedBranches.has(b.id)).map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
+    branchList.querySelectorAll('input[data-branch]').forEach(input=>input.addEventListener('change',()=>{const id=input.dataset.branch;if(input.checked)selectedBranches.add(id);else selectedBranches.delete(id);renderBranches();if(!selectedBranches.has(branchSelect.value))branchSelect.value='';renderMatrix();}));
+    renderMatrix();
+  }
+  L.querySelector('#managerApplyProfile').onclick=()=>{const profile=L.querySelector('#managerPermissionProfile').value;if(profile==='Custom Access'){status.textContent='Custom Access selected. Existing drafts are unchanged.';return;}const template=MANAGER_PERMISSION_PROFILES[profile]||{};if(!branchSelect.value){status.textContent='Select a branch before applying a profile.';return;}const modules={};Object.entries(template).forEach(([key,actions])=>{modules[key]={};actions.forEach(a=>modules[key][a]=true);});drafts[branchSelect.value]={modules};renderMatrix();status.textContent=profile+' applied to the selected branch draft only.';};
+  branchSelect.onchange=renderMatrix;
+  (async()=>{
+    try{
+      const [{data:branchData,error:branchError},{data:accessData,error:accessError}]=await Promise.all([
+        sb.from('restaurant_branches').select('id,name,code,is_default').eq('restaurant_id',HALINA_RESTAURANT_ID).eq('is_active',true).order('name'),
+        sb.from('staff_branch_access').select('branch_id,permissions,is_active').eq('restaurant_user_id',manager.id)
+      ]);
+      if(branchError)throw branchError;if(accessError)throw accessError;
+      branches=branchData||[];accessRows=(accessData||[]).filter(x=>x.is_active!==false);
+      accessRows.forEach(row=>{selectedBranches.add(row.branch_id);drafts[row.branch_id]=normalize(row.permissions);});
+      renderBranches();status.textContent=accessRows.length+' active branch assignment(s) loaded. Changes are draft-only.';
+    }catch(error){branchList.innerHTML='<p class="er">Unable to load branch assignments: '+esc(error.message||String(error))+'</p>';matrix.innerHTML='<p class="mu">Permission editor could not load its data.</p>';status.textContent='Read failed. No changes were saved.';}
+  })();
+}
+
 function staffPage(){
   const permissionNames={orders:'Orders',void:'Void Orders',tables:'Tables',stocks:'Stocks',dispatcher:'Dispatcher',settings:'Settings'};
   const rows=STAFF_ROWS.map(u=>{
@@ -3250,7 +3312,7 @@ function staffPage(){
     const status=active?(online?'<span class="bd">● Online</span>':'<span class="bd">● Offline</span>'):'<span class="bd er">Deactivated</span>';
     const actions=String(u.role||'').toLowerCase()==='staff'
       ? `<div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn" type="button" data-a="staffeditprofile" data-id="${esc(u.id)}" style="white-space:nowrap">Edit Profile</button><button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" style="white-space:nowrap">Reset PIN</button> ${active?`<button class="btn" type="button" data-a="staffdeactivate" data-id="${esc(u.id)}" style="white-space:nowrap">Deactivate</button>`:'<span class="mu">Inactive</span>'}</div>`
-      : '<span class="mu">—</span>';
+      : String(u.role||'').toLowerCase()==='manager' ? `<button class="btn pri" type="button" data-a="managerpermissions" data-id="${esc(u.id)}">Manage Permissions</button>` : '<span class="mu">—</span>';
     return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
   });
   return `<div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
@@ -3262,6 +3324,7 @@ function staffPage(){
 }
 PG.staff=staffPage;
 A.addstaff=()=>staffAddForm();
+A.managerpermissions=(button)=>managerPermissionsEditor(STAFF_ROWS.find(row=>row.id===button.dataset.id));
 A.staffrefresh=async()=>{
   try{await loadStaffData();render();toast('Staff list refreshed');}
   catch(e){staffLoadError=e.message||String(e);render();}
