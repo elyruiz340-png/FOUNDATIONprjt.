@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EDMEL | Manager Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:light;--bg:#f3f5ef;--surface:#fff;--surface2:#f8faf6;--line:#e3e9df;--text:#1e3024;--muted:#718073;--green:#236b42;--green2:#174d30;--soft:#e9f3eb;--red:#a33d34;--amber:#91631c;--shadow:0 18px 48px rgba(30,61,39,.09)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0%,#e4efe4 0,transparent 35%),var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}.hidden{display:none!important}
+#loginView{min-height:100vh;display:grid;place-items:center;padding:24px}.login-card{width:min(420px,100%);padding:34px;border:1px solid rgba(255,255,255,.8);border-radius:24px;background:rgba(255,255,255,.88);box-shadow:var(--shadow);backdrop-filter:blur(16px)}.brand-mark{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#2e8050,#174d30);color:#fff;font-weight:900;font-size:18px;box-shadow:0 8px 18px rgba(35,107,66,.2)}h1{font-size:24px;letter-spacing:-.6px;margin:18px 0 4px}.sub{color:var(--muted);margin:0 0 22px}.field{display:grid;gap:6px;margin:14px 0}.field label{font-size:12px;font-weight:800;color:#4c5e50}.field input,.field select{height:46px;border:1px solid var(--line);border-radius:11px;padding:0 13px;background:#fbfcfa;color:var(--text);outline:none}.field input:focus,.field select:focus{border-color:#6a9d78;box-shadow:0 0 0 3px rgba(48,123,73,.12)}.primary{border:0;border-radius:11px;padding:12px 18px;background:linear-gradient(145deg,#2e8050,#1c5c38);color:#fff;font-weight:800;box-shadow:0 7px 16px rgba(35,107,66,.18)}.secondary{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#fff;color:var(--text);font-weight:750}.danger{border:1px solid #f0d5d2;border-radius:10px;padding:8px 11px;background:#fff8f7;color:var(--red);font-weight:750}.message{min-height:20px;margin:10px 0 0;font-size:12px;color:var(--red)}.note{font-size:12px;color:var(--muted)}
+#appView{min-height:100vh}.topbar{height:72px;padding:0 clamp(16px,4vw,52px);display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid rgba(220,229,218,.8);background:rgba(255,255,255,.76);backdrop-filter:blur(18px);position:sticky;top:0;z-index:5}.top-left{display:flex;align-items:center;gap:12px}.top-title{font-weight:900;letter-spacing:.02em}.top-title small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0}.top-actions{display:flex;align-items:center;gap:10px}.user-pill{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:12px;font-weight:750}
+main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:22px}.welcome h1{margin:0;font-size:28px}.welcome p{margin:5px 0 0;color:var(--muted)}.branch-select{display:flex;align-items:center;gap:9px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}.branch-select label{font-size:11px;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}.branch-select select{border:0;background:transparent;font-weight:800;color:var(--text);outline:none;max-width:220px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}.stat{padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.9);box-shadow:0 7px 22px rgba(30,61,39,.04)}.stat span{display:block;color:var(--muted);font-size:12px;font-weight:750}.stat strong{display:block;margin-top:5px;font-size:26px;letter-spacing:-.7px}.panel{border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:0 8px 24px rgba(30,61,39,.04);overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}.panel-head h2{margin:0;font-size:16px}.panel-head p{margin:3px 0 0;font-size:12px;color:var(--muted)}.panel-body{padding:0 20px 16px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th{text-align:left;padding:13px 10px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line)}td{padding:14px 10px;border-bottom:1px solid #edf1eb;vertical-align:middle}tr:last-child td{border-bottom:0}.staff-name{font-weight:850}.staff-user{font-size:11px;color:var(--muted)}.status{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;background:#f0f3ef;color:#69756b}.status:before{content:"";width:6px;height:6px;border-radius:50%;background:#9aa59a}.status.online{background:#e8f5eb;color:#22623b}.status.online:before{background:#39a15b}.status.removed{background:#fff3e4;color:#8a5b1a}.status.removed:before{background:#d39a3f}.chips{display:flex;gap:5px;flex-wrap:wrap}.chip{padding:4px 7px;border-radius:7px;background:#f1f5f0;color:#526353;font-size:10px;font-weight:750}.empty{padding:34px 12px;text-align:center;color:var(--muted)}.history{margin-top:18px}.history-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #edf1eb}.history-row:last-child{border-bottom:0}.history-row strong{font-size:12px}.history-row small{display:block;color:var(--muted);font-size:11px}
+#staffModal{position:fixed;inset:0;z-index:20;display:none;place-items:center;padding:18px;background:rgba(19,34,24,.38);backdrop-filter:blur(5px)}#staffModal.open{display:grid}.modal{width:min(620px,100%);max-height:min(90vh,820px);overflow:auto;border:1px solid rgba(255,255,255,.8);border-radius:20px;background:#fff;box-shadow:0 25px 80px rgba(10,30,17,.22)}.modal-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head h2{margin:0;font-size:18px}.modal-body{padding:20px 22px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.permissions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 18px}.permission{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);font-size:12px;font-weight:750}.permission input{accent-color:var(--green)}.modal-actions{display:flex;justify-content:flex-end;gap:9px;padding:15px 22px;border-top:1px solid var(--line)}.hint{padding:11px 13px;border-radius:10px;background:#f1f6f0;color:#506351;font-size:11px;margin:12px 0}
+@media(max-width:700px){.topbar{height:64px}.welcome{align-items:flex-start;flex-direction:column}.branch-select{width:100%;justify-content:space-between}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}.form-grid{grid-template-columns:1fr}.top-actions .user-pill{display:none}main{width:calc(100% - 24px);margin-top:20px}.panel-head{align-items:flex-start;flex-direction:column}.panel-body{padding:0 12px 12px}}
+</style>
+</head>
+<body>
+<section id="loginView">
+ <form class="login-card" id="loginForm">
+  <div class="brand-mark">E</div>
+  <h1>Manager Sign In</h1>
+  <p class="sub">Access your assigned branch and manage your team.</p>
+  <div class="field"><label for="username">Username</label><input id="username" autocomplete="username" maxlength="80" required></div>
+  <div class="field"><label for="pin">6-Digit PIN</label><input id="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="current-password" required></div>
+  <button class="primary" id="loginButton" type="submit" style="width:100%">Sign In</button>
+  <div class="message" id="loginMessage" role="alert"></div>
+  <p class="note">Manager access is limited to assigned branches and permissions.</p>
+ </form>
+</section>
+
+<section id="appView" class="hidden">
+ <header class="topbar">
+  <div class="top-left"><div class="brand-mark" style="width:36px;height:36px;border-radius:11px">E</div><div class="top-title">EDMEL <small>MANAGER WORKSPACE</small></div></div>
+  <div class="top-actions"><span class="user-pill" id="managerName">Manager</span><button class="secondary" id="logoutButton">Sign Out</button></div>
+ </header>
+ <main>
+  <div class="welcome">
+   <div><h1>Team Management</h1><p>Manage subordinate staff and branch access.</p></div>
+   <div class="branch-select"><label for="branchSelect">Branch</label><select id="branchSelect"></select></div>
+  </div>
+  <div class="stats">
+   <div class="stat"><span>Assigned Staff</span><strong id="statStaff">—</strong></div>
+   <div class="stat"><span>Currently Online</span><strong id="statOnline">—</strong></div>
+   <div class="stat"><span>My Branch Permissions</span><strong id="statPermissions">—</strong></div>
+  </div>
+  <section class="panel">
+   <div class="panel-head"><div><h2>Staff & Permissions</h2><p>Only staff below your authority are shown here.</p></div><button class="primary" id="addStaffButton">+ Add Staff</button></div>
+   <div class="panel-body">
+    <div class="table-wrap"><table><thead><tr><th>Staff Member</th><th>Position</th><th>Branch Status</th><th>Login Status</th><th>Permissions</th><th>Action</th></tr></thead><tbody id="staffRows"><tr><td colspan="6" class="empty">Loading staff...</td></tr></tbody></table></div>
+    <div class="note" id="staffMessage" style="padding:10px 0 0"></div>
+   </div>
+  </section>
+  <section class="panel history">
+   <div class="panel-head"><div><h2>Recent Staff Sessions</h2><p>Login and logout activity for this branch.</p></div><button class="secondary" id="refreshButton">Refresh</button></div>
+   <div class="panel-body" id="sessionRows"><div class="empty">Loading session history...</div></div>
+  </section>
+ </main>
+</section>
+
+<div id="staffModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+ <form class="modal" id="staffForm">
+  <div class="modal-head"><h2 id="modalTitle">Add Staff Member</h2><button class="secondary" type="button" id="closeModal">Close</button></div>
+  <div class="modal-body">
+   <div class="form-grid">
+    <div class="field"><label for="fullName">Full Name</label><input id="fullName" maxlength="100" required></div>
+    <div class="field"><label for="displayName">Display Name</label><input id="displayName" maxlength="60"></div>
+    <div class="field"><label for="position">Position</label><select id="position" required><option value="Cashier">Cashier</option><option value="Kitchen Staff">Kitchen Staff</option></select></div>
+    <div class="field"><label for="staffUsername">Username</label><input id="staffUsername" maxlength="40" pattern="[A-Za-z0-9._-]{3,40}" required></div>
+    <div class="field"><label for="staffPin">6-Digit PIN</label><input id="staffPin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>
+    <div class="field"><label for="staffPinConfirm">Confirm PIN</label><input id="staffPinConfirm" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>
+   </div>
+   <div class="hint" id="permissionHint">You can assign only permissions that are enabled for your own account in this branch.</div>
+   <strong style="font-size:12px">Permissions</strong>
+   <div class="permissions">
+    <label class="permission"><input type="checkbox" id="permOrders"> Orders</label>
+    <label class="permission"><input type="checkbox" id="permVoid"> Void Orders</label>
+    <label class="permission"><input type="checkbox" id="permTables"> Tables</label>
+    <label class="permission"><input type="checkbox" id="permStocks"> Stocks</label>
+    <label class="permission" id="dispatcherPermissionWrap"><input type="checkbox" id="permDispatcher"> Dispatcher</label>
+    <label class="permission"><input type="checkbox" id="permSettings"> Settings</label>
+   </div>
+   <div class="message" id="formMessage" role="alert"></div>
+  </div>
+  <div class="modal-actions"><button class="secondary" type="button" id="cancelModal">Cancel</button><button class="primary" id="saveStaffButton" type="submit">Create Staff</button></div>
+ </form>
+</div>
+
+<script>
+(() => {
+ const SUPABASE_URL = "https://isqcuycjrbjtmqhzckvb.supabase.co";
+ const SUPABASE_KEY = "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
+ const RESTAURANT_ID = "5e562ca7-38aa-4894-8265-ddca2f4e61b6";
+ const sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{storageKey:"edmel-manager-auth",persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+ const $ = id => document.getElementById(id);
+ const esc = value => String(value ?? "").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+ const permissionLabels = {orders:"Orders",void:"Void",tables:"Tables",stocks:"Stocks",dispatcher:"Dispatcher",settings:"Settings"};
+ let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true;
+
+ function showLogin(message=""){ $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden"); $("loginMessage").textContent=message; }
+ function showApp(){ $("loginView").classList.add("hidden"); $("appView").classList.remove("hidden"); }
+ function notify(message,isError=false){ $("staffMessage").textContent=message; $("staffMessage").style.color=isError?"#a33d34":"#718073"; }
+ async function callSession(action,id=null,branchId=null,activity=false){
+  const {data,error}=await sb.functions.invoke("staff-session-action",{body:{action,...(id?{session_id:id}:{}),...(branchId?{branch_id:branchId}:{}),...(action==="heartbeat"?{activity:activity===true}:{})}});
+  if(error)throw new Error(data?.error||error.message||"Staff session request failed.");
+  if(!data?.success) {const e=new Error(data?.error||"Staff session request failed.");e.expired=data?.expired===true;throw e;}
+  return data;
+ }
+ async function endPresence(){if(heartbeat)clearInterval(heartbeat);heartbeat=null;const old=sessionId;sessionId=null;sessionStorage.removeItem("edmel_manager_session_id");if(old){try{await callSession("end",old);}catch(_){}}}
+ async function startPresence(branchId){
+  const stored=sessionStorage.getItem("edmel_manager_session_id");
+  if(stored){try{await callSession("heartbeat",stored,null,true);sessionId=stored;}catch(_){sessionStorage.removeItem("edmel_manager_session_id");}}
+  if(!sessionId){const result=await callSession("start",null,branchId);sessionId=result.session_id;sessionStorage.setItem("edmel_manager_session_id",sessionId);}
+  if(heartbeat)clearInterval(heartbeat);
+  heartbeat=setInterval(async()=>{try{await callSession("heartbeat",sessionId,null,activitySinceHeartbeat);activitySinceHeartbeat=false;}catch(error){await endPresence();await sb.auth.signOut({scope:"local"});showLogin(error.message||"Your session has ended. Please sign in again.");}},45000);
+ }
+ ["pointerdown","keydown","touchstart","click","input","change"].forEach(name=>document.addEventListener(name,()=>{activitySinceHeartbeat=true;},{capture:true,passive:true}));
+
+ async function bootstrap(){
+  const {data:userData,error:userError}=await sb.auth.getUser();
+  if(userError||!userData?.user)throw new Error("Please sign in again.");
+  const {data:links,error:linkError}=await sb.from("restaurant_users").select("id,user_id,restaurant_id,role,position,full_name,display_name,cashier_username,is_active").eq("user_id",userData.user.id).eq("restaurant_id",RESTAURANT_ID).eq("role","staff").eq("is_active",true);
+  if(linkError)throw linkError;
+  managerLink=(links||[]).find(row=>String(row.position||"").toLowerCase()==="manager");
+  if(!managerLink)throw new Error("This account does not have Manager access.");
+  const {data:access,error:accessError}=await sb.from("staff_branch_access").select("branch_id,permissions,is_active").eq("restaurant_user_id",managerLink.id).eq("is_active",true);
+  if(accessError)throw accessError;
+  managerAccess=access||[];
+  const branchIds=managerAccess.map(row=>row.branch_id);
+  if(!branchIds.length)throw new Error("No active branch has been assigned to this Manager account.");
+  const {data:branchRows,error:branchError}=await sb.from("restaurant_branches").select("id,name,code,is_default,is_active").in("id",branchIds).eq("is_active",true);
+  if(branchError)throw branchError;
+  branches=(branchRows||[]).filter(branch=>managerAccess.some(access=>access.branch_id===branch.id&&access.permissions?.staff_management===true));
+  if(!branches.length)throw new Error("Staff management is not enabled for any assigned branch.");
+  const preferred=sessionStorage.getItem("edmel_manager_branch");
+  activeBranch=branches.find(b=>b.id===preferred)||branches.find(b=>b.is_default)||branches[0];
+  ownPermissions=managerAccess.find(a=>a.branch_id===activeBranch.id)?.permissions||{};
+  $("managerName").textContent=managerLink.display_name||managerLink.full_name||"Manager";
+  $("branchSelect").innerHTML=branches.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join("");
+  $("branchSelect").value=activeBranch.id;
+  showApp();
+  await startPresence(activeBranch.id);
+  await loadBranchData();
+ }
+
+ function permissionChips(permissions){
+  return Object.keys(permissionLabels).filter(key=>permissions?.[key]===true).map(key=>'<span class="chip">'+permissionLabels[key]+'</span>').join("")||'<span class="note">No permissions</span>';
+ }
+ function staffIsOnline(staffId){
+  const row=sessionRows.find(s=>s.restaurant_user_id===staffId&&!s.logout_at&&Date.now()-new Date(s.last_seen_at).getTime()<120000);
+  return !!row;
+ }
+ async function loadBranchData(){
+  notify("Loading branch staff...");
+  const [{data:users,error:userError},{data:access,error:accessError},{data:sessions,error:sessionError}] = await Promise.all([
+   sb.from("restaurant_users").select("id,user_id,restaurant_id,role,cashier_username,full_name,display_name,position,permissions,created_at,is_active,deactivated_at").eq("restaurant_id",RESTAURANT_ID).order("created_at",{ascending:true}),
+   sb.from("staff_branch_access").select("restaurant_user_id,branch_id,permissions,is_active").eq("branch_id",activeBranch.id),
+   sb.from("staff_sessions").select("id,restaurant_user_id,user_id,login_at,logout_at,last_seen_at,end_reason").eq("branch_id",activeBranch.id).order("login_at",{ascending:false}).limit(500)
+  ]);
+  if(userError)throw userError;if(accessError)throw accessError;
+  staffRows=(users||[]).filter(u=>String(u.role).toLowerCase()==="staff"&&String(u.position||"").toLowerCase()!=="manager").map(u=>{
+   const a=(access||[]).find(x=>x.restaurant_user_id===u.id);
+   return a?{...u,branchAccess:a}:null;
+  }).filter(Boolean);
+  sessionRows=sessionError?[]:(sessions||[]);
+  renderStaff();
+  renderSessions();
+  const online=staffRows.filter(u=>u.is_active&&u.branchAccess.is_active&&staffIsOnline(u.id)).length;
+  $("statStaff").textContent=staffRows.filter(u=>u.branchAccess.is_active&&u.is_active).length;
+  $("statOnline").textContent=online;
+  $("statPermissions").textContent=Object.keys(permissionLabels).filter(k=>ownPermissions[k]===true).length;
+  notify(sessionError?"Staff loaded. Session history could not be refreshed.":"");
+ }
+
+ function renderStaff(){
+  if(!staffRows.length){$("staffRows").innerHTML='<tr><td colspan="6" class="empty">No subordinate staff are assigned to this branch.</td></tr>';return;}
+  $("staffRows").innerHTML=staffRows.map(u=>{
+   const name=u.display_name||u.full_name||u.cashier_username||"Staff";
+   const removed=!u.branchAccess.is_active;
+   const state=!u.is_active?"Deactivated":removed?"Removed from branch":"Assigned";
+   const online=u.is_active&&!removed&&staffIsOnline(u.id);
+   return '<tr><td><div class="staff-name">'+esc(name)+'</div><div class="staff-user">'+esc(u.cashier_username||"Username unavailable")+'</div></td>'+
+    '<td>'+esc(u.position||"Staff")+'</td>'+
+    '<td><span class="status '+(removed?"removed":"")+'">'+state+'</span></td>'+
+    '<td><span class="status '+(online?"online":"")+'">'+(online?"Online":"Offline")+'</span></td>'+
+    '<td><div class="chips">'+permissionChips(u.branchAccess.permissions)+'</div></td>'+
+    '<td>'+(removed||!u.is_active?'<span class="note">No action</span>':'<button class="danger" data-remove="'+esc(u.id)+'">Remove Access</button>')+'</td></tr>';
+  }).join("");
+  $("staffRows").querySelectorAll("[data-remove]").forEach(button=>button.addEventListener("click",()=>removeBranchAccess(button.dataset.remove,button)));
+ }
+
+ function renderSessions(){
+  const rows=sessionRows.slice(0,12);
+  if(!rows.length){$("sessionRows").innerHTML='<div class="empty">No session history is available for this branch yet.</div>';return;}
+  $("sessionRows").innerHTML=rows.map(s=>{
+   const staff=staffRows.find(u=>u.id===s.restaurant_user_id);
+   const name=staff?.display_name||staff?.full_name||staff?.cashier_username||"Staff";
+   const start=s.login_at?new Date(s.login_at).toLocaleString():"—";
+   const end=s.logout_at?new Date(s.logout_at).toLocaleString():"Currently active";
+   return '<div class="history-row"><div><strong>'+esc(name)+'</strong><small>Login: '+esc(start)+'</small></div><div style="text-align:right"><strong>'+esc(s.logout_at?"Logged out":"Active / not yet ended")+'</strong><small>Logout: '+esc(end)+'</small></div></div>';
+  }).join("");
+ }
+
+ function openModal(){
+  $("formMessage").textContent="";
+  $("staffForm").reset();
+  for(const [key,id] of Object.entries({orders:"permOrders",void:"permVoid",tables:"permTables",stocks:"permStocks",dispatcher:"permDispatcher",settings:"permSettings"})){
+   const input=$(id);input.checked=ownPermissions[key]===true;input.disabled=ownPermissions[key]!==true;
+  }
+  $("dispatcherPermissionWrap").classList.toggle("hidden",ownPermissions.dispatcher!==true);
+  const position=$("position");
+  position.innerHTML='<option value="Cashier">Cashier</option><option value="Kitchen Staff">Kitchen Staff</option>'+(ownPermissions.dispatcher===true?'<option value="Dispatcher">Dispatcher</option>':"");
+  $("staffModal").classList.add("open");
+  $("fullName").focus();
+ }
+ function closeModal(){$("staffModal").classList.remove("open");}
+ $("addStaffButton").addEventListener("click",openModal);
+ $("closeModal").addEventListener("click",closeModal);
+ $("cancelModal").addEventListener("click",closeModal);
+ $("staffModal").addEventListener("click",event=>{if(event.target===$("staffModal"))closeModal();});
+
+ $("staffForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const fullName=$("fullName").value.trim(),displayName=$("displayName").value.trim(),username=$("staffUsername").value.trim(),pin=$("staffPin").value,confirmPin=$("staffPinConfirm").value,position=$("position").value;
+  if(pin!==confirmPin){$("formMessage").textContent="The PIN entries do not match.";return;}
+  const permissions={orders:$("permOrders").checked,void:$("permVoid").checked,tables:$("permTables").checked,stocks:$("permStocks").checked,dispatcher:$("permDispatcher").checked,settings:$("permSettings").checked};
+  for(const [key,value] of Object.entries(permissions)){if(value&&ownPermissions[key]!==true){$("formMessage").textContent="You cannot assign permissions beyond your own branch access.";return;}}
+  $("saveStaffButton").disabled=true;$("formMessage").textContent="Creating staff account securely...";
+  try{
+   const {data,error}=await sb.functions.invoke("create-staff",{body:{restaurant_id:RESTAURANT_ID,branch_id:activeBranch.id,full_name:fullName,display_name:displayName,position,username,permissions,pin}});
+   if(error)throw new Error(data?.error||error.message||"Unable to create staff account.");
+   if(!data?.success)throw new Error(data?.error||"Staff account creation was not confirmed.");
+   closeModal();await loadBranchData();notify("Staff account created successfully.");
+  }catch(error){$("formMessage").textContent=error.message||"Unable to create staff account.";}
+  finally{$("saveStaffButton").disabled=false;$("staffPin").value="";$("staffPinConfirm").value="";}
+ });
+
+ async function removeBranchAccess(id,button){
+  const staff=staffRows.find(u=>u.id===id);if(!staff)return;
+  const name=staff.display_name||staff.full_name||staff.cashier_username||"this staff member";
+  if(!confirm("Remove "+name+" from "+activeBranch.name+"? Their account and access to other branches will remain unchanged."))return;
+  button.disabled=true;
+  try{
+   const {data,error}=await sb.functions.invoke("staff-session-action",{body:{action:"remove_branch_access",restaurant_user_id:id,branch_id:activeBranch.id}});
+   if(error)throw new Error(data?.error||error.message||"Unable to remove branch access.");
+   if(!data?.success)throw new Error(data?.error||"Branch access removal was not confirmed.");
+   await loadBranchData();notify("Staff access removed from this branch.");
+  }catch(error){button.disabled=false;notify(error.message||"Unable to remove branch access.",true);}
+ }
+
+ $("branchSelect").addEventListener("change",async()=>{
+  const next=branches.find(b=>b.id===$("branchSelect").value);if(!next)return;
+  activeBranch=next;ownPermissions=managerAccess.find(a=>a.branch_id===next.id)?.permissions||{};
+  sessionStorage.setItem("edmel_manager_branch",next.id);
+  await endPresence();await startPresence(next.id);await loadBranchData();
+ });
+ $("refreshButton").addEventListener("click",()=>loadBranchData().catch(error=>notify(error.message,true)));
+ $("logoutButton").addEventListener("click",async()=>{await endPresence();await sb.auth.signOut({scope:"local"});showLogin("You have signed out.");});
+ $("loginForm").addEventListener("submit",async event=>{
+  event.preventDefault();const username=$("username").value.trim(),pin=$("pin").value,button=$("loginButton");
+  if(!username||!/^[0-9]{6}$/.test(pin)){showLogin("Enter your username and six-digit PIN.");return;}
+  button.disabled=true;button.textContent="Verifying...";$("loginMessage").textContent="";
+  try{
+   const response=await fetch(SUPABASE_URL+"/functions/v1/cashier-login",{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({username,pin})});
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok||!result.token_hash)throw new Error(result.error||"Invalid username or PIN.");
+   const {data,error}=await sb.auth.verifyOtp({token_hash:result.token_hash,type:"magiclink"});
+   if(error||!data?.session)throw new Error(error?.message||"Authentication could not be completed.");
+   $("pin").value="";
+   await bootstrap();
+  }catch(error){await sb.auth.signOut({scope:"local"});showLogin(error.message||"Unable to sign in.");}
+  finally{button.disabled=false;button.textContent="Sign In";}
+ });
+
+ sb.auth.getSession().then(async({data,error})=>{
+  if(error)throw error;
+  if(data?.session){try{await bootstrap();}catch(e){await endPresence();await sb.auth.signOut({scope:"local"});showLogin(e.message||"Please sign in again.");}}
+ }).catch(error=>showLogin(error.message||"Please sign in."));
+ sb.auth.onAuthStateChange((event)=>{
+  if(event==="SIGNED_OUT"){if(heartbeat)clearInterval(heartbeat);heartbeat=null;sessionId=null;showLogin("Your session has ended. Please sign in again.");}
+ });
+})();
+</script>
+</body>
+</html>
