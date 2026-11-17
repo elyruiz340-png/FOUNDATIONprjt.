@@ -3475,6 +3475,7 @@ function staffAddForm(){
       <div class="fl"><label for="staffPinConfirm">Confirm Cashier PIN *</label><input id="staffPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter six-digit PIN"></div>
       <div class="fl"><label>Permissions</label>
         <label class="row" for="staffPermOrders"><span>Orders</span><input id="staffPermOrders" type="checkbox" checked></label>
+        <label class="row" for="staffPermVoid"><span>Void Orders</span><input id="staffPermVoid" type="checkbox"></label>
         <label class="row" for="staffPermTables"><span>Tables</span><input id="staffPermTables" type="checkbox" checked></label>
         <label class="row" for="staffPermStocks"><span>Stocks</span><input id="staffPermStocks" type="checkbox" checked></label>
         <label class="row" for="staffPermDispatcher"><span>Dispatcher</span><input id="staffPermDispatcher" type="checkbox"></label>
@@ -3497,7 +3498,7 @@ function staffAddForm(){
     const pin=L.querySelector('#staffPin').value;
     const confirmPin=L.querySelector('#staffPinConfirm').value;
     if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
-    const permissions={orders:L.querySelector('#staffPermOrders').checked,tables:L.querySelector('#staffPermTables').checked,stocks:L.querySelector('#staffPermStocks').checked,dispatcher:L.querySelector('#staffPermDispatcher').checked,settings:L.querySelector('#staffPermSettings').checked};
+    const permissions={orders:L.querySelector('#staffPermOrders').checked,void:L.querySelector('#staffPermVoid').checked,tables:L.querySelector('#staffPermTables').checked,stocks:L.querySelector('#staffPermStocks').checked,dispatcher:L.querySelector('#staffPermDispatcher').checked,settings:L.querySelector('#staffPermSettings').checked};
     submitBtn.disabled=true;message.textContent='Creating staff account securely…';
     try{
       const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:HALINA_RESTAURANT_ID,full_name:fullName,display_name:displayName,position,username,permissions,pin}});
