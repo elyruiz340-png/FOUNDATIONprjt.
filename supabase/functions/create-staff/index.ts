@@ -77,7 +77,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: actorLinks, error: actorLinkError } = await admin
       .from("restaurant_users")
-      .select("id,role,position,is_active")
+      .select("id,role,position,is_active,full_name,display_name,cashier_username")
       .eq("user_id", actor.id).eq("restaurant_id", restaurantId).eq("is_active", true);
 
     if (actorLinkError) {
@@ -134,9 +134,30 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Unable to finish staff creation; no staff account was kept" }, 500);
     }
 
+    let auditLogged = true;
+    if (!ownerAdmin) {
+      const actorName = managerLink?.display_name || managerLink?.full_name || managerLink?.cashier_username || "Manager";
+      const { error: auditError } = await admin.from("audit_logs").insert({
+        restaurant_id: restaurantId,
+        actor_user_id: actor.id,
+        actor_name: actorName,
+        actor_role: "manager",
+        action_category: "Staff & Security",
+        action: "Created staff account",
+        record_type: "staff_account",
+        record_id: staffLinkId,
+        result: "success",
+        details: { branch_id: branchId, staff_name: fullName, username, position, permissions: suppliedPermissions },
+      });
+      if (auditError) {
+        auditLogged = false;
+        console.error("create-staff: Manager staff creation audit insert failed", auditError.message);
+      }
+    }
+
     createdAuthUserId = null;
     return json({
-      success: true, staff_id: staffLinkId, username, branch_id: branchId,
+      success: true, staff_id: staffLinkId, username, branch_id: branchId, audit_logged: auditLogged,
       message: "Staff account created. Set up login through the staff login screen.",
     }, 201);
   } catch (_error) {
