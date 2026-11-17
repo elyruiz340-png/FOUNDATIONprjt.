@@ -170,6 +170,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  let currentManagerPage="";
  function moduleAccess(key, action="view"){
   const p=ownPermissions||{};
+  if(key==="staff"&&p.staff_management===true)return true;
   if(p.modules&&typeof p.modules==="object"){
    const grant=p.modules[key];
    if(grant&&typeof grant==="object"&&(grant[action]===true||grant.manage===true))return true;
