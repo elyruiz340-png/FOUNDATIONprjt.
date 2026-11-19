@@ -17,17 +17,24 @@ async function loadExpenses(){
  if(!CURRENT_RESTAURANT_ID){loadError='Restaurant access could not be verified.';expenses=[];if(S.page==='exp')render();return}
  loading=true;loadError='';if(S.page==='exp')render();
  try{
-  const [c,b,e,r,mr,mu,n]=await Promise.all([
+  const [c,b,e,r,mr,mu,n,pol,em,emn,orders]=await Promise.all([
    sb.from('restaurant_expense_categories').select('id,name,description,is_active').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('name'),
    sb.from('restaurant_branches').select('id,name,code,is_default').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('is_active',true).order('name'),
    sb.from('restaurant_expenses').select('id,restaurant_id,branch_id,category_id,expense_date,description,payee,reference_number,notes,amount,currency_code,status,created_at,approved_at,approval_note,rejection_reason,void_reason').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('expense_date',{ascending:false}).order('created_at',{ascending:false}).limit(PAGE_LIMIT),
    sb.from('restaurants').select('currency').eq('id',CURRENT_RESTAURANT_ID).maybeSingle(),
    sb.from('manager_expense_requests').select('id,branch_id,manager_restaurant_user_id,submitted_by_user_id,request_type,expense_id,request_data,status,submitted_at,reviewed_at,review_reason').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('submitted_at',{ascending:false}).limit(500),
    sb.from('restaurant_users').select('id,display_name,full_name,cashier_username,position').eq('restaurant_id',CURRENT_RESTAURANT_ID),
-   sb.from('manager_expense_request_notifications').select('id,branch_id,request_id,title,message,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false).order('created_at',{ascending:false}).limit(50)
+   sb.from('manager_expense_request_notifications').select('id,branch_id,request_id,title,message,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false).order('created_at',{ascending:false}).limit(50),
+   sb.from('restaurant_expense_policies').select('restaurant_id,branch_id,create_approval_mode,edit_approval_mode,void_approval_mode,emergency_authorization_limit,updated_at').eq('restaurant_id',CURRENT_RESTAURANT_ID),
+   sb.from('manager_emergency_authorization_requests').select('*').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('created_at',{ascending:false}).limit(500),
+   sb.from('manager_emergency_authorization_notifications').select('id,branch_id,request_id,title,message,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false).order('created_at',{ascending:false}).limit(50),
+   sb.from('orders').select('id,branch_id,subtotal,discount_amount,tax,tip,service_charge,total,payment_status,settled_at,created_at,order_status,status').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('payment_status','paid').not('settled_at','is',null).order('settled_at',{ascending:false}).limit(PAGE_LIMIT)
   ]);
   if(c.error)throw c.error;if(b.error)throw b.error;if(e.error)throw e.error;if(r.error)throw r.error;if(mr.error)throw mr.error;if(mu.error)throw mu.error;if(n.error)throw n.error;
-  cats=c.data||[];branches=b.data||[];expenses=e.data||[];managerRequests=mr.data||[];managerUsers=mu.data||[];managerExpenseNotifications=n.data||[];currency=String(r.data?.currency||'USD').toUpperCase();
+  if(pol.error)throw pol.error;if(em.error)throw em.error;if(emn.error)throw emn.error;if(orders.error)throw orders.error;
+  cats=c.data||[];branches=b.data||[];expenses=e.data||[];managerRequests=mr.data||[];managerUsers=mu.data||[];managerExpenseNotifications=n.data||[];
+  expensePolicies=pol.data||[];emergencyRequests=em.data||[];emergencyNotifications=emn.data||[];salesRows=orders.data||[];
+  currency=String(r.data?.currency||'USD').toUpperCase();
   if(!/^[A-Z]{3}$/.test(currency))currency='USD';
   if(S.f.expBranch&&!branches.some(x=>x.id===S.f.expBranch))S.f.expBranch='';
   if(S.f.expCategory&&!cats.some(x=>x.id===S.f.expCategory))S.f.expCategory='';
@@ -171,7 +178,106 @@ async function toggleCategory(id){
  catch(e){toast('Could not update category: '+(e?.message||String(e)),1)}
 }
 
-PG.exp=expensePage;
+
+let expensePolicies=[],emergencyRequests=[],emergencyNotifications=[],salesRows=[];
+const emergencyStatusLabels={pending_authorization:'Pending authorization',authorized:'Authorized',authorized_under_limit:'Within branch limit',rejected:'Rejected',spent_pending_review:'Actuals pending review',reconciled:'Reconciled',reconciliation_rejected:'Correction requested'};
+const approvalModeLabels={none:'No approval',manager:'Manager approval',admin:'Owner / Admin approval'};
+const expenseBranchPolicy=id=>expensePolicies.find(x=>x.branch_id===id)||{branch_id:id,create_approval_mode:'admin',edit_approval_mode:'admin',void_approval_mode:'admin',emergency_authorization_limit:0};
+const requestManagerName=req=>{const u=managerUsers.find(x=>x.id===req.manager_restaurant_user_id);return u?.display_name||u?.full_name||u?.cashier_username||'Manager'};
+function expenseTabs(active){
+ return '<div class="tb expense-main-tabs" style="flex-wrap:wrap"><button class="btn '+(active==='expenses'?'pri':'')+'" data-a="exptab" data-v="expenses">Expenses</button><button class="btn '+(active==='approvals'?'pri':'')+'" data-a="exptab" data-v="approvals">Approval Center</button><button class="btn '+(active==='profit'?'pri':'')+'" data-a="exptab" data-v="profit">Profit &amp; Loss</button><button class="btn '+(active==='policies'?'pri':'')+'" data-a="exptab" data-v="policies">Approval Policies</button></div>';
+}
+function approvalCenterPage(){
+ const tab=S.f.expApprovalTab||'expense',branch=S.f.expBranch||'';
+ const visible=managerRequests.filter(r=>(!branch||r.branch_id===branch)&&r.status==='pending'&&(tab==='expense'?r.request_type==='create':tab==='financial'?['edit','void'].includes(r.request_type):false));
+ const history=managerRequests.filter(r=>(!branch||r.branch_id===branch)&&r.status!=='pending');
+ const emergency=emergencyRequests.filter(r=>!branch||r.branch_id===branch);
+ const pending=visible.length,selected=visible.filter(r=>selectedManagerRequestIds.has(r.id)).length;
+ const subTabs=[['expense','Expense Approval'],['emergency','Emergency Authorization'],['financial','Financial Adjustments'],['history','Approval History']];
+ const subNav='<div class="tb" style="flex-wrap:wrap">'+subTabs.map(([k,l])=>'<button class="btn '+(tab===k?'pri':'')+'" data-a="expapprovaltab" data-v="'+k+'">'+l+'</button>').join('')+'</div>';
+ const branchFilter='<div class="tb"><label class="note">Branch <select data-c="expBranch"><option value="">All accessible branches</option>'+branches.map(b=>'<option value="'+escE(b.id)+'" '+(branch===b.id?'selected':'')+'>'+escE(b.name)+'</option>').join('')+'</select></label><span class="sp"></span><button class="btn" data-a="exprefresh">Refresh</button></div>';
+ const reqRows=visible.map(req=>{
+  const data=req.request_data||{},row=expenses.find(x=>x.id===req.expense_id);
+  const description=req.request_type==='create'?(data.description||'New expense'):req.request_type==='edit'?(data.description||row?.description||'Expense edit'):(row?.description||'Expense void');
+  const amount=req.request_type==='void'?row?.amount:data.amount;
+  return '<tr><td><input type="checkbox" data-manager-expense-request-select data-id="'+req.id+'" '+(selectedManagerRequestIds.has(req.id)?'checked':'')+' aria-label="Select request"></td><td>'+dateText(req.submitted_at)+'</td><td>'+escE(branchName(req.branch_id))+'</td><td>'+escE(requestManagerName(req))+'</td><td>'+escE(req.request_type)+'</td><td><b>'+escE(description)+'</b></td><td>'+(amount==null?'—':money(amount))+'</td><td>'+statusBadge(req.status)+'</td><td><button class="btn pri" data-a="managerexprequestapprove" data-id="'+req.id+'">Approve</button> <button class="btn" data-a="managerexprequestreject" data-id="'+req.id+'">Reject</button></td></tr>';
+ }).join('');
+ const reqContent='<section class="card"><div class="row"><div><h3 style="margin:0">'+(tab==='expense'?'Expense Approval': 'Financial Adjustments')+'</h3><p class="note">Requests remain outside the official expense ledger until approved.</p></div><span class="mu">'+pending+' pending</span></div><div class="tb" style="flex-wrap:wrap"><span class="mu">'+selected+' selected</span><button class="btn" data-a="managerexpselectpending" '+(!pending?'disabled':'')+'>Select Pending</button><button class="btn" data-a="managerexpclearselection" '+(!selectedManagerRequestIds.size?'disabled':'')+'>Clear Selection</button><button class="btn pri" data-a="managerexpbulkapprove" '+(!selected?'disabled':'')+'>Approve Selected</button><button class="btn" data-a="managerexpbulkreject" '+(!selected?'disabled':'')+'>Reject Selected</button></div><div class="tw"><table class="inv-table"><thead><tr><th>Select</th><th>Submitted</th><th>Branch</th><th>Manager</th><th>Type</th><th>Description</th><th>Amount</th><th>Status</th><th>Review</th></tr></thead><tbody>'+(reqRows||'<tr><td colspan="9"><div class="empty">No pending requests in this category.</div></td></tr>')+'</tbody></table></div></section>';
+ const emergencyRows=emergency.map(r=>{
+  const actions=r.status==='pending_authorization'?'<button class="btn pri" data-a="emergencyapprove" data-id="'+r.id+'">Approve</button> <button class="btn" data-a="emergencyreject" data-id="'+r.id+'">Reject</button>':r.status==='spent_pending_review'?'<button class="btn pri" data-a="emergencyreconcile" data-id="'+r.id+'">Reconcile</button> <button class="btn" data-a="emergencyactualreject" data-id="'+r.id+'">Request Correction</button>':'—';
+  return '<tr><td>'+dateText(r.created_at)+'</td><td>'+escE(branchName(r.branch_id))+'</td><td>'+escE(requestManagerName({manager_restaurant_user_id:r.manager_restaurant_user_id}))+'</td><td><b>'+escE(r.description)+'</b><small class="mu" style="display:block">'+escE(r.purpose)+'</small></td><td>'+money(r.requested_amount)+'</td><td>'+money(r.authorization_limit)+'</td><td>'+(r.actual_amount==null?'—':money(r.actual_amount))+'</td><td><span class="bd '+(['authorized','authorized_under_limit','reconciled'].includes(r.status)?'ok':r.status==='rejected'?'er':'wn')+'">'+(emergencyStatusLabels[r.status]||escE(r.status))+'</span></td><td>'+actions+'</td></tr>';
+ }).join('');
+ const emergencyContent='<section class="card"><div class="row"><div><h3 style="margin:0">Emergency Authorization</h3><p class="note">Spending above the branch limit requires Owner/Admin authorization before spending. Actual amount and receipt reference are reviewed after spending.</p></div><span class="mu">'+emergencyRequests.filter(r=>r.status==='pending_authorization'||r.status==='spent_pending_review').length+' awaiting action</span></div>'+(emergencyNotifications.length?'<div class="note" style="padding:10px 0">'+emergencyNotifications.length+' unread emergency notifications</div>':'')+'<div class="tw"><table class="inv-table"><thead><tr><th>Submitted</th><th>Branch</th><th>Manager</th><th>Emergency</th><th>Requested</th><th>Branch Limit</th><th>Actual</th><th>Status</th><th>Action</th></tr></thead><tbody>'+(emergencyRows||'<tr><td colspan="9"><div class="empty">No emergency authorization requests.</div></td></tr>')+'</tbody></table></div></section>';
+ const historyRows=history.map(r=>{const data=r.request_data||{},row=expenses.find(x=>x.id===r.expense_id),desc=r.request_type==='create'?(data.description||'New expense'):r.request_type==='edit'?(data.description||row?.description||'Expense edit'):(row?.description||'Expense void');return '<tr><td>'+dateText(r.submitted_at)+'</td><td>'+escE(branchName(r.branch_id))+'</td><td>'+escE(requestManagerName(r))+'</td><td>'+escE(r.request_type)+'</td><td>'+escE(desc)+'</td><td>'+statusBadge(r.status)+'</td><td>'+dateText(r.reviewed_at)+'</td><td>'+escE(r.review_reason||'—')+'</td></tr>'}).join('');
+ const emergencyHistory=emergency.filter(r=>!['pending_authorization','spent_pending_review'].includes(r.status)).map(r=>'<tr><td>'+dateText(r.created_at)+'</td><td>'+escE(branchName(r.branch_id))+'</td><td>'+escE(requestManagerName({manager_restaurant_user_id:r.manager_restaurant_user_id}))+'</td><td>Emergency Authorization</td><td>'+escE(r.description)+'</td><td><span class="bd">'+(emergencyStatusLabels[r.status]||r.status)+'</span></td><td>'+dateText(r.final_reviewed_at||r.approved_at)+'</td><td>'+escE(r.final_review_reason||r.decision_reason||'—')+'</td></tr>').join('');
+ const historyContent='<section class="card"><h3 style="margin-top:0">Approval History</h3><p class="note">Approved and rejected Manager expense requests and completed emergency reviews. Original decisions remain recorded.</p><div class="tw"><table class="inv-table"><thead><tr><th>Submitted</th><th>Branch</th><th>Manager</th><th>Type</th><th>Description</th><th>Decision</th><th>Reviewed</th><th>Reason</th></tr></thead><tbody>'+(historyRows+emergencyHistory||'<tr><td colspan="8"><div class="empty">No reviewed requests yet.</div></td></tr>')+'</tbody></table></div></section>';
+ const notificationBox=managerExpenseNotifications.length||emergencyNotifications.length?'<section class="card"><div class="row"><h3 style="margin:0">Approval Notifications</h3><span class="mu">'+(managerExpenseNotifications.length+emergencyNotifications.length)+' unread</span></div>'+(managerExpenseNotifications.map(n=>'<div class="row"><span>'+escE(n.title)+'<small class="mu" style="display:block">'+escE(n.message)+'</small></span><button class="btn" data-a="managerexpmarkread" data-id="'+n.id+'">Mark read</button></div>').join(''))+(emergencyNotifications.map(n=>'<div class="row"><span>'+escE(n.title)+'<small class="mu" style="display:block">'+escE(n.message)+'</small></span><button class="btn" data-a="emergencymarkread" data-id="'+n.id+'">Mark read</button></div>').join(''))+'</section>':'';
+ return subNav+branchFilter+notificationBox+(tab==='expense'||tab==='financial'?reqContent:tab==='emergency'?emergencyContent:historyContent);
+}
+function emergencyDecisionModal(id,decision){
+ const req=emergencyRequests.find(x=>x.id===id);if(!req||req.status!=='pending_authorization')return;
+ const label=decision==='approved'?'Authorize Emergency Spending':'Reject Emergency Request';
+ L.innerHTML='<div class="bk" data-a="close"></div><form id="emergencyDecisionForm" class="md" role="dialog" aria-modal="true"><h3>'+label+'</h3><p class="note">'+escE(req.description)+' · '+money(req.requested_amount)+' requested · branch limit '+money(req.authorization_limit)+'</p><div class="fl"><label for="emergencyDecisionReason">Decision reason *</label><textarea id="emergencyDecisionReason" minlength="3" maxlength="500" required rows="3"></textarea></div><div class="tb"><button class="btn pri" id="emergencyDecisionSave">Confirm</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="emergencyDecisionError" class="er"></p></form>';
+ document.getElementById('emergencyDecisionForm').onsubmit=async ev=>{ev.preventDefault();const reason=document.getElementById('emergencyDecisionReason').value.trim(),btn=document.getElementById('emergencyDecisionSave'),err=document.getElementById('emergencyDecisionError');if(reason.length<3){err.textContent='Enter a reason with at least 3 characters.';return}btn.disabled=true;btn.textContent='Processing…';try{const {data,error}=await sb.rpc('edmel_review_manager_emergency_authorization',{p_request_id:id,p_decision:decision,p_reason:reason});if(error)throw error;if(!data?.success)throw new Error('The authorization decision was not confirmed.');closeL();await loadExpenses();toast(decision==='approved'?'Emergency spending authorized.':'Emergency request rejected.')}catch(e){err.textContent=e?.message||'Unable to review emergency request.';btn.disabled=false;btn.textContent='Confirm'}};
+}
+function emergencyActualDecisionModal(id,decision){
+ const req=emergencyRequests.find(x=>x.id===id);if(!req||req.status!=='spent_pending_review')return;
+ const label=decision==='reconciled'?'Confirm Final Emergency Spend':'Request Correction to Emergency Spend';
+ L.innerHTML='<div class="bk" data-a="close"></div><form id="emergencyActualDecisionForm" class="md" role="dialog" aria-modal="true"><h3>'+label+'</h3><p class="note">'+escE(req.description)+' · authorized '+money(req.approved_amount||req.requested_amount)+' · actual '+money(req.actual_amount)+'</p><p class="note">Receipt reference: '+escE(req.actual_receipt_reference||'Not provided')+'</p><div class="fl"><label for="emergencyActualReason">Review reason *</label><textarea id="emergencyActualReason" minlength="3" maxlength="500" required rows="3"></textarea></div><div class="tb"><button class="btn pri" id="emergencyActualSave">Confirm</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="emergencyActualError" class="er"></p></form>';
+ document.getElementById('emergencyActualDecisionForm').onsubmit=async ev=>{ev.preventDefault();const reason=document.getElementById('emergencyActualReason').value.trim(),btn=document.getElementById('emergencyActualSave'),err=document.getElementById('emergencyActualError');if(reason.length<3){err.textContent='Enter a reason with at least 3 characters.';return}btn.disabled=true;btn.textContent='Processing…';try{const {data,error}=await sb.rpc('edmel_review_manager_emergency_actuals',{p_request_id:id,p_decision:decision,p_reason:reason});if(error)throw error;if(!data?.success)throw new Error('The final review was not confirmed.');closeL();await loadExpenses();toast(decision==='reconciled'?'Emergency spending reconciled.':'Correction requested from Manager.')}catch(e){err.textContent=e?.message||'Unable to complete final review.';btn.disabled=false;btn.textContent='Confirm'}};
+}
+function expensePolicyPage(){
+ const selected=S.f.expPolicyBranch||branches.find(b=>b.is_default)?.id||branches[0]?.id||'';
+ const p=expenseBranchPolicy(selected);
+ return '<section class="card"><div class="row"><div><h3 style="margin:0">Branch Approval Policy</h3><p class="note">Approval mode is configured per branch and per Manager action. Changes apply to new requests only.</p></div><button class="btn" data-a="exprefresh">Refresh</button></div><div class="expense-filters"><label>Branch<select id="expensePolicyBranch" data-c="expPolicyBranch">'+branches.map(b=>'<option value="'+escE(b.id)+'" '+(b.id===selected?'selected':'')+'>'+escE(b.name)+'</option>').join('')+'</select></label><label>Create Expense<select id="policyCreateMode"><option value="none" '+(p.create_approval_mode==='none'?'selected':'')+'>No approval — direct save</option><option value="manager" '+(p.create_approval_mode==='manager'?'selected':'')+'>Manager approval</option><option value="admin" '+(p.create_approval_mode==='admin'?'selected':'')+'>Owner / Admin approval</option></select></label><label>Edit Expense<select id="policyEditMode"><option value="none" '+(p.edit_approval_mode==='none'?'selected':'')+'>No approval — direct save</option><option value="manager" '+(p.edit_approval_mode==='manager'?'selected':'')+'>Manager approval</option><option value="admin" '+(p.edit_approval_mode==='admin'?'selected':'')+'>Owner / Admin approval</option></select></label><label>Void Expense<select id="policyVoidMode"><option value="none" '+(p.void_approval_mode==='none'?'selected':'')+'>No approval — direct void</option><option value="manager" '+(p.void_approval_mode==='manager'?'selected':'')+'>Manager approval</option><option value="admin" '+(p.void_approval_mode==='admin'?'selected':'')+'>Owner / Admin approval</option></select></label><label>Emergency Spending Limit ('+currency+')<input id="policyEmergencyLimit" type="number" min="0" step="0.01" value="'+Number(p.emergency_authorization_limit||0).toFixed(2)+'"></label></div><p class="note">Emergency requests above this amount require Owner/Admin authorization before spending. Requests at or below the limit are recorded as authorized under branch policy and still require actual-spend reconciliation.</p><div class="tb"><button class="btn pri" data-a="exppolicysave" data-branch="'+escE(selected)+'">Save Branch Policy</button></div></section>';
+}
+async function saveExpensePolicy(t){
+ const branchId=t.dataset.branch||S.f.expPolicyBranch;if(!branchId){toast('Select a branch first.',1);return}
+ const limit=Number(document.getElementById('policyEmergencyLimit')?.value);
+ if(!Number.isFinite(limit)||limit<0){toast('Enter a valid emergency spending limit.',1);return}
+ const row={restaurant_id:CURRENT_RESTAURANT_ID,branch_id:branchId,
+  create_approval_mode:document.getElementById('policyCreateMode').value,
+  edit_approval_mode:document.getElementById('policyEditMode').value,
+  void_approval_mode:document.getElementById('policyVoidMode').value,
+  emergency_authorization_limit:limit,updated_at:new Date().toISOString()};
+ const {data:userData,error:userError}=await sb.auth.getUser();if(userError||!userData?.user){toast('Admin session unavailable.',1);return}
+ row.updated_by_user_id=userData.user.id;
+ const {error}=await sb.from('restaurant_expense_policies').upsert(row,{onConflict:'restaurant_id,branch_id'});
+ if(error){toast('Could not save branch policy: '+error.message,1);return}
+ try{await sb.from('audit_logs').insert({restaurant_id:CURRENT_RESTAURANT_ID,actor_user_id:userData.user.id,actor_name:userData.user.email||'Admin',actor_role:'admin',action_category:'Expenses & Profit',action:'Updated branch expense approval policy',record_type:'restaurant_expense_policy',record_id:branchId,result:'success',details:{create_approval_mode:row.create_approval_mode,edit_approval_mode:row.edit_approval_mode,void_approval_mode:row.void_approval_mode,emergency_authorization_limit:limit}})}catch(_){}
+ await loadExpenses();toast('Branch expense approval policy saved.');
+}
+function profitPage(){
+ const [from,to]=rng(S.per),branch=S.f.expBranch||'';
+ const within=d=>{const x=new Date(d);return x>=from&&x<to};
+ const sales=salesRows.filter(o=>(!branch||o.branch_id===branch)&&within(o.settled_at));
+ const periodExpenses=expenses.filter(e=>e.status==='approved'&&(!branch||e.branch_id===branch)&&within(e.expense_date));
+ const gross=sales.reduce((n,o)=>n+Number(o.subtotal||0),0);
+ const discounts=sales.reduce((n,o)=>n+Number(o.discount_amount||0),0);
+ const netSales=Math.max(0,gross-discounts);
+ const tax=sales.reduce((n,o)=>n+Number(o.tax||0),0);
+ const collected=sales.reduce((n,o)=>n+Number(o.total||0),0);
+ const expenseTotal=periodExpenses.reduce((n,e)=>n+Number(e.amount||0),0);
+ const preCogs=netSales-expenseTotal;
+ return '<div class="tb"><label class="note">Period <select data-c="per">'+Object.entries(PER).map(([k,v])=>'<option value="'+k+'" '+(S.per===k?'selected':'')+'>'+v[0]+'</option>').join('')+'</select></label><label class="note">Branch <select data-c="expBranch"><option value="">All accessible branches</option>'+branches.map(b=>'<option value="'+escE(b.id)+'" '+(branch===b.id?'selected':'')+'>'+escE(b.name)+'</option>').join('')+'</select></label><span class="sp"></span><button class="btn" data-a="exprefresh">Refresh</button></div><div class="g k"><div class="card"><div class="mu">Settled Net Sales</div><div class="big">'+money(netSales)+'</div><small class="mu">'+sales.length+' paid and settled orders</small></div><div class="card"><div class="mu">Discounts</div><div class="big">'+money(discounts)+'</div><small class="mu">From settled orders</small></div><div class="card"><div class="mu">Approved Expenses</div><div class="big">'+money(expenseTotal)+'</div><small class="mu">'+periodExpenses.length+' approved records</small></div><div class="card"><div class="mu">Pre-COGS Operating Balance</div><div class="big">'+money(preCogs)+'</div><small class="mu">Net sales less approved expenses only</small></div></div><section class="card"><div class="row"><h3 style="margin:0">Profit Readiness</h3><span class="bd wn">Not yet final profit</span></div><p>True gross profit and net profit cannot be calculated yet because EDMEL has no connected recipe / ingredient cost-of-goods-sold (COGS) records or refund / chargeback ledger for this restaurant.</p><div class="g g2"><div><div class="mu">Tax collected (not sales income)</div><div class="big">'+money(tax)+'</div></div><div><div class="mu">Total collected (includes configured charges)</div><div class="big">'+money(collected)+'</div></div></div><p class="note">The Pre-COGS Operating Balance is not Net Profit. It excludes ingredient cost, inventory consumption, refunds / chargebacks and other accounting adjustments. We will not display a fabricated profit percentage.</p></section><section class="card"><h3 style="margin-top:0">Approved Expense Breakdown</h3><div class="tw"><table class="inv-table"><thead><tr><th>Date</th><th>Branch</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead><tbody>'+(periodExpenses.map(e=>'<tr><td>'+dateText(e.expense_date)+'</td><td>'+escE(branchName(e.branch_id))+'</td><td>'+escE(catName(e.category_id))+'</td><td>'+escE(e.description)+'</td><td>'+money(e.amount)+'</td></tr>').join('')||'<tr><td colspan="5"><div class="empty">No approved expenses in this period.</div></td></tr>')+'</tbody></table></div></section>';
+}
+function enhancedExpensePage(){
+ const active=S.f.expTab||'expenses';
+ if(active==='approvals')return '<div class="expense-p2">'+expenseTabs(active)+approvalCenterPage()+'</div>';
+ if(active==='profit')return '<div class="expense-p2">'+expenseTabs(active)+profitPage()+'</div>';
+ if(active==='policies')return '<div class="expense-p2">'+expenseTabs(active)+expensePolicyPage()+'</div>';
+ return '<div class="expense-p2">'+expenseTabs('expenses')+expensePage()+'</div>';
+}
+
+PG.exp=enhancedExpensePage;
+A.exptab=t=>{S.f.expTab=t.dataset.v;render();if(S.f.expTab==='profit'||S.f.expTab==='approvals'||S.f.expTab==='policies')loadExpenses()};
+A.expapprovaltab=t=>{S.f.expApprovalTab=t.dataset.v;selectedManagerRequestIds.clear();render()};
+A.emergencyapprove=t=>emergencyDecisionModal(t.dataset.id,'approved');
+A.emergencyreject=t=>emergencyDecisionModal(t.dataset.id,'rejected');
+A.emergencyreconcile=t=>emergencyActualDecisionModal(t.dataset.id,'reconciled');
+A.emergencyactualreject=t=>emergencyActualDecisionModal(t.dataset.id,'rejected');
+A.emergencymarkread=async t=>{try{const {error}=await sb.from('manager_emergency_authorization_notifications').update({is_read:true,read_at:new Date().toISOString()}).eq('id',t.dataset.id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin');if(error)throw error;await loadExpenses();toast('Emergency notification marked as read.')}catch(e){toast(e?.message||'Unable to update emergency notification.',1)}};
+A.exppolicysave=t=>saveExpensePolicy(t);
 A.addexp=()=>expenseForm(null);
 A.expcats=()=>categoryModal();
 A.expcattoggle=t=>toggleCategory(t.dataset.id);
@@ -190,12 +296,23 @@ A.managerexpbulkreject=()=>managerExpenseBulkDecisionModal('rejected');
 A.managerexpmarkread=async t=>{try{const {error}=await sb.from('manager_expense_request_notifications').update({is_read:true,read_at:new Date().toISOString()}).eq('id',t.dataset.id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin');if(error)throw error;await loadExpenses();toast('Notification marked as read.')}catch(e){toast(e?.message||'Unable to update notification.',1)}};
 const oldGo=A.go;
 A.go=t=>{const page=t?.dataset?.p;oldGo(t);if(page==='exp')loadExpenses()};
+document.addEventListener('change',ev=>{
+ const t=ev.target;
+ if(t?.dataset?.c==='expBranch'||t?.dataset?.c==='expCategory'||t?.dataset?.c==='expStatus'||t?.dataset?.c==='per'){
+  S.f[t.dataset.c]=t.value;
+  if(t.dataset.c==='expBranch')selectedManagerRequestIds.clear();
+  render();return;
+ }
+ if(t?.id==='expensePolicyBranch'){S.f.expPolicyBranch=t.value;render();return;}
+});
 document.addEventListener('change',ev=>{const t=ev.target;if(!t?.matches('[data-manager-expense-request-select]'))return;if(t.checked)selectedManagerRequestIds.add(t.dataset.id);else selectedManagerRequestIds.delete(t.dataset.id);render()});
 document.addEventListener('input',ev=>{
  const t=ev.target;if(t?.dataset?.c!=='expQ')return;
  S.f.expQ=t.value;const pos=t.selectionStart;render();const next=document.querySelector('#pg [data-c="expQ"]');if(next){next.focus();next.setSelectionRange(pos,pos)}
 });
 const css=document.createElement('style');css.id='edmel-expense-phase2-css';css.textContent=`
+.expense-main-tabs{border-bottom:1px solid var(--bd);padding-bottom:10px}.expense-main-tabs .btn{min-width:130px}
+
 .expense-p2{display:grid;gap:14px}.expense-filters{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:12px}
 .expense-filters label{display:grid;gap:5px;color:var(--mu);font-size:12px;font-weight:600}
 .expense-filters input,.expense-filters select{width:100%;min-width:0}
