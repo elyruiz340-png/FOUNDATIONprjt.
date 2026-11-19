@@ -3369,6 +3369,7 @@ function managerPermissionsEditor(manager){
     if(scopeMode==='selected'){
       scopeTargets.innerHTML='<div class="note" style="margin-bottom:7px">Select one or more assigned branches. Other assigned branches will keep their current permissions.</div>'+(assigned.length?assigned.map(b=>'<label class="row" style="justify-content:flex-start;gap:9px"><input type="checkbox" data-scope-branch="'+esc(b.id)+'" '+(selectedScopeBranches.has(b.id)?'checked':'')+'><span>'+esc(b.name)+'</span></label>').join(''):'<p class="mu">No assigned branches.</p>');
       scopeTargets.querySelectorAll('[data-scope-branch]').forEach(input=>input.addEventListener('change',()=>{
+        if(sharedDirty)syncSharedDraft();
         if(input.checked)selectedScopeBranches.add(input.dataset.scopeBranch);else selectedScopeBranches.delete(input.dataset.scopeBranch);
         const first=activeScopeTargets()[0];if(first){branchSelect.value=first;sharedDraft=clone(drafts[first]||{modules:{}});sharedDirty=false;}
         renderBranchSelect();renderScopeTargets();renderMatrix();
@@ -3400,6 +3401,7 @@ function managerPermissionsEditor(manager){
     renderBranchSelect();renderScopeTargets();renderMatrix();
   }
   scopeSelect.onchange=()=>{
+    if(scopeMode!=='custom'&&sharedDirty)syncSharedDraft();
     scopeMode=scopeSelect.value;
     const targets=activeScopeTargets();
     if(scopeMode==='selected'&&!selectedScopeBranches.size)selectedScopeBranches=new Set(Array.from(selectedBranches));
