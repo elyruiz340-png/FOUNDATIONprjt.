@@ -45,6 +45,10 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  .manager-content main{width:calc(100% - 24px);margin-top:18px}
  .manager-content .top-title small{display:none}
 }
+
+.manager-expense-modal{position:fixed;inset:0;z-index:50;background:rgba(13,24,17,.48);backdrop-filter:blur(5px);display:grid;place-items:center;padding:18px}.manager-expense-modal[hidden]{display:none}.manager-expense-dialog{width:min(560px,100%);max-height:90vh;overflow:auto;background:var(--panel,#fff);color:var(--text);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.22);display:grid;gap:13px}.manager-expense-dialog h2{margin:0;font-size:21px}.manager-expense-dialog .field{display:grid;gap:6px}.manager-expense-dialog .field label{font-size:12px;font-weight:800;color:var(--muted)}.manager-expense-dialog input,.manager-expense-dialog select,.manager-expense-dialog textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel,#fff);color:var(--text);font:inherit}.manager-expense-dialog .row{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-start}.manager-expense-dialog .row button{flex:1}
+@media(max-width:680px){.top-actions{gap:6px;flex-wrap:wrap;justify-content:flex-end}.top-actions .branch-select{padding:6px 8px;max-width:190px}.branch-select select{max-width:120px}.top-actions .user-pill{display:none}.manager-expense-dialog{padding:16px}}
+
 </style>
 </head>
 <body>
@@ -69,7 +73,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  <div class="manager-content">
  <header class="topbar">
   <div class="top-left"><div class="brand-mark" style="width:36px;height:36px;border-radius:11px">E</div><div class="top-title">EDMEL <small>MANAGER WORKSPACE</small></div></div>
-  <div class="top-actions"><span class="user-pill" id="managerName">Manager</span><button class="secondary" id="logoutButton">Sign Out</button></div>
+  <div class="top-actions"><div class="branch-select"><label for="branchSelect">Active Branch</label><select id="branchSelect" aria-label="Active branch"></select></div><span class="user-pill" id="managerName">Manager</span><button class="secondary" id="logoutButton">Sign Out</button></div>
  </header>
  <main>
   <section class="manager-page-placeholder" id="modulePlaceholder" hidden aria-live="polite">
@@ -81,7 +85,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   <div id="staffWorkspace">
   <div class="welcome">
    <div><h1>Team Management</h1><p>Manage subordinate staff and branch access.</p></div>
-   <div class="branch-select"><label for="branchSelect">Branch</label><select id="branchSelect"></select></div>
+   
   </div>
   <div class="stats">
    <div class="stat"><span>Assigned Staff</span><strong id="statStaff">—</strong></div>
@@ -113,9 +117,29 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   </section>
 
   </div>
+  <div id="expensesWorkspace" hidden>
+   <div class="welcome"><div><h1>Expenses & Profit</h1><p>Operating expenses and approval requests for the active assigned branch.</p></div><button class="secondary" id="managerExpenseRefreshButton" type="button">Refresh</button></div>
+   <div class="stats">
+    <div class="stat"><span>Approved Expenses</span><strong id="managerExpenseApprovedTotal">—</strong></div>
+    <div class="stat"><span>Pending Requests</span><strong id="managerExpensePendingCount">—</strong></div>
+    <div class="stat"><span>Approved This Month</span><strong id="managerExpenseMonthlyTotal">—</strong></div>
+   </div>
+   <div class="permission-note" id="managerExpenseInfo">All records shown are restricted to the active assigned branch. Pending requests do not change official expense totals.</div>
+   <section class="panel" style="margin-top:16px">
+    <div class="panel-head"><div><h2>Operating Expenses</h2><p>Approved and pending expense records for this branch.</p></div><button class="primary" id="managerExpenseAddButton" type="button" hidden>+ Add Expense</button></div>
+    <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody id="managerExpenseRows"><tr><td colspan="6" class="empty">Loading expenses…</td></tr></tbody></table></div></div>
+   </section>
+   <section class="panel" style="margin-top:16px">
+    <div class="panel-head"><div><h2>Expense Approval Requests</h2><p>Review your submitted requests and requests you are authorized to approve.</p></div></div>
+    <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Submitted</th><th>Request</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody id="managerExpenseRequestRows"><tr><td colspan="6" class="empty">Loading requests…</td></tr></tbody></table></div></div>
+   </section>
+   <div class="permission-note" style="margin-top:16px">Profit reporting is not enabled in this workspace yet. It will be shown only after the sales, discounts, refunds and cost-of-goods sources are verified for this branch.</div>
+  </div>
  </main>
  </div>
 </section>
+
+<div id="managerExpenseModal" class="manager-expense-modal" hidden aria-modal="true" role="dialog" aria-labelledby="managerExpenseModalTitle"></div>
 
 <div id="staffModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
  <form class="modal" id="staffForm">
@@ -234,20 +258,26 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
    if(active)button.setAttribute("aria-current","page");else button.removeAttribute("aria-current");
   });
   const realStaffWorkspace=key==="staff"&&ownPermissions?.staff_management===true;
+  const realExpensesWorkspace=key==="expenses"&&moduleAccess("expenses","view");
   $("staffWorkspace").hidden=!realStaffWorkspace;
-  $("modulePlaceholder").hidden=realStaffWorkspace;
+  $("expensesWorkspace").hidden=!realExpensesWorkspace;
+  $("modulePlaceholder").hidden=realStaffWorkspace||realExpensesWorkspace;
   if(realStaffWorkspace){
    $("moduleTitle").textContent="Staff & Permissions";
+   return;
+  }
+  if(realExpensesWorkspace){
+   loadManagerExpenses().catch(error=>showManagerExpenseError(error.message||"Unable to load expenses."));
    return;
   }
   $("moduleTitle").textContent=item[1];
   $("moduleDescription").textContent=key==="staff"
    ?"Staff module visibility is granted, but the existing staff-management workflow requires the dedicated branch staff-management permission. Ask the Owner or Admin to enable it."
-   :"This module is visible because the Owner or Admin granted access. The current Admin page contains illustrative demo data, so this Manager view will not display sample figures or expose unverified actions.";
-  $("modulePermissionNote").textContent="Branch: "+(activeBranch?.name||"Assigned branch")+". This view is limited to branches assigned to your Manager account. Module actions will be connected only after branch-level data access and backend authorization are verified.";
+   :"This module is visible because the Owner or Admin granted access. Its operational workflow is not connected yet, so no sample figures or unverified actions are displayed.";
+  $("modulePermissionNote").textContent="Branch: "+(activeBranch?.name||"Assigned branch")+". This view is limited to branches assigned to your Manager account.";
  }
 
- let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true;
+ let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true, managerAuthUserId=null, managerExpenseRows=[], managerExpenseCategories=[], managerExpenseRequests=[], managerExpenseCurrency="USD", managerExpenseLoading=false;
  let pendingApprovalActions=[], approvalBatches=[];
 
  function showLogin(message=""){ $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden"); $("loginMessage").textContent=message; }
@@ -272,6 +302,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  async function bootstrap(){
   const {data:userData,error:userError}=await sb.auth.getUser();
   if(userError||!userData?.user)throw new Error("Please sign in again.");
+  managerAuthUserId=userData.user.id;
   const {data:links,error:linkError}=await sb.from("restaurant_users").select("id,user_id,restaurant_id,role,position,full_name,display_name,cashier_username,is_active").eq("user_id",userData.user.id).eq("restaurant_id",RESTAURANT_ID).eq("role","staff").eq("is_active",true);
   if(linkError)throw linkError;
   managerLink=(links||[]).find(row=>String(row.position||"").toLowerCase()==="manager");
@@ -389,6 +420,156 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   $("statOnline").textContent=online;
   $("statPermissions").textContent=Object.keys(permissionLabels).filter(k=>ownPermissions[k]===true).length;
   notify(sessionError?"Staff loaded. Session history could not be refreshed.":"");
+ }
+
+
+ function managerExpenseCan(action){return moduleAccess("expenses",action);}
+ function managerExpenseMoney(value){
+  try{return new Intl.NumberFormat("en-US",{style:"currency",currency:managerExpenseCurrency}).format(Number(value)||0);}
+  catch(_){return managerExpenseCurrency+" "+(Number(value)||0).toFixed(2);}
+ }
+ function managerExpenseDate(value){
+  if(!value)return "—";
+  const date=new Date(String(value).slice(0,10)+"T00:00:00");
+  return Number.isNaN(date.getTime())?"—":date.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
+ }
+ function managerExpenseStatus(status){
+  const labels={pending:"Pending approval",approved:"Approved",rejected:"Rejected",voided:"Voided"};
+  return labels[status]||status||"Unknown";
+ }
+ function showManagerExpenseError(message){
+  const body=$("managerExpenseRows");
+  if(body)body.innerHTML='<tr><td colspan="6" class="empty">'+esc(message)+'</td></tr>';
+  const info=$("managerExpenseInfo");if(info)info.textContent=message;
+ }
+ async function loadManagerExpenses(){
+  if(!activeBranch||!managerExpenseCan("view"))return;
+  managerExpenseLoading=true;
+  $("managerExpenseRows").innerHTML='<tr><td colspan="6" class="empty">Loading branch expenses…</td></tr>';
+  $("managerExpenseRequestRows").innerHTML='<tr><td colspan="6" class="empty">Loading approval requests…</td></tr>';
+  $("managerExpenseAddButton").hidden=!managerExpenseCan("create");
+  try{
+   const [expenseResult,categoryResult,requestResult,currencyResult]=await Promise.all([
+    sb.from("restaurant_expenses").select("id,branch_id,category_id,expense_date,description,payee,reference_number,notes,amount,currency_code,status,created_by_user_id,approved_at,approval_note,rejection_reason,void_reason").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).order("expense_date",{ascending:false}).order("created_at",{ascending:false}).limit(1000),
+    sb.from("restaurant_expense_categories").select("id,name,is_active").eq("restaurant_id",RESTAURANT_ID).order("name"),
+    sb.from("manager_expense_requests").select("id,branch_id,manager_restaurant_user_id,submitted_by_user_id,request_type,expense_id,request_data,status,submitted_at,reviewed_at,review_reason").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).order("submitted_at",{ascending:false}).limit(100),
+    sb.from("restaurants").select("currency").eq("id",RESTAURANT_ID).maybeSingle()
+   ]);
+   if(expenseResult.error)throw expenseResult.error;
+   if(categoryResult.error)throw categoryResult.error;
+   if(requestResult.error)throw requestResult.error;
+   if(currencyResult.error)throw currencyResult.error;
+   managerExpenseRows=expenseResult.data||[];
+   managerExpenseCategories=categoryResult.data||[];
+   managerExpenseRequests=requestResult.data||[];
+   managerExpenseCurrency=String(currencyResult.data?.currency||"USD").toUpperCase();
+   if(!/^[A-Z]{3}$/.test(managerExpenseCurrency))managerExpenseCurrency="USD";
+   renderManagerExpenses();
+  }catch(error){showManagerExpenseError(error.message||"Unable to load expenses.");throw error;}
+  finally{managerExpenseLoading=false;}
+ }
+ function renderManagerExpenses(){
+  const rows=managerExpenseRows||[],requests=managerExpenseRequests||[];
+  const approved=rows.filter(x=>x.status==="approved").reduce((n,x)=>n+Number(x.amount||0),0);
+  const pendingRequests=requests.filter(x=>x.status==="pending");
+  const month=new Date().toISOString().slice(0,7);
+  const monthly=rows.filter(x=>x.status==="approved"&&String(x.expense_date||"").startsWith(month)).reduce((n,x)=>n+Number(x.amount||0),0);
+  $("managerExpenseApprovedTotal").textContent=managerExpenseMoney(approved);
+  $("managerExpensePendingCount").textContent=String(pendingRequests.length);
+  $("managerExpenseMonthlyTotal").textContent=managerExpenseMoney(monthly);
+  $("managerExpenseInfo").textContent="Active branch: "+(activeBranch?.name||"Assigned branch")+". Only this branch's expense records and requests are loaded.";
+  $("managerExpenseAddButton").hidden=!managerExpenseCan("create");
+  const categoryName=id=>managerExpenseCategories.find(c=>c.id===id)?.name||"Unavailable category";
+  $("managerExpenseRows").innerHTML=rows.length?rows.map(row=>{
+   const actions=[];
+   if(managerExpenseCan("edit")&&!["rejected","voided"].includes(row.status))actions.push('<button class="secondary" type="button" data-manager-expense-edit="'+esc(row.id)+'">Edit</button>');
+   if(managerExpenseCan("delete")&&!["rejected","voided"].includes(row.status))actions.push('<button class="secondary" type="button" data-manager-expense-void="'+esc(row.id)+'">Void</button>');
+   return '<tr><td>'+esc(managerExpenseDate(row.expense_date))+'</td><td>'+esc(categoryName(row.category_id))+'</td><td><strong>'+esc(row.description)+'</strong>'+(row.payee?'<small class="note" style="display:block">Payee: '+esc(row.payee)+'</small>':'')+'</td><td>'+esc(managerExpenseMoney(row.amount))+'</td><td>'+esc(managerExpenseStatus(row.status))+'</td><td><div style="display:flex;gap:6px;flex-wrap:wrap">'+(actions.join("")||'<span class="note">View only</span>')+'</div></td></tr>';
+  }).join(""):'<tr><td colspan="6" class="empty">No expense records for this branch yet.</td></tr>';
+  $("managerExpenseRequestRows").innerHTML=requests.length?requests.map(req=>{
+   const data=req.request_data||{},expense=rows.find(x=>x.id===req.expense_id);
+   const description=req.request_type==="create"?(data.description||"New expense"):req.request_type==="edit"?(data.description||expense?.description||"Expense edit"):(expense?.description||"Expense void");
+   const amount=req.request_type==="void"?expense?.amount:data.amount;
+   const canReview=managerExpenseCan("approve")&&req.submitted_by_user_id!==managerAuthUserId&&req.status==="pending";
+   const actions=canReview?'<button class="primary" type="button" data-manager-request-review="approved" data-id="'+esc(req.id)+'">Approve</button><button class="secondary" type="button" data-manager-request-review="rejected" data-id="'+esc(req.id)+'">Reject</button>':'';
+   return '<tr><td>'+esc(managerExpenseDate(req.submitted_at))+'</td><td>'+esc(req.request_type.charAt(0).toUpperCase()+req.request_type.slice(1))+'</td><td>'+esc(description)+'</td><td>'+(amount==null?"—":esc(managerExpenseMoney(amount)))+'</td><td>'+esc(managerExpenseStatus(req.status))+'</td><td><div style="display:flex;gap:6px;flex-wrap:wrap">'+(actions||'<span class="note">'+(req.submitted_by_user_id===managerAuthUserId?"Your request":"No review action")+'</span>')+'</div></td></tr>';
+  }).join(""):'<tr><td colspan="6" class="empty">No expense approval requests for this branch.</td></tr>';
+  $("managerExpenseRows").querySelectorAll("[data-manager-expense-edit]").forEach(button=>button.addEventListener("click",()=>openManagerExpenseForm(managerExpenseRows.find(x=>x.id===button.dataset.managerExpenseEdit))));
+  $("managerExpenseRows").querySelectorAll("[data-manager-expense-void]").forEach(button=>button.addEventListener("click",()=>openManagerExpenseVoid(managerExpenseRows.find(x=>x.id===button.dataset.managerExpenseVoid))));
+  $("managerExpenseRequestRows").querySelectorAll("[data-manager-request-review]").forEach(button=>button.addEventListener("click",()=>openManagerExpenseReview(button.dataset.id,button.dataset.managerRequestReview)));
+ }
+ function openManagerExpenseForm(row=null){
+  const editing=!!row;
+  if(editing&&!managerExpenseCan("edit"))return;
+  if(!editing&&!managerExpenseCan("create"))return;
+  const categories=managerExpenseCategories.filter(x=>x.is_active);
+  if(!categories.length){notify("No active expense category is available. Ask the Owner or Admin to configure one.",true);return;}
+  const modal=$("managerExpenseModal");
+  modal.hidden=false;
+  modal.innerHTML='<form class="manager-expense-dialog" id="managerExpenseForm"><div class="row"><h2 id="managerExpenseModalTitle">'+(editing?"Edit Expense":"Add Expense")+'</h2><button type="button" class="secondary" id="managerExpenseClose">Close</button></div><p class="note">Branch: '+esc(activeBranch.name)+'. '+(ownPermissions.expense_approval_required===false?"Your permitted changes can be saved directly under this branch policy.":"Submissions remain pending until an authorized approver reviews them.")+'</p><div class="field"><label for="managerExpenseCategory">Category</label><select id="managerExpenseCategory" required>'+categories.map(c=>'<option value="'+esc(c.id)+'" '+(row?.category_id===c.id?"selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select></div><div class="field"><label for="managerExpenseDate">Expense Date</label><input id="managerExpenseDate" type="date" required value="'+esc(row?.expense_date||new Date().toISOString().slice(0,10))+'"></div><div class="field"><label for="managerExpenseDescription">Description</label><input id="managerExpenseDescription" maxlength="500" required value="'+esc(row?.description||"")+'"></div><div class="field"><label for="managerExpenseAmount">Amount ('+esc(managerExpenseCurrency)+')</label><input id="managerExpenseAmount" type="number" min="0.01" step="0.01" required value="'+(row?Number(row.amount).toFixed(2):"")+'"></div><div class="field"><label for="managerExpensePayee">Payee / Supplier</label><input id="managerExpensePayee" maxlength="160" value="'+esc(row?.payee||"")+'"></div><div class="field"><label for="managerExpenseReference">Reference Number</label><input id="managerExpenseReference" maxlength="120" value="'+esc(row?.reference_number||"")+'"></div><div class="field"><label for="managerExpenseNotes">Notes</label><textarea id="managerExpenseNotes" maxlength="2000" rows="2">'+esc(row?.notes||"")+'</textarea></div>'+(editing?'<div class="field"><label for="managerExpenseReason">Reason for Change</label><textarea id="managerExpenseReason" minlength="3" maxlength="500" required rows="2"></textarea></div>':'')+'<div class="row"><button class="primary" type="submit" id="managerExpenseSave">'+(editing?"Submit Edit":"Submit Expense")+'</button><button class="secondary" type="button" id="managerExpenseCancel">Cancel</button></div><p class="note" id="managerExpenseFormMessage" role="alert"></p></form>';
+  const close=()=>{modal.hidden=true;modal.innerHTML="";};
+  $("managerExpenseClose").onclick=close;$("managerExpenseCancel").onclick=close;
+  $("managerExpenseForm").onsubmit=async event=>{
+   event.preventDefault();
+   const button=$("managerExpenseSave"),message=$("managerExpenseFormMessage");
+   const requestData={
+    category_id:$("managerExpenseCategory").value,
+    expense_date:$("managerExpenseDate").value,
+    description:$("managerExpenseDescription").value.trim(),
+    amount:Number($("managerExpenseAmount").value),
+    payee:$("managerExpensePayee").value.trim()||null,
+    reference_number:$("managerExpenseReference").value.trim()||null,
+    notes:$("managerExpenseNotes").value.trim()||null
+   };
+   if(editing){requestData.reason=$("managerExpenseReason").value.trim();if(requestData.reason.length<3){message.textContent="Enter a reason for the change.";return;}}
+   if(!requestData.category_id||!requestData.expense_date||requestData.description.length<3||!Number.isFinite(requestData.amount)||requestData.amount<=0){message.textContent="Complete the required fields with a valid amount.";return;}
+   button.disabled=true;button.textContent="Submitting…";
+   try{
+    const {data,error}=await sb.rpc("edmel_submit_manager_expense_request",{
+     p_restaurant_id:RESTAURANT_ID,p_branch_id:activeBranch.id,p_request_type:editing?"edit":"create",
+     p_expense_id:editing?row.id:null,p_request_data:requestData
+    });
+    if(error)throw error;
+    close();
+    notify(data?.status==="pending"?"Expense request submitted for approval.":"Expense saved under the branch's direct-save policy.");
+    await loadManagerExpenses();
+   }catch(error){message.textContent=error.message||"Unable to submit expense.";button.disabled=false;button.textContent=editing?"Submit Edit":"Submit Expense";}
+  };
+ }
+ function openManagerExpenseVoid(row){
+  if(!row||!managerExpenseCan("delete"))return;
+  const modal=$("managerExpenseModal");modal.hidden=false;
+  modal.innerHTML='<form class="manager-expense-dialog" id="managerExpenseVoidForm"><h2>Void Expense</h2><p class="note">'+esc(row.description)+' · '+esc(managerExpenseMoney(row.amount))+'</p><div class="field"><label for="managerExpenseVoidReason">Reason *</label><textarea id="managerExpenseVoidReason" minlength="3" maxlength="500" required rows="3"></textarea></div><div class="row"><button class="primary" type="submit" id="managerExpenseVoidSave">Submit Void</button><button class="secondary" type="button" id="managerExpenseVoidCancel">Cancel</button></div><p class="note" id="managerExpenseVoidMessage" role="alert"></p></form>';
+  const close=()=>{modal.hidden=true;modal.innerHTML="";};
+  $("managerExpenseVoidCancel").onclick=close;
+  $("managerExpenseVoidForm").onsubmit=async event=>{
+   event.preventDefault();const reason=$("managerExpenseVoidReason").value.trim(),button=$("managerExpenseVoidSave"),message=$("managerExpenseVoidMessage");
+   if(reason.length<3){message.textContent="Enter a reason with at least 3 characters.";return;}
+   button.disabled=true;button.textContent="Submitting…";
+   try{
+    const {data,error}=await sb.rpc("edmel_submit_manager_expense_request",{p_restaurant_id:RESTAURANT_ID,p_branch_id:activeBranch.id,p_request_type:"void",p_expense_id:row.id,p_request_data:{reason}});
+    if(error)throw error;close();notify(data?.status==="pending"?"Void request submitted for approval.":"Expense voided under the branch policy.");await loadManagerExpenses();
+   }catch(error){message.textContent=error.message||"Unable to submit void request.";button.disabled=false;button.textContent="Submit Void";}
+  };
+ }
+ function openManagerExpenseReview(requestId,decision){
+  if(!managerExpenseCan("approve"))return;
+  const request=managerExpenseRequests.find(x=>x.id===requestId);
+  if(!request||request.submitted_by_user_id===managerAuthUserId)return;
+  const modal=$("managerExpenseModal");modal.hidden=false;
+  modal.innerHTML='<form class="manager-expense-dialog" id="managerExpenseReviewForm"><h2>'+(decision==="approved"?"Approve Expense Request":"Reject Expense Request")+'</h2><p class="note">This decision applies only to '+esc(activeBranch.name)+'.</p><div class="field"><label for="managerExpenseReviewReason">Reason *</label><textarea id="managerExpenseReviewReason" minlength="3" maxlength="500" required rows="3"></textarea></div><div class="row"><button class="primary" type="submit" id="managerExpenseReviewSave">Confirm</button><button class="secondary" type="button" id="managerExpenseReviewCancel">Cancel</button></div><p class="note" id="managerExpenseReviewMessage" role="alert"></p></form>';
+  const close=()=>{modal.hidden=true;modal.innerHTML="";};
+  $("managerExpenseReviewCancel").onclick=close;
+  $("managerExpenseReviewForm").onsubmit=async event=>{
+   event.preventDefault();const reason=$("managerExpenseReviewReason").value.trim(),button=$("managerExpenseReviewSave"),message=$("managerExpenseReviewMessage");
+   if(reason.length<3){message.textContent="Enter a reason with at least 3 characters.";return;}
+   button.disabled=true;button.textContent="Processing…";
+   try{
+    const {data,error}=await sb.rpc("edmel_review_manager_expense_request",{p_request_id:requestId,p_decision:decision,p_reason:reason});
+    if(error)throw error;if(!data?.success)throw new Error("The request decision was not confirmed.");
+    close();notify(decision==="approved"?"Expense request approved.":"Expense request rejected.");await loadManagerExpenses();
+   }catch(error){message.textContent=error.message||"Unable to review request.";button.disabled=false;button.textContent="Confirm";}
+  };
  }
 
  function renderStaff(){
@@ -531,6 +712,8 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   sessionStorage.setItem("edmel_manager_branch",next.id);
   await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
  });
+ $("managerExpenseRefreshButton")?.addEventListener("click",()=>loadManagerExpenses().catch(error=>showManagerExpenseError(error.message||"Unable to refresh expenses.")));
+ $("managerExpenseAddButton")?.addEventListener("click",()=>openManagerExpenseForm());
  $("refreshButton").addEventListener("click",()=>loadBranchData().catch(error=>notify(error.message,true)));
  $("logoutButton").addEventListener("click",async()=>{await endPresence();await sb.auth.signOut({scope:"local"});showLogin("You have signed out.");});
  $("loginForm").addEventListener("submit",async event=>{
