@@ -3307,6 +3307,7 @@ function managerPermissionsEditor(manager){
       if(!p.modules.staff||typeof p.modules.staff!=='object'||Array.isArray(p.modules.staff))p.modules.staff={};
       if(typeof p.modules.staff.manage!=='boolean')p.modules.staff.manage=true;
     }
+    if(typeof p.expense_approval_required!=='boolean')p.expense_approval_required=true;
     return p;
   };
   const currentDraft=()=>drafts[branchSelect.value]||(drafts[branchSelect.value]={modules:{}});
@@ -3352,7 +3353,7 @@ function managerPermissionsEditor(manager){
         return '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer"><input type="checkbox" data-module="'+def.key+'" data-action="'+key+'" '+(checked?'checked':'')+' style="margin-top:3px"><span><strong style="display:block;font-size:13px">'+label+'</strong><small class="mu" style="display:block;line-height:1.4;margin-top:2px">'+help+'</small></span></label>';
       }).join('');
       return '<section class="card" style="padding:13px"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="min-width:0"><strong>'+def.label+'</strong><p class="note" style="margin:3px 0 0">'+def.description+'</p></div><label style="display:flex;align-items:center;gap:7px;white-space:nowrap"><span class="mu" style="font-size:12px">'+(enabled?'ON':'OFF')+'</span><input type="checkbox" data-module-toggle="'+def.key+'" '+(enabled?'checked':'')+' aria-label="Enable '+def.label+'" style="width:42px;height:22px;accent-color:#27966C"></label></div>'+
-        (enabled?'<details open style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--mu)">Recommended permissions · '+recommended+' — customize</summary><div style="padding-top:8px">'+actionRows+'<p class="note" style="margin:8px 0 0">Only the selected actions are granted. Actions that are not supported by a connected workflow will remain unavailable until backend enforcement is implemented.</p></div></details>':'<p class="note" style="margin:8px 0 0">Turn on to choose which actions this Manager can use. No access is granted while this module is off.</p>')+'</section>';
+        (enabled?'<details open style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--mu)">Recommended permissions · '+recommended+' — customize</summary><div style="padding-top:8px">'+actionRows+(def.key==='expenses'?'<div style="border-top:1px solid var(--line);padding-top:12px;margin-top:8px"><label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" data-expense-approval '+(p.expense_approval_required!==false?'checked':'')+' style="margin-top:3px"><span><strong style="display:block;font-size:13px">Require Owner/Admin approval for Manager expense submissions</strong><small class="mu" style="display:block;line-height:1.4;margin-top:3px">When enabled, new expense submissions and supported changes stay pending until an authorized approver reviews them. When disabled, permitted actions can be saved directly.</small></span></label></div>':'')+'<p class="note" style="margin:8px 0 0">Only the selected actions are granted. Actions that are not supported by a connected workflow will remain unavailable until backend enforcement is implemented.</p></div></details>':'<p class="note" style="margin:8px 0 0">Turn on to choose which actions this Manager can use. No access is granted while this module is off.</p>')+'</section>';
     }).join('');
     matrix.querySelectorAll('input[data-module-toggle]').forEach(input=>input.addEventListener('change',()=>{
       const key=input.dataset.moduleToggle,def=moduleDef(key);
@@ -3361,6 +3362,7 @@ function managerPermissionsEditor(manager){
       renderMatrix();
     }));
     matrix.querySelectorAll('input[data-module][data-action]').forEach(input=>input.addEventListener('change',()=>{setDraftPermission(input.dataset.module,input.dataset.action,input.checked);renderMatrix();}));
+    matrix.querySelectorAll('input[data-expense-approval]').forEach(input=>input.addEventListener('change',()=>{const target=scopeMode==='custom'?currentDraft():(sharedDraft||(sharedDraft=clone(drafts[targets[0]]||{modules:{}})));target.expense_approval_required=input.checked;if(scopeMode==='custom')drafts[branchSelect.value]=target;else{sharedDraft=target;sharedDirty=true;syncSharedDraft();}renderMatrix();}));
   }
   function renderScopeTargets(){
     const assigned=Array.from(selectedBranches).map(id=>branches.find(b=>b.id===id)).filter(Boolean);
