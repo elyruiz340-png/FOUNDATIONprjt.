@@ -154,5 +154,7 @@ const css=document.createElement('style');css.id='edmel-expense-phase2-css';css.
 @media(max-width:760px){.expense-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.expense-filters{grid-template-columns:1fr}}
 `;document.head.appendChild(css);
+const previousDashboardLoad=load;
+load=async function(manual){const result=await previousDashboardLoad(manual);if(S.page==='exp')await loadExpenses();return result};
 if(S.page==='exp')loadExpenses();
 })();
