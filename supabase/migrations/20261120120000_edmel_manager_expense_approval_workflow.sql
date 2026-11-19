@@ -155,9 +155,10 @@ DECLARE
   v_actor_name text;
 BEGIN
   IF v_user_id IS NULL THEN RAISE EXCEPTION 'Authentication required.'; END IF;
+  p_request_data := coalesce(p_request_data,'{}'::jsonb);
   IF p_restaurant_id IS NULL OR p_branch_id IS NULL
      OR p_request_type NOT IN ('create','edit','void')
-     OR jsonb_typeof(coalesce(p_request_data,'{}'::jsonb)) <> 'object' THEN
+     OR jsonb_typeof(p_request_data) <> 'object' THEN
     RAISE EXCEPTION 'Invalid expense request.';
   END IF;
 
@@ -205,9 +206,6 @@ BEGIN
     v_notes := nullif(btrim(coalesce(p_request_data->>'notes','')),'');
     v_reason := nullif(btrim(coalesce(p_request_data->>'reason','')),'');
 
-    IF v_category_id IS NULL OR v_description NOT BETWEEN '' AND '' THEN
-      NULL;
-    END IF;
     IF v_category_id IS NULL OR char_length(v_description) NOT BETWEEN 3 AND 500
        OR v_amount IS NULL OR v_amount <= 0
        OR (v_notes IS NOT NULL AND char_length(v_notes)>2000)
