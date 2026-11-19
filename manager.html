@@ -243,7 +243,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
    $("moduleTitle").textContent="No Dashboard Access";
    $("moduleDescription").textContent="No dashboard modules have been enabled for this account. Contact the Owner or Admin to request access.";
    $("modulePermissionNote").textContent="Your assigned branch access remains restricted. No data or management actions are available.";
-   $("modulePlaceholder").hidden=false;$("staffWorkspace").hidden=true;
+   $("modulePlaceholder").hidden=false;$("staffWorkspace").hidden=true;$("expensesWorkspace").hidden=true;
    return;
   }
   const requested=allowed.some(x=>x[0]===currentManagerPage)?currentManagerPage:allowed[0][0];
