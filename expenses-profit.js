@@ -242,17 +242,16 @@ async function saveExpensePolicy(t){
  const branchId=t.dataset.branch||S.f.expPolicyBranch;if(!branchId){toast('Select a branch first.',1);return}
  const limit=Number(document.getElementById('policyEmergencyLimit')?.value);
  if(!Number.isFinite(limit)||limit<0){toast('Enter a valid emergency spending limit.',1);return}
- const row={restaurant_id:CURRENT_RESTAURANT_ID,branch_id:branchId,
-  create_approval_mode:document.getElementById('policyCreateMode').value,
-  edit_approval_mode:document.getElementById('policyEditMode').value,
-  void_approval_mode:document.getElementById('policyVoidMode').value,
-  emergency_authorization_limit:limit,updated_at:new Date().toISOString()};
- const {data:userData,error:userError}=await sb.auth.getUser();if(userError||!userData?.user){toast('Admin session unavailable.',1);return}
- row.updated_by_user_id=userData.user.id;
- const {error}=await sb.from('restaurant_expense_policies').upsert(row,{onConflict:'restaurant_id,branch_id'});
+ const {data,error}=await sb.rpc('edmel_save_restaurant_expense_policy',{
+  p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branchId,
+  p_create_approval_mode:document.getElementById('policyCreateMode').value,
+  p_edit_approval_mode:document.getElementById('policyEditMode').value,
+  p_void_approval_mode:document.getElementById('policyVoidMode').value,
+  p_emergency_authorization_limit:limit
+ });
  if(error){toast('Could not save branch policy: '+error.message,1);return}
- try{await sb.from('audit_logs').insert({restaurant_id:CURRENT_RESTAURANT_ID,actor_user_id:userData.user.id,actor_name:userData.user.email||'Admin',actor_role:'admin',action_category:'Expenses & Profit',action:'Updated branch expense approval policy',record_type:'restaurant_expense_policy',record_id:branchId,result:'success',details:{create_approval_mode:row.create_approval_mode,edit_approval_mode:row.edit_approval_mode,void_approval_mode:row.void_approval_mode,emergency_authorization_limit:limit}})}catch(_){}
- await loadExpenses();toast('Branch expense approval policy saved.');
+ if(!data?.success){toast('The branch policy save was not confirmed.',1);return}
+ await loadExpenses();toast('Branch expense approval policy saved and audit-logged.');
 }
 function addIsoDays(iso,days){const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)}
 function dateInRestaurantZone(date){const p=new Intl.DateTimeFormat('en-CA',{timeZone:restaurantTimezone||'UTC',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);const v={};p.forEach(x=>{if(x.type!=='literal')v[x.type]=x.value});return v.year+'-'+v.month+'-'+v.day}
