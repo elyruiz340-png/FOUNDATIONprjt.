@@ -3251,12 +3251,24 @@ function staffLatestSession(u){
 }
 
 const MANAGER_PERMISSION_MODULES=[
-  ['overview','Overview'],['sales','Sales & Analytics'],['settings','Business Settings'],
-  ['orders','Orders & Transactions'],['expenses','Expenses & Profit'],['staff','Staff & Permissions'],
-  ['audit','Audit Logs'],['branches','Multi-Branch Management'],['health','System Health'],
-  ['inventory','Inventory'],['tables','Tables'],['dispatcher','Dispatcher'],['payments','Payments'],
-  ['menu','Menu'],['discounts','Discounts & Vouchers'],['tax','Tax & Service Charge'],
-  ['receipts','Receipts & Printers'],['ai','EDY — AI Assistant']
+  {key:'overview',label:'Overview',description:'Give the Manager a quick view of branch operations.',recommended:['view'],actions:[['view','View Overview','See the branch overview and available summary information.']]},
+  {key:'sales',label:'Sales & Analytics',description:'Control access to sales performance and reporting.',recommended:['view'],actions:[['view','View Sales Dashboard & Reports','See sales totals, trends and reports for the selected branch.'],['create','Create Sales Records','Create sales-related records where the connected workflow supports it.'],['edit','Edit Sales Records','Modify eligible sales records where the connected workflow supports it.'],['delete','Void Sales Records','Void eligible records only through an authorized workflow.'],['approve','Approve Sales Adjustments','Approve eligible sales adjustments where supported.'],['manage','Manage Sales','Grant broader sales management authority.']]},
+  {key:'settings',label:'Business Settings',description:'Control access to branch-level business configuration.',recommended:['view'],actions:[['view','View Business Settings','See the business settings enabled for this branch.'],['create','Create Settings','Create eligible configuration records.'],['edit','Edit Settings','Change eligible branch settings.'],['delete','Deactivate Settings','Deactivate eligible settings where supported.'],['approve','Approve Settings Changes','Approve eligible configuration changes where supported.'],['manage','Manage Business Settings','Grant broader settings management authority.']]},
+  {key:'orders',label:'Orders & Transactions',description:'Control order visibility and processing actions.',recommended:['view','edit'],actions:[['view','View Orders & Transactions','See orders and transaction information for this branch.'],['create','Accept / Create Orders','Perform supported order acceptance or creation actions.'],['edit','Update Order Status','Update eligible order statuses.'],['delete','Void Orders','Void eligible orders with the required reason.'],['approve','Approve Order Actions','Approve eligible order actions where supported.'],['manage','Manage Orders','Grant broader order management authority.']]},
+  {key:'expenses',label:'Expenses & Profit',description:'Control expense records, approval actions and financial reporting.',recommended:['view','create'],actions:[['view','View Expenses & Profit Reports','See authorized expense records and financial summaries for this branch.'],['create','Create Expense Requests','Submit new expense records or requests.'],['edit','Edit Expenses','Change eligible expense records; approval rules still apply.'],['delete','Void Expenses','Void eligible expenses with a required reason.'],['approve','Approve Expenses','Review and approve eligible expense submissions.'],['manage','Manage Expenses','Grant broader expense authority. This will not bypass the configured approval policy.']]},
+  {key:'staff',label:'Staff & Permissions',description:'Control access to staff information and management actions.',recommended:['view'],actions:[['view','View Staff','See staff assigned to this branch.'],['create','Add Staff','Create eligible staff records where supported.'],['edit','Edit Staff','Change eligible staff details.'],['delete','Deactivate Staff','Deactivate eligible staff accounts where supported.'],['approve','Approve Staff Requests','Approve eligible staff requests.'],['manage','Manage Staff','Grant broader staff management authority.']]},
+  {key:'audit',label:'Audit Logs',description:'Allow visibility into recorded branch activities.',recommended:['view'],actions:[['view','View Audit Logs','Review authorized activity history for this branch.']]},
+  {key:'branches',label:'Multi-Branch Management',description:'Control access to branch information and branch administration.',recommended:['view'],actions:[['view','View Branch Information','See branch information permitted to this Manager.'],['create','Create Branch Records','Create eligible branch records where supported.'],['edit','Edit Branch Information','Change eligible branch details.'],['delete','Deactivate Branch Records','Deactivate eligible branch records where supported.'],['approve','Approve Branch Changes','Approve eligible branch changes.'],['manage','Manage Branches','Grant broader branch management authority. This does not grant access to unassigned branches.']]},
+  {key:'health',label:'System Health',description:'Allow visibility into system status and integration health.',recommended:['view'],actions:[['view','View System Health','See system health and integration status.'],['manage','Manage Integrations','Manage eligible integration settings where supported.']]},
+  {key:'inventory',label:'Inventory',description:'Control stock visibility and inventory operations.',recommended:['view'],actions:[['view','View Inventory','See stock levels and inventory records.'],['create','Add Stock','Record eligible stock additions.'],['edit','Edit Inventory','Change eligible inventory records.'],['delete','Remove / Void Stock Records','Remove or void eligible stock records where supported.'],['approve','Approve Stock Adjustments','Approve eligible stock adjustments.'],['manage','Manage Inventory','Grant broader inventory authority.']]},
+  {key:'tables',label:'Tables',description:'Control table and seating management for this branch.',recommended:['view'],actions:[['view','View Tables','See branch table status and details.'],['create','Create Tables','Add table records where supported.'],['edit','Edit Tables','Change table details and status.'],['delete','Deactivate Tables','Deactivate eligible table records.'],['approve','Approve Table Changes','Approve eligible table changes.'],['manage','Manage Tables','Grant broader table management authority.']]},
+  {key:'dispatcher',label:'Dispatcher',description:'Control dispatch and order handoff visibility and actions.',recommended:['view'],actions:[['view','View Dispatcher','See eligible dispatch queues and delivery information.'],['create','Create Dispatch Tasks','Create eligible dispatch tasks.'],['edit','Update Dispatch Status','Update eligible dispatch and handoff statuses.'],['delete','Cancel Dispatch Tasks','Cancel eligible dispatch tasks.'],['approve','Approve Dispatch Actions','Approve eligible dispatch actions.'],['manage','Manage Dispatcher','Grant broader dispatch authority.']]},
+  {key:'payments',label:'Payments',description:'Control payment visibility and supported payment actions.',recommended:['view'],actions:[['view','View Payments','See payment records and statuses for this branch.'],['create','Record Payments','Create eligible payment records where supported.'],['edit','Update Payment Records','Change eligible payment records through authorized workflows.'],['delete','Void Payments','Void eligible payment records where supported.'],['approve','Verify / Approve Payments','Verify eligible payments where supported by the payment workflow.'],['manage','Manage Payments','Grant broader payment authority.']]},
+  {key:'menu',label:'Menu',description:'Control menu item and category access for this branch.',recommended:['view'],actions:[['view','View Menu','See menu items and categories.'],['create','Create Menu Items','Add eligible menu records.'],['edit','Edit Menu Items','Change eligible menu details.'],['delete','Deactivate Menu Items','Deactivate eligible menu records.'],['approve','Approve Menu Changes','Approve eligible menu changes.'],['manage','Manage Menu','Grant broader menu authority.']]},
+  {key:'discounts',label:'Discounts & Vouchers',description:'Control discount and voucher configuration and usage.',recommended:['view'],actions:[['view','View Discounts & Vouchers','See active discount rules and voucher information.'],['create','Create Discounts / Vouchers','Create eligible discount or voucher records.'],['edit','Edit Discounts / Vouchers','Change eligible discount or voucher rules.'],['delete','Deactivate Discounts / Vouchers','Deactivate eligible rules or vouchers.'],['approve','Approve Discounts','Approve eligible discount actions.'],['manage','Manage Discounts & Vouchers','Grant broader discount and voucher authority.']]},
+  {key:'tax',label:'Tax & Service Charge',description:'Control visibility and changes to tax and service charge settings.',recommended:['view'],actions:[['view','View Tax & Service Charge','See configured tax and service charge settings.'],['edit','Edit Tax & Service Charge','Change eligible tax and service charge settings. Owner/Admin review and jurisdiction validation may still be required.'],['manage','Manage Tax Settings','Grant broader tax configuration authority.']]},
+  {key:'receipts',label:'Receipts & Printers',description:'Control receipt configuration and printer settings.',recommended:['view'],actions:[['view','View Receipts & Printers','See receipt settings and connected printer information.'],['edit','Edit Receipts & Printers','Change eligible receipt and printer settings.'],['manage','Manage Receipts & Printers','Grant broader receipt and printer authority.']]},
+  {key:'ai',label:'EDY — AI Assistant',description:'Control access to the restaurant AI assistant and supported settings.',recommended:['view'],actions:[['view','Use EDY Assistant','Access the AI assistant features enabled for this branch.'],['manage','Manage EDY Settings','Manage supported AI assistant settings.']]}
 ];
 const MANAGER_PERMISSION_ACTIONS=['view','create','edit','delete','approve','manage'];
 const MANAGER_PERMISSION_PROFILES={
@@ -3268,17 +3280,17 @@ const MANAGER_PERMISSION_PROFILES={
 function managerPermissionsEditor(manager){
   if(!manager||String(manager.position||'').trim().toLowerCase()!=='manager'){toast('Manager account could not be verified');return;}
   const managerName=manager.display_name||manager.full_name||manager.cashier_username||'Manager';
-  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="managerPermTitle" style="max-width:1080px;width:min(1080px,96vw);max-height:90vh;overflow:auto">
-    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><div class="mu" style="font-size:12px;letter-spacing:.08em;text-transform:uppercase">Admin · Staff & Permissions</div><h3 id="managerPermTitle" style="font-size:21px;margin:4px 0">Manager Permissions</h3><p class="note">Configure branch-specific access for <strong>${esc(managerName)}</strong>.</p></div><button class="btn" type="button" data-a="close" aria-label="Close">Close</button></div>
-    <div class="g g2"><section class="card"><h3>Manager Account</h3><div class="row"><span class="mu">Name</span><strong>${esc(managerName)}</strong></div><div class="row"><span class="mu">Username</span><strong>${esc(manager.cashier_username||'—')}</strong></div><div class="row"><span class="mu">Role</span><strong>Manager</strong></div><p class="note" style="margin-top:10px">Recommended profiles are starting templates. Applying a profile only changes this editor's draft until saved through the secure Admin permission service.</p></section>
-    <section class="card"><h3>Recommended Profile</h3><div class="fl"><label for="managerPermissionProfile">Choose a starting profile</label><select id="managerPermissionProfile"><option value="Custom Access">Custom Access</option><option>Operations Manager</option><option>Branch Supervisor</option><option>Inventory Manager</option><option>Sales & Reporting Manager</option></select></div><button id="managerApplyProfile" class="btn" type="button">Apply Profile to Draft</button><p class="note" style="margin:10px 0 0">Existing branch permissions are not silently overwritten.</p></section></div>
-    <section class="card"><h3>Branch Assignment</h3><p class="note">Select the branches this Manager may access. Permissions are configured separately for each selected branch.</p><div id="managerBranchList" class="g g2"><span class="mu">Loading branches…</span></div></section>
-    <section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3 style="margin-bottom:3px">Module Permissions</h3><p class="note">Choose a branch above to inspect and edit its permission draft.</p></div><select id="managerPermissionBranch" aria-label="Permission branch"><option value="">Select a branch</option></select></div><div id="managerPermissionMatrix" class="tw"><p class="mu">Loading branch permissions…</p></div></section>
-    <section class="card"><h3>Management Authority</h3><p class="note">These controls are separate from ordinary module visibility. Granting authority requires server-side validation.</p><div id="managerAuthorityControls"><label class="row"><span>Manage subordinate staff</span><input type="checkbox" data-authority="staff_management"></label><label class="row"><span>Submit approval request batches</span><input type="checkbox" data-authority="approval_request_access"></label><label class="row"><span>Assign staff to branches</span><input type="checkbox" data-authority="branch_assignment" disabled></label><label class="row"><span>Edit subordinate permissions</span><input type="checkbox" data-authority="permission_management" disabled></label></div><p class="note">Approval Request Access is saved per branch and enforced by Supabase. Branch assignment and subordinate permission-management controls remain preview-only.</p></section>
-    <div class="tb" style="justify-content:space-between"><span id="managerPermissionStatus" class="note" role="status">Loading current branch access…</span><div style="display:flex;gap:8px"><button class="btn" type="button" data-a="close">Cancel</button><button class="btn pri" id="managerPermissionSave" type="button" disabled>Save Permissions</button></div></div>
-  </div>`;
-  const branchList=L.querySelector('#managerBranchList'),branchSelect=L.querySelector('#managerPermissionBranch'),matrix=L.querySelector('#managerPermissionMatrix'),status=L.querySelector('#managerPermissionStatus'),save=L.querySelector('#managerPermissionSave');
-  let branches=[],accessRows=[],drafts={},selectedBranches=new Set();
+  L.innerHTML='<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="managerPermTitle" style="max-width:1080px;width:min(1080px,96vw);max-height:90vh;overflow:auto">'+
+    '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><div class="mu" style="font-size:12px;letter-spacing:.08em;text-transform:uppercase">Admin · Staff & Permissions</div><h3 id="managerPermTitle" style="font-size:21px;margin:4px 0">Manager Permissions</h3><p class="note">Configure branch-specific access for <strong>'+esc(managerName)+'</strong>.</p></div><button class="btn" type="button" data-a="close" aria-label="Close">Close</button></div>'+
+    '<div class="g g2"><section class="card"><h3>Manager Account</h3><div class="row"><span class="mu">Name</span><strong>'+esc(managerName)+'</strong></div><div class="row"><span class="mu">Username</span><strong>'+esc(manager.cashier_username||'—')+'</strong></div><div class="row"><span class="mu">Role</span><strong>Manager</strong></div><p class="note" style="margin-top:10px">Recommended profiles are starting templates. Applying a profile changes only the current draft until saved.</p></section>'+
+    '<section class="card"><h3>Recommended Profile</h3><div class="fl"><label for="managerPermissionProfile">Choose a starting profile</label><select id="managerPermissionProfile"><option value="Custom Access">Custom Access</option><option>Operations Manager</option><option>Branch Supervisor</option><option>Inventory Manager</option><option>Sales & Reporting Manager</option></select></div><button id="managerApplyProfile" class="btn" type="button">Apply Recommended Profile</button><p class="note" style="margin:10px 0 0">Profiles are templates. Existing customized permissions are not silently overwritten.</p></section></div>'+
+    '<section class="card"><h3>Branch Assignment</h3><p class="note">Choose which active branches this Manager may access. Removing a branch here removes that branch assignment; it does not change other branches\' permission drafts.</p><div id="managerBranchList" class="g g2"><span class="mu">Loading branches…</span></div></section>'+
+    '<section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3 style="margin-bottom:3px">Permission Scope</h3><p class="note">Choose where the permission configuration below will be applied.</p></div><select id="managerPermissionScope" aria-label="Permission scope"><option value="all">All assigned branches</option><option value="selected">Selected assigned branches</option><option value="custom">Customize per branch</option></select></div><div id="managerScopeTargets" style="margin:12px 0"></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><label for="managerPermissionBranch" class="mu">Preview branch</label><select id="managerPermissionBranch" aria-label="Preview branch"><option value="">Select a branch</option></select><span id="managerPermissionScopeNote" class="note">Choose a branch scope.</span></div></section>'+
+    '<section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3 style="margin-bottom:3px">Module Permissions</h3><p class="note">Turn a module on to reveal its recommended permissions. You can customize each permission.</p></div><span class="bd ok">Branch-scoped</span></div><div id="managerPermissionMatrix" style="display:grid;gap:10px;margin-top:12px"><p class="mu">Loading permissions…</p></div></section>'+
+    '<section class="card"><h3>Management Authority</h3><p class="note">These controls are separate from ordinary module visibility. Granting authority requires server-side validation.</p><div id="managerAuthorityControls"><label class="row"><span>Manage subordinate staff</span><input type="checkbox" data-authority="staff_management"></label><label class="row"><span>Submit approval request batches</span><input type="checkbox" data-authority="approval_request_access"></label><label class="row"><span>Assign staff to branches</span><input type="checkbox" data-authority="branch_assignment" disabled></label><label class="row"><span>Edit subordinate permissions</span><input type="checkbox" data-authority="permission_management" disabled></label></div><p class="note">Approval Request Access is saved per branch and enforced by Supabase. Branch assignment and subordinate permission-management controls remain unavailable until their backend workflows are implemented.</p></section>'+
+    '<div class="tb" style="justify-content:space-between"><span id="managerPermissionStatus" class="note" role="status">Loading current branch access…</span><div style="display:flex;gap:8px"><button class="btn" type="button" data-a="close">Cancel</button><button class="btn pri" id="managerPermissionSave" type="button" disabled>Save Permissions</button></div></div></div>';
+  const branchList=L.querySelector('#managerBranchList'),branchSelect=L.querySelector('#managerPermissionBranch'),matrix=L.querySelector('#managerPermissionMatrix'),status=L.querySelector('#managerPermissionStatus'),save=L.querySelector('#managerPermissionSave'),scopeSelect=L.querySelector('#managerPermissionScope'),scopeTargets=L.querySelector('#managerScopeTargets'),scopeNote=L.querySelector('#managerPermissionScopeNote');
+  let branches=[],accessRows=[],drafts={},selectedBranches=new Set(),selectedScopeBranches=new Set(),scopeMode='all',sharedDraft=null,sharedDirty=false;
   const clone=o=>JSON.parse(JSON.stringify(o||{}));
   const normalize=raw=>{
     const p=clone(raw);
@@ -3296,86 +3308,172 @@ function managerPermissionsEditor(manager){
     return p;
   };
   const currentDraft=()=>drafts[branchSelect.value]||(drafts[branchSelect.value]={modules:{}});
+  const activeScopeTargets=()=>{
+    if(scopeMode==='all')return Array.from(selectedBranches);
+    if(scopeMode==='selected')return Array.from(selectedScopeBranches).filter(id=>selectedBranches.has(id));
+    return branchSelect.value&&selectedBranches.has(branchSelect.value)?[branchSelect.value]:[];
+  };
+  const moduleDef=key=>MANAGER_PERMISSION_MODULES.find(x=>x.key===key);
+  function syncSharedDraft(){
+    if(scopeMode==='custom'||!sharedDraft)return;
+    activeScopeTargets().forEach(id=>{drafts[id]=clone(sharedDraft);});
+  }
+  function setDraftPermission(moduleKey,action,value){
+    const target=scopeMode==='custom'?currentDraft():(sharedDraft||(sharedDraft=clone(drafts[activeScopeTargets()[0]]||{modules:{}})));
+    if(!target.modules||typeof target.modules!=='object'||Array.isArray(target.modules))target.modules={};
+    if(value){
+      if(!target.modules[moduleKey]||typeof target.modules[moduleKey]!=='object')target.modules[moduleKey]={};
+      target.modules[moduleKey][action]=true;
+    }else if(target.modules[moduleKey]){
+      target.modules[moduleKey][action]=false;
+      if(!MANAGER_PERMISSION_ACTIONS.some(a=>target.modules[moduleKey][a]===true))delete target.modules[moduleKey];
+    }
+    if(scopeMode==='custom')drafts[branchSelect.value]=target;
+    else{sharedDirty=true;syncSharedDraft();}
+  }
+  function moduleEnabled(p,key){return !!(p.modules&&p.modules[key]&&MANAGER_PERMISSION_ACTIONS.some(a=>p.modules[key][a]===true));}
   function renderMatrix(){
     const branchId=branchSelect.value;
-    if(!branchId){matrix.innerHTML='<p class="mu">Select a branch to configure its permissions.</p>';return;}
-    const p=currentDraft();
+    const targets=activeScopeTargets();
+    if(!targets.length){matrix.innerHTML='<p class="mu">Select at least one assigned branch in the chosen permission scope.</p>';return;}
+    const p=scopeMode==='custom'?currentDraft():(sharedDraft||(sharedDraft=clone(drafts[targets[0]]||{modules:{}})));
     const staffAuthority=L.querySelector('[data-authority="staff_management"]');
     if(staffAuthority)staffAuthority.checked=p.staff_management===true;
     const approvalAuthority=L.querySelector('[data-authority="approval_request_access"]');
     if(approvalAuthority)approvalAuthority.checked=p.approval_request_access===true;
-    matrix.innerHTML=`<table><thead><tr><th>Module</th>${MANAGER_PERMISSION_ACTIONS.map(a=>`<th>${a[0].toUpperCase()+a.slice(1)}</th>`).join('')}</tr></thead><tbody>${MANAGER_PERMISSION_MODULES.map(([key,label])=>`<tr><td><strong>${label}</strong></td>${MANAGER_PERMISSION_ACTIONS.map(action=>`<td><input type="checkbox" data-module="${key}" data-action="${action}" aria-label="${label} ${action}" ${p.modules[key]?.[action]===true?'checked':''}></td>`).join('')}</tr>`).join('')}</tbody></table>`;
-    matrix.querySelectorAll('input[data-module]').forEach(input=>input.addEventListener('change',()=>{const mod=input.dataset.module,act=input.dataset.action;if(!p.modules[mod])p.modules[mod]={};p.modules[mod][act]=input.checked;}));
+    matrix.innerHTML=MANAGER_PERMISSION_MODULES.map(def=>{
+      const enabled=moduleEnabled(p,def.key);
+      const current=p.modules[def.key]||{};
+      const recommended=def.recommended.map(a=>a.toUpperCase()).join(' + ');
+      const actionRows=def.actions.map(action=>{
+        const key=action[0],label=action[1],help=action[2],checked=current[key]===true;
+        return '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer"><input type="checkbox" data-module="'+def.key+'" data-action="'+key+'" '+(checked?'checked':'')+' style="margin-top:3px"><span><strong style="display:block;font-size:13px">'+label+'</strong><small class="mu" style="display:block;line-height:1.4;margin-top:2px">'+help+'</small></span></label>';
+      }).join('');
+      return '<section class="card" style="padding:13px"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="min-width:0"><strong>'+def.label+'</strong><p class="note" style="margin:3px 0 0">'+def.description+'</p></div><label style="display:flex;align-items:center;gap:7px;white-space:nowrap"><span class="mu" style="font-size:12px">'+(enabled?'ON':'OFF')+'</span><input type="checkbox" data-module-toggle="'+def.key+'" '+(enabled?'checked':'')+' aria-label="Enable '+def.label+'" style="width:42px;height:22px;accent-color:#27966C"></label></div>'+
+        (enabled?'<details open style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--mu)">Recommended permissions · '+recommended+' — customize</summary><div style="padding-top:8px">'+actionRows+'<p class="note" style="margin:8px 0 0">Only the selected actions are granted. Actions that are not supported by a connected workflow will remain unavailable until backend enforcement is implemented.</p></div></details>':'<p class="note" style="margin:8px 0 0">Turn on to choose which actions this Manager can use. No access is granted while this module is off.</p>')+'</section>';
+    }).join('');
+    matrix.querySelectorAll('input[data-module-toggle]').forEach(input=>input.addEventListener('change',()=>{
+      const key=input.dataset.moduleToggle,def=moduleDef(key);
+      if(input.checked){def.recommended.forEach(a=>setDraftPermission(key,a,true));}
+      else{const target=scopeMode==='custom'?currentDraft():(sharedDraft||(sharedDraft=clone(drafts[targets[0]]||{modules:{}})));delete target.modules[key];if(scopeMode==='custom')drafts[branchSelect.value]=target;else{sharedDraft=target;sharedDirty=true;syncSharedDraft();}}
+      renderMatrix();
+    }));
+    matrix.querySelectorAll('input[data-module][data-action]').forEach(input=>input.addEventListener('change',()=>{setDraftPermission(input.dataset.module,input.dataset.action,input.checked);renderMatrix();}));
+  }
+  function renderScopeTargets(){
+    const assigned=Array.from(selectedBranches).map(id=>branches.find(b=>b.id===id)).filter(Boolean);
+    if(scopeMode==='selected'){
+      scopeTargets.innerHTML='<div class="note" style="margin-bottom:7px">Select one or more assigned branches. Other assigned branches will keep their current permissions.</div>'+(assigned.length?assigned.map(b=>'<label class="row" style="justify-content:flex-start;gap:9px"><input type="checkbox" data-scope-branch="'+esc(b.id)+'" '+(selectedScopeBranches.has(b.id)?'checked':'')+'><span>'+esc(b.name)+'</span></label>').join(''):'<p class="mu">No assigned branches.</p>');
+      scopeTargets.querySelectorAll('[data-scope-branch]').forEach(input=>input.addEventListener('change',()=>{
+        if(input.checked)selectedScopeBranches.add(input.dataset.scopeBranch);else selectedScopeBranches.delete(input.dataset.scopeBranch);
+        const first=activeScopeTargets()[0];if(first){branchSelect.value=first;sharedDraft=clone(drafts[first]||{modules:{}});sharedDirty=false;}
+        renderBranchSelect();renderScopeTargets();renderMatrix();
+      }));
+    }else if(scopeMode==='all'){
+      scopeTargets.innerHTML='<p class="note">The same permission configuration will be applied to all '+assigned.length+' currently assigned branch(es). Unassigned branches are never included.</p>';
+    }else{
+      scopeTargets.innerHTML='<p class="note">Each assigned branch keeps its own permission configuration. Select a preview branch and customize it independently.</p>';
+    }
+    const targets=activeScopeTargets();
+    scopeNote.textContent=scopeMode==='all'?'Changes apply to every assigned branch.':scopeMode==='selected'?'Changes apply only to the checked branches.':'Changes apply only to the preview branch.';
+    if(targets.length&&(!targets.includes(branchSelect.value)))branchSelect.value=targets[0];
+  }
+  function renderBranchSelect(){
+    const ids=scopeMode==='custom'?Array.from(selectedBranches):activeScopeTargets();
+    branchSelect.innerHTML='<option value="">Select a branch</option>'+ids.map(id=>branches.find(b=>b.id===id)).filter(Boolean).map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join('');
   }
   function renderBranches(){
-    branchList.innerHTML=branches.length?branches.map(b=>`<label class="row" style="justify-content:flex-start;gap:10px"><input type="checkbox" data-branch="${esc(b.id)}" ${selectedBranches.has(b.id)?'checked':''}><span><strong>${esc(b.name)}</strong><span class="mu" style="display:block;font-size:12px">${esc(b.code||'Branch')}</span></span></label>`).join(''):'<p class="mu">No active branches were found for this restaurant.</p>';
-    branchSelect.innerHTML='<option value="">Select a branch</option>'+branches.filter(b=>selectedBranches.has(b.id)).map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
-    branchList.querySelectorAll('input[data-branch]').forEach(input=>input.addEventListener('change',()=>{const id=input.dataset.branch;if(input.checked)selectedBranches.add(id);else selectedBranches.delete(id);renderBranches();if(!selectedBranches.has(branchSelect.value))branchSelect.value='';renderMatrix();}));
-    renderMatrix();
+    branchList.innerHTML=branches.length?branches.map(b=>'<label class="row" style="justify-content:flex-start;gap:10px"><input type="checkbox" data-branch="'+esc(b.id)+'" '+(selectedBranches.has(b.id)?'checked':'')+'><span><strong>'+esc(b.name)+'</strong><span class="mu" style="display:block;font-size:12px">'+esc(b.code||'Branch')+'</span></span></label>').join(''):'<p class="mu">No active branches were found for this restaurant.</p>';
+    branchList.querySelectorAll('input[data-branch]').forEach(input=>input.addEventListener('change',()=>{
+      const id=input.dataset.branch;
+      if(input.checked){selectedBranches.add(id);if(!drafts[id])drafts[id]={modules:{}};selectedScopeBranches.add(id);}
+      else{selectedBranches.delete(id);selectedScopeBranches.delete(id);}
+      if(scopeMode==='all'&&!sharedDraft&&selectedBranches.size)sharedDraft=clone(drafts[id]||{modules:{}});
+      renderBranchSelect();renderScopeTargets();renderMatrix();
+    }));
+    if(scopeMode==='selected')selectedScopeBranches=new Set(Array.from(selectedScopeBranches).filter(id=>selectedBranches.has(id)));
+    renderBranchSelect();renderScopeTargets();renderMatrix();
   }
-  L.querySelector('#managerApplyProfile').onclick=()=>{const profile=L.querySelector('#managerPermissionProfile').value;if(profile==='Custom Access'){status.textContent='Custom Access selected. Existing drafts are unchanged.';return;}const template=MANAGER_PERMISSION_PROFILES[profile]||{};if(!branchSelect.value){status.textContent='Select a branch before applying a profile.';return;}const modules={};Object.entries(template).forEach(([key,actions])=>{modules[key]={};actions.forEach(a=>modules[key][a]=true);});drafts[branchSelect.value]={...currentDraft(),modules};renderMatrix();status.textContent=profile+' applied to the selected branch draft only.';};
-  branchSelect.onchange=renderMatrix;
+  scopeSelect.onchange=()=>{
+    scopeMode=scopeSelect.value;
+    const targets=activeScopeTargets();
+    if(scopeMode==='selected'&&!selectedScopeBranches.size)selectedScopeBranches=new Set(Array.from(selectedBranches));
+    const next=activeScopeTargets()[0]||Array.from(selectedBranches)[0]||'';
+    if(next){branchSelect.value=next;sharedDraft=clone(drafts[next]||{modules:{}});sharedDirty=false;}
+    renderBranchSelect();renderScopeTargets();renderMatrix();
+  };
+  branchSelect.onchange=()=>{
+    if(scopeMode!=='custom'&&branchSelect.value&&!sharedDirty){sharedDraft=clone(drafts[branchSelect.value]||{modules:{}});}
+    renderMatrix();
+  };
+  L.querySelector('#managerApplyProfile').onclick=()=>{
+    const profile=L.querySelector('#managerPermissionProfile').value;
+    if(profile==='Custom Access'){status.textContent='Custom Access selected. Existing drafts are unchanged.';return;}
+    const template=MANAGER_PERMISSION_PROFILES[profile]||{},modules={};
+    Object.entries(template).forEach(([key,actions])=>{modules[key]={};actions.forEach(a=>modules[key][a]=true);});
+    const base=scopeMode==='custom'?currentDraft():(sharedDraft||{});
+    const next=clone(base);next.modules=modules;
+    if(scopeMode==='custom')drafts[branchSelect.value]=next;
+    else{sharedDraft=next;sharedDirty=true;syncSharedDraft();}
+    renderMatrix();status.textContent=profile+' applied to '+(scopeMode==='custom'?'the preview branch':activeScopeTargets().length+' selected branch(es)')+' draft only.';
+  };
   const staffAuthority=L.querySelector('[data-authority="staff_management"]');
   const approvalAuthority=L.querySelector('[data-authority="approval_request_access"]');
-  approvalAuthority?.addEventListener('change',()=>{
-    if(!branchSelect.value){approvalAuthority.checked=false;status.textContent='Select a branch before changing management authority.';return;}
-    currentDraft().approval_request_access=approvalAuthority.checked;
-  });
-  staffAuthority?.addEventListener('change',()=>{
-    if(!branchSelect.value){staffAuthority.checked=false;status.textContent='Select a branch before changing management authority.';return;}
-    const permissions=currentDraft();
-    permissions.staff_management=staffAuthority.checked;
-    if(!permissions.modules||typeof permissions.modules!=='object'||Array.isArray(permissions.modules))permissions.modules={};
-    if(!permissions.modules.staff||typeof permissions.modules.staff!=='object'||Array.isArray(permissions.modules.staff))permissions.modules.staff={};
-    permissions.modules.staff.manage=staffAuthority.checked;
-  });
+  [staffAuthority,approvalAuthority].forEach(input=>input?.addEventListener('change',()=>{
+    if(!branchSelect.value){input.checked=false;status.textContent='Select an assigned branch before changing management authority.';return;}
+    const target=scopeMode==='custom'?currentDraft():(sharedDraft||(sharedDraft=clone(drafts[activeScopeTargets()[0]]||{modules:{}})));
+    target[input.dataset.authority]=input.checked;
+    if(input===staffAuthority){
+      if(!target.modules||typeof target.modules!=='object')target.modules={};
+      if(!target.modules.staff)target.modules.staff={};
+      target.modules.staff.manage=input.checked;
+    }
+    if(scopeMode==='custom')drafts[branchSelect.value]=target;else{sharedDraft=target;sharedDirty=true;syncSharedDraft();}
+  }));
   save.onclick=async()=>{
     if(save.disabled)return;
     if(!selectedBranches.size){status.textContent='Select at least one branch before saving.';return;}
+    const targets=activeScopeTargets();
+    if(!targets.length){status.textContent='Select at least one assigned branch for this permission scope.';return;}
+    if(scopeMode!=='custom'&&!sharedDraft){status.textContent='Permission draft could not be prepared.';return;}
+    if(scopeMode!=='custom')syncSharedDraft();
     const assignments=Array.from(selectedBranches).map(branchId=>{
       const permissions=clone(drafts[branchId]||{modules:{}});
       if(!permissions.modules||typeof permissions.modules!=='object'||Array.isArray(permissions.modules))permissions.modules={};
       if(!permissions.modules.staff||typeof permissions.modules.staff!=='object'||Array.isArray(permissions.modules.staff))permissions.modules.staff={};
-      const staffAuthorityEnabled=permissions.staff_management===true;
-      permissions.modules.staff.manage=staffAuthorityEnabled;
+      permissions.modules.staff.manage=permissions.staff_management===true;
       const legacyMap={orders:'orders',tables:'tables',stocks:'inventory',dispatcher:'dispatcher',settings:'settings'};
       Object.entries(legacyMap).forEach(([legacyKey,moduleKey])=>{
-        const view=permissions.modules[moduleKey]?.view===true;
-        if(Object.prototype.hasOwnProperty.call(permissions,legacyKey))permissions[legacyKey]=view;
+        if(Object.prototype.hasOwnProperty.call(permissions,legacyKey))permissions[legacyKey]=permissions.modules[moduleKey]?.view===true;
       });
       return {branch_id:branchId,permissions};
     });
-    save.disabled=true;save.textContent='Saving…';status.textContent='Saving Manager permissions securely…';
+    save.disabled=true;save.textContent='Saving…';status.textContent='Saving branch-scoped Manager permissions securely…';
     try{
-      const {data:sessionData,error:sessionError}=await sb.auth.getSession();
-      const accessToken=sessionData?.session?.access_token;
+      const {data:sessionData,error:sessionError}=await sb.auth.getSession(),accessToken=sessionData?.session?.access_token;
       if(sessionError||!accessToken)throw new Error('Your Admin session has expired. Sign in again.');
       const response=await fetch(SB_URL+'/functions/v1/admin-save-manager-permissions',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+accessToken,'apikey':SB_KEY},
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+accessToken,'apikey':SB_KEY},
         body:JSON.stringify({restaurant_id:HALINA_RESTAURANT_ID,manager_id:manager.id,assignments})
       });
       const result=await response.json().catch(()=>({}));
       if(!response.ok||result.success!==true)throw new Error(result.error||'Unable to save Manager permissions.');
       const previousBranch=branchSelect.value;
-      const {data:updatedAccess,error:reloadError}=await sb.from('staff_branch_access')
-        .select('branch_id,permissions,is_active').eq('restaurant_user_id',manager.id);
+      const {data:updatedAccess,error:reloadError}=await sb.from('staff_branch_access').select('branch_id,permissions,is_active').eq('restaurant_user_id',manager.id);
       if(reloadError)throw new Error('Permissions saved, but the refreshed view could not load: '+reloadError.message);
       accessRows=(updatedAccess||[]).filter(x=>x.is_active!==false);
-      selectedBranches=new Set(accessRows.map(x=>x.branch_id));
-      drafts={};
+      selectedBranches=new Set(accessRows.map(x=>x.branch_id));drafts={};
       accessRows.forEach(row=>{drafts[row.branch_id]=normalize(row.permissions);});
+      selectedScopeBranches=new Set(Array.from(selectedScopeBranches).filter(id=>selectedBranches.has(id)));
+      if(!selectedScopeBranches.size)selectedScopeBranches=new Set(selectedBranches);
+      sharedDraft=null;sharedDirty=false;
       renderBranches();
       if(selectedBranches.has(previousBranch))branchSelect.value=previousBranch;
-      renderMatrix();
-      status.textContent='Saved successfully · '+(result.result?.branches_saved||assignments.length)+' branch assignment(s) updated.';
+      renderScopeTargets();renderMatrix();
+      status.textContent='Saved successfully · '+(result.result?.branches_saved||assignments.length)+' assigned branch(es) updated.';
       toast('Manager permissions saved');
-    }catch(error){
-      status.textContent=error.message||String(error);
-      toast(error.message||'Unable to save Manager permissions');
-    }finally{
-      save.disabled=false;save.textContent='Save Permissions';
-    }
+    }catch(error){status.textContent=error.message||String(error);toast(error.message||'Unable to save Manager permissions');}
+    finally{save.disabled=false;save.textContent='Save Permissions';}
   };
   (async()=>{
     try{
@@ -3386,11 +3484,13 @@ function managerPermissionsEditor(manager){
       if(branchError)throw branchError;if(accessError)throw accessError;
       branches=branchData||[];accessRows=(accessData||[]).filter(x=>x.is_active!==false);
       accessRows.forEach(row=>{selectedBranches.add(row.branch_id);drafts[row.branch_id]=normalize(row.permissions);});
-      renderBranches();save.disabled=false;status.textContent=accessRows.length+' active branch assignment(s) loaded. Review changes, then save.';
+      selectedScopeBranches=new Set(selectedBranches);
+      if(selectedBranches.size){sharedDraft=clone(drafts[Array.from(selectedBranches)[0]]||{modules:{}});}
+      renderBranches();save.disabled=false;
+      status.textContent=accessRows.length+' active branch assignment(s) loaded. Choose the permission scope, review the preview and save.';
     }catch(error){branchList.innerHTML='<p class="er">Unable to load branch assignments: '+esc(error.message||String(error))+'</p>';matrix.innerHTML='<p class="mu">Permission editor could not load its data.</p>';status.textContent='Read failed. No changes were saved.';}
   })();
 }
-
 async function loadManagerApprovalInbox(){
   const host=document.getElementById('managerApprovalInbox');
   if(!host)return [];
