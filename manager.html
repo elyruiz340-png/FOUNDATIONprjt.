@@ -338,7 +338,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  async function loadApprovalInbox(){
   const host=$("approvalRequestHistory");if(!host)return;
   try{
-   const {data,error}=await sb.functions.invoke("manager-approval-inbox",{body:{action:"inbox",limit:50}});
+   const {data,error}=await sb.functions.invoke("manager-approval-inbox",{body:{action:"inbox",restaurant_id:RESTAURANT_ID,limit:50}});
    if(error)throw new Error(data?.error||error.message||"Unable to load approval requests.");
    if(!data?.success)throw new Error(data?.error||"Unable to load approval requests.");
    approvalBatches=data.batches||[];
@@ -349,7 +349,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
     return '<div style="padding:11px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>'+esc(b.summary)+'</strong><span class="chip">'+esc(state)+'</span></div><div class="note">'+esc(branch)+' · '+esc(when)+' · '+esc((b.actions||[]).length)+' action(s)</div>'+(b.decision_reason?'<div class="note">Admin note: '+esc(b.decision_reason)+'</div>':'')+'</div>';
    }).join("");
    host.innerHTML=rows||"No approval requests submitted yet.";
-   for(const n of (data.notifications||[])){if(!n.is_read){await sb.functions.invoke("manager-approval-inbox",{body:{action:"mark_read",notification_id:n.id}});}}
+   for(const n of (data.notifications||[])){if(!n.is_read){await sb.functions.invoke("manager-approval-inbox",{body:{action:"mark_read",restaurant_id:RESTAURANT_ID,notification_id:n.id}});}}
   }catch(error){host.textContent=error.message||"Approval requests could not be loaded.";}
  }
  $("submitApprovalBatchButton").addEventListener("click",submitApprovalBatch);
