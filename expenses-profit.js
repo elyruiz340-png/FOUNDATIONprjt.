@@ -17,7 +17,7 @@ async function loadExpenses(){
  if(!CURRENT_RESTAURANT_ID){loadError='Restaurant access could not be verified.';expenses=[];if(S.page==='exp')render();return}
  loading=true;loadError='';if(S.page==='exp')render();
  try{
-  const [c,b,e,r,mr,mu,n,pol,em,emn,orders]=await Promise.all([
+  const [c,b,e,r,mr,mu,n,pol,em,emn,orders,audit]=await Promise.all([
    sb.from('restaurant_expense_categories').select('id,name,description,is_active').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('name'),
    sb.from('restaurant_branches').select('id,name,code,is_default').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('is_active',true).order('name'),
    sb.from('restaurant_expenses').select('id,restaurant_id,branch_id,category_id,expense_date,description,payee,reference_number,notes,amount,currency_code,status,created_at,approved_at,approval_note,rejection_reason,void_reason').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('expense_date',{ascending:false}).order('created_at',{ascending:false}).limit(PAGE_LIMIT),
@@ -28,12 +28,13 @@ async function loadExpenses(){
    sb.from('restaurant_expense_policies').select('restaurant_id,branch_id,create_approval_mode,edit_approval_mode,void_approval_mode,emergency_authorization_limit,updated_at').eq('restaurant_id',CURRENT_RESTAURANT_ID),
    sb.from('manager_emergency_authorization_requests').select('*').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('created_at',{ascending:false}).limit(500),
    sb.from('manager_emergency_authorization_notifications').select('id,branch_id,request_id,title,message,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false).order('created_at',{ascending:false}).limit(50),
-   sb.from('orders').select('id,branch_id,subtotal,discount_amount,tax,tip,service_charge,total,payment_status,settled_at,created_at,order_status,status').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('payment_status','paid').not('settled_at','is',null).order('settled_at',{ascending:false}).limit(PAGE_LIMIT)
+   sb.from('orders').select('id,branch_id,subtotal,discount_amount,tax,tip,service_charge,total,payment_status,settled_at,created_at,order_status,status').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('payment_status','paid').not('settled_at','is',null).order('settled_at',{ascending:false}).limit(PAGE_LIMIT),
+   sb.from('restaurant_expense_audit_logs').select('id,branch_id,record_type,record_id,action,actor_name,actor_role,permission_key,reason,before_data,after_data,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('created_at',{ascending:false}).limit(500)
   ]);
   if(c.error)throw c.error;if(b.error)throw b.error;if(e.error)throw e.error;if(r.error)throw r.error;if(mr.error)throw mr.error;if(mu.error)throw mu.error;if(n.error)throw n.error;
-  if(pol.error)throw pol.error;if(em.error)throw em.error;if(emn.error)throw emn.error;if(orders.error)throw orders.error;
+  if(pol.error)throw pol.error;if(em.error)throw em.error;if(emn.error)throw emn.error;if(orders.error)throw orders.error;if(audit.error)throw audit.error;
   cats=c.data||[];branches=b.data||[];expenses=e.data||[];managerRequests=mr.data||[];managerUsers=mu.data||[];managerExpenseNotifications=n.data||[];
-  expensePolicies=pol.data||[];emergencyRequests=em.data||[];emergencyNotifications=emn.data||[];salesRows=orders.data||[];
+  expensePolicies=pol.data||[];emergencyRequests=em.data||[];emergencyNotifications=emn.data||[];salesRows=orders.data||[];expenseAuditRows=audit.data||[];
   currency=String(r.data?.currency||'USD').toUpperCase();
   if(!/^[A-Z]{3}$/.test(currency))currency='USD';
   if(S.f.expBranch&&!branches.some(x=>x.id===S.f.expBranch))S.f.expBranch='';
@@ -179,7 +180,7 @@ async function toggleCategory(id){
 }
 
 
-let expensePolicies=[],emergencyRequests=[],emergencyNotifications=[],salesRows=[];
+let expensePolicies=[],emergencyRequests=[],emergencyNotifications=[],salesRows=[],expenseAuditRows=[];
 const emergencyStatusLabels={pending_authorization:'Pending authorization',authorized:'Authorized',authorized_under_limit:'Within branch limit',rejected:'Rejected',spent_pending_review:'Actuals pending review',reconciled:'Reconciled',reconciliation_rejected:'Correction requested'};
 const approvalModeLabels={none:'No approval',manager:'Manager approval',admin:'Owner / Admin approval'};
 const expenseBranchPolicy=id=>expensePolicies.find(x=>x.branch_id===id)||{branch_id:id,create_approval_mode:'admin',edit_approval_mode:'admin',void_approval_mode:'admin',emergency_authorization_limit:0};
@@ -210,7 +211,8 @@ function approvalCenterPage(){
  const emergencyContent='<section class="card"><div class="row"><div><h3 style="margin:0">Emergency Authorization</h3><p class="note">Spending above the branch limit requires Owner/Admin authorization before spending. Actual amount and receipt reference are reviewed after spending.</p></div><span class="mu">'+emergencyRequests.filter(r=>r.status==='pending_authorization'||r.status==='spent_pending_review').length+' awaiting action</span></div>'+(emergencyNotifications.length?'<div class="note" style="padding:10px 0">'+emergencyNotifications.length+' unread emergency notifications</div>':'')+'<div class="tw"><table class="inv-table"><thead><tr><th>Submitted</th><th>Branch</th><th>Manager</th><th>Emergency</th><th>Requested</th><th>Branch Limit</th><th>Actual</th><th>Status</th><th>Action</th></tr></thead><tbody>'+(emergencyRows||'<tr><td colspan="9"><div class="empty">No emergency authorization requests.</div></td></tr>')+'</tbody></table></div></section>';
  const historyRows=history.map(r=>{const data=r.request_data||{},row=expenses.find(x=>x.id===r.expense_id),desc=r.request_type==='create'?(data.description||'New expense'):r.request_type==='edit'?(data.description||row?.description||'Expense edit'):(row?.description||'Expense void');return '<tr><td>'+dateText(r.submitted_at)+'</td><td>'+escE(branchName(r.branch_id))+'</td><td>'+escE(requestManagerName(r))+'</td><td>'+escE(r.request_type)+'</td><td>'+escE(desc)+'</td><td>'+statusBadge(r.status)+'</td><td>'+dateText(r.reviewed_at)+'</td><td>'+escE(r.review_reason||'—')+'</td></tr>'}).join('');
  const emergencyHistory=emergency.filter(r=>!['pending_authorization','spent_pending_review'].includes(r.status)).map(r=>'<tr><td>'+dateText(r.created_at)+'</td><td>'+escE(branchName(r.branch_id))+'</td><td>'+escE(requestManagerName({manager_restaurant_user_id:r.manager_restaurant_user_id}))+'</td><td>Emergency Authorization</td><td>'+escE(r.description)+'</td><td><span class="bd">'+(emergencyStatusLabels[r.status]||r.status)+'</span></td><td>'+dateText(r.final_reviewed_at||r.approved_at)+'</td><td>'+escE(r.final_review_reason||r.decision_reason||'—')+'</td></tr>').join('');
- const historyContent='<section class="card"><h3 style="margin-top:0">Approval History</h3><p class="note">Approved and rejected Manager expense requests and completed emergency reviews. Original decisions remain recorded.</p><div class="tw"><table class="inv-table"><thead><tr><th>Submitted</th><th>Branch</th><th>Manager</th><th>Type</th><th>Description</th><th>Decision</th><th>Reviewed</th><th>Reason</th></tr></thead><tbody>'+(historyRows+emergencyHistory||'<tr><td colspan="8"><div class="empty">No reviewed requests yet.</div></td></tr>')+'</tbody></table></div></section>';
+ const auditRows=expenseAuditRows.map(a=>{const before=a.before_data||{},after=a.after_data||{},beforeAmount=before.amount==null?'':money(before.amount),afterAmount=after.amount==null?'':money(after.amount),change=beforeAmount&&afterAmount?beforeAmount+' → '+afterAmount:afterAmount||beforeAmount||'—';return '<tr><td>'+dateText(a.created_at)+'</td><td>'+escE(branchName(a.branch_id))+'</td><td>'+escE(a.actor_name||'System')+'</td><td>'+escE(a.action||'Expense updated')+'</td><td>'+escE(after.description||before.description||'Expense record')+'</td><td>'+escE(change)+'</td><td>'+escE(a.reason||'—')+'</td></tr>'}).join('');
+ const historyContent='<section class="card"><h3 style="margin-top:0">Approval History</h3><p class="note">Reviewed Manager requests, emergency decisions, and recorded expense changes. Original decisions and before/after values are preserved.</p><div class="tw"><table class="inv-table"><thead><tr><th>Submitted</th><th>Branch</th><th>Manager</th><th>Type</th><th>Description</th><th>Decision</th><th>Reviewed</th><th>Reason</th></tr></thead><tbody>'+(historyRows+emergencyHistory||'<tr><td colspan="8"><div class="empty">No reviewed requests yet.</div></td></tr>')+'</tbody></table></div><h3>Expense Audit Trail</h3><div class="tw"><table class="inv-table"><thead><tr><th>Date</th><th>Branch</th><th>Actor</th><th>Action</th><th>Record</th><th>Amount</th><th>Reason</th></tr></thead><tbody>'+(auditRows||'<tr><td colspan="7"><div class="empty">No expense audit entries yet.</div></td></tr>')+'</tbody></table></div></section>';
  const notificationBox=managerExpenseNotifications.length||emergencyNotifications.length?'<section class="card"><div class="row"><h3 style="margin:0">Approval Notifications</h3><span class="mu">'+(managerExpenseNotifications.length+emergencyNotifications.length)+' unread</span></div>'+(managerExpenseNotifications.map(n=>'<div class="row"><span>'+escE(n.title)+'<small class="mu" style="display:block">'+escE(n.message)+'</small></span><button class="btn" data-a="managerexpmarkread" data-id="'+n.id+'">Mark read</button></div>').join(''))+(emergencyNotifications.map(n=>'<div class="row"><span>'+escE(n.title)+'<small class="mu" style="display:block">'+escE(n.message)+'</small></span><button class="btn" data-a="emergencymarkread" data-id="'+n.id+'">Mark read</button></div>').join(''))+'</section>':'';
  return subNav+branchFilter+notificationBox+(tab==='expense'||tab==='financial'?reqContent:tab==='emergency'?emergencyContent:historyContent);
 }
@@ -278,6 +280,20 @@ A.emergencyreconcile=t=>emergencyActualDecisionModal(t.dataset.id,'reconciled');
 A.emergencyactualreject=t=>emergencyActualDecisionModal(t.dataset.id,'rejected');
 A.emergencymarkread=async t=>{try{const {error}=await sb.from('manager_emergency_authorization_notifications').update({is_read:true,read_at:new Date().toISOString()}).eq('id',t.dataset.id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin');if(error)throw error;await loadExpenses();toast('Emergency notification marked as read.')}catch(e){toast(e?.message||'Unable to update emergency notification.',1)}};
 A.exppolicysave=t=>saveExpensePolicy(t);
+async function showExpenseNotificationDrawer(){
+ try{
+  const [n,e]=await Promise.all([
+   sb.from('manager_expense_request_notifications').select('id,title,message,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false).order('created_at',{ascending:false}).limit(30),
+   sb.from('manager_emergency_authorization_notifications').select('id,title,message,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false).order('created_at',{ascending:false}).limit(30)
+  ]);
+  if(n.error)throw n.error;if(e.error)throw e.error;
+  const all=[...(n.data||[]).map(x=>({...x,kind:'expense'})),...(e.data||[]).map(x=>({...x,kind:'emergency'}))].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b><span class="mu">'+all.length+' unread approval alerts</span><button class="btn" data-a="expnotifreadall" '+(!all.length?'disabled':'')+'>Mark all read</button></div>'+(all.map(x=>'<div class="row" style="align-items:flex-start;gap:10px;padding:10px 0;border-top:1px solid var(--bd)"><div style="flex:1;min-width:0"><b>'+escE(x.title)+'</b><div class="mu">'+escE(x.message)+'</div><small class="mu">'+dateText(x.created_at)+'</small></div><button class="btn" data-a="'+(x.kind==='emergency'?'emergencymarkread':'managerexpmarkread')+'" data-id="'+x.id+'">Mark read</button></div>').join('')||empty('You’re all caught up.') )+'<button class="btn pri" style="margin-top:10px" data-a="go" data-p="exp">Open Expenses &amp; Profit</button></div>';
+ }catch(e){toast('Could not load approval notifications: '+(e?.message||String(e)),1)}
+}
+A.bell=()=>showExpenseNotificationDrawer();
+A.expnotifreadall=async()=>{try{const now=new Date().toISOString();const [a,b]=await Promise.all([sb.from('manager_expense_request_notifications').update({is_read:true,read_at:now}).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false),sb.from('manager_emergency_authorization_notifications').update({is_read:true,read_at:now}).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false)]);if(a.error)throw a.error;if(b.error)throw b.error;closeL();toast('Approval notifications marked as read.')}catch(e){toast(e?.message||'Unable to mark notifications as read.',1)}};
+
 A.addexp=()=>expenseForm(null);
 A.expcats=()=>categoryModal();
 A.expcattoggle=t=>toggleCategory(t.dataset.id);
