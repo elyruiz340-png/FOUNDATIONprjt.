@@ -2,7 +2,8 @@
 (() => {
 'use strict';
 const PAGE_LIMIT=2000;
-let cats=[],branches=[],expenses=[],managerRequests=[],managerUsers=[],currency='USD',loading=false,loadError='';
+let cats=[],branches=[],expenses=[],managerRequests=[],managerUsers=[],managerExpenseNotifications=[],currency='USD',loading=false,loadError='';
+let selectedManagerRequestIds=new Set(),managerRequestSelectionBranch='';
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 const escE=v=>esc(String(v??''));
 const money=v=>{try{return new Intl.NumberFormat('en-US',{style:'currency',currency}).format(Number(v)||0)}catch(_){return currency+' '+(Number(v)||0).toFixed(2)}};
@@ -16,16 +17,17 @@ async function loadExpenses(){
  if(!CURRENT_RESTAURANT_ID){loadError='Restaurant access could not be verified.';expenses=[];if(S.page==='exp')render();return}
  loading=true;loadError='';if(S.page==='exp')render();
  try{
-  const [c,b,e,r,mr,mu]=await Promise.all([
+  const [c,b,e,r,mr,mu,n]=await Promise.all([
    sb.from('restaurant_expense_categories').select('id,name,description,is_active').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('name'),
    sb.from('restaurant_branches').select('id,name,code,is_default').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('is_active',true).order('name'),
    sb.from('restaurant_expenses').select('id,restaurant_id,branch_id,category_id,expense_date,description,payee,reference_number,notes,amount,currency_code,status,created_at,approved_at,approval_note,rejection_reason,void_reason').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('expense_date',{ascending:false}).order('created_at',{ascending:false}).limit(PAGE_LIMIT),
    sb.from('restaurants').select('currency').eq('id',CURRENT_RESTAURANT_ID).maybeSingle(),
    sb.from('manager_expense_requests').select('id,branch_id,manager_restaurant_user_id,submitted_by_user_id,request_type,expense_id,request_data,status,submitted_at,reviewed_at,review_reason').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('submitted_at',{ascending:false}).limit(500),
-   sb.from('restaurant_users').select('id,display_name,full_name,cashier_username,position').eq('restaurant_id',CURRENT_RESTAURANT_ID)
+   sb.from('restaurant_users').select('id,display_name,full_name,cashier_username,position').eq('restaurant_id',CURRENT_RESTAURANT_ID),
+   sb.from('manager_expense_request_notifications').select('id,branch_id,request_id,title,message,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false).order('created_at',{ascending:false}).limit(50)
   ]);
-  if(c.error)throw c.error;if(b.error)throw b.error;if(e.error)throw e.error;if(r.error)throw r.error;if(mr.error)throw mr.error;if(mu.error)throw mu.error;
-  cats=c.data||[];branches=b.data||[];expenses=e.data||[];managerRequests=mr.data||[];managerUsers=mu.data||[];currency=String(r.data?.currency||'USD').toUpperCase();
+  if(c.error)throw c.error;if(b.error)throw b.error;if(e.error)throw e.error;if(r.error)throw r.error;if(mr.error)throw mr.error;if(mu.error)throw mu.error;if(n.error)throw n.error;
+  cats=c.data||[];branches=b.data||[];expenses=e.data||[];managerRequests=mr.data||[];managerUsers=mu.data||[];managerExpenseNotifications=n.data||[];currency=String(r.data?.currency||'USD').toUpperCase();
   if(!/^[A-Z]{3}$/.test(currency))currency='USD';
   if(S.f.expBranch&&!branches.some(x=>x.id===S.f.expBranch))S.f.expBranch='';
   if(S.f.expCategory&&!cats.some(x=>x.id===S.f.expCategory))S.f.expCategory='';
@@ -35,6 +37,12 @@ async function loadExpenses(){
 
 function expensePage(){
  const q=String(S.f.expQ||'').toLowerCase(),br=S.f.expBranch||'',cat=S.f.expCategory||'',st=S.f.expStatus||'';
+ if(br!==managerRequestSelectionBranch){selectedManagerRequestIds.clear();managerRequestSelectionBranch=br;}
+ const visibleRequests=managerRequests.filter(x=>!br||x.branch_id===br);
+ const pendingManagerRequests=visibleRequests.filter(x=>x.status==='pending');
+ const selectedPendingCount=pendingManagerRequests.filter(x=>selectedManagerRequestIds.has(x.id)).length;
+ const notificationHtml=managerExpenseNotifications.length?'<div class="card" style="margin:10px 0;padding:12px"><div class="row"><strong>New Manager Expense Notifications</strong><span class="mu">'+managerExpenseNotifications.length+' unread</span></div>'+managerExpenseNotifications.map(n=>'<div class="row" style="gap:10px;padding:8px 0;border-top:1px solid var(--line)"><div style="flex:1;min-width:0"><strong>'+escE(n.title)+'</strong><small class="mu" style="display:block">'+escE(n.message)+' · '+dateText(n.created_at)+'</small></div><button class="btn" data-a="managerexpmarkread" data-id="'+escE(n.id)+'">Mark read</button></div>').join('')+'</div>':'';
+ const bulkToolbar=br?'<div class="tb" style="gap:8px;flex-wrap:wrap;margin:10px 0"><span class="mu">'+selectedPendingCount+' selected · '+pendingManagerRequests.length+' pending in this branch</span><button class="btn" data-a="managerexpselectpending" '+(!pendingManagerRequests.length?'disabled':'')+'>Select Pending</button><button class="btn" data-a="managerexpclearselection" '+(!selectedManagerRequestIds.size?'disabled':'')+'>Clear Selection</button><button class="btn pri" data-a="managerexpbulkapprove" '+(!selectedPendingCount?'disabled':'')+'>Approve Selected</button><button class="btn" data-a="managerexpbulkreject" '+(!selectedPendingCount?'disabled':'')+'>Reject Selected</button></div>':'<p class="note" style="margin:10px 0">Select a branch in the filter above to enable branch-scoped bulk review.</p>';
  const rows=expenses.filter(x=>(!q||[x.description,x.payee,x.reference_number,catName(x.category_id),branchName(x.branch_id)].join(' ').toLowerCase().includes(q))&&(!br||x.branch_id===br)&&(!cat||x.category_id===cat)&&(!st||x.status===st));
  const approved=rows.filter(x=>x.status==='approved').reduce((n,x)=>n+Number(x.amount||0),0);
  const pending=rows.filter(x=>x.status==='pending');
@@ -58,11 +66,27 @@ function expensePage(){
  <label>Status<select data-c="expStatus"><option value="">All statuses</option>${Object.entries(statusText).map(([k,v])=>`<option value="${k}"${st===k?' selected':''}>${v}</option>`).join('')}</select></label>
  <label>Search<input data-c="expQ" value="${escE(S.f.expQ||'')}" placeholder="Description, payee or reference"></label>
  </div></section>
- <section class="card"><div class="row"><h3 style="margin:0">Manager Approval Requests</h3><span class="mu">${managerRequests.filter(x=>x.status==='pending').length} pending · ${managerRequests.length} total</span></div><p class="note">Manager submissions are held separately until an authorized reviewer approves them. Rejecting a request does not alter the official expense record.</p><div class="tw"><table class="inv-table"><thead><tr><th>Submitted</th><th>Branch</th><th>Manager</th><th>Request</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody> ${managerRequests.map(req=>{const data=req.request_data||{},row=expenses.find(x=>x.id===req.expense_id),manager=managerUsers.find(x=>x.id===req.manager_restaurant_user_id),name=manager?.display_name||manager?.full_name||manager?.cashier_username||'Manager',description=req.request_type==='create'?(data.description||'New expense'):req.request_type==='edit'?(data.description||row?.description||'Expense edit'):(row?.description||'Expense void'),amount=req.request_type==='void'?row?.amount:data.amount,actions=req.status==='pending'?'<button class="btn pri" data-a="managerexprequestapprove" data-id="'+req.id+'">Approve</button><button class="btn" data-a="managerexprequestreject" data-id="'+req.id+'">Reject</button>':'<span class="mu">Reviewed</span>';return '<tr><td>'+dateText(req.submitted_at)+'</td><td>'+escE(branchName(req.branch_id))+'</td><td>'+escE(name)+'</td><td>'+escE(req.request_type.charAt(0).toUpperCase()+req.request_type.slice(1))+'</td><td><b>'+escE(description)+'</b></td><td>'+(amount==null?'—':money(amount))+'</td><td>'+statusBadge(req.status)+'</td><td><div style="display:flex;gap:5px;flex-wrap:wrap">'+actions+'</div></td></tr>'}).join('') || '<tr><td colspan="8"><div class="empty">No Manager expense requests have been submitted.</div></td></tr>'} </tbody></table></div></section>
+ <section class="card"><div class="row"><h3 style="margin:0">Manager Approval Requests</h3><span class="mu">${pendingManagerRequests.length} pending · ${visibleRequests.length} shown</span></div>${notificationHtml}${bulkToolbar}<p class="note">Manager submissions are held separately until an authorized reviewer approves them. Bulk review is limited to the selected branch. Rejecting a request does not alter the official expense record.</p><div class="tw"><table class="inv-table"><thead><tr><th>Select</th><th>Submitted</th><th>Branch</th><th>Manager</th><th>Request</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody>${visibleRequests.map(req=>{const data=req.request_data||{},row=expenses.find(x=>x.id===req.expense_id),manager=managerUsers.find(x=>x.id===req.manager_restaurant_user_id),name=manager?.display_name||manager?.full_name||manager?.cashier_username||'Manager',description=req.request_type==='create'?(data.description||'New expense'):req.request_type==='edit'?(data.description||row?.description||'Expense edit'):(row?.description||'Expense void'),amount=req.request_type==='void'?row?.amount:data.amount,selectCell=req.status==='pending'?'<input type="checkbox" data-manager-expense-request-select data-id="'+req.id+'" '+(selectedManagerRequestIds.has(req.id)?'checked':'')+' aria-label="Select expense request">':'—',actions=req.status==='pending'?'<button class="btn pri" data-a="managerexprequestapprove" data-id="'+req.id+'">Approve</button><button class="btn" data-a="managerexprequestreject" data-id="'+req.id+'">Reject</button>':'<span class="mu">Reviewed</span>';return '<tr><td>'+selectCell+'</td><td>'+dateText(req.submitted_at)+'</td><td>'+escE(branchName(req.branch_id))+'</td><td>'+escE(name)+'</td><td>'+escE(req.request_type.charAt(0).toUpperCase()+req.request_type.slice(1))+'</td><td><b>'+escE(description)+'</b></td><td>'+(amount==null?'—':money(amount))+'</td><td>'+statusBadge(req.status)+'</td><td><div style="display:flex;gap:5px;flex-wrap:wrap">'+actions+'</div></td></tr>'}).join('') || '<tr><td colspan="9"><div class="empty">No Manager expense requests have been submitted for this branch filter.</div></td></tr>'}</tbody></table></div></section>
  <section class="card"><div class="row"><h3 style="margin:0">Expense Records</h3><span class="mu">${rows.length} shown · ${expenses.length} loaded</span></div><div class="tw"><table class="inv-table"><thead><tr><th>Date</th><th>Branch</th><th>Category</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody>${trs||`<tr><td colspan="7"><div class="empty">${cats.some(x=>x.is_active)?'No expense records match these filters.':'No active expense categories. Create a category before adding an expense.'}</div></td></tr>`}</tbody></table></div></section>
  <p class="note">Only approved operating expenses are included in approved expense totals. Pending, rejected and voided records remain available for review. Supplier purchases and profit calculations are separate future phases.</p></div>`;
 }
 
+function managerExpenseBulkDecisionModal(decision){
+ const ids=Array.from(selectedManagerRequestIds),branchId=S.f.expBranch||'';
+ if(!branchId){toast('Select one branch before using bulk review.',1);return}
+ if(!ids.length||ids.length>50){toast('Select between 1 and 50 pending requests.',1);return}
+ const selected=managerRequests.filter(r=>ids.includes(r.id)&&r.branch_id===branchId&&r.status==='pending');
+ if(selected.length!==ids.length){selectedManagerRequestIds.clear();toast('The selection changed. Refresh the requests and try again.',1);render();return}
+ const label=decision==='approved'?'Approve Selected Requests':'Reject Selected Requests';
+ L.innerHTML='<div class="bk" data-a="close"></div><form class="md" role="dialog" aria-modal="true" aria-label="'+label+'" id="managerExpenseBulkDecisionForm"><h3>'+label+'</h3><p class="note">This action applies to '+ids.length+' pending request(s) in '+escE(branchName(branchId))+'. All selected requests will be processed together. If one request fails validation, none will be changed.</p><div class="fl"><label for="managerExpenseBulkReason">Review reason *</label><textarea id="managerExpenseBulkReason" minlength="3" maxlength="500" rows="3" required></textarea></div><div class="tb"><button class="btn pri" id="managerExpenseBulkSave">Confirm</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="managerExpenseBulkError" class="er"></p></form>';
+ document.getElementById('managerExpenseBulkDecisionForm').onsubmit=async ev=>{
+  ev.preventDefault();const reason=document.getElementById('managerExpenseBulkReason').value.trim(),btn=document.getElementById('managerExpenseBulkSave'),err=document.getElementById('managerExpenseBulkError');
+  if(reason.length<3){err.textContent='Enter a reason with at least 3 characters.';return}
+  btn.disabled=true;btn.textContent='Processing…';
+  try{const result=await sb.rpc('edmel_review_manager_expense_requests_bulk',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branchId,p_request_ids:ids,p_decision:decision,p_reason:reason});if(result.error)throw result.error;if(!result.data?.success||Number(result.data.processed_count)!==ids.length)throw new Error('The bulk decision was not fully confirmed.');selectedManagerRequestIds.clear();closeL();await loadExpenses();toast(ids.length+' Manager expense request(s) '+(decision==='approved'?'approved.':'rejected.'))}
+  catch(e){err.textContent=e?.message||'Unable to process the selected requests.';btn.disabled=false;btn.textContent='Confirm'}
+ };
+}
 function managerExpenseRequestDecisionModal(id,decision){
  const request=managerRequests.find(x=>x.id===id);if(!request||request.status!=='pending')return;
  const label=decision==='approved'?'Approve Manager Expense Request':'Reject Manager Expense Request';
@@ -159,8 +183,14 @@ A.expreject=t=>decisionModal(t.dataset.id,'rejected');
 A.expvoid=t=>decisionModal(t.dataset.id,'voided');
 A.managerexprequestapprove=t=>managerExpenseRequestDecisionModal(t.dataset.id,'approved');
 A.managerexprequestreject=t=>managerExpenseRequestDecisionModal(t.dataset.id,'rejected');
+A.managerexpselectpending=()=>{if(!S.f.expBranch){toast('Select one branch first.',1);return}const pending=managerRequests.filter(r=>r.branch_id===S.f.expBranch&&r.status==='pending');selectedManagerRequestIds=new Set(pending.slice(0,50).map(r=>r.id));if(pending.length>50)toast('Selected the first 50 pending requests. Review the remaining requests separately.',1);render()};
+A.managerexpclearselection=()=>{selectedManagerRequestIds.clear();render()};
+A.managerexpbulkapprove=()=>managerExpenseBulkDecisionModal('approved');
+A.managerexpbulkreject=()=>managerExpenseBulkDecisionModal('rejected');
+A.managerexpmarkread=async t=>{try{const {error}=await sb.from('manager_expense_request_notifications').update({is_read:true,read_at:new Date().toISOString()}).eq('id',t.dataset.id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin');if(error)throw error;await loadExpenses();toast('Notification marked as read.')}catch(e){toast(e?.message||'Unable to update notification.',1)}};
 const oldGo=A.go;
 A.go=t=>{const page=t?.dataset?.p;oldGo(t);if(page==='exp')loadExpenses()};
+document.addEventListener('change',ev=>{const t=ev.target;if(!t?.matches('[data-manager-expense-request-select]'))return;if(t.checked)selectedManagerRequestIds.add(t.dataset.id);else selectedManagerRequestIds.delete(t.dataset.id);render()});
 document.addEventListener('input',ev=>{
  const t=ev.target;if(t?.dataset?.c!=='expQ')return;
  S.f.expQ=t.value;const pos=t.selectionStart;render();const next=document.querySelector('#pg [data-c="expQ"]');if(next){next.focus();next.setSelectionRange(pos,pos)}
