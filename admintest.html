@@ -3456,7 +3456,7 @@ function staffPage(){
   ${staffHistoryError?`<div class="card" style="margin-top:12px"><p class="mu">Login history unavailable: ${esc(staffHistoryError)}</p></div>`:''}
   <div class="card" style="margin-top:14px"><h3>Account & Session Security</h3><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Deactivated staff accounts are retained with their session history.</p><p>• Online means an active session heartbeat was received within the last 2 minutes.</p></div>`;
 }
-PG.staff=staffPage;
+PG.staff=()=>{const html=staffPage();setTimeout(loadManagerApprovalInbox,0);return html;};
 A.approvalrefresh=async()=>{await loadManagerApprovalInbox();};
 A.approvalapprove=button=>reviewManagerApproval(button.dataset.id,'approve');
 A.approvalreject=button=>reviewManagerApproval(button.dataset.id,'reject');
