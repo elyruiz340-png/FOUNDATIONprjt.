@@ -3393,6 +3393,7 @@ function managerPermissionsEditor(manager){
       if(input.checked){selectedBranches.add(id);if(!drafts[id])drafts[id]={modules:{}};selectedScopeBranches.add(id);}
       else{selectedBranches.delete(id);selectedScopeBranches.delete(id);}
       if(scopeMode==='all'&&!sharedDraft&&selectedBranches.size)sharedDraft=clone(drafts[id]||{modules:{}});
+      if(scopeMode==='all'&&input.checked&&sharedDirty&&sharedDraft)drafts[id]=clone(sharedDraft);
       renderBranchSelect();renderScopeTargets();renderMatrix();
     }));
     if(scopeMode==='selected')selectedScopeBranches=new Set(Array.from(selectedScopeBranches).filter(id=>selectedBranches.has(id)));
@@ -3440,7 +3441,7 @@ function managerPermissionsEditor(manager){
     const targets=activeScopeTargets();
     if(!targets.length){status.textContent='Select at least one assigned branch for this permission scope.';return;}
     if(scopeMode!=='custom'&&!sharedDraft){status.textContent='Permission draft could not be prepared.';return;}
-    if(scopeMode!=='custom')syncSharedDraft();
+    if(scopeMode!=='custom'&&sharedDirty)syncSharedDraft();
     const assignments=Array.from(selectedBranches).map(branchId=>{
       const permissions=clone(drafts[branchId]||{modules:{}});
       if(!permissions.modules||typeof permissions.modules!=='object'||Array.isArray(permissions.modules))permissions.modules={};
