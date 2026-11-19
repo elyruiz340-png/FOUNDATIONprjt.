@@ -2,7 +2,7 @@
 (() => {
 'use strict';
 const PAGE_LIMIT=2000;
-let cats=[],branches=[],expenses=[],currency='USD',loading=false,loadError='';
+let cats=[],branches=[],expenses=[],managerRequests=[],managerUsers=[],currency='USD',loading=false,loadError='';
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 const escE=v=>esc(String(v??''));
 const money=v=>{try{return new Intl.NumberFormat('en-US',{style:'currency',currency}).format(Number(v)||0)}catch(_){return currency+' '+(Number(v)||0).toFixed(2)}};
@@ -16,14 +16,16 @@ async function loadExpenses(){
  if(!CURRENT_RESTAURANT_ID){loadError='Restaurant access could not be verified.';expenses=[];if(S.page==='exp')render();return}
  loading=true;loadError='';if(S.page==='exp')render();
  try{
-  const [c,b,e,r]=await Promise.all([
+  const [c,b,e,r,mr,mu]=await Promise.all([
    sb.from('restaurant_expense_categories').select('id,name,description,is_active').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('name'),
    sb.from('restaurant_branches').select('id,name,code,is_default').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('is_active',true).order('name'),
    sb.from('restaurant_expenses').select('id,restaurant_id,branch_id,category_id,expense_date,description,payee,reference_number,notes,amount,currency_code,status,created_at,approved_at,approval_note,rejection_reason,void_reason').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('expense_date',{ascending:false}).order('created_at',{ascending:false}).limit(PAGE_LIMIT),
-   sb.from('restaurants').select('currency').eq('id',CURRENT_RESTAURANT_ID).maybeSingle()
+   sb.from('restaurants').select('currency').eq('id',CURRENT_RESTAURANT_ID).maybeSingle(),
+   sb.from('manager_expense_requests').select('id,branch_id,manager_restaurant_user_id,submitted_by_user_id,request_type,expense_id,request_data,status,submitted_at,reviewed_at,review_reason').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('submitted_at',{ascending:false}).limit(500),
+   sb.from('restaurant_users').select('id,display_name,full_name,cashier_username,position').eq('restaurant_id',CURRENT_RESTAURANT_ID)
   ]);
-  if(c.error)throw c.error;if(b.error)throw b.error;if(e.error)throw e.error;if(r.error)throw r.error;
-  cats=c.data||[];branches=b.data||[];expenses=e.data||[];currency=String(r.data?.currency||'USD').toUpperCase();
+  if(c.error)throw c.error;if(b.error)throw b.error;if(e.error)throw e.error;if(r.error)throw r.error;if(mr.error)throw mr.error;if(mu.error)throw mu.error;
+  cats=c.data||[];branches=b.data||[];expenses=e.data||[];managerRequests=mr.data||[];managerUsers=mu.data||[];currency=String(r.data?.currency||'USD').toUpperCase();
   if(!/^[A-Z]{3}$/.test(currency))currency='USD';
   if(S.f.expBranch&&!branches.some(x=>x.id===S.f.expBranch))S.f.expBranch='';
   if(S.f.expCategory&&!cats.some(x=>x.id===S.f.expCategory))S.f.expCategory='';
@@ -56,8 +58,22 @@ function expensePage(){
  <label>Status<select data-c="expStatus"><option value="">All statuses</option>${Object.entries(statusText).map(([k,v])=>`<option value="${k}"${st===k?' selected':''}>${v}</option>`).join('')}</select></label>
  <label>Search<input data-c="expQ" value="${escE(S.f.expQ||'')}" placeholder="Description, payee or reference"></label>
  </div></section>
+ <section class="card"><div class="row"><h3 style="margin:0">Manager Approval Requests</h3><span class="mu">' + managerRequests.filter(x=>x.status==='pending').length + ' pending · ' + managerRequests.length + ' total</span></div><p class="note">Manager submissions are held separately until an authorized reviewer approves them. Rejecting a request does not alter the official expense record.</p><div class="tw"><table class="inv-table"><thead><tr><th>Submitted</th><th>Branch</th><th>Manager</th><th>Request</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody> ${managerRequests.map(req=>{const data=req.request_data||{},row=expenses.find(x=>x.id===req.expense_id),manager=managerUsers.find(x=>x.id===req.manager_restaurant_user_id),name=manager?.display_name||manager?.full_name||manager?.cashier_username||'Manager',description=req.request_type==='create'?(data.description||'New expense'):req.request_type==='edit'?(data.description||row?.description||'Expense edit'):(row?.description||'Expense void'),amount=req.request_type==='void'?row?.amount:data.amount,actions=req.status==='pending'?'<button class="btn pri" data-a="managerexprequestapprove" data-id="'+req.id+'">Approve</button><button class="btn" data-a="managerexprequestreject" data-id="'+req.id+'">Reject</button>':'<span class="mu">Reviewed</span>';return '<tr><td>'+dateText(req.submitted_at)+'</td><td>'+escE(branchName(req.branch_id))+'</td><td>'+escE(name)+'</td><td>'+escE(req.request_type.charAt(0).toUpperCase()+req.request_type.slice(1))+'</td><td><b>'+escE(description)+'</b></td><td>'+(amount==null?'—':money(amount))+'</td><td>'+statusBadge(req.status)+'</td><td><div style="display:flex;gap:5px;flex-wrap:wrap">'+actions+'</div></td></tr>'}).join('') || '<tr><td colspan="8"><div class="empty">No Manager expense requests have been submitted.</div></td></tr>'} </tbody></table></div></section>
  <section class="card"><div class="row"><h3 style="margin:0">Expense Records</h3><span class="mu">${rows.length} shown · ${expenses.length} loaded</span></div><div class="tw"><table class="inv-table"><thead><tr><th>Date</th><th>Branch</th><th>Category</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody>${trs||`<tr><td colspan="7"><div class="empty">${cats.some(x=>x.is_active)?'No expense records match these filters.':'No active expense categories. Create a category before adding an expense.'}</div></td></tr>`}</tbody></table></div></section>
  <p class="note">Only approved operating expenses are included in approved expense totals. Pending, rejected and voided records remain available for review. Supplier purchases and profit calculations are separate future phases.</p></div>`;
+}
+
+function managerExpenseRequestDecisionModal(id,decision){
+ const request=managerRequests.find(x=>x.id===id);if(!request||request.status!=='pending')return;
+ const label=decision==='approved'?'Approve Manager Expense Request':'Reject Manager Expense Request';
+ L.innerHTML='<div class="bk" data-a="close"></div><form class="md" role="dialog" aria-modal="true" aria-label="'+label+'" id="managerExpenseRequestDecisionForm"><h3>'+label+'</h3><p class="note">This decision applies to the selected branch request. The original expense record remains unchanged if the request is rejected.</p><div class="fl"><label for="managerExpenseRequestReason">Review reason *</label><textarea id="managerExpenseRequestReason" minlength="3" maxlength="500" rows="3" required></textarea></div><div class="tb"><button class="btn pri" id="managerExpenseRequestDecisionSave">Confirm</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="managerExpenseRequestDecisionError" class="er"></p></form>';
+ document.getElementById('managerExpenseRequestDecisionForm').onsubmit=async ev=>{
+  ev.preventDefault();const reason=document.getElementById('managerExpenseRequestReason').value.trim(),btn=document.getElementById('managerExpenseRequestDecisionSave'),err=document.getElementById('managerExpenseRequestDecisionError');
+  if(reason.length<3){err.textContent='Enter a reason with at least 3 characters.';return}
+  btn.disabled=true;btn.textContent='Processing…';
+  try{const result=await sb.rpc('edmel_review_manager_expense_request',{p_request_id:id,p_decision:decision,p_reason:reason});if(result.error)throw result.error;if(!result.data?.success)throw new Error('The request decision was not confirmed.');closeL();await loadExpenses();toast(decision==='approved'?'Manager expense request approved.':'Manager expense request rejected.')}
+  catch(e){err.textContent=e?.message||'Unable to review this request.';btn.disabled=false;btn.textContent='Confirm'}
+ };
 }
 
 function categoryModal(){
@@ -141,6 +157,8 @@ A.expdetail=t=>expenseDetail(t.dataset.id);
 A.expapprove=t=>decisionModal(t.dataset.id,'approved');
 A.expreject=t=>decisionModal(t.dataset.id,'rejected');
 A.expvoid=t=>decisionModal(t.dataset.id,'voided');
+A.managerexprequestapprove=t=>managerExpenseRequestDecisionModal(t.dataset.id,'approved');
+A.managerexprequestreject=t=>managerExpenseRequestDecisionModal(t.dataset.id,'rejected');
 const oldGo=A.go;
 A.go=t=>{const page=t?.dataset?.p;oldGo(t);if(page==='exp')loadExpenses()};
 document.addEventListener('input',ev=>{
