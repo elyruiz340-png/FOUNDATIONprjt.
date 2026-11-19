@@ -288,6 +288,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   const preferred=sessionStorage.getItem("edmel_manager_branch");
   activeBranch=branches.find(b=>b.id===preferred)||branches.find(b=>b.is_default)||branches[0];
   ownPermissions=managerAccess.find(a=>a.branch_id===activeBranch.id)?.permissions||{};
+  $("approvalRequestPanel").hidden=ownPermissions.approval_request_access!==true;
   $("managerName").textContent=managerLink.display_name||managerLink.full_name||"Manager";
   $("branchSelect").innerHTML=branches.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join("");
   $("branchSelect").value=activeBranch.id;
@@ -298,6 +299,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  }
 
  function queueApprovalAction(action,label){
+  if(ownPermissions.approval_request_access!==true)throw new Error("Approval Request Access has not been enabled for your account in this branch. Contact the Owner or Admin.");
   if(!activeBranch)throw new Error("Select an active branch first.");
   if(pendingApprovalActions.length>=50)throw new Error("A batch can contain up to 50 actions.");
   const key=action.type+":"+action.staff_id;
@@ -337,6 +339,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  }
  async function loadApprovalInbox(){
   const host=$("approvalRequestHistory");if(!host)return;
+  if(ownPermissions.approval_request_access!==true){host.textContent="Approval Request Access is not enabled for this branch." ;return;}
   try{
    const {data,error}=await sb.functions.invoke("manager-approval-inbox",{body:{action:"inbox",restaurant_id:RESTAURANT_ID,limit:50}});
    if(error)throw new Error(data?.error||error.message||"Unable to load approval requests.");
@@ -523,6 +526,8 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  $("branchSelect").addEventListener("change",async()=>{
   const next=branches.find(b=>b.id===$("branchSelect").value);if(!next)return;
   activeBranch=next;ownPermissions=managerAccess.find(a=>a.branch_id===next.id)?.permissions||{};
+  $("approvalRequestPanel").hidden=ownPermissions.approval_request_access!==true;
+  if(ownPermissions.approval_request_access!==true){pendingApprovalActions=[];renderApprovalQueue();}
   sessionStorage.setItem("edmel_manager_branch",next.id);
   await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
  });
