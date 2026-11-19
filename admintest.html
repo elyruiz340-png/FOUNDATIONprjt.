@@ -3370,7 +3370,7 @@ function managerPermissionsEditor(manager){
       else{const target=scopeMode==='custom'?currentDraft():(sharedDraft||(sharedDraft=clone(drafts[targets[0]]||{modules:{}})));delete target.modules[key];if(scopeMode==='custom')drafts[branchSelect.value]=target;else{sharedDraft=target;sharedDirty=true;syncSharedDraft();}}
       renderMatrix();
     }));
-    matrix.querySelectorAll('input[data-module][data-action]').forEach(input=>input.addEventListener('change',()=>{setDraftPermission(input.dataset.module,input.dataset.action,input.checked);renderMatrix();}));
+    matrix.querySelectorAll('input[data-module][data-action]').forEach(input=>input.addEventListener('change',()=>{if(input.dataset.action==='view'&&!input.checked){const target=scopeMode==='custom'?currentDraft():(sharedDraft||(sharedDraft=clone(drafts[targets[0]]||{modules:{}})));delete target.modules[input.dataset.module];if(scopeMode==='custom')drafts[branchSelect.value]=target;else{sharedDraft=target;sharedDirty=true;syncSharedDraft();}}else{setDraftPermission(input.dataset.module,input.dataset.action,input.checked);}renderMatrix();}));
     matrix.querySelectorAll('input[data-expense-approval]').forEach(input=>input.addEventListener('change',()=>{const target=scopeMode==='custom'?currentDraft():(sharedDraft||(sharedDraft=clone(drafts[targets[0]]||{modules:{}})));target.expense_approval_required=input.checked;if(scopeMode==='custom')drafts[branchSelect.value]=target;else{sharedDraft=target;sharedDirty=true;syncSharedDraft();}renderMatrix();}));
   }
   function renderScopeTargets(){
