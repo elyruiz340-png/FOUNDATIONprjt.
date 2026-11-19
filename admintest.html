@@ -2323,7 +2323,7 @@ const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
 let navIndicatorFrame=0;
-function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;const title=NAV.find(n=>n[0]===S.page);$('#ttl').textContent=title?title[1]:S.page;$('#dockNav').querySelectorAll('button').forEach(b=>{const on=b.dataset.p==S.page;b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});moveNavIndicator(true);const pg=$('#pg');pg.replaceChildren();pg.insertAdjacentHTML('afterbegin',PG[S.page]());dotU();if(id){const e=$('#pg [data-c="'+id+'"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}if(S.page==='settings'&&S.settingsSection==='tables')setTimeout(drawTableQrs,0);}
+function render(){const f=document.activeElement,id=f&&f.dataset&&f.dataset.c,v=f&&f.value;const title=NAV.find(n=>n[0]===S.page);$('#ttl').textContent=title?title[1]:S.page;$('#dockNav').querySelectorAll('button').forEach(b=>{const on=b.dataset.p==S.page;b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});moveNavIndicator(true);const pg=$('#pg');pg.replaceChildren();pg.insertAdjacentHTML('afterbegin',PG[S.page]());dotU();if(S.page==='branches'&&!ADMIN_BRANCH_LOADED&&!ADMIN_BRANCH_LOADING)loadAdminBranches();if(id){const e=$('#pg [data-c="'+id+'"]');if(e){e.focus();if(e.type==='text'||e.type==='search'){e.value=v??e.value;try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}if(S.page==='settings'&&S.settingsSection==='tables')setTimeout(drawTableQrs,0);}
 function go(p){S.page=p;S.f={};$('#app').classList.remove('mo');render();const workspace=$('#pg');if(workspace)workspace.scrollTop=0;window.scrollTo({top:0,behavior:'auto'})}
 function securitySettingsPage(){
  return `<section class="bs-panel">
@@ -2338,7 +2338,100 @@ function securitySettingsPage(){
  </section>`;
 }
 
+
+/* ADMIN MULTI-BRANCH MANAGEMENT — read-only Supabase workspace */
+let ADMIN_BRANCH_ROWS=[];
+let ADMIN_BRANCH_ASSIGNMENTS=[];
+let ADMIN_BRANCH_STAFF=[];
+let ADMIN_BRANCH_LOADING=false;
+let ADMIN_BRANCH_LOADED=false;
+let ADMIN_BRANCH_ERROR='';
+let ADMIN_BRANCH_SELECTED_ID='';
+
+function adminBranchAssignedStaff(branchId){
+  const activeAssignments=ADMIN_BRANCH_ASSIGNMENTS.filter(a=>a.branch_id===branchId&&a.is_active!==false);
+  return activeAssignments.map(a=>{
+    const staff=ADMIN_BRANCH_STAFF.find(u=>u.id===a.restaurant_user_id);
+    return staff?{...staff,assignment:a}:null;
+  }).filter(Boolean);
+}
+function renderAdminBranchesPage(){
+  if(ADMIN_BRANCH_LOADING&&!ADMIN_BRANCH_LOADED){
+    return '<div class="card"><div class="mu">Multi-Branch Management</div><h3>Loading branch information…</h3><p class="note">Reading branch records and staff assignments from the current restaurant.</p></div>';
+  }
+  if(ADMIN_BRANCH_ERROR&&!ADMIN_BRANCH_LOADED){
+    return '<div class="card"><h3>Unable to load branch information</h3><p class="er">'+esc(ADMIN_BRANCH_ERROR)+'</p><button class="btn pri" data-a="branch-refresh">Try again</button></div>';
+  }
+  const branches=ADMIN_BRANCH_ROWS;
+  const active=branches.filter(b=>b.is_active===true);
+  const inactive=branches.filter(b=>b.is_active!==true);
+  const defaultBranch=branches.find(b=>b.is_default===true);
+  const selected=branches.find(b=>b.id===ADMIN_BRANCH_SELECTED_ID)||defaultBranch||branches[0]||null;
+  const branchCards=branches.map(b=>{
+    const assigned=adminBranchAssignedStaff(b.id);
+    const activeStaff=assigned.filter(u=>u.is_active===true);
+    const managers=activeStaff.filter(u=>String(u.position||'').toLowerCase()==='manager');
+    const isSelected=selected&&selected.id===b.id;
+    return '<button type="button" class="card kp" data-a="branch-select" data-id="'+esc(b.id)+'" aria-pressed="'+(isSelected?'true':'false')+'" style="text-align:left;width:100%;cursor:pointer;border-color:'+(isSelected?'var(--ac)':'var(--bd)')+';background:'+(isSelected?'var(--gh)':'var(--s)')+'">'+
+      '<div class="row"><b>'+esc(b.name)+'</b><span class="bd '+(b.is_active?'ok':'wn')+'">'+(b.is_active?'Active':'Inactive')+'</span></div>'+
+      '<div class="mu">'+esc(b.code)+' · '+(b.is_default?'Default branch':'Additional branch')+'</div>'+
+      '<div class="big">'+activeStaff.length+'</div><div class="mu">Active staff · '+managers.length+' Manager(s)</div></button>';
+  }).join('');
+  let detail='';
+  if(selected){
+    const assigned=adminBranchAssignedStaff(selected.id);
+    const activeAssigned=assigned.filter(u=>u.is_active===true);
+    const inactiveAssigned=assigned.filter(u=>u.is_active!==true);
+    const staffRows=assigned.map(u=>{
+      const name=u.display_name||u.full_name||'Unnamed staff';
+      const position=u.position||u.role||'Staff';
+      return '<tr><td>'+esc(name)+'</td><td>'+esc(position)+'</td><td><span class="bd '+(u.is_active?'ok':'wn')+'">'+(u.is_active?'Active account':'Inactive account')+'</span></td><td><span class="bd '+(u.assignment.is_active?'ok':'wn')+'">'+(u.assignment.is_active?'Assigned':'Assignment inactive')+'</span></td></tr>';
+    }).join('');
+    detail='<div class="card" style="margin-top:14px"><div class="row"><div><div class="mu">Selected branch</div><h3 style="margin:3px 0">'+esc(selected.name)+'</h3></div><span class="bd '+(selected.is_active?'ok':'wn')+'">'+(selected.is_active?'Active':'Inactive')+'</span></div>'+
+      '<div class="g g2"><div><div class="mu">Branch code</div><b>'+esc(selected.code)+'</b></div><div><div class="mu">Default branch</div><b>'+(selected.is_default?'Yes':'No')+'</b></div><div><div class="mu">Timezone</div><b>'+esc(selected.timezone||'Not set')+'</b></div><div><div class="mu">Address</div><b>'+esc(selected.address||'Not provided')+'</b></div><div><div class="mu">Active assigned staff</div><b>'+activeAssigned.length+'</b></div><div><div class="mu">Inactive staff accounts / assignments</div><b>'+inactiveAssigned.length+'</b></div></div>'+
+      '<h3 style="margin-top:14px">Staff assignments</h3><div class="tw"><table><thead><tr><th>Staff member</th><th>Position</th><th>Account status</th><th>Branch assignment</th></tr></thead><tbody>'+(staffRows||'<tr><td colspan="4"><div class="empty">No staff assignments found for this branch.</div></td></tr>')+'</tbody></table></div></div>';
+  }else{
+    detail='<div class="card" style="margin-top:14px"><div class="empty">No branch records are available for this restaurant.</div></div>';
+  }
+  return '<div class="tb"><div><div class="ttl">Multi-Branch Management</div><div class="note" style="margin:3px 0 0">Live branch records and staff assignments for this restaurant.</div></div><span class="sp"></span><button class="btn" data-a="branch-refresh">Refresh data</button></div>'+
+    '<div class="g k"><div class="card"><div class="mu">Total branches</div><div class="big">'+branches.length+'</div></div><div class="card"><div class="mu">Active branches</div><div class="big">'+active.length+'</div></div><div class="card"><div class="mu">Inactive branches</div><div class="big">'+inactive.length+'</div></div><div class="card"><div class="mu">Default branch</div><div class="big" style="font-size:19px">'+esc(defaultBranch?defaultBranch.name:'Not set')+'</div></div></div>'+
+    '<div class="card"><div class="row"><div><h3 style="margin:0">Branch directory</h3><p class="note" style="margin:3px 0 0">Select a branch to review its details and staff assignments.</p></div><span class="mu">'+branches.length+' record(s)</span></div>'+
+    (branches.length?'<div class="g g2" style="margin:12px 0 0">'+branchCards+'</div>':'<div class="empty">No branches have been created for this restaurant.</div>')+'</div>'+detail+
+    '<p class="note" style="margin-top:12px">This workspace is read-only. Branch creation, editing, activation changes and deletion are not available here.</p>';
+}
+async function loadAdminBranches(){
+  if(ADMIN_BRANCH_LOADING)return;
+  ADMIN_BRANCH_LOADING=true;
+  ADMIN_BRANCH_ERROR='';
+  try{
+    const restaurantId=HALINA_RESTAURANT_ID;
+    if(!restaurantId)throw new Error('Restaurant account could not be identified.');
+    const [branchResult,assignmentResult,staffResult]=await Promise.all([
+      sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,is_default,is_active,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
+      sb.from('staff_branch_access').select('restaurant_user_id,restaurant_id,branch_id,is_active,permissions,created_at').eq('restaurant_id',restaurantId),
+      sb.from('restaurant_users').select('id,restaurant_id,display_name,full_name,position,role,is_active').eq('restaurant_id',restaurantId)
+    ]);
+    if(branchResult.error)throw branchResult.error;
+    if(assignmentResult.error)throw assignmentResult.error;
+    if(staffResult.error)throw staffResult.error;
+    ADMIN_BRANCH_ROWS=branchResult.data||[];
+    ADMIN_BRANCH_ASSIGNMENTS=assignmentResult.data||[];
+    ADMIN_BRANCH_STAFF=staffResult.data||[];
+    if(!ADMIN_BRANCH_ROWS.some(b=>b.id===ADMIN_BRANCH_SELECTED_ID)){
+      ADMIN_BRANCH_SELECTED_ID=(ADMIN_BRANCH_ROWS.find(b=>b.is_default===true)||ADMIN_BRANCH_ROWS[0]||{}).id||'';
+    }
+    ADMIN_BRANCH_LOADED=true;
+  }catch(error){
+    ADMIN_BRANCH_ERROR=error?.message||String(error);
+  }finally{
+    ADMIN_BRANCH_LOADING=false;
+    if(S.page==='branches')render();
+  }
+}
+
 const A={
+'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';render()},
+'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
 theme:t=>{const T=['light','neodark','dark'],v=t&&t.dataset&&t.dataset.v;const next=T.includes(v)?v:T[(T.indexOf(S.theme)+1)%3];if(v&&next===S.theme)return;const change=()=>{S.theme=next;ss('th',S.theme);applyTheme();if(S.page=='settings')render()};if(window.startThemeReveal&&t&&t.getBoundingClientRect)startThemeReveal(t,change);else change()},
 
@@ -2521,7 +2614,7 @@ const day0=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
 function rng(per){const n=new Date(),t=day0(n),D=864e5;switch(per){case'today':return[t,new Date(+t+D)];case'yest':return[new Date(+t-D),t];case'7d':return[new Date(+t-6*D),new Date(+t+D)];case'30d':return[new Date(+t-29*D),new Date(+t+D)];case'tm':return[new Date(n.getFullYear(),n.getMonth(),1),new Date(+t+D)];case'lm':return[new Date(n.getFullYear(),n.getMonth()-1,1),new Date(n.getFullYear(),n.getMonth(),1)];case'ty':return[new Date(n.getFullYear(),0,1),new Date(+t+D)];default:{const a=new Date(S.cu0+'T00:00'),b=new Date(S.cu1+'T00:00');return[a,new Date(+b+D)]}}}
 const inR=per=>{const[a,b]=rng(per);return ORD.filter(o=>o.dt>=a&&o.dt<b)};
 const NC=n=>`<div class="card"><span class="bd wn">● Not connected yet</span><h3 style="margin:10px 0 4px">${n}</h3><p class="mu">This section isn’t connected to your restaurant data yet, so nothing is shown here.</p></div>`;
-Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>{const q=(S.f.q||'').toLowerCase();const active=INV.filter(x=>!x.archived||S.showArchived);const rows=active.filter(x=>!q||[x.n,x.c,x.pid].join(' ').toLowerCase().includes(q));const activeCount=INV.filter(x=>!x.archived).length,archivedCount=INV.filter(x=>x.archived).length;return `<div class="inv-toolbar"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${activeCount} active · ${archivedCount} archived · Live data</span><button class="btn pri" data-a="invadd">+ Add item</button><button class="btn" data-a="invarchived">${S.showArchived?'Hide archived':'Show archived'}</button><button class="btn" data-a="invrefresh">Refresh</button></div>${S.stockErr?`<div class="card"><span class="bd er">● Inventory load error</span><p>${esc(S.stockErr)}</p></div>`:''}<div class="card inv-table-card"><div class="tw"><table class="inv-table"><thead><tr><th>Item</th><th>Category</th><th>Remaining stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows.map(x=>`<tr><td><div class="inv-item">${x.image?`<img class="inv-thumb" src="${esc(x.image)}" alt="">`:`<span class="inv-thumb inv-thumb-placeholder" aria-hidden="true">▦</span>`}<div><div class="inv-item-name">${esc(x.n)}</div><div class="inv-item-id">${esc(x.pid||'')}</div></div></div></td><td>${esc(x.c||'Uncategorized')}</td><td><span class="inv-remaining">${esc(String(x.q))}</span></td><td>${x.archived?bdg('Archived'):bdg(x.available?'Available':'Unavailable')}</td><td><details class="inv-actions"><summary aria-label="Actions for ${esc(x.n)}">⋯</summary><div class="inv-action-menu">${!x.archived?`<button data-a="invedit" data-i="${x.id}">Edit item details</button><button data-a="invadjust" data-i="${x.id}">Edit stock quantity</button><button data-a="invavailability" data-i="${x.id}">${x.available?'Make unavailable':'Make available'}</button><button class="danger" data-a="invarchive" data-i="${x.id}">Archive item</button>`:`<button data-a="invavailability" data-i="${x.id}">Restore available</button>`}</div></details></td></tr>`).join('')||`<tr><td colspan="5"><div class="empty">No inventory items found.</div></td></tr>`}</tbody></table></div></div><p class="note">Only Remaining Stock is displayed in this list. Total stock is retained in Supabase and remains available in the stock editor. Unavailable items retain their quantities; archived records and stock history are preserved.</p>`},exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>NC('Multi-Branch Management'),health:()=>NC('System Health & Integrations'),
+Object.assign(PG,{menu:()=>NC('Menu & Categories'),inv:()=>{const q=(S.f.q||'').toLowerCase();const active=INV.filter(x=>!x.archived||S.showArchived);const rows=active.filter(x=>!q||[x.n,x.c,x.pid].join(' ').toLowerCase().includes(q));const activeCount=INV.filter(x=>!x.archived).length,archivedCount=INV.filter(x=>x.archived).length;return `<div class="inv-toolbar"><input data-c="q" value="${esc(S.f.q||'')}" placeholder="Search inventory…" aria-label="Search inventory"><span class="mu">${activeCount} active · ${archivedCount} archived · Live data</span><button class="btn pri" data-a="invadd">+ Add item</button><button class="btn" data-a="invarchived">${S.showArchived?'Hide archived':'Show archived'}</button><button class="btn" data-a="invrefresh">Refresh</button></div>${S.stockErr?`<div class="card"><span class="bd er">● Inventory load error</span><p>${esc(S.stockErr)}</p></div>`:''}<div class="card inv-table-card"><div class="tw"><table class="inv-table"><thead><tr><th>Item</th><th>Category</th><th>Remaining stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows.map(x=>`<tr><td><div class="inv-item">${x.image?`<img class="inv-thumb" src="${esc(x.image)}" alt="">`:`<span class="inv-thumb inv-thumb-placeholder" aria-hidden="true">▦</span>`}<div><div class="inv-item-name">${esc(x.n)}</div><div class="inv-item-id">${esc(x.pid||'')}</div></div></div></td><td>${esc(x.c||'Uncategorized')}</td><td><span class="inv-remaining">${esc(String(x.q))}</span></td><td>${x.archived?bdg('Archived'):bdg(x.available?'Available':'Unavailable')}</td><td><details class="inv-actions"><summary aria-label="Actions for ${esc(x.n)}">⋯</summary><div class="inv-action-menu">${!x.archived?`<button data-a="invedit" data-i="${x.id}">Edit item details</button><button data-a="invadjust" data-i="${x.id}">Edit stock quantity</button><button data-a="invavailability" data-i="${x.id}">${x.available?'Make unavailable':'Make available'}</button><button class="danger" data-a="invarchive" data-i="${x.id}">Archive item</button>`:`<button data-a="invavailability" data-i="${x.id}">Restore available</button>`}</div></details></td></tr>`).join('')||`<tr><td colspan="5"><div class="empty">No inventory items found.</div></td></tr>`}</tbody></table></div></div><p class="note">Only Remaining Stock is displayed in this list. Total stock is retained in Supabase and remains available in the stock editor. Unavailable items retain their quantities; archived records and stock history are preserved.</p>`},exp:()=>NC('Expenses & Profit'),staff:()=>NC('Staff & Permissions'),audit:()=>NC('Audit Logs'),branches:()=>renderAdminBranchesPage(),health:()=>NC('System Health & Integrations'),
 settings:()=>{
  const sections=[
   {id:'profile',name:'Restaurant Profile',desc:'Business information & operating hours',group:'BUSINESS',icon:'home'},
