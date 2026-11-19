@@ -17,24 +17,23 @@ async function loadExpenses(){
  if(!CURRENT_RESTAURANT_ID){loadError='Restaurant access could not be verified.';expenses=[];if(S.page==='exp')render();return}
  loading=true;loadError='';if(S.page==='exp')render();
  try{
-  const [c,b,e,r,mr,mu,n,pol,em,emn,orders,audit]=await Promise.all([
+  const [c,b,e,r,mr,mu,n,pol,em,emn,audit]=await Promise.all([
    sb.from('restaurant_expense_categories').select('id,name,description,is_active').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('name'),
    sb.from('restaurant_branches').select('id,name,code,is_default').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('is_active',true).order('name'),
    sb.from('restaurant_expenses').select('id,restaurant_id,branch_id,category_id,expense_date,description,payee,reference_number,notes,amount,currency_code,status,created_at,approved_at,approval_note,rejection_reason,void_reason').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('expense_date',{ascending:false}).order('created_at',{ascending:false}).limit(PAGE_LIMIT),
-   sb.from('restaurants').select('currency').eq('id',CURRENT_RESTAURANT_ID).maybeSingle(),
+   sb.from('restaurants').select('currency,timezone').eq('id',CURRENT_RESTAURANT_ID).maybeSingle(),
    sb.from('manager_expense_requests').select('id,branch_id,manager_restaurant_user_id,submitted_by_user_id,request_type,expense_id,request_data,status,submitted_at,reviewed_at,review_reason').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('submitted_at',{ascending:false}).limit(500),
    sb.from('restaurant_users').select('id,display_name,full_name,cashier_username,position').eq('restaurant_id',CURRENT_RESTAURANT_ID),
    sb.from('manager_expense_request_notifications').select('id,branch_id,request_id,title,message,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false).order('created_at',{ascending:false}).limit(50),
    sb.from('restaurant_expense_policies').select('restaurant_id,branch_id,create_approval_mode,edit_approval_mode,void_approval_mode,emergency_authorization_limit,updated_at').eq('restaurant_id',CURRENT_RESTAURANT_ID),
    sb.from('manager_emergency_authorization_requests').select('*').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('created_at',{ascending:false}).limit(500),
    sb.from('manager_emergency_authorization_notifications').select('id,branch_id,request_id,title,message,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false).order('created_at',{ascending:false}).limit(50),
-   sb.from('orders').select('id,branch_id,subtotal,discount_amount,tax,tip,service_charge,total,payment_status,settled_at,created_at,order_status,status').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('payment_status','paid').not('settled_at','is',null).order('settled_at',{ascending:false}).limit(PAGE_LIMIT),
    sb.from('restaurant_expense_audit_logs').select('id,branch_id,record_type,record_id,action,actor_name,actor_role,permission_key,reason,before_data,after_data,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('created_at',{ascending:false}).limit(500)
   ]);
   if(c.error)throw c.error;if(b.error)throw b.error;if(e.error)throw e.error;if(r.error)throw r.error;if(mr.error)throw mr.error;if(mu.error)throw mu.error;if(n.error)throw n.error;
-  if(pol.error)throw pol.error;if(em.error)throw em.error;if(emn.error)throw emn.error;if(orders.error)throw orders.error;if(audit.error)throw audit.error;
+  if(pol.error)throw pol.error;if(em.error)throw em.error;if(emn.error)throw emn.error;if(audit.error)throw audit.error;
   cats=c.data||[];branches=b.data||[];expenses=e.data||[];managerRequests=mr.data||[];managerUsers=mu.data||[];managerExpenseNotifications=n.data||[];
-  expensePolicies=pol.data||[];emergencyRequests=em.data||[];emergencyNotifications=emn.data||[];salesRows=orders.data||[];expenseAuditRows=audit.data||[];
+  expensePolicies=pol.data||[];emergencyRequests=em.data||[];emergencyNotifications=emn.data||[];expenseAuditRows=audit.data||[];restaurantTimezone=String(r.data?.timezone||'UTC');
   const expenseDot=document.querySelector('#dot');if(expenseDot)expenseDot.style.display=(managerExpenseNotifications.length||emergencyNotifications.length||((typeof NT!=='undefined')&&NT.some(x=>!x.r)))?'block':'none';
   currency=String(r.data?.currency||'USD').toUpperCase();
   if(!/^[A-Z]{3}$/.test(currency))currency='USD';
@@ -181,7 +180,7 @@ async function toggleCategory(id){
 }
 
 
-let expensePolicies=[],emergencyRequests=[],emergencyNotifications=[],salesRows=[],expenseAuditRows=[];
+let expensePolicies=[],emergencyRequests=[],emergencyNotifications=[],expenseAuditRows=[],restaurantTimezone='UTC',profitSummary=null,profitLoading=false,profitError='',profitRequestSequence=0;
 const emergencyStatusLabels={pending_authorization:'Pending authorization',authorized:'Authorized',authorized_under_limit:'Within branch limit',rejected:'Rejected',spent_pending_review:'Actuals pending review',reconciled:'Reconciled',reconciliation_rejected:'Correction requested'};
 const approvalModeLabels={none:'No approval',manager:'Manager approval',admin:'Owner / Admin approval'};
 const expenseBranchPolicy=id=>expensePolicies.find(x=>x.branch_id===id)||{branch_id:id,create_approval_mode:'admin',edit_approval_mode:'admin',void_approval_mode:'admin',emergency_authorization_limit:0};
@@ -255,19 +254,41 @@ async function saveExpensePolicy(t){
  try{await sb.from('audit_logs').insert({restaurant_id:CURRENT_RESTAURANT_ID,actor_user_id:userData.user.id,actor_name:userData.user.email||'Admin',actor_role:'admin',action_category:'Expenses & Profit',action:'Updated branch expense approval policy',record_type:'restaurant_expense_policy',record_id:branchId,result:'success',details:{create_approval_mode:row.create_approval_mode,edit_approval_mode:row.edit_approval_mode,void_approval_mode:row.void_approval_mode,emergency_authorization_limit:limit}})}catch(_){}
  await loadExpenses();toast('Branch expense approval policy saved.');
 }
+function addIsoDays(iso,days){const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)}
+function dateInRestaurantZone(date){const p=new Intl.DateTimeFormat('en-CA',{timeZone:restaurantTimezone||'UTC',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);const v={};p.forEach(x=>{if(x.type!=='literal')v[x.type]=x.value});return v.year+'-'+v.month+'-'+v.day}
+function profitRangeDates(){
+ const today=dateInRestaurantZone(new Date()),monthStart=today.slice(0,7)+'-01',yearStart=today.slice(0,4)+'-01-01';
+ let start=today,end=addIsoDays(today,1);
+ switch(S.per){
+  case'yest':start=addIsoDays(today,-1);end=today;break;
+  case'7d':start=addIsoDays(today,-6);break;
+  case'30d':start=addIsoDays(today,-29);break;
+  case'tm':start=monthStart;break;
+  case'lm':{const d=new Date(monthStart+'T00:00:00Z');d.setUTCMonth(d.getUTCMonth()-1);start=d.toISOString().slice(0,10);end=monthStart;break}
+  case'ty':start=yearStart;break;
+  case'cu':start=S.cu0;end=addIsoDays(S.cu1,1);break;
+  default:break;
+ }
+ return {start,end};
+}
+async function loadProfitSummary(){
+ const seq=++profitRequestSequence,{start,end}=profitRangeDates();
+ if(!start||!end||end<=start){profitSummary=null;profitError='Choose a valid custom date range.';profitLoading=false;if(S.page==='exp'&&S.f.expTab==='profit')render();return}
+ profitLoading=true;profitError='';if(S.page==='exp'&&S.f.expTab==='profit')render();
+ try{
+  const {data,error}=await sb.rpc('edmel_get_expense_profit_summary',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:S.f.expBranch||null,p_start_date:start,p_end_date_exclusive:end});
+  if(error)throw error;if(seq!==profitRequestSequence)return;
+  profitSummary=data||null;
+ }catch(e){if(seq===profitRequestSequence){profitSummary=null;profitError=e?.message||'Unable to load Profit & Loss summary.'}}
+ finally{if(seq===profitRequestSequence){profitLoading=false;if(S.page==='exp'&&S.f.expTab==='profit')render()}}
+}
 function profitPage(){
- const [from,to]=rng(S.per),branch=S.f.expBranch||'';
- const within=d=>{const raw=String(d||'');const x=/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)?new Date(raw+'T00:00:00'):new Date(d);return !Number.isNaN(x.getTime())&&x>=from&&x<to};
- const sales=salesRows.filter(o=>(!branch||o.branch_id===branch)&&within(o.settled_at));
- const periodExpenses=expenses.filter(e=>e.status==='approved'&&(!branch||e.branch_id===branch)&&within(e.expense_date));
- const gross=sales.reduce((n,o)=>n+Number(o.subtotal||0),0);
- const discounts=sales.reduce((n,o)=>n+Number(o.discount_amount||0),0);
- const netSales=Math.max(0,gross-discounts);
- const tax=sales.reduce((n,o)=>n+Number(o.tax||0),0);
- const collected=sales.reduce((n,o)=>n+Number(o.total||0),0);
- const expenseTotal=periodExpenses.reduce((n,e)=>n+Number(e.amount||0),0);
- const preCogs=netSales-expenseTotal;
- return '<div class="tb"><label class="note">Period <select data-c="per">'+Object.entries(PER).map(([k,v])=>'<option value="'+k+'" '+(S.per===k?'selected':'')+'>'+v[0]+'</option>').join('')+'</select></label><label class="note">Branch <select data-c="expBranch"><option value="">All accessible branches</option>'+branches.map(b=>'<option value="'+escE(b.id)+'" '+(branch===b.id?'selected':'')+'>'+escE(b.name)+'</option>').join('')+'</select></label><span class="sp"></span><button class="btn" data-a="exprefresh">Refresh</button></div><div class="g k"><div class="card"><div class="mu">Settled Net Sales</div><div class="big">'+money(netSales)+'</div><small class="mu">'+sales.length+' paid and settled orders</small></div><div class="card"><div class="mu">Discounts</div><div class="big">'+money(discounts)+'</div><small class="mu">From settled orders</small></div><div class="card"><div class="mu">Approved Expenses</div><div class="big">'+money(expenseTotal)+'</div><small class="mu">'+periodExpenses.length+' approved records</small></div><div class="card"><div class="mu">Pre-COGS Operating Balance</div><div class="big">'+money(preCogs)+'</div><small class="mu">Net sales less approved expenses only</small></div></div><section class="card"><div class="row"><h3 style="margin:0">Profit Readiness</h3><span class="bd wn">Not yet final profit</span></div><p>True gross profit and net profit cannot be calculated yet because EDMEL has no connected recipe / ingredient cost-of-goods-sold (COGS) records or refund / chargeback ledger for this restaurant.</p><div class="g g2"><div><div class="mu">Tax collected (not sales income)</div><div class="big">'+money(tax)+'</div></div><div><div class="mu">Total collected (includes configured charges)</div><div class="big">'+money(collected)+'</div></div></div><p class="note">The Pre-COGS Operating Balance is not Net Profit. It excludes ingredient cost, inventory consumption, refunds / chargebacks and other accounting adjustments. We will not display a fabricated profit percentage.</p></section><section class="card"><h3 style="margin-top:0">Approved Expense Breakdown</h3><div class="tw"><table class="inv-table"><thead><tr><th>Date</th><th>Branch</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead><tbody>'+(periodExpenses.map(e=>'<tr><td>'+dateText(e.expense_date)+'</td><td>'+escE(branchName(e.branch_id))+'</td><td>'+escE(catName(e.category_id))+'</td><td>'+escE(e.description)+'</td><td>'+money(e.amount)+'</td></tr>').join('')||'<tr><td colspan="5"><div class="empty">No approved expenses in this period.</div></td></tr>')+'</tbody></table></div></section>';
+ const branch=S.f.expBranch||'',period=Object.entries(PER).map(([k,v])=>'<option value="'+k+'" '+(S.per===k?'selected':'')+'>'+v[0]+'</option>').join('');
+ if(profitLoading)return '<div class="tb"><label class="note">Period <select data-c="per">'+period+'</select></label><label class="note">Branch <select data-c="expBranch"><option value="">All accessible branches</option>'+branches.map(b=>'<option value="'+escE(b.id)+'" '+(branch===b.id?'selected':'')+'>'+escE(b.name)+'</option>').join('')+'</select></label></div><section class="card"><div class="empty">Loading timezone-aware sales and expense totals…</div></section>';
+ if(profitError)return '<div class="tb"><label class="note">Period <select data-c="per">'+period+'</select></label><label class="note">Branch <select data-c="expBranch"><option value="">All accessible branches</option>'+branches.map(b=>'<option value="'+escE(b.id)+'" '+(branch===b.id?'selected':'')+'>'+escE(b.name)+'</option>').join('')+'</select></label><span class="sp"></span><button class="btn" data-a="profitrefresh">Retry</button></div><section class="card"><span class="bd er">Report unavailable</span><p>'+escE(profitError)+'</p></section>';
+ const p=profitSummary||{},start=p.period_start||'',end=p.period_end_exclusive?addIsoDays(p.period_end_exclusive,-1):'';
+ const custom=S.per==='cu'?'<label class="note">From <input type="date" data-c="cu0" value="'+escE(S.cu0)+'"></label><label class="note">To <input type="date" data-c="cu1" value="'+escE(S.cu1)+'"></label>':'';
+ return '<div class="tb"><label class="note">Period <select data-c="per">'+period+'</select></label>'+custom+'<label class="note">Branch <select data-c="expBranch"><option value="">All accessible branches</option>'+branches.map(b=>'<option value="'+escE(b.id)+'" '+(branch===b.id?'selected':'')+'>'+escE(b.name)+'</option>').join('')+'</select></label><span class="sp"></span><button class="btn" data-a="profitrefresh">Refresh</button></div><p class="note">Reporting timezone: '+escE(p.timezone||restaurantTimezone)+' · '+escE(start)+' to '+escE(end)+'</p><div class="g k"><div class="card"><div class="mu">Settled Net Sales</div><div class="big">'+money(p.net_sales||0)+'</div><small class="mu">'+Number(p.sales_order_count||0)+' paid and settled orders</small></div><div class="card"><div class="mu">Discounts</div><div class="big">'+money(p.discounts||0)+'</div><small class="mu">From settled orders</small></div><div class="card"><div class="mu">Approved Expenses</div><div class="big">'+money(p.approved_expenses||0)+'</div><small class="mu">'+Number(p.approved_expense_count||0)+' approved records</small></div><div class="card"><div class="mu">Pre-COGS Operating Balance</div><div class="big">'+money(p.pre_cogs_operating_balance||0)+'</div><small class="mu">Net sales less approved expenses only</small></div></div><section class="card"><div class="row"><h3 style="margin:0">Profit Readiness</h3><span class="bd wn">Net Profit not available yet</span></div><p>True gross profit and net profit cannot be calculated yet because EDMEL has no connected recipe / ingredient cost-of-goods-sold (COGS) records or refund / chargeback ledger for this restaurant.</p><div class="g g2"><div><div class="mu">Tax collected (not sales income)</div><div class="big">'+money(p.tax_collected||0)+'</div></div><div><div class="mu">Total collected (includes tax, tips and service charges)</div><div class="big">'+money(p.total_collected||0)+'</div></div></div><div class="g g2"><div><div class="mu">Tips collected</div><div class="big">'+money(p.tips_collected||0)+'</div></div><div><div class="mu">Service charges collected</div><div class="big">'+money(p.service_charges_collected||0)+'</div></div></div><p class="note">The Pre-COGS Operating Balance is not Net Profit. It excludes ingredient cost, inventory consumption, refunds / chargebacks and other accounting adjustments. We will not display a fabricated profit percentage.</p></section>';
 }
 function enhancedExpensePage(){
  const active=S.f.expTab||'expenses';
@@ -278,7 +299,7 @@ function enhancedExpensePage(){
 }
 
 PG.exp=enhancedExpensePage;
-A.exptab=t=>{S.f.expTab=t.dataset.v;render();if(S.f.expTab==='profit'||S.f.expTab==='approvals'||S.f.expTab==='policies')loadExpenses()};
+A.exptab=t=>{S.f.expTab=t.dataset.v;render();if(S.f.expTab==='profit')loadProfitSummary();else if(S.f.expTab==='approvals'||S.f.expTab==='policies')loadExpenses()};
 A.expapprovaltab=t=>{S.f.expApprovalTab=t.dataset.v;selectedManagerRequestIds.clear();render()};
 A.emergencyapprove=t=>emergencyDecisionModal(t.dataset.id,'approved');
 A.emergencyreject=t=>emergencyDecisionModal(t.dataset.id,'rejected');
@@ -286,6 +307,7 @@ A.emergencyreconcile=t=>emergencyActualDecisionModal(t.dataset.id,'reconciled');
 A.emergencyactualreject=t=>emergencyActualDecisionModal(t.dataset.id,'rejected');
 A.emergencymarkread=async t=>{try{const {error}=await sb.from('manager_emergency_authorization_notifications').update({is_read:true,read_at:new Date().toISOString()}).eq('id',t.dataset.id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin');if(error)throw error;await loadExpenses();toast('Emergency notification marked as read.')}catch(e){toast(e?.message||'Unable to update emergency notification.',1)}};
 A.exppolicysave=t=>saveExpensePolicy(t);
+A.profitrefresh=()=>loadProfitSummary();
 async function showExpenseNotificationDrawer(){
  try{
   const [n,e]=await Promise.all([
@@ -325,10 +347,10 @@ const oldGo=A.go;
 A.go=t=>{const page=t?.dataset?.p;oldGo(t);if(page==='exp')loadExpenses()};
 document.addEventListener('change',ev=>{
  const t=ev.target;
- if(t?.dataset?.c==='expBranch'||t?.dataset?.c==='expCategory'||t?.dataset?.c==='expStatus'||t?.dataset?.c==='per'){
-  if(t.dataset.c==='per')S.per=t.value;else S.f[t.dataset.c]=t.value;
+ if(t?.dataset?.c==='expBranch'||t?.dataset?.c==='expCategory'||t?.dataset?.c==='expStatus'||t?.dataset?.c==='per'||t?.dataset?.c==='cu0'||t?.dataset?.c==='cu1'){
+  if(t.dataset.c==='per')S.per=t.value;else if(t.dataset.c==='cu0'||t.dataset.c==='cu1')S[t.dataset.c]=t.value;else S.f[t.dataset.c]=t.value;
   if(t.dataset.c==='expBranch')selectedManagerRequestIds.clear();
-  render();return;
+  render();if(S.f.expTab==='profit')loadProfitSummary();return;
  }
  if(t?.id==='expensePolicyBranch'){S.f.expPolicyBranch=t.value;render();return;}
 });
