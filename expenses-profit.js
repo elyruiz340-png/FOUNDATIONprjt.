@@ -252,7 +252,7 @@ async function saveExpensePolicy(t){
 }
 function profitPage(){
  const [from,to]=rng(S.per),branch=S.f.expBranch||'';
- const within=d=>{const x=new Date(d);return x>=from&&x<to};
+ const within=d=>{const raw=String(d||'');const x=/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)?new Date(raw+'T00:00:00'):new Date(d);return !Number.isNaN(x.getTime())&&x>=from&&x<to};
  const sales=salesRows.filter(o=>(!branch||o.branch_id===branch)&&within(o.settled_at));
  const periodExpenses=expenses.filter(e=>e.status==='approved'&&(!branch||e.branch_id===branch)&&within(e.expense_date));
  const gross=sales.reduce((n,o)=>n+Number(o.subtotal||0),0);
