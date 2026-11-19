@@ -35,6 +35,7 @@ async function loadExpenses(){
   if(pol.error)throw pol.error;if(em.error)throw em.error;if(emn.error)throw emn.error;if(orders.error)throw orders.error;if(audit.error)throw audit.error;
   cats=c.data||[];branches=b.data||[];expenses=e.data||[];managerRequests=mr.data||[];managerUsers=mu.data||[];managerExpenseNotifications=n.data||[];
   expensePolicies=pol.data||[];emergencyRequests=em.data||[];emergencyNotifications=emn.data||[];salesRows=orders.data||[];expenseAuditRows=audit.data||[];
+  const expenseDot=document.querySelector('#dot');if(expenseDot)expenseDot.style.display=(managerExpenseNotifications.length||emergencyNotifications.length||((typeof NT!=='undefined')&&NT.some(x=>!x.r)))?'block':'none';
   currency=String(r.data?.currency||'USD').toUpperCase();
   if(!/^[A-Z]{3}$/.test(currency))currency='USD';
   if(S.f.expBranch&&!branches.some(x=>x.id===S.f.expBranch))S.f.expBranch='';
@@ -292,6 +293,11 @@ async function showExpenseNotificationDrawer(){
  }catch(e){toast('Could not load approval notifications: '+(e?.message||String(e)),1)}
 }
 A.bell=()=>showExpenseNotificationDrawer();
+const oldManagerExpenseMarkRead=A.managerexpmarkread;
+A.managerexpmarkread=async t=>{if(oldManagerExpenseMarkRead)await oldManagerExpenseMarkRead(t);await showExpenseNotificationDrawer()};
+const oldEmergencyMarkRead=A.emergencymarkread;
+A.emergencymarkread=async t=>{if(oldEmergencyMarkRead)await oldEmergencyMarkRead(t);await showExpenseNotificationDrawer()};
+
 A.expnotifreadall=async()=>{try{const now=new Date().toISOString();const [a,b]=await Promise.all([sb.from('manager_expense_request_notifications').update({is_read:true,read_at:now}).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false),sb.from('manager_emergency_authorization_notifications').update({is_read:true,read_at:now}).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_role','admin').eq('is_read',false)]);if(a.error)throw a.error;if(b.error)throw b.error;closeL();toast('Approval notifications marked as read.')}catch(e){toast(e?.message||'Unable to mark notifications as read.',1)}};
 
 A.addexp=()=>expenseForm(null);
@@ -305,7 +311,7 @@ A.expreject=t=>decisionModal(t.dataset.id,'rejected');
 A.expvoid=t=>decisionModal(t.dataset.id,'voided');
 A.managerexprequestapprove=t=>managerExpenseRequestDecisionModal(t.dataset.id,'approved');
 A.managerexprequestreject=t=>managerExpenseRequestDecisionModal(t.dataset.id,'rejected');
-A.managerexpselectpending=()=>{if(!S.f.expBranch){toast('Select one branch first.',1);return}const pending=managerRequests.filter(r=>r.branch_id===S.f.expBranch&&r.status==='pending');selectedManagerRequestIds=new Set(pending.slice(0,50).map(r=>r.id));if(pending.length>50)toast('Selected the first 50 pending requests. Review the remaining requests separately.',1);render()};
+A.managerexpselectpending=()=>{if(!S.f.expBranch){toast('Select one branch first.',1);return}const category=S.f.expApprovalTab||'expense';const pending=managerRequests.filter(r=>r.branch_id===S.f.expBranch&&r.status==='pending'&&(category==='financial'?['edit','void'].includes(r.request_type):category==='expense'?r.request_type==='create':true));selectedManagerRequestIds=new Set(pending.slice(0,50).map(r=>r.id));if(pending.length>50)toast('Selected the first 50 pending requests in this category. Review the remaining requests separately.',1);render()};
 A.managerexpclearselection=()=>{selectedManagerRequestIds.clear();render()};
 A.managerexpbulkapprove=()=>managerExpenseBulkDecisionModal('approved');
 A.managerexpbulkreject=()=>managerExpenseBulkDecisionModal('rejected');
