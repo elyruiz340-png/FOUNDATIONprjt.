@@ -2381,7 +2381,7 @@ function renderAdminBranchesPage(){
   if(selected){
     const assigned=adminBranchAssignedStaff(selected.id);
     const activeAssigned=assigned.filter(u=>u.is_active===true);
-    const inactiveAssigned=assigned.filter(u=>u.is_active!==true);
+    const inactiveAssigned=assigned.filter(u=>u.is_active!==true||u.assignment.is_active!==true);
     const staffRows=assigned.map(u=>{
       const name=u.display_name||u.full_name||'Unnamed staff';
       const position=u.position||u.role||'Staff';
@@ -2408,7 +2408,7 @@ async function loadAdminBranches(){
     if(!restaurantId)throw new Error('Restaurant account could not be identified.');
     const [branchResult,assignmentResult,staffResult]=await Promise.all([
       sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,is_default,is_active,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
-      sb.from('staff_branch_access').select('restaurant_user_id,restaurant_id,branch_id,is_active,permissions,created_at').eq('restaurant_id',restaurantId),
+      sb.from('staff_branch_access').select('restaurant_user_id,restaurant_id,branch_id,is_active,created_at').eq('restaurant_id',restaurantId),
       sb.from('restaurant_users').select('id,restaurant_id,display_name,full_name,position,role,is_active').eq('restaurant_id',restaurantId)
     ]);
     if(branchResult.error)throw branchResult.error;
