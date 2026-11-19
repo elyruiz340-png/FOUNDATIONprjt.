@@ -134,7 +134,12 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
     <div class="panel-body" id="managerExpenseNotifications" aria-live="polite"></div>
     <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Submitted</th><th>Request</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody id="managerExpenseRequestRows"><tr><td colspan="6" class="empty">Loading requests…</td></tr></tbody></table></div></div>
    </section>
-   <div class="permission-note" style="margin-top:16px">Profit reporting is not enabled in this workspace yet. It will be shown only after the sales, discounts, refunds and cost-of-goods sources are verified for this branch.</div>
+   <section class="panel" style="margin-top:16px">
+    <div class="panel-head"><div><h2>Emergency Authorization</h2><p>Request approval before emergency spending above the branch limit, then submit the actual amount and receipt reference.</p></div><button class="primary" id="managerEmergencyAddButton" type="button" hidden>Request Emergency Spending</button></div>
+    <div class="panel-body" id="managerEmergencyNotifications" aria-live="polite"></div>
+    <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Submitted</th><th>Description</th><th>Requested</th><th>Actual</th><th>Status</th><th>Action</th></tr></thead><tbody id="managerEmergencyRows"><tr><td colspan="6" class="empty">Loading emergency requests…</td></tr></tbody></table></div></div>
+   </section>
+   <div class="permission-note" style="margin-top:16px">Profit reporting is available in the Admin Dashboard after sales and approved expense records are connected. True profit still requires verified recipe and ingredient costing.</div>
   </div>
  </main>
  </div>
@@ -278,7 +283,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   $("modulePermissionNote").textContent="Branch: "+(activeBranch?.name||"Assigned branch")+". This view is limited to branches assigned to your Manager account.";
  }
 
- let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true, managerAuthUserId=null, managerExpenseRows=[], managerExpenseCategories=[], managerExpenseRequests=[], managerExpenseNotifications=[], managerExpenseCurrency="USD", managerExpenseLoading=false;
+ let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true, managerAuthUserId=null, managerExpenseRows=[], managerExpenseCategories=[], managerExpenseRequests=[], managerExpenseNotifications=[], managerEmergencyRequests=[], managerEmergencyNotifications=[], managerExpenseCurrency="USD", managerExpenseLoading=false;
  let pendingApprovalActions=[], approvalBatches=[];
 
  function showLogin(message=""){ $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden"); $("loginMessage").textContent=message; }
@@ -450,22 +455,28 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   $("managerExpenseRequestRows").innerHTML='<tr><td colspan="6" class="empty">Loading approval requests…</td></tr>';
   $("managerExpenseAddButton").hidden=!managerExpenseCan("create");
   try{
-   const [expenseResult,categoryResult,requestResult,currencyResult,notificationResult]=await Promise.all([
+   const [expenseResult,categoryResult,requestResult,currencyResult,notificationResult,emergencyResult,emergencyNotificationResult]=await Promise.all([
     sb.from("restaurant_expenses").select("id,branch_id,category_id,expense_date,description,payee,reference_number,notes,amount,currency_code,status,created_by_user_id,approved_at,approval_note,rejection_reason,void_reason").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).order("expense_date",{ascending:false}).order("created_at",{ascending:false}).limit(1000),
     sb.from("restaurant_expense_categories").select("id,name,is_active").eq("restaurant_id",RESTAURANT_ID).order("name"),
-    sb.from("manager_expense_requests").select("id,branch_id,manager_restaurant_user_id,submitted_by_user_id,request_type,expense_id,request_data,status,submitted_at,reviewed_at,review_reason").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).order("submitted_at",{ascending:false}).limit(100),
+    sb.from("manager_expense_requests").select("id,branch_id,manager_restaurant_user_id,submitted_by_user_id,request_type,expense_id,request_data,status,submitted_at,reviewed_at,review_reason").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).eq("submitted_by_user_id",managerAuthUserId).order("submitted_at",{ascending:false}).limit(100),
     sb.from("restaurants").select("currency").eq("id",RESTAURANT_ID).maybeSingle(),
-    sb.from("manager_expense_request_notifications").select("id,request_id,title,message,created_at").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).eq("recipient_role","manager").eq("recipient_user_id",managerAuthUserId).eq("is_read",false).order("created_at",{ascending:false}).limit(50)
+    sb.from("manager_expense_request_notifications").select("id,request_id,title,message,created_at").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).eq("recipient_role","manager").eq("recipient_user_id",managerAuthUserId).eq("is_read",false).order("created_at",{ascending:false}).limit(50),
+    sb.from("manager_emergency_authorization_requests").select("id,branch_id,description,purpose,requested_amount,currency_code,authorization_limit,status,approved_amount,decision_reason,actual_amount,actual_receipt_reference,actual_notes,actual_submitted_at,final_review_reason,created_at,approved_at,final_reviewed_at").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).eq("submitted_by_user_id",managerAuthUserId).order("created_at",{ascending:false}).limit(100),
+    sb.from("manager_emergency_authorization_notifications").select("id,request_id,title,message,created_at").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).eq("recipient_role","manager").eq("recipient_user_id",managerAuthUserId).eq("is_read",false).order("created_at",{ascending:false}).limit(50)
    ]);
    if(expenseResult.error)throw expenseResult.error;
    if(categoryResult.error)throw categoryResult.error;
    if(requestResult.error)throw requestResult.error;
    if(currencyResult.error)throw currencyResult.error;
    if(notificationResult.error)throw notificationResult.error;
+   if(emergencyResult.error)throw emergencyResult.error;
+   if(emergencyNotificationResult.error)throw emergencyNotificationResult.error;
    managerExpenseRows=expenseResult.data||[];
    managerExpenseCategories=categoryResult.data||[];
    managerExpenseRequests=requestResult.data||[];
    managerExpenseNotifications=notificationResult.data||[];
+   managerEmergencyRequests=emergencyResult.data||[];
+   managerEmergencyNotifications=emergencyNotificationResult.data||[];
    managerExpenseCurrency=String(currencyResult.data?.currency||"USD").toUpperCase();
    if(!/^[A-Z]{3}$/.test(managerExpenseCurrency))managerExpenseCurrency="USD";
    renderManagerExpenses();
@@ -500,10 +511,35 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
    const actions=canReview?'<button class="primary" type="button" data-manager-request-review="approved" data-id="'+esc(req.id)+'">Approve</button><button class="secondary" type="button" data-manager-request-review="rejected" data-id="'+esc(req.id)+'">Reject</button>':'';
    return '<tr><td>'+esc(managerExpenseDate(req.submitted_at))+'</td><td>'+esc(req.request_type.charAt(0).toUpperCase()+req.request_type.slice(1))+'</td><td>'+esc(description)+'</td><td>'+(amount==null?"—":esc(managerExpenseMoney(amount)))+'</td><td>'+esc(managerExpenseStatus(req.status))+'</td><td><div style="display:flex;gap:6px;flex-wrap:wrap">'+(actions||'<span class="note">'+(req.submitted_by_user_id===managerAuthUserId?"Your request":"No review action")+'</span>')+'</div></td></tr>';
   }).join(""):'<tr><td colspan="6" class="empty">No expense approval requests for this branch.</td></tr>';
+  $("managerEmergencyAddButton").hidden=!managerExpenseCan("create");
+  const emergencyStatus={pending_authorization:"Pending Admin authorization",authorized:"Authorized",authorized_under_limit:"Within branch limit",rejected:"Rejected",spent_pending_review:"Actuals pending review",reconciled:"Reconciled",reconciliation_rejected:"Correction requested"};
+  $("managerEmergencyRows").innerHTML=managerEmergencyRequests.length?managerEmergencyRequests.map(req=>{
+   const canSubmitActuals=["authorized","authorized_under_limit","reconciliation_rejected"].includes(req.status);
+   const action=canSubmitActuals?'<button class="secondary" type="button" data-manager-emergency-actual="'+esc(req.id)+'">'+(req.status==="reconciliation_rejected"?"Resubmit Actuals":"Submit Actuals")+'</button>':req.status==="pending_authorization"||req.status==="spent_pending_review"?"<span class=\"note\">Awaiting review</span>":"—";
+   return '<tr><td>'+esc(managerExpenseDate(req.created_at))+'</td><td><strong>'+esc(req.description)+'</strong><small class="note" style="display:block">'+esc(req.purpose)+'</small></td><td>'+esc(managerExpenseMoney(req.requested_amount))+'</td><td>'+(req.actual_amount==null?"—":esc(managerExpenseMoney(req.actual_amount)))+'</td><td>'+esc(emergencyStatus[req.status]||req.status)+'</td><td>'+action+'</td></tr>';
+  }).join(""):'<tr><td colspan="6" class="empty">No emergency authorization requests for this branch.</td></tr>';
+  const emergencyNotificationHost=$("managerEmergencyNotifications");
+  if(emergencyNotificationHost)emergencyNotificationHost.innerHTML=managerEmergencyNotifications.length?'<strong>Emergency Notifications</strong>'+managerEmergencyNotifications.map(n=>'<div class="row" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line)"><div><strong>'+esc(n.title)+'</strong><p class="note" style="margin:3px 0">'+esc(n.message)+'</p></div><button type="button" class="secondary" data-manager-emergency-notification-read="'+esc(n.id)+'">Mark read</button></div>').join(""):'<p class="note">No unread emergency notifications.</p>';
   $("managerExpenseRows").querySelectorAll("[data-manager-expense-edit]").forEach(button=>button.addEventListener("click",()=>openManagerExpenseForm(managerExpenseRows.find(x=>x.id===button.dataset.managerExpenseEdit))));
   $("managerExpenseRows").querySelectorAll("[data-manager-expense-void]").forEach(button=>button.addEventListener("click",()=>openManagerExpenseVoid(managerExpenseRows.find(x=>x.id===button.dataset.managerExpenseVoid))));
   $("managerExpenseRequestRows").querySelectorAll("[data-manager-request-review]").forEach(button=>button.addEventListener("click",()=>openManagerExpenseReview(button.dataset.id,button.dataset.managerRequestReview)));
+  $("managerEmergencyRows").querySelectorAll("[data-manager-emergency-actual]").forEach(button=>button.addEventListener("click",()=>openManagerEmergencyActuals(managerEmergencyRequests.find(x=>x.id===button.dataset.managerEmergencyActual))));
+  emergencyNotificationHost?.querySelectorAll("[data-manager-emergency-notification-read]").forEach(button=>button.addEventListener("click",async()=>{button.disabled=true;try{const {error}=await sb.from("manager_emergency_authorization_notifications").update({is_read:true,read_at:new Date().toISOString()}).eq("id",button.dataset.managerEmergencyNotificationRead).eq("restaurant_id",RESTAURANT_ID).eq("recipient_role","manager").eq("recipient_user_id",managerAuthUserId);if(error)throw error;await loadManagerExpenses();}catch(error){button.disabled=false;const host=$("managerEmergencyNotifications");if(host)host.insertAdjacentHTML("beforeend",'<p class="note" role="alert">'+esc(error.message||"Unable to update notification.")+'</p>');}}));
   notificationHost?.querySelectorAll("[data-manager-expense-notification-read]").forEach(button=>button.addEventListener("click",async()=>{button.disabled=true;try{const {error}=await sb.from("manager_expense_request_notifications").update({is_read:true,read_at:new Date().toISOString()}).eq("id",button.dataset.managerExpenseNotificationRead).eq("restaurant_id",RESTAURANT_ID).eq("recipient_role","manager").eq("recipient_user_id",managerAuthUserId);if(error)throw error;await loadManagerExpenses();}catch(error){button.disabled=false;const host=$("managerExpenseNotifications");if(host)host.insertAdjacentHTML("beforeend",'<p class="note" role="alert">'+esc(error.message||"Unable to update notification.")+'</p>');}}));
+ }
+ function openManagerEmergencyForm(){
+  if(!activeBranch||!managerExpenseCan("create"))return;
+  const modal=$("managerExpenseModal");modal.hidden=false;
+  modal.innerHTML='<form class="manager-expense-dialog" id="managerEmergencyForm"><div class="row"><h2>Request Emergency Spending</h2><button type="button" class="secondary" id="managerEmergencyClose">Close</button></div><p class="note">The system checks the active branch emergency limit. Do not spend above that limit until Owner/Admin authorization is approved.</p><div class="field"><label for="managerEmergencyDescription">Emergency Description *</label><input id="managerEmergencyDescription" maxlength="500" required></div><div class="field"><label for="managerEmergencyPurpose">Purpose / What needs to be purchased *</label><textarea id="managerEmergencyPurpose" minlength="3" maxlength="1000" rows="3" required></textarea></div><div class="field"><label for="managerEmergencyAmount">Requested Amount ('+esc(managerExpenseCurrency)+') *</label><input id="managerEmergencyAmount" type="number" min="0.01" step="0.01" required></div><div class="field"><label for="managerEmergencyReason">Reason for Emergency *</label><textarea id="managerEmergencyReason" minlength="3" maxlength="1000" rows="3" required></textarea></div><div class="row"><button class="primary" id="managerEmergencySubmit" type="submit">Submit Request</button><button class="secondary" id="managerEmergencyCancel" type="button">Cancel</button></div><p class="note" id="managerEmergencyMessage" role="alert"></p></form>';
+  const close=()=>{modal.hidden=true;modal.innerHTML="";};$("managerEmergencyClose").onclick=close;$("managerEmergencyCancel").onclick=close;
+  $("managerEmergencyForm").onsubmit=async event=>{event.preventDefault();const button=$("managerEmergencySubmit"),message=$("managerEmergencyMessage"),amount=Number($("managerEmergencyAmount").value);if(!Number.isFinite(amount)||amount<=0){message.textContent="Enter a valid amount.";return;}button.disabled=true;button.textContent="Submitting…";try{const {data,error}=await sb.rpc("edmel_submit_manager_emergency_authorization",{p_restaurant_id:RESTAURANT_ID,p_branch_id:activeBranch.id,p_description:$("managerEmergencyDescription").value.trim(),p_purpose:$("managerEmergencyPurpose").value.trim(),p_requested_amount:amount,p_emergency_reason:$("managerEmergencyReason").value.trim()});if(error)throw error;if(!data?.success)throw new Error("The emergency request was not confirmed.");close();notify(data.requires_admin_approval?"Emergency request submitted. Wait for Owner/Admin authorization before spending.":"Emergency spending was recorded under the branch limit. Submit actuals and receipt reference after spending.");await loadManagerExpenses();}catch(error){message.textContent=error.message||"Unable to submit emergency request.";button.disabled=false;button.textContent="Submit Request";}};
+ }
+ function openManagerEmergencyActuals(row){
+  if(!row||!["authorized","authorized_under_limit","reconciliation_rejected"].includes(row.status))return;
+  const modal=$("managerExpenseModal");modal.hidden=false;
+  modal.innerHTML='<form class="manager-expense-dialog" id="managerEmergencyActualForm"><div class="row"><h2>Submit Actual Emergency Spending</h2><button type="button" class="secondary" id="managerEmergencyActualClose">Close</button></div><p class="note">'+esc(row.description)+' · authorized '+esc(managerExpenseMoney(row.approved_amount||row.requested_amount))+'</p><div class="field"><label for="managerEmergencyActualAmount">Actual Amount ('+esc(managerExpenseCurrency)+') *</label><input id="managerEmergencyActualAmount" type="number" min="0.01" step="0.01" required value="'+(row.actual_amount?Number(row.actual_amount).toFixed(2):"")+'"></div><div class="field"><label for="managerEmergencyReceipt">Receipt Reference / Link</label><input id="managerEmergencyReceipt" maxlength="500" value="'+esc(row.actual_receipt_reference||"")+'" placeholder="Receipt number or secure document link"></div><div class="field"><label for="managerEmergencyActualNotes">Notes</label><textarea id="managerEmergencyActualNotes" maxlength="2000" rows="3">'+esc(row.actual_notes||"")+'</textarea></div><div class="row"><button class="primary" id="managerEmergencyActualSubmit" type="submit">Submit Actuals</button><button class="secondary" id="managerEmergencyActualCancel" type="button">Cancel</button></div><p class="note" id="managerEmergencyActualMessage" role="alert"></p></form>';
+  const close=()=>{modal.hidden=true;modal.innerHTML="";};$("managerEmergencyActualClose").onclick=close;$("managerEmergencyActualCancel").onclick=close;
+  $("managerEmergencyActualForm").onsubmit=async event=>{event.preventDefault();const button=$("managerEmergencyActualSubmit"),message=$("managerEmergencyActualMessage"),amount=Number($("managerEmergencyActualAmount").value);if(!Number.isFinite(amount)||amount<=0){message.textContent="Enter a valid actual amount.";return;}button.disabled=true;button.textContent="Submitting…";try{const {data,error}=await sb.rpc("edmel_submit_manager_emergency_actuals",{p_request_id:row.id,p_actual_amount:amount,p_receipt_reference:$("managerEmergencyReceipt").value.trim()||null,p_notes:$("managerEmergencyActualNotes").value.trim()||null});if(error)throw error;if(!data?.success)throw new Error("The actual spending submission was not confirmed.");close();notify(data.over_authorized_amount?"Actuals submitted. The amount exceeds the authorized amount and requires Admin review.":"Actual spending submitted for final review.");await loadManagerExpenses();}catch(error){message.textContent=error.message||"Unable to submit actual spending.";button.disabled=false;button.textContent="Submit Actuals";}};
  }
  function openManagerExpenseForm(row=null){
   const editing=!!row;
@@ -721,6 +757,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  });
  $("managerExpenseRefreshButton")?.addEventListener("click",()=>loadManagerExpenses().catch(error=>showManagerExpenseError(error.message||"Unable to refresh expenses.")));
  $("managerExpenseAddButton")?.addEventListener("click",()=>openManagerExpenseForm());
+ $("managerEmergencyAddButton")?.addEventListener("click",()=>openManagerEmergencyForm());
  $("refreshButton").addEventListener("click",()=>loadBranchData().catch(error=>notify(error.message,true)));
  $("logoutButton").addEventListener("click",async()=>{await endPresence();await sb.auth.signOut({scope:"local"});showLogin("You have signed out.");});
  $("loginForm").addEventListener("submit",async event=>{
