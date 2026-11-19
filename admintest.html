@@ -2599,14 +2599,23 @@ settings:()=>{
  return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div>${showProfileSave}</div>${profile}</main></div></div>`;
 },audit:auditPage});
 A.bell=async()=>{
-  L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b><p class="mu">Loading Manager approval notifications…</p></div>';
+  L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b><p class="mu">Loading notifications…</p></div>';
   try{
-    const {data,error}=await sb.functions.invoke('manager-approval-inbox',{body:{action:'inbox',restaurant_id:CURRENT_RESTAURANT_ID,limit:100}});
-    if(error)throw new Error(data?.error||error.message||'Unable to load notifications.');
-    if(!data?.success)throw new Error(data?.error||'Unable to load notifications.');
+    const [approvalResult,expenseResult]=await Promise.all([
+      sb.functions.invoke('manager-approval-inbox',{body:{action:'inbox',restaurant_id:CURRENT_RESTAURANT_ID,limit:100}}),
+      sb.from('manager_expense_requests').select('id,branch_id,request_type,submitted_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('status','pending').order('submitted_at',{ascending:false}).limit(50)
+    ]);
+    const {data,error}=approvalResult;
+    if(error)throw new Error(data?.error||error.message||'Unable to load approval notifications.');
+    if(!data?.success)throw new Error(data?.error||'Unable to load approval notifications.');
+    if(expenseResult.error)throw new Error(expenseResult.error.message||'Unable to load expense requests.');
     const notes=(data.notifications||[]).filter(n=>!n.is_read);
     const pending=(data.batches||[]).filter(b=>b.status==='pending');
-    L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b><span class="bd ${pending.length?'wn':'ok'}">${pending.length} pending</span></div>${notes.map(n=>'<div class="row"><span><b>'+esc(n.title)+'</b><br><span class="mu">'+esc(n.message)+'</span></span></div>').join('')||empty('No unread approval notifications.')}${pending.length?'<button class="btn pri" style="margin-top:10px" data-a="go" data-p="staff">Review Manager Requests</button>':''}</div>`;
+    const expensePending=expenseResult.data||[];
+    L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b><span class="bd '+(pending.length+expensePending.length?'wn':'ok')+'">'+(pending.length+expensePending.length)+' pending</span></div>'+
+      (notes.map(n=>'<div class="row"><span><b>'+esc(n.title)+'</b><br><span class="mu">'+esc(n.message)+'</span></span></div>').join('')||empty('No unread staff approval notifications.'))+
+      '<section style="margin-top:14px"><b>Staff Permission Requests</b><p class="mu">'+pending.length+' pending request batch(es)</p>'+(pending.length?'<button class="btn pri" data-a="go" data-p="staff">Review Staff Requests</button>':'')+'</section>'+
+      '<section style="margin-top:14px"><b>Expense Approval Requests</b><p class="mu">'+expensePending.length+' pending expense request(s)</p>'+(expensePending.length?'<button class="btn pri" data-a="go" data-p="exp">Review Expense Requests</button>':'')+'</section></div>';
     for(const n of notes){await sb.functions.invoke('manager-approval-inbox',{body:{action:'mark_read',restaurant_id:CURRENT_RESTAURANT_ID,notification_id:n.id}});}
     dotU();
   }catch(error){
