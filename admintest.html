@@ -2598,7 +2598,21 @@ settings:()=>{
  const showProfileSave=active.id==='profile'?`<button class="btn pri" data-a="profilesave">${I('log',16)} Save Changes</button>`:'';
  return `<div class="bs-page"><div class="bs-layout"><aside class="bs-sidebar">${nav}</aside><main class="bs-content"><div class="bs-content-head"><div class="bs-head-icon">${I(active.icon,23)}</div><div class="bs-head-copy"><h2>${active.name}</h2><p>${active.desc}</p></div>${showProfileSave}</div>${profile}</main></div></div>`;
 },audit:auditPage});
-A.bell=()=>{L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b>${empty('Notifications are not connected yet.')}</div>`};
+A.bell=async()=>{
+  L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b><p class="mu">Loading Manager approval notifications…</p></div>';
+  try{
+    const {data,error}=await sb.functions.invoke('manager-approval-inbox',{body:{action:'inbox',limit:100}});
+    if(error)throw new Error(data?.error||error.message||'Unable to load notifications.');
+    if(!data?.success)throw new Error(data?.error||'Unable to load notifications.');
+    const notes=(data.notifications||[]).filter(n=>!n.is_read);
+    const pending=(data.batches||[]).filter(b=>b.status==='pending');
+    L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b><span class="bd ${pending.length?'wn':'ok'}">${pending.length} pending</span></div>${notes.map(n=>'<div class="row"><span><b>'+esc(n.title)+'</b><br><span class="mu">'+esc(n.message)+'</span></span></div>').join('')||empty('No unread approval notifications.')}${pending.length?'<button class="btn pri" style="margin-top:10px" data-a="go" data-p="staff">Review Manager Requests</button>':''}</div>`;
+    for(const n of notes){await sb.functions.invoke('manager-approval-inbox',{body:{action:'mark_read',notification_id:n.id}});}
+    dotU();
+  }catch(error){
+    L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><b>Notifications</b><p class="er">'+esc(error.message||'Unable to load notifications.')+'</p></div>';
+  }
+};
 
 function paymentMethodsPage(){
  const methodNames={cash:'Cash',card:'Card / Terminal',qr_manual:'Manual QR Payment',online:'Online Payment Gateway'};
@@ -3370,6 +3384,50 @@ function managerPermissionsEditor(manager){
   })();
 }
 
+async function loadManagerApprovalInbox(){
+  const host=document.getElementById('managerApprovalInbox');
+  if(!host)return [];
+  host.innerHTML='<p class="mu">Loading approval requests…</p>';
+  try{
+    const {data,error}=await sb.functions.invoke('manager-approval-inbox',{body:{action:'inbox',limit:100}});
+    if(error)throw new Error(data?.error||error.message||'Unable to load approval requests.');
+    if(!data?.success)throw new Error(data?.error||'Unable to load approval requests.');
+    const batches=data.batches||[];
+    const pending=batches.filter(b=>b.status==='pending');
+    host.innerHTML=pending.length?pending.map(b=>{
+      const requester=b.requester?.display_name||b.requester?.full_name||b.requester?.cashier_username||'Manager';
+      const branch=b.branch?.name||'Branch';
+      const actions=(b.actions||[]).map((a,i)=>{
+        const staff=STAFF_ROWS.find(s=>s.id===a.staff_id);
+        const name=staff?.display_name||staff?.full_name||staff?.cashier_username||'Staff member';
+        const label=a.type==='edit_staff_permissions'?'Edit permissions for ':'Remove branch access for ';
+        return '<li>'+esc(label+name)+'</li>';
+      }).join('');
+      return '<article class="card" style="margin:10px 0;padding:14px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>'+esc(b.summary)+'</strong><span class="bd wn">PENDING</span></div><p class="mu" style="margin:6px 0">'+esc(requester)+' · '+esc(branch)+' · '+esc(new Date(b.created_at).toLocaleString())+'</p><ul style="margin:8px 0 12px;padding-left:20px">'+actions+'</ul><div class="tb"><button class="btn pri" data-a="approvalapprove" data-id="'+esc(b.id)+'">Approve All</button><button class="btn" data-a="approvalreject" data-id="'+esc(b.id)+'">Reject All</button></div></article>';
+    }).join(''):'<div class="empty">No pending Manager approval requests.</div>';
+    for(const n of (data.notifications||[])){if(!n.is_read){await sb.functions.invoke('manager-approval-inbox',{body:{action:'mark_read',notification_id:n.id}});}}
+    return batches;
+  }catch(error){
+    host.innerHTML='<p class="er">'+esc(error.message||'Unable to load approval requests.')+'</p>';
+    return [];
+  }
+}
+async function reviewManagerApproval(batchId,decision){
+  const reason=window.prompt(decision==='approve'?'Optional approval note:':'Reason for rejecting this entire batch:','');
+  if(reason===null)return;
+  if(decision==='reject'&&!reason.trim()){toast('Enter a reason before rejecting the batch.',1);return;}
+  try{
+    const {data,error}=await sb.rpc('edmel_review_manager_approval_batch',{
+      p_batch_id:batchId,p_decision:decision,p_reason:reason.trim()||null
+    });
+    if(error)throw new Error(error.message||'Unable to review approval request.');
+    if(!data?.success)throw new Error(data?.error||'Approval decision was not confirmed.');
+    await loadStaffData();
+    render();
+    toast(decision==='approve'?'Approval batch applied successfully.':'Approval batch rejected.');
+  }catch(error){toast(error.message||'Unable to review approval request.',1);}
+}
+
 function staffPage(){
   const permissionNames={orders:'Orders',void:'Void Orders',tables:'Tables',stocks:'Stocks',dispatcher:'Dispatcher',settings:'Settings'};
   const rows=STAFF_ROWS.map(u=>{
@@ -3391,7 +3449,7 @@ function staffPage(){
         : '<span class="mu">—</span>';
     return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
   });
-  return `<div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
+  return `<section class="card" style="margin-bottom:14px"><div class="tb" style="justify-content:space-between"><div><h3 style="margin:0">Manager Approval Center</h3><p class="mu" style="margin:5px 0 0">Review complete request batches submitted by Managers. Each batch is approved or rejected as one unit.</p></div><button class="btn" data-a="approvalrefresh">Refresh Requests</button></div><div id="managerApprovalInbox" style="margin-top:10px"><p class="mu">Loading approval requests…</p></div></section><div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
   ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p></div>`:
     STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Status','Permissions','Date Added','Actions'],rows)}</div>`:
     `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant.</p></div>`}
@@ -3399,6 +3457,9 @@ function staffPage(){
   <div class="card" style="margin-top:14px"><h3>Account & Session Security</h3><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Deactivated staff accounts are retained with their session history.</p><p>• Online means an active session heartbeat was received within the last 2 minutes.</p></div>`;
 }
 PG.staff=staffPage;
+A.approvalrefresh=async()=>{await loadManagerApprovalInbox();};
+A.approvalapprove=button=>reviewManagerApproval(button.dataset.id,'approve');
+A.approvalreject=button=>reviewManagerApproval(button.dataset.id,'reject');
 A.addstaff=()=>staffAddForm();
 A.managerpermissions=(button)=>managerPermissionsEditor(STAFF_ROWS.find(row=>row.id===button.dataset.id));
 A.staffrefresh=async()=>{
