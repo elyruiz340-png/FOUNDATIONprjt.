@@ -299,7 +299,7 @@ A.go=t=>{const page=t?.dataset?.p;oldGo(t);if(page==='exp')loadExpenses()};
 document.addEventListener('change',ev=>{
  const t=ev.target;
  if(t?.dataset?.c==='expBranch'||t?.dataset?.c==='expCategory'||t?.dataset?.c==='expStatus'||t?.dataset?.c==='per'){
-  S.f[t.dataset.c]=t.value;
+  if(t.dataset.c==='per')S.per=t.value;else S.f[t.dataset.c]=t.value;
   if(t.dataset.c==='expBranch')selectedManagerRequestIds.clear();
   render();return;
  }
