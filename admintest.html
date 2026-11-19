@@ -1274,6 +1274,31 @@ header{background-color:rgba(255,255,255,.025)!important}
 .receipt-paper[data-width="58"]{max-width:230px}.receipt-paper[data-width="80"]{max-width:310px}.receipt-paper img{display:block;max-width:72px;max-height:58px;object-fit:contain;margin:0 auto 8px}.receipt-paper .rp-center{text-align:center}.receipt-paper .rp-line{border-top:1px dashed #777;margin:9px 0}.receipt-paper .rp-row{display:flex;justify-content:space-between;gap:10px}.receipt-paper .rp-item{padding:8px 0;border-bottom:1px dashed #aaa}.receipt-paper .rp-item-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(13mm,max-content);align-items:start;column-gap:2.5mm}.receipt-paper .rp-item-name{min-width:0;font-size:.94em;font-weight:500;line-height:1.3;overflow-wrap:anywhere;word-break:normal}.receipt-paper .rp-item-total{min-width:13mm;white-space:nowrap;text-align:right;align-self:start;font-size:.94em;font-weight:600}.receipt-paper .rp-item-meta{margin-top:4px;font-size:.96em;line-height:1.35}.receipt-paper .rp-row{line-height:1.4;gap:8px}.receipt-paper .rp-line{margin:11px 0}.receipt-paper .rp-total{font-size:calc(15px*var(--k-body));font-weight:800}.receipt-note{font-size:calc(12px*var(--k-small));color:var(--mu)}
 @media(max-width:900px){.receipt-grid{grid-template-columns:1fr}.receipt-preview-wrap{position:static}.receipt-form-grid{grid-template-columns:1fr}}
 
+
+/* EDMEL compact expense list and centered detail focus panels */
+.expense-compact-table th:nth-child(2),.expense-compact-table td:nth-child(2),.expense-compact-table th:nth-child(3),.expense-compact-table td:nth-child(3){display:none}
+.expense-compact-table td:nth-child(4) small{display:none!important}
+.md.focus-panel{left:50%;top:50%;transform:translate(-50%,-50%);width:min(680px,calc(100vw - 32px));max-height:min(88vh,820px);padding:24px;border-radius:22px;background:var(--gf);border:1px solid var(--ge);box-shadow:var(--sh),inset 0 1px 0 var(--hl);animation:edmelFocusIn .2s ease-out}
+@keyframes edmelFocusIn{from{opacity:0;transform:translate(-50%,-48%) scale(.985)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.focus-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+.focus-panel-head h2{font-size:22px;margin:2px 0 4px;color:var(--tx)}
+.focus-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ac)}
+.focus-summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;border-radius:16px;background:var(--s);border:1px solid var(--bd);margin-bottom:14px}
+.focus-summary>div{display:grid;gap:4px}.focus-amount{font-size:28px;line-height:1.2;color:var(--tx)}
+.focus-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.focus-field{min-width:0;padding:12px 14px;border:1px solid var(--bd);border-radius:13px;background:var(--gh);display:grid;gap:5px}
+.focus-field span{font-size:11px;color:var(--mu)}.focus-field b{font-size:13px;overflow-wrap:anywhere;color:var(--tx)}
+.focus-section{margin-top:14px;padding:15px;border:1px solid var(--bd);border-radius:15px;background:var(--gh)}
+.focus-section h3{margin:0 0 9px;font-size:14px}.focus-section p{margin:6px 0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.focus-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--bd)}
+.md.focus-panel .ib{flex:0 0 auto}
+.bd.ok{background:rgba(46,160,90,.15);color:var(--ok);border-color:rgba(46,160,90,.25)}
+.bd.wn{background:rgba(220,155,38,.16);color:var(--wn);border-color:rgba(220,155,38,.3)}
+.bd.er{background:rgba(210,65,55,.14);color:var(--er);border-color:rgba(210,65,55,.25)}
+.btn.pri{background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border-color:transparent}
+.btn.danger{background:rgba(210,65,55,.1);color:var(--er);border-color:rgba(210,65,55,.35)}
+@media(max-width:640px){.md.focus-panel{width:calc(100vw - 18px);max-height:92vh;padding:17px;border-radius:18px}.focus-grid{grid-template-columns:1fr}.focus-amount{font-size:24px}}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -3236,6 +3261,11 @@ function auditPage(){
   ]}}))}</div>`}
   <p class="note" style="margin-top:10px">Read-only audit history. Recorded activity includes inventory, orders, payments, menu items and categories, staff accounts and permissions, cashier credential changes, staff sessions, and table changes. Background session heartbeats are excluded to avoid noisy duplicate entries.</p>`;
 }
+function focusModal(title,content){
+  const layer=document.getElementById('layer');if(!layer)return;
+  layer.innerHTML='<div class="bk" data-a="close"></div><section class="md focus-panel" role="dialog" aria-modal="true" aria-label="'+esc(title)+'"><div class="focus-panel-head"><div><span class="focus-kicker">Activity record</span><h2>'+esc(title)+'</h2></div><button class="ib" data-a="close" aria-label="Close">'+I('x')+'</button></div>'+content+'<div class="focus-actions"><button class="btn" data-a="close">Close</button></div></section>';
+  const close=layer.querySelector('.ib');if(close)close.focus();
+}
 function auditDetail(id){
   const a=AUDIT_ROWS.find(x=>String(x.id)===String(id));
   if(!a){toast('Audit record not found. Refresh and try again.',1);return;}
@@ -3289,7 +3319,7 @@ function auditDetail(id){
     : `<div class="card" style="margin-top:12px"><p style="margin:0">${String(a.action||'').toLowerCase().includes('pin')?'The security event was recorded. Sensitive PIN values are intentionally not stored in the audit details.':'No field-by-field changes are available for this record.'}</p></div>`;
   const statusBadge=bdg(a.result==='failed'?'Failed':'Success');
   const actorIcon=roleText.toLowerCase()==='system'?'⚙':'●';
-  drawer('Activity details',`
+  focusModal('Activity details',`
     <div class="card" style="padding:16px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <div style="width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--s);font-size:20px">${isStock?'📦':'🧾'}</div>
