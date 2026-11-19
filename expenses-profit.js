@@ -266,7 +266,7 @@ function profitRangeDates(){
   case'tm':start=monthStart;break;
   case'lm':{const d=new Date(monthStart+'T00:00:00Z');d.setUTCMonth(d.getUTCMonth()-1);start=d.toISOString().slice(0,10);end=monthStart;break}
   case'ty':start=yearStart;break;
-  case'cu':start=S.cu0;end=addIsoDays(S.cu1,1);break;
+  case'cu':if(!S.cu0||!S.cu1)return {start:'',end:''};start=S.cu0;end=addIsoDays(S.cu1,1);break;
   default:break;
  }
  return {start,end};
@@ -285,6 +285,7 @@ async function loadProfitSummary(){
 function profitPage(){
  const branch=S.f.expBranch||'',period=Object.entries(PER).map(([k,v])=>'<option value="'+k+'" '+(S.per===k?'selected':'')+'>'+v[0]+'</option>').join('');
  if(profitLoading)return '<div class="tb"><label class="note">Period <select data-c="per">'+period+'</select></label><label class="note">Branch <select data-c="expBranch"><option value="">All accessible branches</option>'+branches.map(b=>'<option value="'+escE(b.id)+'" '+(branch===b.id?'selected':'')+'>'+escE(b.name)+'</option>').join('')+'</select></label></div><section class="card"><div class="empty">Loading timezone-aware sales and expense totals…</div></section>';
+ if(!profitSummary&&!profitError)return '<section class="card"><div class="empty">Loading Profit &amp; Loss summary…</div></section>';
  if(profitError)return '<div class="tb"><label class="note">Period <select data-c="per">'+period+'</select></label><label class="note">Branch <select data-c="expBranch"><option value="">All accessible branches</option>'+branches.map(b=>'<option value="'+escE(b.id)+'" '+(branch===b.id?'selected':'')+'>'+escE(b.name)+'</option>').join('')+'</select></label><span class="sp"></span><button class="btn" data-a="profitrefresh">Retry</button></div><section class="card"><span class="bd er">Report unavailable</span><p>'+escE(profitError)+'</p></section>';
  const p=profitSummary||{},start=p.period_start||'',end=p.period_end_exclusive?addIsoDays(p.period_end_exclusive,-1):'';
  const custom=S.per==='cu'?'<label class="note">From <input type="date" data-c="cu0" value="'+escE(S.cu0)+'"></label><label class="note">To <input type="date" data-c="cu1" value="'+escE(S.cu1)+'"></label>':'';
