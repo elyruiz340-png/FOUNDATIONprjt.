@@ -2727,7 +2727,8 @@ function testReceiptPrint(multiItem=false){
    setTimeout(()=>window.print(),250);
   }));
  })().catch(()=>setTimeout(()=>window.print(),250));
- <\/script></body></html>`);
+ <\/script><script src="./expenses-profit.js"></script>
+</body></html>`);
  w.document.close();
 }
 document.addEventListener('input',e=>{if(e.target.closest('.bs-content')&&e.target.id?.startsWith('rc_'))updateReceiptPreview()});
