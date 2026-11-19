@@ -95,6 +95,18 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
     <div class="note" id="staffMessage" style="padding:10px 0 0"></div>
    </div>
   </section>
+  <section class="panel" id="approvalRequestPanel" style="margin-top:18px">
+   <div class="panel-head"><div><h2>Approval Requests</h2><p>Queue multiple staff changes and submit them together for Owner/Admin review.</p></div><button class="secondary" id="refreshApprovalsButton" type="button">Refresh</button></div>
+   <div class="panel-body">
+    <div id="queuedApprovalActions" class="note">No changes queued.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+     <button class="primary" id="submitApprovalBatchButton" type="button" disabled>Submit Request Batch</button>
+     <button class="secondary" id="clearApprovalBatchButton" type="button" disabled>Clear Queue</button>
+    </div>
+    <div id="approvalRequestMessage" class="note" style="padding-top:10px" aria-live="polite"></div>
+    <div style="margin-top:18px"><strong>Submitted Requests</strong><div id="approvalRequestHistory" class="note" style="padding-top:8px">Loading requests...</div></div>
+   </div>
+  </section>
   <section class="panel history">
    <div class="panel-head"><div><h2>Recent Staff Sessions</h2><p>Login and logout activity for this branch.</p></div><button class="secondary" id="refreshButton">Refresh</button></div>
    <div class="panel-body" id="sessionRows"><div class="empty">Loading session history...</div></div>
@@ -236,6 +248,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  }
 
  let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true;
+ let pendingApprovalActions=[], approvalBatches=[];
 
  function showLogin(message=""){ $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden"); $("loginMessage").textContent=message; }
  function showApp(){ $("loginView").classList.add("hidden"); $("appView").classList.remove("hidden"); }
@@ -284,6 +297,65 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   if(ownPermissions.staff_management===true)await loadBranchData();
  }
 
+ function queueApprovalAction(action,label){
+  if(!activeBranch)throw new Error("Select an active branch first.");
+  if(pendingApprovalActions.length>=50)throw new Error("A batch can contain up to 50 actions.");
+  const key=action.type+":"+action.staff_id;
+  const existing=pendingApprovalActions.findIndex(x=>x.type+":"+x.staff_id===key);
+  if(existing>=0)pendingApprovalActions.splice(existing,1);
+  pendingApprovalActions.push({...action,_label:label});
+  renderApprovalQueue();
+ }
+ function renderApprovalQueue(){
+  const host=$("queuedApprovalActions");if(!host)return;
+  const rows=pendingApprovalActions.map((a,i)=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)"><span>'+esc(i+1)+'. '+esc(a._label)+'</span><button type="button" class="secondary" data-remove-queued="'+i+'">Remove</button></div>').join("");
+  host.innerHTML=rows||"No changes queued.";
+  host.querySelectorAll("[data-remove-queued]").forEach(b=>b.addEventListener("click",()=>{pendingApprovalActions.splice(+b.dataset.removeQueued,1);renderApprovalQueue();}));
+  $("submitApprovalBatchButton").disabled=!pendingApprovalActions.length;
+  $("clearApprovalBatchButton").disabled=!pendingApprovalActions.length;
+ }
+ async function submitApprovalBatch(){
+  if(!pendingApprovalActions.length||!activeBranch)return;
+  const summary=window.prompt("Enter a short summary for this approval batch:","Manager staff changes");
+  if(summary===null)return;
+  if(summary.trim().length<3||summary.trim().length>240){$("approvalRequestMessage").textContent="Summary must be between 3 and 240 characters.";return;}
+  const actions=pendingApprovalActions.map(({_label,...action})=>action);
+  $("submitApprovalBatchButton").disabled=true;
+  $("approvalRequestMessage").textContent="Submitting approval request...";
+  try{
+   const {data,error}=await sb.rpc("edmel_submit_manager_approval_batch",{
+    p_restaurant_id:RESTAURANT_ID,p_branch_id:activeBranch.id,p_actions:actions,p_summary:summary.trim()
+   });
+   if(error)throw new Error(error.message||"Unable to submit approval request.");
+   if(!data?.success)throw new Error(data?.error||"Approval request was not confirmed.");
+   pendingApprovalActions=[];
+   renderApprovalQueue();
+   $("approvalRequestMessage").textContent="Request submitted. Changes will remain pending until the Owner/Admin reviews the entire batch.";
+   await loadApprovalInbox();
+  }catch(error){$("approvalRequestMessage").textContent=error.message||"Unable to submit approval request.";}
+  finally{$("submitApprovalBatchButton").disabled=!pendingApprovalActions.length;}
+ }
+ async function loadApprovalInbox(){
+  const host=$("approvalRequestHistory");if(!host)return;
+  try{
+   const {data,error}=await sb.functions.invoke("manager-approval-inbox",{body:{action:"inbox",limit:50}});
+   if(error)throw new Error(data?.error||error.message||"Unable to load approval requests.");
+   if(!data?.success)throw new Error(data?.error||"Unable to load approval requests.");
+   approvalBatches=data.batches||[];
+   const rows=approvalBatches.map(b=>{
+    const when=b.created_at?new Date(b.created_at).toLocaleString():"";
+    const branch=b.branch?.name||"Assigned branch";
+    const state=String(b.status||"pending").toUpperCase();
+    return '<div style="padding:11px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>'+esc(b.summary)+'</strong><span class="chip">'+esc(state)+'</span></div><div class="note">'+esc(branch)+' · '+esc(when)+' · '+esc((b.actions||[]).length)+' action(s)</div>'+(b.decision_reason?'<div class="note">Admin note: '+esc(b.decision_reason)+'</div>':'')+'</div>';
+   }).join("");
+   host.innerHTML=rows||"No approval requests submitted yet.";
+   for(const n of (data.notifications||[])){if(!n.is_read){await sb.functions.invoke("manager-approval-inbox",{body:{action:"mark_read",notification_id:n.id}});}}
+  }catch(error){host.textContent=error.message||"Approval requests could not be loaded.";}
+ }
+ $("submitApprovalBatchButton").addEventListener("click",submitApprovalBatch);
+ $("clearApprovalBatchButton").addEventListener("click",()=>{pendingApprovalActions=[];renderApprovalQueue();});
+ $("refreshApprovalsButton").addEventListener("click",loadApprovalInbox);
+
  function permissionChips(permissions){
   if(permissions?.modules&&typeof permissions.modules==="object")return '<span class="chip">Action-level permissions</span>';
   return Object.keys(permissionLabels).filter(key=>permissions?.[key]===true).map(key=>'<span class="chip">'+permissionLabels[key]+'</span>').join("")||'<span class="note">No permissions</span>';
@@ -307,6 +379,8 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   sessionRows=sessionError?[]:(sessions||[]);
   renderStaff();
   renderSessions();
+  renderApprovalQueue();
+  await loadApprovalInbox();
   const online=staffRows.filter(u=>u.is_active&&u.branchAccess.is_active&&staffIsOnline(u.id)).length;
   $("statStaff").textContent=staffRows.filter(u=>u.branchAccess.is_active&&u.is_active).length;
   $("statOnline").textContent=online;
@@ -357,7 +431,9 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   $("fullName").focus();
  }
  function closeModal(){$("staffModal").classList.remove("open");}
- $("addStaffButton").addEventListener("click",openModal);
+ $("addStaffButton").addEventListener("click",()=>{
+  notify("Staff creation is temporarily paused while the secure Admin approval and post-approval PIN setup are completed.",true);
+ });
  $("closeModal").addEventListener("click",closeModal);
  $("cancelModal").addEventListener("click",closeModal);
  $("staffModal").addEventListener("click",event=>{if(event.target===$("staffModal"))closeModal();});
@@ -422,21 +498,13 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   const permissions={};
   for(const [key,inputId] of Object.entries(editPermissionInputs))permissions[key]=$(inputId).checked;
   $("savePermissionButton").disabled=true;
-  $("permissionFormMessage").textContent="Saving branch permissions securely...";
+  $("permissionFormMessage").textContent="Adding this change to the approval batch...";
   try{
-   const {data,error}=await sb.functions.invoke("manager-update-staff",{body:{
-    restaurant_id:RESTAURANT_ID,branch_id:activeBranch.id,restaurant_user_id:staff.id,permissions
-   }});
-   if(error){
-    let errorMessage=data?.error||error.message||"Unable to update staff permissions.";
-    if(error.context&&typeof error.context.json==="function"){try{const detail=await error.context.json();if(detail?.error)errorMessage=detail.error;}catch(_){}}
-    throw new Error(errorMessage);
-   }
-   if(!data?.success)throw new Error(data?.error||"Staff permission update was not confirmed.");
+   queueApprovalAction({type:"edit_staff_permissions",staff_id:staff.id,permissions},
+     "Edit permissions for "+(staff.display_name||staff.full_name||staff.cashier_username||"staff member"));
    closePermissionModal();
-   await loadBranchData();
-   notify(data.audit_logged===false?"Permissions saved, but audit logging needs attention.":"Branch permissions updated successfully.",data.audit_logged===false);
-  }catch(error){$("permissionFormMessage").textContent=error.message||"Unable to update staff permissions.";}
+   notify("Permission change added to the approval queue. Submit the batch when ready.");
+  }catch(error){$("permissionFormMessage").textContent=error.message||"Unable to queue this change.";}
   finally{$("savePermissionButton").disabled=false;}
  });
 
@@ -446,15 +514,10 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   if(!confirm("Remove "+name+" from "+activeBranch.name+"? Their account and access to other branches will remain unchanged."))return;
   button.disabled=true;
   try{
-   const {data,error}=await sb.functions.invoke("staff-session-action",{body:{action:"remove_branch_access",restaurant_user_id:id,branch_id:activeBranch.id}});
-   if(error){
-    let errorMessage=data?.error||error.message||"Unable to remove branch access.";
-    if(error.context&&typeof error.context.json==="function"){try{const detail=await error.context.json();if(detail?.error)errorMessage=detail.error;}catch(_){}}
-    throw new Error(errorMessage);
-   }
-   if(!data?.success)throw new Error(data?.error||"Branch access removal was not confirmed.");
-   await loadBranchData();notify(data.audit_logged===false?"Access removed, but audit logging needs attention.":"Staff access removed from this branch.",data.audit_logged===false);
-  }catch(error){button.disabled=false;notify(error.message||"Unable to remove branch access.",true);}
+   queueApprovalAction({type:"remove_branch_access",staff_id:id},"Remove branch access for "+name);
+   notify("Branch access removal added to the approval queue. It will not take effect until Admin approval.");
+  }catch(error){notify(error.message||"Unable to queue branch access removal.",true);}
+  finally{button.disabled=false;}
  }
 
  $("branchSelect").addEventListener("change",async()=>{
