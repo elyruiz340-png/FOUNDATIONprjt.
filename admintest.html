@@ -2119,7 +2119,7 @@ html.hl-intro-sb #nav button:nth-of-type(1){animation-delay:.08s}html.hl-intro-s
 .ui2-prev small{font-size:calc(12px*var(--k-small));opacity:.8}
 .ui2-note{font-size:calc(12px*var(--k-small));color:var(--mu);margin:8px 0 0;line-height:1.45}
 
-/* ---- Liquid Glass opacity (Glass only). Default 10% = the original clear glass (no override applied). ---- */
+/* ---- Liquid Glass opacity (Glass only). Clear glass is the default. ---- */
 html[data-ui="glass"][data-glass-adj="1"] :is(#sb,header,.card,.bs-sidebar,.bs-content,.dr,.md,.pn){background-color:rgba(9,24,18,calc(.05 + var(--ga)*.90))!important;background-image:none!important;-webkit-backdrop-filter:blur(calc(22px + var(--ga)*16px)) saturate(1.35)!important;backdrop-filter:blur(calc(22px + var(--ga)*16px)) saturate(1.35)!important}
 html[data-ui="glass"][data-glass-adj="1"] .bs-panel{background-color:rgba(255,255,255,calc(.02 + var(--ga)*.05))!important}
 
@@ -3212,6 +3212,43 @@ html[data-ui="glass"][data-glass-adj="1"] :is(
 ){background:transparent!important;opacity:0!important}
 html[data-ui="glass"][data-glass-adj="1"] .ui2-prev.g{
  background:rgba(255,255,255,var(--edmel-glass-alpha))!important;
+}
+
+
+/* EDMEL CLEAR GLASS — Liquid Glass theme only. Colorless tint, no frost. */
+html[data-ui="glass"][data-glass-adj="1"]{
+ --edmel-glass-alpha:calc(.05 + var(--ga,0)*.90);
+}
+html[data-ui="glass"][data-glass-adj="1"] :is(
+ #sb,header,.card,.bs-sidebar,.bs-content,.bs-panel,
+ .tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,
+ .inv-table-card,.empty,.bs-coming-note,.dr,.md,.pn,.ts,
+ .modal,.popover,.dropdown,.menu-panel,#toast,.ui2-prev
+){
+ background-color:rgba(255,255,255,var(--edmel-glass-alpha))!important;
+ background-image:none!important;
+ -webkit-backdrop-filter:none!important;
+ backdrop-filter:none!important;
+}
+html[data-ui="glass"][data-glass-adj="1"] :is(#nav button,.bs-nav-item,.bs-group){
+ background-color:rgba(255,255,255,calc(var(--edmel-glass-alpha)*.55))!important;
+ background-image:none!important;
+ -webkit-backdrop-filter:none!important;
+ backdrop-filter:none!important;
+}
+html[data-ui="glass"][data-glass-adj="1"] :is(
+ .card:before,.bs-sidebar:before,.bs-content:before,.bs-panel:before,
+ .tm-hero:before,.tm-stat:before,.tm-tools:before,.tm-card:before,.tm-footer:before
+){background:transparent!important;opacity:0!important;filter:none!important}
+html[data-ui="glass"][data-glass-adj="1"] .bk{
+ background:rgba(7,10,18,.16)!important;
+ -webkit-backdrop-filter:none!important;
+ backdrop-filter:none!important;
+}
+html[data-ui="glass"][data-glass-adj="1"] .md.focus-panel{
+ background-color:rgba(255,255,255,var(--edmel-glass-alpha))!important;
+ -webkit-backdrop-filter:none!important;
+ backdrop-filter:none!important;
 }
 
 </style>
@@ -4659,7 +4696,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ---------- appearance: Liquid Glass opacity + text size ---------- */
-const UK='halina_ui_v1',DEF={glass:10,title:100,body:100,small:100};
+const UK='halina_ui_v1',DEF={glass:5,title:100,body:100,small:100};
 const RNG={glass:[5,95],title:[90,125],body:[90,125],small:[90,130]};
 const norm=o=>{const r={...DEF};if(o&&typeof o==='object')for(const k in DEF){const v=Number(o[k]);if(isFinite(v))r[k]=Math.min(RNG[k][1],Math.max(RNG[k][0],Math.round(v)))}return r};
 let saved=DEF,UI=DEF;
@@ -4681,7 +4718,7 @@ const dirty=()=>JSON.stringify(UI)!==JSON.stringify(saved);
 function panelsHtml(){
   const row=(k,l)=>`<div class="ui2-row"><label for="ui2-${k}">${l}</label><input id="ui2-${k}" type="range" data-ui2="${k}" min="${RNG[k][0]}" max="${RNG[k][1]}" step="1" value="${UI[k]}"><output id="ui2o-${k}">${UI[k]}%</output></div>`;
   const ui=document.documentElement.dataset.ui;
-  return `<section class="bs-panel" id="ui2Glass"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Liquid Glass transparency</h3><p>How see-through or solid the glass surfaces look. 10% is the default clear glass; higher is more frosted and solid. Affects Liquid Glass Mode only.</p></div></div>
+  return `<section class="bs-panel" id="ui2Glass"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Liquid Glass transparency</h3><p>How see-through or solid the glass surfaces look. 5% is the default clear glass with no frost; higher values add more surface tint. Affects Liquid Glass Mode only.</p></div></div>
   ${row('glass','Glass opacity')}
   <div class="ui2-prev g"><h4>Glass preview</h4><p>Cards, panels, menus and the sidebar follow this setting.</p><small>Higher opacity hides more of the wallpaper and gives text more contrast.</small></div>
   <p class="ui2-note">${ui==='glass'?'You are in Liquid Glass Mode, so changes show across the dashboard right away.':'Switch to Liquid Glass Mode to see this on the dashboard. Light and Dark are never changed by this slider.'}</p>
