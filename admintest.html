@@ -3070,7 +3070,93 @@ async function addTable(e){e.preventDefault();try{await tableRpc('halina_create_
 async function updateTable(t,patch){await tableRpc('halina_update_restaurant_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_id:t.id,p_table_number:patch.table_number??t.table_number,p_seating_capacity:patch.seating_capacity??t.seating_capacity,p_is_active:patch.is_active??t.is_active,p_is_locked:patch.is_locked??t.is_locked});await refreshTables();}
 function tableDownload(t){const el=document.getElementById('tmqr-'+t.id);const img=el?.querySelector('img')||el?.querySelector('canvas');if(!img)return;const url=img.tagName==='CANVAS'?img.toDataURL('image/png'):img.src;const a=document.createElement('a');a.href=url;a.download='HALINA-'+t.table_number.replace(/[^a-z0-9_-]/gi,'_')+'-QR.png';a.click();}
 async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,250));const cards=HALINA_TABLES.map(t=>{const el=document.getElementById('tmqr-'+t.id),img=el?.querySelector('img');return img?`<article><h2>${esc(t.table_number)}</h2><img src="${img.src}"><p>Scan to order</p></article>`:''}).join('');const w=window.open('','_blank');if(!w){toast('Allow pop-ups to print QR codes',1);return;}w.document.write(`<html><head><title>HALINA Table QR Codes</title><style>body{font-family:Arial;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}article{border:1px solid #ddd;padding:16px;break-inside:avoid}img{width:180px;height:180px}
-</style></head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
+</style>
+<!-- EDMEL PREMIUM INDIGO / VIOLET VISUAL SYSTEM — Admin UI only -->
+<style id="edmel-premium-indigo-theme">
+:root{
+ --bg:#0b1020;--bg2:#121a2d;--s:rgba(23,31,52,.72);--gs:rgba(24,34,58,.78);
+ --gh:rgba(29,40,65,.62);--gf:rgba(17,24,42,.96);
+ --bd:rgba(166,181,218,.14);--ge:rgba(170,190,235,.24);--hl:rgba(255,255,255,.09);
+ --tx:#edf1fb;--mu:#a6b0c7;--ac:#a78bfa;--ac2:#6655e8;
+ --o1:#7662e8;--o2:#4236a5;--o3:#8bb8ff;--ok:#7fb5ff;--wn:#f1b968;--er:#ef788b;
+ --sh:0 18px 48px rgba(0,0,0,.36);--r:16px;
+ --glass-edge:rgba(167,139,250,.25);--glass-top:rgba(255,255,255,.12);
+ --glass-surface:rgba(84,91,160,.22);--glass-surface-strong:rgba(25,33,59,.86);
+ --lg-edge:rgba(167,139,250,.25);--lg-edge-strong:rgba(139,184,255,.34);
+ --lg-reflect:rgba(255,255,255,.13);
+}
+[data-theme="light"]{
+ --bg:#f4f5fb;--bg2:#eaedf7;--s:rgba(255,255,255,.84);--gs:rgba(255,255,255,.92);
+ --gh:rgba(247,248,253,.94);--gf:rgba(255,255,255,.98);
+ --bd:rgba(76,86,128,.14);--ge:rgba(255,255,255,.96);--hl:rgba(255,255,255,.98);
+ --tx:#20243a;--mu:#68718b;--ac:#705be8;--ac2:#5542d5;
+ --o1:#8b7bf0;--o2:#5c4bd2;--o3:#7da9f6;--ok:#477fce;--wn:#a66b18;--er:#c84d63;
+ --sh:0 14px 34px rgba(38,45,83,.10);
+ --glass-edge:rgba(112,91,232,.17);--glass-top:rgba(255,255,255,.92);
+ --glass-surface:rgba(238,240,251,.84);--glass-surface-strong:rgba(255,255,255,.96);
+ --lg-edge:rgba(112,91,232,.18);--lg-edge-strong:rgba(125,169,246,.28);
+ --lg-reflect:rgba(255,255,255,.9);
+}
+[data-theme="light"][data-skin="neodark"]{
+ --bg:#171a25;--bg2:#202436;--s:rgba(31,36,55,.88);--gs:rgba(31,36,55,.9);
+ --gh:rgba(38,44,67,.82);--gf:rgba(25,30,47,.97);
+ --bd:rgba(186,194,224,.14);--ge:rgba(167,139,250,.22);--hl:rgba(255,255,255,.08);
+ --tx:#edf0fa;--mu:#abb3ca;--ac:#b19aff;--ac2:#705ce8;
+ --o1:#7968d9;--o2:#5143a8;--o3:#8bb8ff;--ok:#7fb5ff;--wn:#e8b56b;--er:#e77c8e;
+ --sh:0 16px 38px rgba(0,0,0,.32);
+ --glass-edge:rgba(167,139,250,.2);--glass-top:rgba(255,255,255,.07);
+ --glass-surface:rgba(69,73,112,.25);--glass-surface-strong:rgba(29,34,54,.92);
+ --lg-edge:rgba(167,139,250,.2);--lg-edge-strong:rgba(139,184,255,.27);
+ --lg-reflect:rgba(255,255,255,.07);
+}
+/* Replace the old green navigation accent with a restrained violet-to-blue active state. */
+#nav .nav-indicator{
+ background:linear-gradient(125deg,#7658e8 0%,#4f78ed 100%)!important;
+ border:1px solid rgba(194,180,255,.42)!important;
+ box-shadow:0 7px 22px rgba(92,76,214,.30),inset 0 1px 0 rgba(255,255,255,.22)!important;
+}
+.brand b{background:linear-gradient(135deg,#7658e8,#477fe9)!important;box-shadow:0 5px 16px rgba(92,76,214,.22)}
+:focus-visible{outline-color:var(--ac)!important}
+.btn.pri,.btn.primary,.primary-btn{
+ background:linear-gradient(120deg,#7057e8,#477fe9)!important;color:#fff!important;
+ border-color:transparent!important;box-shadow:0 5px 16px rgba(91,82,215,.20)!important;
+}
+.btn.pri:hover,.btn.primary:hover,.primary-btn:hover{filter:brightness(1.08)}
+.btn.danger{background:rgba(210,67,91,.12)!important;color:var(--er)!important;border-color:rgba(239,120,139,.30)!important}
+.bd.ok{background:rgba(85,145,225,.16)!important;color:var(--ok)!important;border-color:rgba(127,181,255,.28)!important}
+.bd.wn{background:rgba(226,166,77,.15)!important;color:var(--wn)!important;border-color:rgba(241,185,104,.30)!important}
+.bd.er{background:rgba(210,67,91,.14)!important;color:var(--er)!important;border-color:rgba(239,120,139,.30)!important}
+/* Center focus panels: calmer surfaces, consistent spacing, crisp typography. */
+.bk{background:rgba(5,8,18,.62)!important;backdrop-filter:blur(7px)!important}
+.md.focus-panel{
+ background:var(--gf)!important;color:var(--tx)!important;border:1px solid var(--ge)!important;
+ border-radius:24px!important;padding:26px!important;
+ box-shadow:0 26px 80px rgba(0,0,0,.38),inset 0 1px 0 var(--hl)!important;
+}
+.focus-panel-head{margin-bottom:20px!important}
+.focus-panel-head h2{font-size:23px!important;letter-spacing:-.035em!important;font-weight:700!important}
+.focus-kicker{color:var(--ac)!important;letter-spacing:.10em!important}
+.focus-summary{padding:17px 19px!important;border-radius:18px!important;background:var(--gh)!important;border-color:var(--bd)!important}
+.focus-amount{font-size:30px!important;letter-spacing:-.035em!important}
+.focus-grid{gap:12px!important}
+.focus-field{padding:14px 16px!important;border-radius:15px!important;background:var(--gh)!important;border-color:var(--bd)!important;gap:6px!important}
+.focus-field span{font-size:12px!important;letter-spacing:.01em}
+.focus-field b{font-size:14px!important;line-height:1.4!important;font-weight:650!important}
+.focus-section{padding:18px!important;border-radius:17px!important;background:var(--gh)!important;border-color:var(--bd)!important}
+.focus-section h3{font-size:15px!important;letter-spacing:-.015em}
+.focus-section p{font-size:13.5px!important;line-height:1.65!important;margin:8px 0!important}
+.focus-actions{gap:10px!important;margin-top:20px!important;padding-top:17px!important}
+.focus-actions .btn{min-height:42px!important;padding:0 17px!important;border-radius:13px!important;font-weight:650!important}
+.md.focus-panel .ib{width:38px;height:38px;border-radius:12px!important}
+@media(max-width:640px){
+ .md.focus-panel{padding:18px!important;border-radius:20px!important}
+ .focus-panel-head h2{font-size:20px!important}
+ .focus-amount{font-size:26px!important}
+ .focus-field{padding:13px!important}
+}
+</style>
+
+</head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
 
 const G=$('#gate');
 function showLogin(err){document.body.classList.add('locked');G.hidden=false;G.innerHTML=`<section class="login-shell" aria-label="HALINA owner sign in"><div class="login-showcase"><div class="login-brand"><span class="login-brand-mark">H</span><span>HALINA BISTRO CAFE</span></div><div class="login-hero-copy"><div class="login-eyebrow">Restaurant management</div><h1>Welcome back to a better way to manage.</h1><p>Your restaurant, your team, and your daily operations — thoughtfully brought together in one place.</p></div><div class="login-showcase-foot"><i></i><span>Owner &amp; administrator access</span></div></div><div class="login-panel"><form id="lf" class="login-form"><div class="login-mobile-brand"><span class="login-brand-mark">H</span></div><p class="login-kicker">HALINA BISTRO CAFE</p><h2>Sign in</h2><p class="login-intro">Enter your account details to continue to your dashboard.</p><div class="login-field"><label for="le">Email address</label><input id="le" type="email" autocomplete="username" placeholder="name@restaurant.com" required></div><div class="login-field"><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" placeholder="Enter your password" required></div>${err?`<p class="login-error" role="alert">${esc(err)}</p>`:''}<button class="login-submit" id="lb" type="submit">Sign in <span aria-hidden="true">→</span></button><div class="login-security"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Secure access for authorized owners and administrators</span></div></form></div></section>`;
