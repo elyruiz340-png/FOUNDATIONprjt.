@@ -3154,6 +3154,37 @@ async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,
  .focus-amount{font-size:26px!important}
  .focus-field{padding:13px!important}
 }
+
+/* TRANSPARENCY PASS — lower surface opacity, let the page show through. */
+:root{
+ --s:rgba(23,31,52,.28);--gs:rgba(24,34,58,.34);
+ --gh:rgba(29,40,65,.22);--gf:rgba(17,24,42,.42);
+ --bd:rgba(166,181,218,.12);--ge:rgba(170,190,235,.20);--hl:rgba(255,255,255,.08);
+ --glass-surface:rgba(84,91,160,.16);--glass-surface-strong:rgba(25,33,59,.52);
+}
+[data-theme="light"]{
+ --s:rgba(255,255,255,.34);--gs:rgba(255,255,255,.42);
+ --gh:rgba(247,248,253,.30);--gf:rgba(255,255,255,.58);
+ --bd:rgba(76,86,128,.12);--ge:rgba(255,255,255,.68);--hl:rgba(255,255,255,.72);
+ --glass-surface:rgba(238,240,251,.32);--glass-surface-strong:rgba(255,255,255,.62);
+}
+[data-theme="light"][data-skin="neodark"]{
+ --s:rgba(31,36,55,.34);--gs:rgba(31,36,55,.40);
+ --gh:rgba(38,44,67,.26);--gf:rgba(25,30,47,.48);
+ --bd:rgba(186,194,224,.12);--ge:rgba(167,139,250,.18);--hl:rgba(255,255,255,.07);
+ --glass-surface:rgba(69,73,112,.16);--glass-surface-strong:rgba(29,34,54,.56);
+}
+.md.focus-panel{
+ background:var(--gf)!important;
+ -webkit-backdrop-filter:blur(30px) saturate(155%)!important;
+ backdrop-filter:blur(30px) saturate(155%)!important;
+}
+.focus-summary,.focus-field,.focus-section{
+ -webkit-backdrop-filter:blur(18px) saturate(145%);
+ backdrop-filter:blur(18px) saturate(145%);
+}
+.bk{background:rgba(5,8,18,.38)!important;backdrop-filter:blur(9px)!important}
+
 </style>
 
 </head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
