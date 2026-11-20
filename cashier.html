@@ -11702,7 +11702,7 @@ async function printSavedOrderReceipt(order) {
     ".rule{border-top:1px dashed #111;margin:7px 0}table{width:100%;border-collapse:collapse;table-layout:fixed}" +
     "td{padding:3px 0;vertical-align:top;overflow-wrap:anywhere}.amt{text-align:right;white-space:nowrap;width:34%;padding-left:4px}" +
     ".total td{font-size:" + (fontSize + 3) + "px;font-weight:bold;padding-top:7px}.foot{text-align:" + alignment + ";margin-top:12px;white-space:pre-wrap}" +
-    "</style><style id='edmel-cashier-ui-refinement'>
+    `</style><style id='edmel-cashier-ui-refinement'>
 /* ED MEL CASHIER — approved floating sidebar refinement */
 #posSection .pos-layout{grid-template-columns:76px minmax(0,1fr)}
 .pos-sidebar{width:76px!important;min-height:0!important;height:100%;padding:12px 8px!important;gap:8px!important;background:transparent!important;position:relative;isolation:isolate}
@@ -11746,8 +11746,8 @@ body.pos-other-view .page-section,body.pos-other-view #message{margin-left:76px}
 #tablesContainer .table-card .action-btn{min-height:40px;border-radius:10px;font-weight:750}
 @media(max-width:600px){.transaction-history-detail-overlay{padding:10px}.transaction-history-detail-modal{padding:16px;border-radius:18px}.transaction-history-detail-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.pos-sidebar-highlight,.pos-sidebar-btn,#tablesContainer .table-card{transition:none!important}}
-</style>
-</head><body>" + header + "<div class='rule'></div>" + metadata +
+</style>` +
+    "</head><body>" + header + "<div class='rule'></div>" + metadata +
     (config.showItems !== false ? "<div class='rule'></div><table>" + (itemRows || "<tr><td>No item details</td></tr>") + "</table>" : "") +
     (rows.length || config.showTotal !== false ? "<div class='rule'></div><table>" + rows.join("") +
       (config.showTotal !== false ? "<tr class='total'><td>TOTAL</td><td class='amt'>" + money(total) + "</td></tr>" : "") +
