@@ -2113,14 +2113,14 @@ html.hl-intro-sb #nav button:nth-of-type(1){animation-delay:.08s}html.hl-intro-s
 .ui2-row label{font-weight:600}
 .ui2-row output{text-align:right;font-variant-numeric:tabular-nums;color:var(--mu)}
 .ui2-prev{margin-top:12px;padding:14px;border-radius:14px;border:1px solid var(--pop-bd);background:var(--pop-bg);color:var(--pop-tx);-webkit-backdrop-filter:var(--pop-blur);backdrop-filter:var(--pop-blur)}
-.ui2-prev.g{background:rgba(9,24,18,calc(.12 + var(--ga,0)*.82));color:#eef5f0;border-color:rgba(170,225,195,.3)}
+.ui2-prev.g{background:rgba(9,24,18,calc(.05 + var(--ga,0)*.90));color:#eef5f0;border-color:rgba(170,225,195,.3)}
 .ui2-prev h4{margin:0 0 4px;font-size:calc(17px*var(--k-title))}
 .ui2-prev p{margin:0 0 6px;font-size:calc(14px*var(--k-body))}
 .ui2-prev small{font-size:calc(12px*var(--k-small));opacity:.8}
 .ui2-note{font-size:calc(12px*var(--k-small));color:var(--mu);margin:8px 0 0;line-height:1.45}
 
 /* ---- Liquid Glass opacity (Glass only). Default 10% = the original clear glass (no override applied). ---- */
-html[data-ui="glass"][data-glass-adj="1"] :is(#sb,header,.card,.bs-sidebar,.bs-content,.dr,.md,.pn){background-color:rgba(9,24,18,calc(.10 + var(--ga)*.82))!important;background-image:none!important;-webkit-backdrop-filter:blur(calc(22px + var(--ga)*16px)) saturate(1.35)!important;backdrop-filter:blur(calc(22px + var(--ga)*16px)) saturate(1.35)!important}
+html[data-ui="glass"][data-glass-adj="1"] :is(#sb,header,.card,.bs-sidebar,.bs-content,.dr,.md,.pn){background-color:rgba(9,24,18,calc(.05 + var(--ga)*.90))!important;background-image:none!important;-webkit-backdrop-filter:blur(calc(22px + var(--ga)*16px)) saturate(1.35)!important;backdrop-filter:blur(calc(22px + var(--ga)*16px)) saturate(1.35)!important}
 html[data-ui="glass"][data-glass-adj="1"] .bs-panel{background-color:rgba(255,255,255,calc(.02 + var(--ga)*.05))!important}
 
 /* security cards: one consistent card pattern */
@@ -4631,13 +4631,13 @@ document.addEventListener('click',e=>{
 
 /* ---------- appearance: Liquid Glass opacity + text size ---------- */
 const UK='halina_ui_v1',DEF={glass:10,title:100,body:100,small:100};
-const RNG={glass:[10,95],title:[90,125],body:[90,125],small:[90,130]};
+const RNG={glass:[5,95],title:[90,125],body:[90,125],small:[90,130]};
 const norm=o=>{const r={...DEF};if(o&&typeof o==='object')for(const k in DEF){const v=Number(o[k]);if(isFinite(v))r[k]=Math.min(RNG[k][1],Math.max(RNG[k][0],Math.round(v)))}return r};
 let saved=DEF,UI=DEF;
 try{saved=norm(JSON.parse(localStorage.getItem(UK)));UI={...saved}}catch(e){}
 function applyUI(){
   const s=document.documentElement.style;
-  const ga=Math.max(0,(UI.glass-10)/85);s.setProperty('--ga',ga.toFixed(3));s.setProperty('--glass-k',(1+ga).toFixed(3));document.documentElement.dataset.glassAdj=ga>0?'1':'0';s.setProperty('--k-title',(UI.title/100).toFixed(3));s.setProperty('--k-body',(UI.body/100).toFixed(3));s.setProperty('--k-small',(UI.small/100).toFixed(3));
+  const ga=Math.max(0,(UI.glass-5)/90);s.setProperty('--ga',ga.toFixed(3));s.setProperty('--glass-k',(1+ga).toFixed(3));document.documentElement.dataset.glassAdj=ga>0?'1':'0';s.setProperty('--k-title',(UI.title/100).toFixed(3));s.setProperty('--k-body',(UI.body/100).toFixed(3));s.setProperty('--k-small',(UI.small/100).toFixed(3));
 }
 applyUI();
 const prevSync=window.wpSyncFromProfile;
