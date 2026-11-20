@@ -6856,8 +6856,10 @@ background:
 ====================== -->
 <aside class="pos-sidebar">
 
-  <!-- Moving selected background -->
-  <div class="pos-sidebar-highlight"></div>
+  <!-- PRIMARY NAVIGATION FLOATING SURFACE -->
+  <div class="pos-sidebar-primary">
+    <!-- Moving selected background -->
+    <div class="pos-sidebar-highlight"></div>
 
   <!-- 1. MENU / ORDERING -->
   <button
@@ -6937,6 +6939,10 @@ background:
     </svg>
   </button>
 
+  </div><!-- /.pos-sidebar-primary -->
+
+  <!-- LOWER UTILITY FLOATING SURFACE -->
+  <div class="pos-sidebar-utility">
   <!-- 6. SETTINGS -->
   <button
     type="button"
@@ -6949,7 +6955,6 @@ background:
       <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>
       <path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.9l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.6.9l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8Z" transform="translate(-1 -2) scale(1.08)"/>
     </svg>
-    
   </button>
 <!-- CASHIER LOGOUT -->
   <div class="pos-sidebar-logout">
@@ -6967,6 +6972,7 @@ background:
       </svg>
     </button>
   </div>
+  </div><!-- /.pos-sidebar-utility -->
 </aside>
 
   <!-- =====================
@@ -11721,13 +11727,13 @@ async function printSavedOrderReceipt(order) {
     `</style><style id='edmel-cashier-ui-refinement'>
 /* ED MEL CASHIER — approved floating sidebar refinement */
 #posSection .pos-layout{grid-template-columns:76px minmax(0,1fr)}
-.pos-sidebar{width:76px!important;min-height:0!important;height:100%;padding:12px 8px!important;gap:8px!important;background:transparent!important;position:relative;isolation:isolate}
-.pos-sidebar::before,.pos-sidebar::after{content:"";position:absolute;left:7px;right:7px;border:1px solid rgba(255,255,255,.72);border-radius:22px;background:linear-gradient(155deg,rgba(255,255,255,.92),rgba(238,241,234,.82));box-shadow:0 8px 22px rgba(48,62,48,.07),inset 0 1px 0 rgba(255,255,255,.9);pointer-events:none;z-index:0}
-.pos-sidebar::before{top:10px;bottom:78px}.pos-sidebar::after{bottom:10px;height:58px}
+.pos-sidebar{width:76px!important;min-height:0!important;height:100%;padding:12px 8px!important;gap:0!important;background:transparent!important;position:relative;isolation:isolate;justify-content:space-between}
+.pos-sidebar-primary,.pos-sidebar-utility{position:relative;z-index:0;width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;box-sizing:border-box;border:1px solid rgba(255,255,255,.78);border-radius:22px;background:linear-gradient(155deg,rgba(255,255,255,.94),rgba(238,241,234,.84));box-shadow:0 8px 22px rgba(48,62,48,.07),inset 0 1px 0 rgba(255,255,255,.92);padding:9px 5px}
+.pos-sidebar-utility{gap:7px;padding:7px 5px}
 .pos-sidebar-highlight{left:0;width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#dcebdc,#c7dfcc);box-shadow:0 5px 14px rgba(63,105,73,.12),inset 0 1px 0 rgba(255,255,255,.75);transition:transform .48s cubic-bezier(.2,1.45,.35,1),width .32s ease,height .32s ease,border-radius .32s ease;z-index:1}
 .pos-sidebar-btn{z-index:2;width:48px;min-height:48px;border-radius:15px;color:#536157;transition:color .2s ease,transform .25s ease,background .2s ease}
 .pos-sidebar-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.5)}.pos-sidebar-btn.active{color:#294c34}
-.pos-sidebar-logout{position:relative;z-index:2;width:100%;padding-top:8px}.cashier-logout-sidebar-btn{width:48px;min-height:48px;border-radius:15px}
+.pos-sidebar-logout{position:relative;z-index:2;width:100%;padding-top:0;display:flex;justify-content:center}.cashier-logout-sidebar-btn{width:48px;min-height:48px;border-radius:15px}
 body.pos-other-view .page-section,body.pos-other-view #message{margin-left:76px}
 @media(max-width:850px){body.pos-other-view .page-section,body.pos-other-view #message{margin-left:76px}}
 @media(max-width:600px){body.pos-other-view .page-section,body.pos-other-view #message{margin-left:68px}#posSection .pos-layout{grid-template-columns:68px minmax(0,1fr)}.pos-sidebar{width:68px!important;padding-left:5px!important;padding-right:5px!important}}
