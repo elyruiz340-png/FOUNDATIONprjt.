@@ -15678,6 +15678,40 @@ body.pos-other-view .page-section,body.pos-other-view #message{margin-left:76px}
 #tablesContainer .table-card .action-btn{min-height:40px;border-radius:10px;font-weight:750}
 @media(max-width:600px){.transaction-history-detail-overlay{padding:10px}.transaction-history-detail-modal{padding:16px;border-radius:18px}.transaction-history-detail-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.pos-sidebar-highlight,.pos-sidebar-btn,#tablesContainer .table-card{transition:none!important}}
+
+/* Inventory viewport correction: keep the page fixed and scroll only the stock grid. */
+body.pos-other-view{overflow:hidden}
+#stocksSection.active{
+  display:flex!important;
+  flex-direction:column;
+  width:auto;
+  height:100vh;
+  height:100dvh;
+  min-height:0;
+  max-height:100vh;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:20px 24px 10px;
+}
+#stocksSection.active .stocks-top-bar{flex:0 0 auto}
+#stocksSection.active #stockCategoryNav{flex:0 0 auto;position:relative}
+#stocksSection.active #stockContainer{
+  flex:1 1 0;
+  height:auto;
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overflow-x:hidden;
+  align-content:start;
+  overscroll-behavior:contain;
+  padding-bottom:8px;
+}
+@media(max-width:600px){
+  #stocksSection.active{height:100dvh;max-height:100dvh;padding:14px 12px 8px}
+  #stocksSection.active #stockContainer{min-height:0;max-height:none}
+}
+
 /* ED MEL STOCKS — compact visual refinement (presentation only) */
 #stocksSection{padding-top:2px;padding-bottom:18px}
 #stockCategoryNav.stock-category-nav{grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:0 0 12px;padding:2px}
