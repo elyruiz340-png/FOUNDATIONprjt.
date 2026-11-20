@@ -10900,6 +10900,7 @@ function cashierGetOperatingDayStart(now) {
 async function cashierFetchOperatingDayOrders() {
   const sessionStart = cashierGetOperatingDayStart(new Date());
   const fields = "id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name";
+  const cashierSession = await getCashierTableSession();
   const pageSize = 1000;
   let offset = 0;
   const allOrders = [];
@@ -10916,7 +10917,7 @@ async function cashierFetchOperatingDayOrders() {
       method: "GET",
       headers: {
         "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY
+        "Authorization": "Bearer " + cashierSession.access_token
       },
       cache: "no-store"
     });
@@ -10949,6 +10950,7 @@ async function cashierFetchOperatingDayOrders() {
 
 async function cashierFetchOutstandingPaymentOrders() {
   const fields = "id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name";
+  const cashierSession = await getCashierTableSession();
   const pageSize = 1000;
   let offset = 0;
   const allOrders = [];
@@ -10966,7 +10968,7 @@ async function cashierFetchOutstandingPaymentOrders() {
       method: "GET",
       headers: {
         "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY
+        "Authorization": "Bearer " + cashierSession.access_token
       },
       cache: "no-store"
     });
