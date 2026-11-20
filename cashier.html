@@ -5991,6 +5991,20 @@ body:not(.restaurant-profile-ready) .cashier-login-brand, body:not(.restaurant-p
   margin:12px 2px 0; color:#929286; font-size:10px; line-height:1.5;
 }
 .payment-confirm-actions { margin-top:12px; }
+
+/* Transaction details overlay belongs to the main cashier page, not the receipt preview. */
+.transaction-history-detail-overlay{position:fixed;inset:0;z-index:100100;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(29,38,31,.28);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.transaction-history-detail-overlay.active{display:flex}
+.transaction-history-detail-modal{width:min(620px,100%);max-height:min(82vh,760px);overflow:auto;border-radius:22px;border:1px solid rgba(255,255,255,.8);background:rgba(255,253,248,.96);box-shadow:0 24px 70px rgba(28,42,31,.22),inset 0 1px 0 #fff;padding:22px}
+.transaction-history-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px}
+.transaction-history-detail-head h3{margin:0;color:#29372b;font-size:20px}.transaction-history-detail-head p{margin:5px 0 0;color:#7b7d72;font-size:12px}
+.transaction-history-detail-close{border:0;border-radius:10px;width:36px;height:36px;background:#f0eee6;color:#435044;font-size:20px;cursor:pointer}
+.transaction-history-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.transaction-history-detail-item{min-width:0;padding:12px;border:1px solid #e8e4da;border-radius:12px;background:#fff}
+.transaction-history-detail-item small{display:block;margin-bottom:5px;color:#85877c;font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.45px}
+.transaction-history-detail-item strong{display:block;overflow-wrap:anywhere;color:#34452f;font-size:13px}
+.transaction-history-detail-activity{margin-top:14px;padding:14px;border-radius:12px;background:#f3f5ef;color:#536052;font-size:12px;line-height:1.8}
+
 .confirm-payment-btn {
   width:100%; min-height:46px; border:1px solid #2f7046; border-radius:10px;
   background:#2f7046; color:#fff; font-size:12px; font-weight:800;
