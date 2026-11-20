@@ -3185,6 +3185,35 @@ async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,
 }
 .bk{background:rgba(5,8,18,.38)!important;backdrop-filter:blur(9px)!important}
 
+
+/* FINAL FIX: Liquid Glass slider controls actual neutral surface fill.
+   5% = 5% white tint; the wallpaper remains visible beneath it. */
+html[data-ui="glass"][data-glass-adj="1"]{
+ --edmel-glass-alpha:calc(.05 + var(--ga,0)*.90);
+}
+html[data-ui="glass"][data-glass-adj="1"] :is(
+ #sb,header,.card,.bs-sidebar,.bs-content,.bs-panel,
+ .tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,
+ .inv-table-card,.empty,.bs-coming-note,.dr,.md,.pn,.ts,
+ .modal,.popover,.dropdown,.menu-panel,#toast,.ui2-prev
+){
+ background:rgba(255,255,255,var(--edmel-glass-alpha))!important;
+ background-image:none!important;
+ -webkit-backdrop-filter:blur(26px) saturate(145%)!important;
+ backdrop-filter:blur(26px) saturate(145%)!important;
+}
+html[data-ui="glass"][data-glass-adj="1"] :is(#nav button,.bs-nav-item,.bs-group){
+ background:rgba(255,255,255,calc(var(--edmel-glass-alpha)*.55))!important;
+ background-image:none!important;
+}
+html[data-ui="glass"][data-glass-adj="1"] :is(
+ .card:before,.bs-sidebar:before,.bs-content:before,.bs-panel:before,
+ .tm-hero:before,.tm-stat:before,.tm-tools:before,.tm-card:before,.tm-footer:before
+){background:transparent!important;opacity:0!important}
+html[data-ui="glass"][data-glass-adj="1"] .ui2-prev.g{
+ background:rgba(255,255,255,var(--edmel-glass-alpha))!important;
+}
+
 </style>
 
 </head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
@@ -4637,7 +4666,7 @@ let saved=DEF,UI=DEF;
 try{saved=norm(JSON.parse(localStorage.getItem(UK)));UI={...saved}}catch(e){}
 function applyUI(){
   const s=document.documentElement.style;
-  const ga=Math.max(0,(UI.glass-5)/90);s.setProperty('--ga',ga.toFixed(3));s.setProperty('--glass-k',(1+ga).toFixed(3));document.documentElement.dataset.glassAdj=ga>0?'1':'0';s.setProperty('--k-title',(UI.title/100).toFixed(3));s.setProperty('--k-body',(UI.body/100).toFixed(3));s.setProperty('--k-small',(UI.small/100).toFixed(3));
+  const ga=Math.max(0,(UI.glass-5)/90);s.setProperty('--ga',ga.toFixed(3));s.setProperty('--glass-k',(1+ga).toFixed(3));document.documentElement.dataset.glassAdj='1';s.setProperty('--k-title',(UI.title/100).toFixed(3));s.setProperty('--k-body',(UI.body/100).toFixed(3));s.setProperty('--k-small',(UI.small/100).toFixed(3));
 }
 applyUI();
 const prevSync=window.wpSyncFromProfile;
