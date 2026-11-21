@@ -2130,6 +2130,26 @@ html[data-ui="dark"] .bs-grid>.bs-panel .bs-head-icon,html[data-ui="glass"] .bs-
 .bs-grid>.bs-panel h3{margin:4px 0 0;font-size:calc(16px*var(--k-title))}
 .bs-grid>.bs-panel p{margin:0;color:var(--mu);line-height:1.45}
 .bs-grid>.bs-panel>.bd{margin-top:auto}
+
+/* EDMEL LIQUID GLASS — clear card surfaces.
+   Dashboard stylesheet only; preserve wallpaper, dock, and modal overlays. */
+html[data-ui="glass"][data-glass-adj="1"] :is(
+  header,#sb,.card,.bs-sidebar,.bs-content,.bs-panel
+){
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+  filter:none!important;
+}
+html[data-ui="glass"][data-glass-adj="1"] :is(
+  .card,.bs-panel
+){
+  border:1px solid rgba(220,228,223,.95)!important;
+  border-radius:10px!important;
+  box-shadow:0 20px 50px rgba(31,51,42,.14)!important;
+}
 </style>
 </head>
 <body class="locked">
@@ -3253,39 +3273,6 @@ html[data-ui="glass"][data-glass-adj="1"] .md.focus-panel{
 
 
 
-/* EDMEL LIQUID GLASS — exact Cashier Order Summary card material.
-   Transparent surface only: no tint, no frost, no backdrop blur. */
-html[data-ui="glass"][data-glass-adj="1"] :is(
-  .card,.bs-content,.bs-panel,
-  .tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,
-  .inv-table-card,.empty,.bs-coming-note,
-  .dr,.md,.pn,.modal,.popover,.dropdown,.menu-panel,.ui2-prev
-){
-  background:transparent!important;
-  background-color:transparent!important;
-  background-image:none!important;
-  border:1px solid rgba(220,228,223,.95)!important;
-  border-radius:10px!important;
-  box-shadow:0 20px 50px rgba(31,51,42,.14)!important;
-  -webkit-backdrop-filter:none!important;
-  backdrop-filter:none!important;
-}
-
- 
-/* EDMEL LIQUID GLASS — targeted clear-surface cleanup v2.
-   Scoped strictly to Liquid Glass. This clears the focus panel and its nested
-   surfaces without changing the wallpaper, modal backdrop, or other themes. */
-html[data-ui="glass"][data-glass-adj="1"] .md.focus-panel,
-html[data-ui="glass"][data-glass-adj="1"] .focus-summary,
-html[data-ui="glass"][data-glass-adj="1"] .focus-field,
-html[data-ui="glass"][data-glass-adj="1"] .focus-section{
-  background:transparent!important;
-  background-color:transparent!important;
-  background-image:none!important;
-  -webkit-backdrop-filter:none!important;
-  backdrop-filter:none!important;
-  filter:none!important;
-}
 </style>
 
 </head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
