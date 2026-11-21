@@ -2131,22 +2131,37 @@ html[data-ui="dark"] .bs-grid>.bs-panel .bs-head-icon,html[data-ui="glass"] .bs-
 .bs-grid>.bs-panel p{margin:0;color:var(--mu);line-height:1.45}
 .bs-grid>.bs-panel>.bd{margin-top:auto}
 
-/* EDMEL LIQUID GLASS — opacity-linked card surfaces.
-   Liquid Glass only. No backdrop blur; wallpaper remains visible beneath a
-   restrained green surface tint controlled by the Appearance opacity slider. */
+/* EDMEL LIQUID GLASS — configurable color, opacity and frost.
+   All selectors are scoped to Liquid Glass; wallpaper and other themes remain unchanged. */
 html[data-ui="glass"][data-glass-adj="1"] :is(
   #sb,.card,.bs-sidebar,.bs-content,.bs-panel
 ){
-  background:rgba(9,24,18,calc(.12 + var(--ga,0)*.36))!important;
-  background-color:rgba(9,24,18,calc(.12 + var(--ga,0)*.36))!important;
+  background:rgba(var(--glass-rgb,36,91,67),calc(.12 + var(--ga,0)*.36))!important;
+  background-color:rgba(var(--glass-rgb,36,91,67),calc(.12 + var(--ga,0)*.36))!important;
   background-image:none!important;
-  -webkit-backdrop-filter:none!important;
-  backdrop-filter:none!important;
+  -webkit-backdrop-filter:blur(var(--glass-frost,0px)) saturate(1.15)!important;
+  backdrop-filter:blur(var(--glass-frost,0px)) saturate(1.15)!important;
   filter:none!important;
-  border:1px solid rgba(220,228,223,.62)!important;
+  border:1px solid color-mix(in srgb,var(--glass-color,#245B43) 52%,rgba(220,228,223,.62))!important;
   border-radius:10px!important;
   box-shadow:0 20px 50px rgba(31,51,42,.14)!important;
 }
+html[data-ui="glass"][data-glass-adj="1"] :is(
+  #sb,.card,.bs-sidebar,.bs-content,.bs-panel
+)::before{
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--glass-color,#245B43) 20%,transparent),
+    transparent 42%,transparent 72%,rgba(255,255,255,.035))!important;
+}
+
+/* Appearance controls: compact color palette and frost presets. */
+.ui2-color-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0 8px}
+.ui2-color-head label{font-weight:600}
+.ui2-color-head input[type="color"]{width:46px;height:34px;padding:3px;border-radius:9px;cursor:pointer}
+.ui2-color-grid{display:flex;flex-wrap:wrap;gap:9px;margin:8px 0 14px}
+.ui2-color-swatch{width:34px;height:34px;border-radius:50%;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.16)}
+.ui2-color-swatch[aria-pressed="true"]{outline:2px solid var(--ac);outline-offset:2px}
+.ui2-frost-presets{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 12px}
 </style>
 </head>
 <body class="locked">
@@ -4714,60 +4729,110 @@ document.addEventListener('click',e=>{
   (S.bsOpen=S.bsOpen||{})[g.dataset.bsg]=open;
 });
 
-/* ---------- appearance: Liquid Glass opacity + text size ---------- */
-const UK='halina_ui_v1',DEF={glass:5,title:100,body:100,small:100};
-const RNG={glass:[5,95],title:[90,125],body:[90,125],small:[90,130]};
-const norm=o=>{const r={...DEF};if(o&&typeof o==='object')for(const k in DEF){const v=Number(o[k]);if(isFinite(v))r[k]=Math.min(RNG[k][1],Math.max(RNG[k][0],Math.round(v)))}return r};
+/* ---------- appearance: Liquid Glass color, opacity, frost + text size ---------- */
+const UK='halina_ui_v1';
+const DEF={glass:5,title:100,body:100,small:100,glassColor:'#245B43',glassFrost:0};
+const RNG={glass:[5,95],title:[90,125],body:[90,125],small:[90,130],glassFrost:[0,24]};
+const HEX=/^#[0-9a-fA-F]{6}$/;
+const norm=o=>{
+  const r={...DEF};
+  if(o&&typeof o==='object'){
+    for(const k of ['glass','title','body','small','glassFrost']){
+      const v=Number(o[k]);if(isFinite(v))r[k]=Math.min(RNG[k][1],Math.max(RNG[k][0],Math.round(v)));
+    }
+    if(typeof o.glassColor==='string'&&HEX.test(o.glassColor))r.glassColor=o.glassColor.toUpperCase();
+  }
+  return r;
+};
 let saved=DEF,UI=DEF;
 try{saved=norm(JSON.parse(localStorage.getItem(UK)));UI={...saved}}catch(e){}
 function applyUI(){
   const s=document.documentElement.style;
-  const ga=Math.max(0,(UI.glass-5)/90);s.setProperty('--ga',ga.toFixed(3));s.setProperty('--glass-k',(1+ga).toFixed(3));document.documentElement.dataset.glassAdj='1';s.setProperty('--k-title',(UI.title/100).toFixed(3));s.setProperty('--k-body',(UI.body/100).toFixed(3));s.setProperty('--k-small',(UI.small/100).toFixed(3));
+  const ga=Math.max(0,(UI.glass-5)/90);
+  const hex=UI.glassColor.replace('#','');
+  const rgb=[parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)].join(',');
+  s.setProperty('--ga',ga.toFixed(3));
+  s.setProperty('--glass-k',(1+ga).toFixed(3));
+  s.setProperty('--glass-color',UI.glassColor);
+  s.setProperty('--glass-rgb',rgb);
+  s.setProperty('--glass-frost',UI.glassFrost+'px');
+  document.documentElement.dataset.glassAdj='1';
+  s.setProperty('--k-title',(UI.title/100).toFixed(3));
+  s.setProperty('--k-body',(UI.body/100).toFixed(3));
+  s.setProperty('--k-small',(UI.small/100).toFixed(3));
 }
 applyUI();
 const prevSync=window.wpSyncFromProfile;
 window.wpSyncFromProfile=function(){
   if(prevSync)prevSync();
   const a=(typeof PROFILE!=='undefined'&&PROFILE.appearance_settings)||{};
-  saved=norm({glass:a.glass_opacity,...(a.type_scale||{})});UI={...saved};applyUI();
+  saved=norm({glass:a.glass_opacity,glassColor:a.glass_color,glassFrost:a.glass_frost_px,...(a.type_scale||{})});
+  UI={...saved};applyUI();
   try{localStorage.setItem(UK,JSON.stringify(saved))}catch(e){}
   if(S.page==='settings'&&S.settingsSection==='appearance')refreshPanels();
 };
 const dirty=()=>JSON.stringify(UI)!==JSON.stringify(saved);
+const colorPresets=[
+  {name:'Emerald',value:'#245B43'},
+  {name:'Ocean',value:'#245B70'},
+  {name:'Sapphire',value:'#344A83'},
+  {name:'Amethyst',value:'#62447F'},
+  {name:'Burgundy',value:'#713D49'},
+  {name:'Bronze',value:'#795638'},
+  {name:'Charcoal',value:'#343A40'}
+];
 function panelsHtml(){
-  const row=(k,l)=>`<div class="ui2-row"><label for="ui2-${k}">${l}</label><input id="ui2-${k}" type="range" data-ui2="${k}" min="${RNG[k][0]}" max="${RNG[k][1]}" step="1" value="${UI[k]}"><output id="ui2o-${k}">${UI[k]}%</output></div>`;
+  const row=(k,l)=>`<div class="ui2-row"><label for="ui2-${k}">${l}</label><input id="ui2-${k}" type="range" data-ui2="${k}" min="${RNG[k][0]}" max="${RNG[k][1]}" step="1" value="${UI[k]}"><output id="ui2o-${k}">${UI[k]}%${k==='glassFrost'?' blur':''}</output></div>`;
   const ui=document.documentElement.dataset.ui;
-  return `<section class="bs-panel" id="ui2Glass"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Liquid Glass transparency</h3><p>How see-through or solid the glass surfaces look. 5% keeps a subtle surface tint with no blur; higher values add more tint and separation. Affects Liquid Glass Mode only.</p></div></div>
-  ${row('glass','Glass opacity')}
-  <div class="ui2-prev g"><h4>Glass preview</h4><p>Cards, panels and the sidebar follow this setting.</p><small>Higher opacity hides more of the wallpaper and gives text more contrast.</small></div>
-  <p class="ui2-note">${ui==='glass'?'You are in Liquid Glass Mode, so changes show across the dashboard right away.':'Switch to Liquid Glass Mode to see this on the dashboard. Light and Dark are never changed by this slider.'}</p>
-  <div class="wp-actions"><button type="button" class="btn pri" data-ui2="save" ${dirty()?'':'disabled'}>Save</button><button type="button" class="btn" data-ui2="reset-glass">Reset to default</button></div></section>
+  const presets=colorPresets.map(p=>`<button type="button" class="ui2-color-swatch" data-ui2="preset" data-color="${p.value}" aria-label="${p.name}" title="${p.name}" aria-pressed="${UI.glassColor===p.value}" style="background:${p.value};border:2px solid ${UI.glassColor===p.value?'var(--tx)':'var(--glass-edge)'}"></button>`).join('');
+  return `<section class="bs-panel" id="ui2Glass">
+    <div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Liquid Glass appearance</h3><p>Customize the glass surface color, transparency and frosted effect. These controls affect Liquid Glass Mode only.</p></div></div>
+    <div class="ui2-color-head"><label for="ui2-glassColor">Glass color</label><input id="ui2-glassColor" type="color" data-ui2="glassColor" value="${UI.glassColor}" aria-label="Custom glass color"></div>
+    <div class="ui2-color-grid">${presets}</div>
+    ${row('glass','Glass opacity')}
+    <div class="ui2-row"><label for="ui2-glassFrost">Frost intensity</label><input id="ui2-glassFrost" type="range" data-ui2="glassFrost" min="0" max="24" step="1" value="${UI.glassFrost}"><output id="ui2o-glassFrost">${UI.glassFrost}px</output></div>
+    <div class="ui2-frost-presets"><button type="button" class="btn" data-ui2="frost-preset" data-frost="0">Clear</button><button type="button" class="btn" data-ui2="frost-preset" data-frost="6">Soft</button><button type="button" class="btn" data-ui2="frost-preset" data-frost="12">Medium</button><button type="button" class="btn" data-ui2="frost-preset" data-frost="20">Strong</button></div>
+    <div class="ui2-prev g"><h4>Glass preview</h4><p>Cards, panels and the sidebar follow these settings.</p><small>Color, opacity and frost update live before saving.</small></div>
+    <p class="ui2-note">${ui==='glass'?'You are in Liquid Glass Mode, so changes show across the dashboard right away.':'Switch to Liquid Glass Mode to see these changes. Light and Dark are never changed by these controls.'}</p>
+    <div class="wp-actions"><button type="button" class="btn pri" data-ui2="save" ${dirty()?'':'disabled'}>Save</button><button type="button" class="btn" data-ui2="reset-glass">Reset glass</button></div>
+  </section>
   <section class="bs-panel" id="ui2Type"><div class="bs-panel-head"><div class="bs-head-icon">${I('spark',22)}</div><div class="bs-head-copy"><h3>Text size</h3><p>Adjust titles, body text and small labels across the dashboard.</p></div></div>
   ${row('title','Titles')}${row('body','Body text')}${row('small','Small text / labels')}
   <div class="ui2-prev"><h4>Order #1024 · Table 5</h4><p>Body text looks like this in tables, forms and descriptions.</p><small>Small label · updated just now</small></div>
-  <div class="wp-actions"><button type="button" class="btn pri" data-ui2="save" ${dirty()?'':'disabled'}>Save</button><button type="button" class="btn" data-ui2="reset-type">Reset to default</button></div></section>`;
+  <div class="wp-actions"><button type="button" class="btn pri" data-ui2="save" ${dirty()?'':'disabled'}>Save</button><button type="button" class="btn" data-ui2="reset-type">Reset text size</button></div></section>`;
 }
 function refreshPanels(){const a=$('#ui2Wrap');if(a)a.innerHTML=panelsHtml()}
 const prevPanel=window.wpPanelHtml;
 window.wpPanelHtml=function(){return prevPanel()+'<div id="ui2Wrap" style="display:contents">'+panelsHtml()+'</div>'};
-document.addEventListener('input',e=>{
-  const k=e.target.dataset&&e.target.dataset.ui2;if(!k||!(k in DEF))return;
-  UI[k]=Number(e.target.value);applyUI();const o=$('#ui2o-'+k);if(o)o.textContent=UI[k]+'%';
+function updateAppearanceControl(k,value){
+  if(k==='glassColor'){if(typeof value==='string'&&HEX.test(value))UI.glassColor=value.toUpperCase()}
+  else if(k in RNG){const n=Number(value);if(isFinite(n))UI[k]=Math.min(RNG[k][1],Math.max(RNG[k][0],Math.round(n)))}
+  applyUI();
+  const o=$('#ui2o-'+k);if(o)o.textContent=k==='glassFrost'?UI[k]+'px':UI[k]+'%';
   $$('[data-ui2="save"]').forEach(b=>b.disabled=!dirty());
+  if(k==='glassColor')refreshPanels();
+}
+document.addEventListener('input',e=>{
+  const k=e.target.dataset&&e.target.dataset.ui2;
+  if(k==='glassColor'||k==='glass'||k==='glassFrost'||k==='title'||k==='body'||k==='small')updateAppearanceControl(k,e.target.value);
 });
 async function saveUI(){
   if(!(window.wpProfileReady&&wpProfileReady())){toast('Restaurant settings are still loading. Please try again in a moment.',1);return}
-  const as={...(PROFILE.appearance_settings||{}),glass_opacity:UI.glass,type_scale:{title:UI.title,body:UI.body,small:UI.small}};
+  const as={...(PROFILE.appearance_settings||{}),glass_opacity:UI.glass,glass_color:UI.glassColor,glass_frost_px:UI.glassFrost,type_scale:{title:UI.title,body:UI.body,small:UI.small}};
   const {data,error}=await sb.from('restaurants').update({appearance_settings:as}).eq('id',HALINA_RESTAURANT_ID).select('id').maybeSingle();
   if(error||!data){toast((error&&error.message)||'Appearance was not saved. Check your owner/admin access.',1);return}
   PROFILE.appearance_settings=as;saved={...UI};try{localStorage.setItem(UK,JSON.stringify(saved))}catch(e){}
   toast('Appearance saved.');refreshPanels();
 }
 document.addEventListener('click',e=>{
-  const b=e.target.closest&&e.target.closest('[data-ui2]');if(!b||b.type==='range')return;const a=b.dataset.ui2;
-  if(a==='save')saveUI();
-  else if(a==='reset-glass'){UI.glass=DEF.glass;applyUI();saveUI()}
-  else if(a==='reset-type'){UI.title=UI.body=UI.small=100;applyUI();saveUI()}
+  const b=e.target.closest&&e.target.closest('[data-ui2]');if(!b||b.type==='range')return;
+  const a=b.dataset.ui2;
+  if(a==='preset')updateAppearanceControl('glassColor',b.dataset.color);
+  else if(a==='frost-preset')updateAppearanceControl('glassFrost',b.dataset.frost);
+  else if(a==='save')saveUI();
+  else if(a==='reset-glass'){
+    UI.glass=DEF.glass;UI.glassColor=DEF.glassColor;UI.glassFrost=DEF.glassFrost;applyUI();refreshPanels();$$('[data-ui2="save"]').forEach(x=>x.disabled=!dirty());
+  }else if(a==='reset-type'){UI.title=UI.body=UI.small=100;applyUI();refreshPanels();$$('[data-ui2="save"]').forEach(x=>x.disabled=!dirty())}
 });
 
 /* ---------- after-render hook: page marker, intro, KPI count-up ---------- */
