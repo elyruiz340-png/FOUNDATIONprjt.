@@ -4838,8 +4838,8 @@ document.addEventListener('click',e=>{
   else if(a==='frost-preset')updateAppearanceControl('glassFrost',b.dataset.frost);
   else if(a==='save')saveUI();
   else if(a==='reset-glass'){
-    UI.glass=DEF.glass;UI.glassColor=DEF.glassColor;UI.glassFrost=DEF.glassFrost;applyUI();refreshPanels();$$('[data-ui2="save"]').forEach(x=>x.disabled=!dirty());
-  }else if(a==='reset-type'){UI.title=UI.body=UI.small=100;applyUI();refreshPanels();$$('[data-ui2="save"]').forEach(x=>x.disabled=!dirty())}
+    UI.glass=DEF.glass;UI.glassColor=DEF.glassColor;UI.glassFrost=DEF.glassFrost;applyUI();refreshPanels();document.querySelectorAll('[data-ui2="save"]').forEach(x=>x.disabled=!dirty());
+  }else if(a==='reset-type'){UI.title=UI.body=UI.small=100;applyUI();refreshPanels();document.querySelectorAll('[data-ui2="save"]').forEach(x=>x.disabled=!dirty())}
 });
 
 /* ---------- after-render hook: page marker, intro, KPI count-up ---------- */
