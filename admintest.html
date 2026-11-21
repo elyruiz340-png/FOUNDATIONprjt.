@@ -4809,8 +4809,11 @@ function updateAppearanceControl(k,value){
   else if(k in RNG){const n=Number(value);if(isFinite(n))UI[k]=Math.min(RNG[k][1],Math.max(RNG[k][0],Math.round(n)))}
   applyUI();
   const o=$('#ui2o-'+k);if(o)o.textContent=k==='glassFrost'?UI[k]+'px':UI[k]+'%';
-  $$('[data-ui2="save"]').forEach(b=>b.disabled=!dirty());
-  if(k==='glassColor')refreshPanels();
+  if(k==='glassColor'){
+    const picker=$('#ui2-glassColor');if(picker&&picker.value!==UI.glassColor)picker.value=UI.glassColor;
+    $('[data-ui2="preset"]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===UI.glassColor)));
+  }
+  $('[data-ui2="save"]').forEach(b=>b.disabled=!dirty());
 }
 document.addEventListener('input',e=>{
   const k=e.target.dataset&&e.target.dataset.ui2;
