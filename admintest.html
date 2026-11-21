@@ -4815,9 +4815,9 @@ function updateAppearanceControl(k,value){
   const o=$('#ui2o-'+k);if(o)o.textContent=k==='glassFrost'?UI[k]+'px':UI[k]+'%';
   if(k==='glassColor'){
     const picker=$('#ui2-glassColor');if(picker&&picker.value!==UI.glassColor)picker.value=UI.glassColor;
-    $('[data-ui2="preset"]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===UI.glassColor)));
+    document.querySelectorAll('[data-ui2="preset"]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===UI.glassColor)));
   }
-  $('[data-ui2="save"]').forEach(b=>b.disabled=!dirty());
+  document.querySelectorAll('[data-ui2="save"]').forEach(b=>b.disabled=!dirty());
 }
 document.addEventListener('input',e=>{
   const k=e.target.dataset&&e.target.dataset.ui2;
