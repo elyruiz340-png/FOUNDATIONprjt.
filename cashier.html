@@ -12468,7 +12468,7 @@ function renderTransactionHistory() {
         <td>${escapeHtml(createdAt)}</td>
         <td>${escapeHtml(orderType.toUpperCase())}</td>
         <td>${escapeHtml(String(order.payment_method || "—").toUpperCase())}</td>
-        <td><span class="transaction-status transaction-${escapeHtml(category)}">${escapeHtml(categoryLabel.toUpperCase())}</span>${category==="other" && ["new","pending","accepted","confirmed","preparing","ready"].includes(String(order.status||"").toLowerCase()) && !["paid","refunded"].includes(String(order.payment_status||"").toLowerCase()) ? '<button type="button" class="transaction-void-action" data-void-order="'+escapeHtml(String(order.id||''))+'">Void Order</button>' : ''}</td>
+        <td><span class="transaction-status transaction-${escapeHtml(category)}">${escapeHtml(categoryLabel.toUpperCase())}</span></td>
         <td>${escapeHtml(orderStatus.toUpperCase())}</td>
         <td class="transaction-amount">${formatCheckoutMoney(total)}</td>
       </tr>
@@ -12491,7 +12491,7 @@ async function loadTransactionHistory() {
       const response = await fetch(
         SUPABASE_URL +
         "/rest/v1/orders" +
-        "?select=id,order_number,table_number,order_type,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name" +
+        "?select=id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name" +
         "&restaurant_id=eq.5e562ca7-38aa-4894-8265-ddca2f4e61b6" +
         "&order=created_at.desc&limit=" + pageSize + "&offset=" + offset,
         {
@@ -12548,10 +12548,19 @@ if (refreshTransactionHistoryButton) {
 (function initTransactionDetailPanel(){
  const rows=document.getElementById("transactionHistoryRows");if(!rows)return;
  const overlay=document.createElement("div");overlay.className="transaction-history-detail-overlay";overlay.id="transactionHistoryDetailOverlay";
- overlay.innerHTML='<section class="transaction-history-detail-modal" role="dialog" aria-modal="true" aria-labelledby="transactionHistoryDetailTitle"><div class="transaction-history-detail-head"><div><h3 id="transactionHistoryDetailTitle">Transaction Details</h3><p id="transactionHistoryDetailSubtitle"></p></div><button type="button" class="transaction-history-detail-close" aria-label="Close transaction details">&times;</button></div><div class="transaction-history-detail-grid" id="transactionHistoryDetailGrid"></div><div class="transaction-history-detail-activity" id="transactionHistoryDetailActivity"></div></section>';
+ overlay.innerHTML='<section class="transaction-history-detail-modal" role="dialog" aria-modal="true" aria-labelledby="transactionHistoryDetailTitle"><div class="transaction-history-detail-head"><div><h3 id="transactionHistoryDetailTitle">Transaction Details</h3><p id="transactionHistoryDetailSubtitle"></p></div><button type="button" class="transaction-history-detail-close" aria-label="Close transaction details">&times;</button></div><div class="transaction-history-detail-grid" id="transactionHistoryDetailGrid"></div><div class="transaction-history-detail-activity" id="transactionHistoryDetailActivity"></div><div class="transaction-history-detail-actions" id="transactionHistoryDetailActions"></div></section>';
  document.body.appendChild(overlay);const close=()=>overlay.classList.remove("active");
  overlay.querySelector(".transaction-history-detail-close").addEventListener("click",close);
- overlay.addEventListener("click",e=>{if(e.target===overlay)close()});
+ overlay.addEventListener("click",e=>{if(e.target===overlay||e.target.closest("[data-void-order]"))close()});
+ overlay.addEventListener("click",async e=>{
+   const printButton=e.target.closest("[data-print-transaction]");
+   if(!printButton||printButton.disabled)return;
+   const order=(window.transactionHistoryCache||[]).find(o=>String(o.id)===printButton.dataset.printTransaction);
+   if(!order){if(typeof showError==="function")showError("Transaction details are unavailable.");return;}
+   if(typeof printSavedOrderReceipt!=="function"){if(typeof showError==="function")showError("Receipt printing is unavailable.");return;}
+   printButton.disabled=true;
+   try{await printSavedOrderReceipt(order)}finally{printButton.disabled=false}
+ });
  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&overlay.classList.contains("active"))close()});
  function open(order){
   const number=order.order_number||String(order.id||"—").slice(0,8);
@@ -12560,6 +12569,13 @@ if (refreshTransactionHistoryButton) {
   const values=[["Order number",number],["Order type",String(order.order_type||"—").replace(/_/g," ").toUpperCase()],["Table",order.table_number||"—"],["Payment method",String(order.payment_method||"—").toUpperCase()],["Payment status",String(order.payment_status||"—").toUpperCase()],["Order status",String(order.status||"—").toUpperCase()],["Payment reference",order.payment_reference||"—"],["Total",formatCheckoutMoney(Number(order.total||0))]];
   document.getElementById("transactionHistoryDetailGrid").innerHTML=values.map(([label,value])=>'<div class="transaction-history-detail-item"><small>'+escapeHtml(label)+'</small><strong>'+escapeHtml(String(value))+'</strong></div>').join("");
   document.getElementById("transactionHistoryDetailActivity").innerHTML='<strong>Staff activity</strong><br>Created by: '+escapeHtml(String(order.created_by_name||"Not set"))+'<br>Accepted by: '+escapeHtml(String(order.accepted_by_name||"Not set"))+'<br>Payment confirmed by: '+escapeHtml(String(order.settled_by_name||"Not set"));
+   const payment=String(order.payment_status||"").trim().toLowerCase();
+   const status=String(order.status||"").trim().toLowerCase();
+   const canVoid=["new","pending","accepted","confirmed","preparing","ready"].includes(status)&&!["paid","refunded","void","voided"].includes(payment);
+   const canPrint=["paid","successful","succeeded","verified"].includes(payment);
+   const actions=document.getElementById("transactionHistoryDetailActions");
+   actions.innerHTML=(canVoid?'<button type="button" class="transaction-detail-action transaction-detail-void" data-void-order="'+escapeHtml(String(order.id||""))+'">Void Order</button>':'')+
+     '<button type="button" class="transaction-detail-action transaction-detail-print" data-print-transaction="'+escapeHtml(String(order.id||""))+'" '+(canPrint?'':'disabled title="Available after payment is confirmed"')+'>Print Receipt</button>';
   overlay.classList.add("active");overlay.querySelector(".transaction-history-detail-close").focus();
  }
  function showForRow(tr){const record=(window.transactionHistoryCache||[]).find(o=>String(o.id)===tr.dataset.transactionId);if(record)open(record)}
@@ -15790,6 +15806,17 @@ body.pos-other-view .page-section,body.pos-other-view #message{margin-left:64px}
 .transaction-history-detail-grid{grid-template-columns:1fr}
 .transaction-history-detail-item strong{font-size:14px}
 }
+
+/* Transaction detail actions: controls stay inside the selected transaction. */
+.transaction-history-detail-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid #e8e4da}
+.transaction-detail-action{min-height:42px;padding:10px 16px;border:1px solid #d8ded3;border-radius:10px;background:#f7f8f3;color:#344b38;font:650 13px/1.2 Inter,Arial,sans-serif;cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+.transaction-detail-action:hover:not(:disabled){transform:translateY(-1px);background:#edf3e9;border-color:#c6d6c1}
+.transaction-detail-action:disabled{opacity:.48;cursor:not-allowed}
+.transaction-detail-void{border-color:#dfb2a8;background:#fff6f3;color:#994638}
+.transaction-detail-void:hover:not(:disabled){background:#ffebe6;border-color:#d89c90}
+.transaction-detail-print{border-color:#2f5942;background:#315b45;color:#fff}
+.transaction-detail-print:hover:not(:disabled){background:#264a37;border-color:#264a37}
+@media(max-width:600px){.transaction-history-detail-actions{flex-direction:column-reverse;align-items:stretch}.transaction-detail-action{width:100%}}
 </style>
 </style>
 
