@@ -2134,7 +2134,9 @@ html[data-ui="dark"] .bs-grid>.bs-panel .bs-head-icon,html[data-ui="glass"] .bs-
 /* EDMEL LIQUID GLASS — configurable color, opacity and frost.
    All selectors are scoped to Liquid Glass; wallpaper and other themes remain unchanged. */
 html[data-ui="glass"][data-glass-adj="1"] :is(
-  #sb,.card,.bs-sidebar,.bs-content,.bs-panel
+  #sb,.card,.bs-sidebar,.bs-content,.bs-panel,
+  .tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,
+  .inv-table-card,.empty,.bs-coming-note
 ){
   background:rgba(var(--glass-rgb,36,91,67),calc(.12 + var(--ga,0)*.36))!important;
   background-color:rgba(var(--glass-rgb,36,91,67),calc(.12 + var(--ga,0)*.36))!important;
@@ -2147,7 +2149,9 @@ html[data-ui="glass"][data-glass-adj="1"] :is(
   box-shadow:0 20px 50px rgba(31,51,42,.14)!important;
 }
 html[data-ui="glass"][data-glass-adj="1"] :is(
-  #sb,.card,.bs-sidebar,.bs-content,.bs-panel
+  #sb,.card,.bs-sidebar,.bs-content,.bs-panel,
+  .tm-hero,.tm-stat,.tm-tools,.tm-card,.tm-add-panel,.tm-footer,
+  .inv-table-card,.empty,.bs-coming-note
 )::before{
   background:linear-gradient(125deg,
     color-mix(in srgb,var(--glass-color,#245B43) 20%,transparent),
