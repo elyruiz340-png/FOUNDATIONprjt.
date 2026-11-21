@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS product_stock_product_id_unique_idx ON public."PRODUCT_STOCK" (product_id) WHERE product_id IS NOT NULL;

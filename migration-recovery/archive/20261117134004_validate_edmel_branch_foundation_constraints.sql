@@ -1,0 +1,12 @@
+
+alter table public.orders validate constraint orders_branch_restaurant_fk;
+alter table public.restaurant_tables validate constraint restaurant_tables_branch_restaurant_fk;
+alter table public.menu_categories validate constraint menu_categories_branch_restaurant_fk;
+alter table public.menu_items validate constraint menu_items_branch_restaurant_fk;
+alter table public."PRODUCT_STOCK" validate constraint product_stock_branch_restaurant_fk;
+alter table public.payments validate constraint payments_branch_restaurant_fk;
+alter table public.reservations validate constraint reservations_branch_restaurant_fk;
+alter table public.staff_sessions validate constraint staff_sessions_branch_restaurant_fk;
+alter table public.order_void_requests validate constraint order_void_requests_branch_restaurant_fk;
+alter table public.restaurant_table_qr_tokens validate constraint restaurant_table_qr_tokens_branch_fk;
+alter table public.table_shared_carts validate constraint table_shared_carts_branch_fk;
