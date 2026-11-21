@@ -3270,6 +3270,22 @@ html[data-ui="glass"][data-glass-adj="1"] :is(
   -webkit-backdrop-filter:none!important;
   backdrop-filter:none!important;
 }
+
+ 
+/* EDMEL LIQUID GLASS — targeted clear-surface cleanup v2.
+   Scoped strictly to Liquid Glass. This clears the focus panel and its nested
+   surfaces without changing the wallpaper, modal backdrop, or other themes. */
+html[data-ui="glass"][data-glass-adj="1"] .md.focus-panel,
+html[data-ui="glass"][data-glass-adj="1"] .focus-summary,
+html[data-ui="glass"][data-glass-adj="1"] .focus-field,
+html[data-ui="glass"][data-glass-adj="1"] .focus-section{
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+  filter:none!important;
+}
 </style>
 
 </head><body>${cards}</body></html>`);w.document.close();w.onload=()=>w.print();}
