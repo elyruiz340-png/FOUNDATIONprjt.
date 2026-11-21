@@ -1300,6 +1300,18 @@ header{background-color:rgba(255,255,255,.025)!important}
 .btn.danger{background:rgba(210,65,55,.1);color:var(--er);border-color:rgba(210,65,55,.35)}
 @media(max-width:640px){.md.focus-panel{width:calc(100vw - 18px);max-height:92vh;padding:17px;border-radius:18px}.focus-grid{grid-template-columns:1fr}.focus-amount{font-size:24px}}
 
+
+/* EDMEL LIQUID GLASS — clean header without container surface. */
+html[data-ui="glass"][data-glass-adj="1"] header{
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
