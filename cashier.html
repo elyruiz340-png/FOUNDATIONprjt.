@@ -7562,15 +7562,40 @@ background:
   id="tablesSection"
   class="page-section"
 >
-  <div class="top-bar">
-    <h2>Table Management</h2>
-    <button
-      class="refresh-btn"
-      id="refreshBtn"
-      type="button"
-    >
-      🔄 Refresh Tables
+  <div class="top-bar tables-top-bar">
+    <div>
+      <h2>Table Management</h2>
+      <p class="tables-subtitle">Monitor table availability and manage seating.</p>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" type="button">
+      <span aria-hidden="true">↻</span> Refresh Tables
     </button>
+  </div>
+
+  <div class="tables-overview" id="tablesOverview" aria-live="polite">
+    <div class="tables-stat"><span class="tables-stat-label">TOTAL TABLES</span><strong id="tablesTotalCount">—</strong></div>
+    <div class="tables-stat"><span class="tables-stat-label">OPEN</span><strong id="tablesOpenCount" class="stat-open">—</strong></div>
+    <div class="tables-stat"><span class="tables-stat-label">LOCKED</span><strong id="tablesLockedCount" class="stat-locked">—</strong></div>
+    <div class="tables-stat"><span class="tables-stat-label">INACTIVE</span><strong id="tablesInactiveCount" class="stat-inactive">—</strong></div>
+  </div>
+
+  <div class="tables-toolbar">
+    <div class="tables-filter-group" id="tablesFilterGroup" role="group" aria-label="Filter tables">
+      <button type="button" class="tables-filter active" data-table-filter="all">All Tables</button>
+      <button type="button" class="tables-filter" data-table-filter="open">Open</button>
+      <button type="button" class="tables-filter" data-table-filter="locked">Locked</button>
+      <button type="button" class="tables-filter" data-table-filter="inactive">Inactive</button>
+    </div>
+    <div class="tables-search-wrap">
+      <input id="tablesSearch" type="search" placeholder="Search table number..." aria-label="Search table number">
+      <select id="tablesCapacityFilter" aria-label="Filter by seating capacity">
+        <option value="all">All capacities</option>
+        <option value="2">2 seats</option>
+        <option value="4">4 seats</option>
+        <option value="6">6 seats</option>
+        <option value="8">8+ seats</option>
+      </select>
+    </div>
   </div>
 
   <div
@@ -8361,35 +8386,79 @@ async function callCashierTableRpc(endpoint, payload) {
   return result;
 }
 
+let cashierTablesCache = [];
+let cashierTableFilter = "all";
+
+function getCashierTableState(table) {
+  if (table.is_active !== true) return "inactive";
+  return table.is_locked === true ? "locked" : "open";
+}
+
+function updateTablesOverview(tables) {
+  const counts = { all: tables.length, open: 0, locked: 0, inactive: 0 };
+  tables.forEach(table => counts[getCashierTableState(table)]++);
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+  set("tablesTotalCount", counts.all);
+  set("tablesOpenCount", counts.open);
+  set("tablesLockedCount", counts.locked);
+  set("tablesInactiveCount", counts.inactive);
+  document.querySelectorAll("[data-table-filter]").forEach(button => {
+    const key = button.dataset.tableFilter;
+    const count = key === "all" ? counts.all : counts[key];
+    button.dataset.count = String(count);
+  });
+}
+
+function applyCashierTableFilters() {
+  const search = (document.getElementById("tablesSearch")?.value || "").trim().toLowerCase();
+  const capacity = document.getElementById("tablesCapacityFilter")?.value || "all";
+  const visible = cashierTablesCache.filter(table => {
+    const state = getCashierTableState(table);
+    const numberMatch = String(table.table_number || "").toLowerCase().includes(search);
+    const seats = Number(table.seating_capacity || 4);
+    const capacityMatch = capacity === "all" ||
+      (capacity === "8" ? seats >= 8 : seats === Number(capacity));
+    return (cashierTableFilter === "all" || state === cashierTableFilter) && numberMatch && capacityMatch;
+  });
+  tablesContainer.innerHTML = "";
+  if (!visible.length) {
+    tablesContainer.innerHTML = '<div class="tables-empty"><strong>No matching tables</strong><span>Try changing your filters or search.</span></div>';
+    return;
+  }
+  visible.forEach(createTableCard);
+}
+
 async function loadTables() {
   clearMessage();
   tablesContainer.innerHTML = '<div class="loading">Loading tables...</div>';
-
   try {
     const data = await callCashierTableRpc(TABLE_LIST_RPC, {
       p_restaurant_id: HALINA_RESTAURANT_ID
     });
-
-    const tables = Array.isArray(data) ? data : [];
-    if (!tables.length) {
-      tablesContainer.innerHTML = '<div class="loading">No tables found.</div>';
-      return;
-    }
-
-    tables.sort(function(a, b) {
+    cashierTablesCache = Array.isArray(data) ? data.slice() : [];
+    cashierTablesCache.sort(function(a, b) {
       return String(a.table_number).localeCompare(String(b.table_number), undefined, { numeric: true });
     });
-
-    tablesContainer.innerHTML = "";
-    tables.forEach(function(table) {
-      createTableCard(table);
-    });
+    updateTablesOverview(cashierTablesCache);
+    applyCashierTableFilters();
   } catch (error) {
     console.error("Load tables error:", error);
     tablesContainer.innerHTML = '<div class="loading">Unable to load tables.</div>';
     showError(error.message);
   }
 }
+
+(function bindCashierTableFilters() {
+  document.querySelectorAll("[data-table-filter]").forEach(button => {
+    button.addEventListener("click", () => {
+      cashierTableFilter = button.dataset.tableFilter || "all";
+      document.querySelectorAll("[data-table-filter]").forEach(item => item.classList.toggle("active", item === button));
+      applyCashierTableFilters();
+    });
+  });
+  document.getElementById("tablesSearch")?.addEventListener("input", applyCashierTableFilters);
+  document.getElementById("tablesCapacityFilter")?.addEventListener("change", applyCashierTableFilters);
+})();
 
 /* =========================
    CREATE TABLE CARD
@@ -8401,22 +8470,29 @@ function createTableCard(table) {
   card.dataset.tableNumber = table.table_number;
   card.dataset.seatingCapacity = String(table.seating_capacity || 4);
   card.dataset.isActive = String(table.is_active === true);
-
-  const isActive = table.is_active === true;
-  const isOpen = isActive && table.is_locked !== true;
-  const statusText = !isActive ? "INACTIVE" : (isOpen ? "🟢 OPEN" : "🔒 LOCKED");
+  const state = getCashierTableState(table);
+  const isActive = state !== "inactive";
+  const isOpen = state === "open";
+  const statusText = state === "inactive" ? "INACTIVE" : (isOpen ? "OPEN" : "LOCKED");
+  const statusIcon = state === "inactive" ? "—" : (isOpen ? "●" : "■");
 
   card.innerHTML = `
-    <div class="table-number">${escapeHtml(table.table_number)}</div>
-    <div class="status ${isOpen ? "open" : "locked"}">${statusText}</div>
+    <div class="table-card-topline">
+      <span class="table-card-kicker">DINING TABLE</span>
+      <span class="status ${state}"><i aria-hidden="true">${statusIcon}</i> ${statusText}</span>
+    </div>
+    <div class="table-card-main">
+      <div class="table-number">${escapeHtml(table.table_number)}</div>
+      <div class="table-capacity"><span aria-hidden="true">♧</span> ${Number(table.seating_capacity || 4)} seats</div>
+    </div>
     <button type="button" class="action-btn ${isOpen ? "lock-btn" : "unlock-btn"}" ${!isActive ? "disabled" : ""}>
-      ${!isActive ? "TABLE INACTIVE" : (isOpen ? "🔒 LOCK TABLE" : "🔓 UNLOCK TABLE")}
+      ${!isActive ? "TABLE INACTIVE" : (isOpen ? "LOCK TABLE" : "UNLOCK TABLE")}
     </button>
   `;
-
   const button = card.querySelector(".action-btn");
   if (isActive) {
-    button.addEventListener("click", function() {
+    button.addEventListener("click", function(event) {
+      event.stopPropagation();
       const nextStatus = isCardOpen(card) ? "locked" : "open";
       updateTableStatus(table, nextStatus, card, button);
     });
@@ -15817,6 +15893,57 @@ body.pos-other-view .page-section,body.pos-other-view #message{margin-left:64px}
 .transaction-detail-print{border-color:#2f5942;background:#315b45;color:#fff}
 .transaction-detail-print:hover:not(:disabled){background:#264a37;border-color:#264a37}
 @media(max-width:600px){.transaction-history-detail-actions{flex-direction:column-reverse;align-items:stretch}.transaction-detail-action{width:100%}}
+
+/* ED MEL TABLE MANAGEMENT — clean, readable UI refinement */
+#tablesSection{padding:20px 24px 24px;color:#2f4033}
+#tablesSection .tables-top-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}
+#tablesSection .tables-top-bar h2{margin:0;font-size:26px;line-height:1.25;font-weight:750;letter-spacing:-.4px;color:#2e4434}
+#tablesSection .tables-subtitle{margin:5px 0 0;color:#748071;font-size:14px;line-height:1.45}
+#tablesSection .refresh-btn{min-height:42px;padding:0 15px;border:1px solid #d9e1d4;border-radius:11px;background:#fffdf8;color:#385640;font-size:13px;font-weight:700;box-shadow:0 2px 7px rgba(48,66,49,.045)}
+#tablesSection .refresh-btn span{font-size:18px;margin-right:5px}
+#tablesSection .tables-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+#tablesSection .tables-stat{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:76px;padding:14px 17px;border:1px solid #e8e4d9;border-radius:13px;background:linear-gradient(145deg,#fffefa,#f9f7f0);box-shadow:0 3px 10px rgba(47,60,46,.035)}
+#tablesSection .tables-stat-label{font-size:11px;font-weight:750;letter-spacing:.55px;color:#788174}
+#tablesSection .tables-stat strong{font-size:25px;line-height:1;font-weight:800;color:#354a39;font-variant-numeric:tabular-nums}
+#tablesSection .tables-stat .stat-open{color:#438253}
+#tablesSection .tables-stat .stat-locked{color:#ad8140}
+#tablesSection .tables-stat .stat-inactive{color:#8b9189}
+#tablesSection .tables-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+#tablesSection .tables-filter-group{display:flex;flex-wrap:wrap;gap:6px}
+#tablesSection .tables-filter{min-height:38px;padding:8px 13px;border:1px solid transparent;border-radius:9px;background:transparent;color:#6a7569;font-size:13px;font-weight:650;cursor:pointer;transition:background .18s ease,color .18s ease,border-color .18s ease}
+#tablesSection .tables-filter:hover{background:#f0f2eb;color:#385640}
+#tablesSection .tables-filter.active{border-color:#d7e2d2;background:#eaf1e6;color:#315b3d;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+#tablesSection .tables-filter::after{content:attr(data-count);display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;margin-left:7px;padding:0 5px;border-radius:7px;background:rgba(80,101,77,.09);font-size:10px;font-weight:750}
+#tablesSection .tables-search-wrap{display:flex;gap:8px;min-width:min(420px,48%)}
+#tablesSection .tables-search-wrap input,#tablesSection .tables-search-wrap select{height:40px;min-width:0;border:1px solid #e2dfd5;border-radius:10px;background:#fffefa;color:#344638;padding:0 12px;font:500 13px Inter,Arial,sans-serif;outline:none}
+#tablesSection .tables-search-wrap input{flex:1}
+#tablesSection .tables-search-wrap input:focus,#tablesSection .tables-search-wrap select:focus{border-color:#91aa8a;box-shadow:0 0 0 3px rgba(111,148,103,.12)}
+#tablesSection .tables-search-wrap input::placeholder{color:#969b91}
+#tablesContainer{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px;align-items:stretch}
+#tablesContainer .table-card{display:flex;flex-direction:column;gap:13px;min-height:174px;padding:15px 16px;border:1px solid #e6e4da;border-radius:14px;background:linear-gradient(150deg,#fffefa 0%,#f8f7f0 100%);box-shadow:0 3px 10px rgba(45,59,44,.045),inset 0 1px 0 rgba(255,255,255,.9);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+#tablesContainer .table-card:hover{transform:translateY(-2px);border-color:#cbd9c5;box-shadow:0 9px 20px rgba(45,59,44,.085),inset 0 1px 0 #fff}
+#tablesContainer .table-card-topline{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#tablesContainer .table-card-kicker{font-size:10px;line-height:1.3;font-weight:750;letter-spacing:.65px;color:#8a9185}
+#tablesContainer .table-card .status{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:7px;font-size:10px;line-height:1.2;font-weight:800;letter-spacing:.35px}
+#tablesContainer .table-card .status i{font-size:9px;font-style:normal}
+#tablesContainer .table-card .status.open{background:#eaf3e7;color:#47794b}
+#tablesContainer .table-card .status.locked{background:#f8f0df;color:#967039}
+#tablesContainer .table-card .status.inactive{background:#eeefec;color:#7d857b}
+#tablesContainer .table-card-main{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex:1}
+#tablesContainer .table-card .table-number{font-size:31px;line-height:1;font-weight:800;letter-spacing:-.8px;color:#2e4935}
+#tablesContainer .table-capacity{display:flex;align-items:center;gap:5px;color:#788174;font-size:12px;font-weight:600;white-space:nowrap}
+#tablesContainer .table-capacity span{font-size:15px;color:#8c9b86}
+#tablesContainer .table-card .action-btn{width:100%;min-height:38px;padding:8px 12px;border:1px solid #dce4d8;border-radius:9px;background:#f0f4ed;color:#426247;font-size:12px;line-height:1.2;font-weight:750;letter-spacing:.2px;cursor:pointer;transition:background .16s ease,border-color .16s ease}
+#tablesContainer .table-card .action-btn:hover:not(:disabled){background:#e5eee1;border-color:#c6d7c1}
+#tablesContainer .table-card .action-btn.unlock-btn{border-color:#e8dfc9;background:#f8f3e8;color:#8b713f}
+#tablesContainer .table-card .action-btn.unlock-btn:hover:not(:disabled){background:#f2ead8}
+#tablesContainer .table-card .action-btn:disabled{opacity:.55;cursor:not-allowed}
+#tablesContainer .tables-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:48px 20px;color:#687568;text-align:center}
+#tablesContainer .tables-empty strong{font-size:15px;color:#405344}
+#tablesContainer .tables-empty span{font-size:13px}
+@media(max-width:900px){#tablesSection{padding:18px}#tablesSection .tables-toolbar{align-items:flex-start;flex-direction:column}#tablesSection .tables-search-wrap{width:100%;min-width:0}}
+@media(max-width:600px){#tablesSection{padding:14px 12px 18px}#tablesSection .tables-top-bar{align-items:flex-start}#tablesSection .tables-top-bar h2{font-size:22px}#tablesSection .tables-subtitle{font-size:12px}#tablesSection .tables-overview{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#tablesSection .tables-stat{min-height:64px;padding:11px}#tablesSection .tables-stat strong{font-size:22px}#tablesSection .tables-search-wrap{flex-direction:column}#tablesSection .tables-search-wrap input,#tablesSection .tables-search-wrap select{width:100%}#tablesContainer{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:9px}#tablesContainer .table-card{min-height:160px;padding:12px}#tablesContainer .table-card .table-number{font-size:27px}}
+@media(prefers-reduced-motion:reduce){#tablesContainer .table-card,#tablesSection .tables-filter{transition:none!important}}
 </style>
 </style>
 
