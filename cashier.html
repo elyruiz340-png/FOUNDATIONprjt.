@@ -14180,7 +14180,7 @@ async function loadCashierAssignedBranches() {
       select.appendChild(option);
     });
     select.value = window.EDMEL_TENANT_CONTEXT?.branch_id || "";
-    host.hidden = branches.length <= 1;
+    host.style.display = branches.length > 1 ? "flex" : "none";
     if (select.dataset.bound !== "1") {
       select.dataset.bound = "1";
       select.addEventListener("change", async () => {
@@ -14211,6 +14211,8 @@ async function loadCashierAssignedBranches() {
 async function endStaffPresence() {
   window.EDMEL_ACCESS_TOKEN = null;
   window.EDMEL_TENANT_CONTEXT = null;
+  const branchSwitch = document.getElementById("cashierBranchSwitch");
+  if (branchSwitch) branchSwitch.style.display = "none";
   stopStaffHeartbeat();
   if (!halinaStaffSessionId) return;
   const sessionId = halinaStaffSessionId;
