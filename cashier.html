@@ -6788,8 +6788,6 @@ background:
     <p id="cashierLoginSubtitle">Enter your cashier username to continue</p>
     <form id="cashierLoginForm" novalidate>
       <div id="cashierUsernameStep">
-        <label for="cashierRestaurantSlug">Restaurant Slug</label>
-        <input id="cashierRestaurantSlug" name="restaurant_slug" type="text" autocomplete="organization" placeholder="e.g. halina-bistro-cafe" maxlength="100" required>
         <label for="cashierUsername">Cashier Username</label>
         <input id="cashierUsername" name="username" type="text" autocomplete="username" required>
         <button id="cashierContinueButton" type="button">Continue</button>
@@ -13840,8 +13838,6 @@ const CASHIER_USERNAME_VALIDATE_URL =
 
 const cashierUsernameInput =
   document.getElementById("cashierUsername");
-const cashierRestaurantSlugInput =
-  document.getElementById("cashierRestaurantSlug");
 let cashierSelectedRestaurantSlug = "";
 
 const cashierUsernameStep =
@@ -13892,14 +13888,7 @@ function cashierShowUsernameStep() {
 async function cashierShowPinStep() {
   if (cashierUsernameValidationInProgress) return;
 
-  const restaurantSlug = cashierRestaurantSlugInput.value.trim().toLowerCase();
   const username = cashierUsernameInput.value.trim();
-
-  if (!restaurantSlug) {
-    cashierLoginMessage.textContent = "Please enter your restaurant slug first.";
-    cashierRestaurantSlugInput.focus();
-    return;
-  }
 
   if (!username) {
     cashierLoginMessage.textContent =
@@ -13923,7 +13912,7 @@ async function cashierShowPinStep() {
           "apikey": SUPABASE_KEY,
           "Authorization": "Bearer " + SUPABASE_KEY
         },
-        body: JSON.stringify({ restaurant_slug: restaurantSlug, username })
+        body: JSON.stringify({ username })
       }
     );
 
@@ -13941,8 +13930,6 @@ async function cashierShowPinStep() {
       cashierUsernameInput.focus();
       return;
     }
-
-    cashierSelectedRestaurantSlug = restaurantSlug;
 
     /* Username preview removed from the PIN screen. */
 
@@ -14882,7 +14869,7 @@ if (cashierLoginForm) {
           "apikey": SUPABASE_KEY,
           "Authorization": "Bearer " + SUPABASE_KEY
         },
-        body: JSON.stringify({ restaurant_slug: cashierSelectedRestaurantSlug, username, pin })
+        body: JSON.stringify({ username, pin, expected_position: "cashier" })
       });
 
       const result = await response.json();
@@ -14913,6 +14900,8 @@ if (cashierLoginForm) {
         );
       }
 
+      cashierSelectedRestaurantSlug = String(result.restaurant_slug || "").trim().toLowerCase();
+      if (!cashierSelectedRestaurantSlug) throw new Error("Restaurant workspace could not be resolved.");
       window.EDMEL_ACCESS_TOKEN = data.session.access_token;
       if (cashierPinInput) cashierPinInput.value = "";
       loginSucceeded = true;
