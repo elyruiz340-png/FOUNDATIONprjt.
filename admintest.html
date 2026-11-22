@@ -87,6 +87,31 @@ input,select{background:var(--s);border:1px solid var(--bd);border-radius:10px;p
 .dr,.md,.pn{position:fixed;z-index:41;background:var(--bg2);border:1px solid var(--bd);box-shadow:var(--sh);overflow:auto}
 .dr{top:0;right:0;bottom:0;width:min(430px,100%);padding:18px;animation:si .25s}
 .md{left:50%;top:12vh;transform:translateX(-50%);width:min(440px,92vw);max-height:80vh;padding:18px;border-radius:16px;animation:fi .2s}
+/* Compact Staff Directory and centered staff details panel. */
+.staff-directory-card{padding:8px 10px}
+.staff-directory-card .tw{overflow-x:auto}
+.staff-directory-card table{table-layout:auto}
+.staff-directory-card th,.staff-directory-card td{padding:7px 9px;line-height:1.25;vertical-align:middle}
+.staff-directory-card th{font-size:12px}
+.staff-directory-card td{font-size:13px}
+.staff-directory-card tbody tr{height:42px}
+.staff-directory-card .btn{padding:6px 11px;font-size:12px;white-space:nowrap}
+.staff-directory-toolbar{gap:7px;margin-bottom:10px}
+.staff-approval-card{padding:12px 14px}
+.bk.staff-details-backdrop{background:rgba(3,9,6,.48);-webkit-backdrop-filter:blur(13px) saturate(75%);backdrop-filter:blur(13px) saturate(75%)}
+.md.staff-details-panel{top:50%;left:50%;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 28px));max-height:min(86vh,760px);padding:22px;border-radius:22px;overflow-y:auto;background:var(--gf)!important;border:1px solid var(--ge)!important;box-shadow:0 28px 90px rgba(0,0,0,.48),inset 0 1px 0 var(--hl)!important}
+.staff-details-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+.staff-details-head h2{font-size:21px;line-height:1.25;margin:0 0 5px;overflow-wrap:anywhere}
+.staff-details-head p{font-size:12px;margin:0}
+.staff-details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.staff-detail-item{min-width:0;padding:11px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--s)}
+.staff-detail-item span{display:block;color:var(--mu);font-size:11px;margin-bottom:4px}
+.staff-detail-item strong{display:block;font-size:13px;font-weight:650;overflow-wrap:anywhere}
+.staff-detail-wide{grid-column:1/-1}
+.staff-details-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--bd)}
+.staff-details-actions .btn{min-width:112px}
+.staff-details-actions .staff-deactivate-btn{border-color:rgba(226,118,107,.48);color:var(--er)}
+@media(max-width:640px){.staff-details-grid{grid-template-columns:1fr}.staff-detail-wide{grid-column:auto}.staff-details-actions{justify-content:stretch}.staff-details-actions .btn{flex:1;min-width:0}}
 /* Staff profile editor — centered focus panel, inherits the active theme tokens. */
 .md.staff-focus-panel{top:50%;transform:translate(-50%,-50%);width:min(500px,calc(100vw - 28px));max-height:min(86vh,760px);padding:22px;border-radius:22px;background:var(--gf);border:1px solid var(--ge);box-shadow:var(--sh),inset 0 1px 0 var(--hl)}
 .staff-focus-panel .staff-focus-kicker{display:inline-flex;align-items:center;gap:7px;color:var(--ac);font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;margin-bottom:8px}
@@ -4066,29 +4091,34 @@ function staffPage(){
   const permissionNames={orders:'Orders',void:'Void Orders',tables:'Tables',stocks:'Stocks',dispatcher:'Dispatcher',settings:'Settings'};
   const rows=STAFF_ROWS.map(u=>{
     const isCurrentUser=!!CURRENT_AUTH_USER_ID&&u.user_id===CURRENT_AUTH_USER_ID;
-    const accountLabel=u.display_name||u.full_name||u.cashier_username||(
-      isCurrentUser&&S.user ? S.user :
-      String(u.role||'').toLowerCase()==='owner' ? 'Owner account' : 'Username not set'
-    );
+    const accountLabel=u.display_name||u.full_name||u.cashier_username||(isCurrentUser&&S.user?S.user:String(u.role||'').toLowerCase()==='owner'?'Owner account':'Username not set');
     const permissions=u.permissions||{};
     const permissionLabel=Object.keys(permissionNames).filter(key=>permissions[key]===true).map(key=>permissionNames[key]).join(', ')||'None assigned';
     const active=u.is_active!==false;
     const online=active&&!!staffLatestSession(u);
     const status=active?(online?'<span class="bd">● Online</span>':'<span class="bd">● Offline</span>'):'<span class="bd er">Deactivated</span>';
     const isManagerPosition=String(u.position||'').trim().toLowerCase()==='manager';
-    const actions=isManagerPosition
-      ? `<div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn pri" type="button" data-a="managerpermissions" data-id="${esc(u.id)}" style="white-space:nowrap">Manage Permissions</button>${active?'': '<span class="mu">Inactive</span>'}</div>`
-      : String(u.role||'').toLowerCase()==='staff'
-        ? `<div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn" type="button" data-a="staffeditprofile" data-id="${esc(u.id)}" style="white-space:nowrap">Edit Profile</button><button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" style="white-space:nowrap">Reset PIN</button> ${active?`<button class="btn" type="button" data-a="staffdeactivate" data-id="${esc(u.id)}" style="white-space:nowrap">Deactivate</button>`:'<span class="mu">Inactive</span>'}</div>`
-        : '<span class="mu">—</span>';
+    const actions=isManagerPosition?'<button class="btn" type="button" data-a="managerpermissions" data-id="'+esc(u.id)+'">Manage Permissions</button>':String(u.role||'').toLowerCase()==='staff'?'<button class="btn staff-view-btn" type="button" data-a="staffdetails" data-id="'+esc(u.id)+'">View Details</button>':'<span class="mu">—</span>';
     return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),esc(staffBranchLabel(u.id)),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
   });
-  return `<section class="card" style="margin-bottom:14px"><div class="tb" style="justify-content:space-between"><div><h3 style="margin:0">Manager Approval Center</h3><p class="mu" style="margin:5px 0 0">Review complete request batches submitted by Managers. Each batch is approved or rejected as one unit.</p></div><button class="btn" data-a="approvalrefresh">Refresh Requests</button></div><div id="managerApprovalInbox" style="margin-top:10px"><p class="mu">Loading approval requests…</p></div></section><div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
-  ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p></div>`:
-    STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Branch','Status','Permissions','Date Added','Actions'],rows)}${staffBranchLoadError?'<p class="note" style="margin:10px 0 0">Branch assignments could not be loaded. Branch values are shown as Unavailable until the next successful refresh.</p>':''}</div>`:
-    `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant.</p></div>`}
-  ${staffHistoryError?`<div class="card" style="margin-top:12px"><p class="mu">Login history unavailable: ${esc(staffHistoryError)}</p></div>`:''}
-  <div class="card" style="margin-top:14px"><h3>Account & Session Security</h3><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Deactivated staff accounts are retained with their session history.</p><p>• Online means an active session heartbeat was received within the last 2 minutes.</p></div>`;
+  return '<section class="card staff-approval-card" style="margin-bottom:12px"><div class="tb" style="justify-content:space-between;margin-bottom:8px"><div><h3 style="margin:0">Manager Approval Center</h3><p class="mu" style="margin:4px 0 0">Review complete request batches submitted by Managers. Each batch is approved or rejected as one unit.</p></div><button class="btn" data-a="approvalrefresh">Refresh Requests</button></div><div id="managerApprovalInbox"><p class="mu">Loading approval requests…</p></div></section><div class="tb staff-directory-toolbar"><span class="mu">'+STAFF_ROWS.length+' linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>'+
+  (staffLoadError?'<div class="card"><span class="bd er">● Could not load staff</span><p>'+esc(staffLoadError)+'</p></div>':
+    STAFF_ROWS.length?'<div class="card staff-directory-card">'+tbl(['Staff Name','Position','Username','Role','Branch','Status','Permissions','Date Added','Actions'],rows)+(staffBranchLoadError?'<p class="note" style="margin:8px 0 0">Branch assignments could not be loaded. Branch values are shown as Unavailable until the next successful refresh.</p>':'')+'</div>':
+    '<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant.</p></div>'))+
+  (staffHistoryError?'<div class="card" style="margin-top:12px"><p class="mu">Login history unavailable: '+esc(staffHistoryError)+'</p></div>':'')+
+  '<div class="card" style="margin-top:12px"><h3>Account & Session Security</h3><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Deactivated staff accounts are retained with their session history.</p><p>• Online means an active session heartbeat was received within the last 2 minutes.</p></div>';
+}
+function openStaffDetails(staffId){
+  const staff=STAFF_ROWS.find(row=>row.id===staffId);
+  if(!staff||String(staff.role||'').toLowerCase()!=='staff'){toast('Staff account could not be verified');return;}
+  const permissionNames={orders:'Orders',void:'Void Orders',tables:'Tables',stocks:'Stocks',dispatcher:'Dispatcher',settings:'Settings'};
+  const permissions=Object.keys(permissionNames).filter(key=>staff.permissions?.[key]===true).map(key=>permissionNames[key]);
+  const active=staff.is_active!==false, status=active?(staffLatestSession(staff)?'Online':'Offline'):'Deactivated';
+  const date=staff.created_at?new Date(staff.created_at).toLocaleString('en-PH'):'—';
+  const detail=(label,value)=>'<div class="staff-detail-item"><span>'+label+'</span><strong>'+esc(value||'—')+'</strong></div>';
+  L.innerHTML='<div class="bk staff-details-backdrop" data-a="close"></div><section class="md staff-details-panel" role="dialog" aria-modal="true" aria-labelledby="staffDetailsTitle"><div class="staff-details-head"><div><span class="staff-focus-kicker">Staff & Permissions</span><h2 id="staffDetailsTitle">'+esc(staff.display_name||staff.full_name||staff.cashier_username||'Staff Details')+'</h2><p class="mu">Complete account information and available actions</p></div><button class="staff-focus-close" type="button" data-a="close" aria-label="Close">×</button></div><div class="staff-details-grid">'+
+    detail('Full Name',staff.full_name)+detail('Display Name',staff.display_name)+detail('Username',staff.cashier_username)+detail('Position',staff.position)+detail('Role',staff.role)+detail('Branch',staffBranchLabel(staff.id))+detail('Account Status',status)+detail('Date Added',date)+'<div class="staff-detail-item staff-detail-wide"><span>Permissions</span><strong>'+esc(permissions.join(', ')||'None assigned')+'</strong></div></div><div class="staff-details-actions"><button class="btn" type="button" data-a="staffdetailsEdit" data-id="'+esc(staff.id)+'">Edit Profile</button><button class="btn" type="button" data-a="staffdetailsPin" data-id="'+esc(staff.id)+'">Reset PIN</button>'+(active?'<button class="btn staff-deactivate-btn" type="button" data-a="staffdetailsDeactivate" data-id="'+esc(staff.id)+'">Deactivate</button>':'<span class="mu">This account is deactivated.</span>')+'</div></section>';
+  L.querySelector('.staff-focus-close')?.focus();
 }
 PG.staff=()=>{const html=staffPage();setTimeout(loadManagerApprovalInbox,0);return html;};
 A.approvalrefresh=async()=>{await loadManagerApprovalInbox();};
@@ -4096,6 +4126,10 @@ A.approvalapprove=button=>reviewManagerApproval(button.dataset.id,'approve');
 A.approvalreject=button=>reviewManagerApproval(button.dataset.id,'reject');
 A.addstaff=()=>staffAddForm();
 A.managerpermissions=(button)=>managerPermissionsEditor(STAFF_ROWS.find(row=>row.id===button.dataset.id));
+A.staffdetails=button=>openStaffDetails(button.dataset.id);
+A.staffdetailsEdit=button=>{const id=button.dataset.id;closeL();A.staffeditprofile({dataset:{id}});};
+A.staffdetailsPin=button=>{const id=button.dataset.id;closeL();A.staffresetpin({dataset:{id}});};
+A.staffdetailsDeactivate=button=>{const id=button.dataset.id;closeL();A.staffdeactivate({dataset:{id},disabled:false});};
 A.staffrefresh=async()=>{
   try{await loadStaffData();render();toast('Staff list refreshed');}
   catch(e){staffLoadError=e.message||String(e);render();}
