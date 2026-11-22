@@ -3576,6 +3576,7 @@ start=async function(){
 };
 const originalLoad=load;
 let STAFF_ROWS=[], staffLoadError='';
+let STAFF_BRANCH_ASSIGNMENTS=[], STAFF_BRANCHES=[], staffBranchLoadError='';
 
 let STAFF_SESSIONS=[], staffHistoryError='';
 let AUDIT_ROWS=[], auditLoadError='';
@@ -3724,13 +3725,40 @@ async function loadStaffData(){
     .order('created_at',{ascending:true});
   if(error)throw error;
   STAFF_ROWS=data||[];
-  const {data:sessions,error:sessionError}=await sb.from('staff_sessions')
-    .select('id,restaurant_id,restaurant_user_id,user_id,login_at,logout_at,last_seen_at,end_reason')
-    .eq('restaurant_id',CURRENT_RESTAURANT_ID)
-    .order('login_at',{ascending:false}).limit(1000);
-  if(sessionError){STAFF_SESSIONS=[];staffHistoryError=sessionError.message||'Could not load session history';}
-  else {STAFF_SESSIONS=sessions||[];staffHistoryError='';}
+  const [sessionResult,assignmentResult,branchResult]=await Promise.all([
+    sb.from('staff_sessions')
+      .select('id,restaurant_id,restaurant_user_id,user_id,login_at,logout_at,last_seen_at,end_reason')
+      .eq('restaurant_id',CURRENT_RESTAURANT_ID)
+      .order('login_at',{ascending:false}).limit(1000),
+    sb.from('staff_branch_access')
+      .select('restaurant_user_id,restaurant_id,branch_id,is_active')
+      .eq('restaurant_id',CURRENT_RESTAURANT_ID),
+    sb.from('restaurant_branches')
+      .select('id,restaurant_id,name,is_active')
+      .eq('restaurant_id',CURRENT_RESTAURANT_ID)
+  ]);
+  if(sessionResult.error){STAFF_SESSIONS=[];staffHistoryError=sessionResult.error.message||'Could not load session history';}
+  else {STAFF_SESSIONS=sessionResult.data||[];staffHistoryError='';}
+  if(assignmentResult.error||branchResult.error){
+    STAFF_BRANCH_ASSIGNMENTS=[];STAFF_BRANCHES=[];
+    staffBranchLoadError=assignmentResult.error?.message||branchResult.error?.message||'Could not load branch assignments';
+  }else{
+    STAFF_BRANCH_ASSIGNMENTS=assignmentResult.data||[];
+    STAFF_BRANCHES=branchResult.data||[];
+    staffBranchLoadError='';
+  }
   staffLoadError='';
+}
+function staffBranchLabel(userId){
+  if(staffBranchLoadError)return 'Unavailable';
+  const assignments=STAFF_BRANCH_ASSIGNMENTS.filter(row=>
+    row.restaurant_user_id===userId&&row.is_active===true
+  );
+  if(assignments.length===0)return 'Unassigned';
+  if(assignments.length>1)return 'Multiple active assignments';
+  const branch=STAFF_BRANCHES.find(row=>row.id===assignments[0].branch_id);
+  if(!branch)return 'Branch unavailable';
+  return branch.is_active===true?branch.name:'Inactive branch: '+branch.name;
 }
 function staffDuration(start,end){
   if(!start)return '—';
@@ -4053,11 +4081,11 @@ function staffPage(){
       : String(u.role||'').toLowerCase()==='staff'
         ? `<div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn" type="button" data-a="staffeditprofile" data-id="${esc(u.id)}" style="white-space:nowrap">Edit Profile</button><button class="btn" type="button" data-a="staffresetpin" data-id="${esc(u.id)}" style="white-space:nowrap">Reset PIN</button> ${active?`<button class="btn" type="button" data-a="staffdeactivate" data-id="${esc(u.id)}" style="white-space:nowrap">Deactivate</button>`:'<span class="mu">Inactive</span>'}</div>`
         : '<span class="mu">—</span>';
-    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
+    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),esc(staffBranchLabel(u.id)),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
   });
   return `<section class="card" style="margin-bottom:14px"><div class="tb" style="justify-content:space-between"><div><h3 style="margin:0">Manager Approval Center</h3><p class="mu" style="margin:5px 0 0">Review complete request batches submitted by Managers. Each batch is approved or rejected as one unit.</p></div><button class="btn" data-a="approvalrefresh">Refresh Requests</button></div><div id="managerApprovalInbox" style="margin-top:10px"><p class="mu">Loading approval requests…</p></div></section><div class="tb"><span class="mu">${STAFF_ROWS.length} linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>
   ${staffLoadError?`<div class="card"><span class="bd er">● Could not load staff</span><p>${esc(staffLoadError)}</p></div>`:
-    STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Status','Permissions','Date Added','Actions'],rows)}</div>`:
+    STAFF_ROWS.length?`<div class="card">${tbl(['Staff Name','Position','Username','Role','Branch','Status','Permissions','Date Added','Actions'],rows)}${staffBranchLoadError?'<p class="note" style="margin:10px 0 0">Branch assignments could not be loaded. Branch values are shown as Unavailable until the next successful refresh.</p>':''}</div>`:
     `<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant.</p></div>`}
   ${staffHistoryError?`<div class="card" style="margin-top:12px"><p class="mu">Login history unavailable: ${esc(staffHistoryError)}</p></div>`:''}
   <div class="card" style="margin-top:14px"><h3>Account & Session Security</h3><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Deactivated staff accounts are retained with their session history.</p><p>• Online means an active session heartbeat was received within the last 2 minutes.</p></div>`;
