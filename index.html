@@ -790,7 +790,10 @@ async function resolveCustomerQrContext() {
     restaurant_id: data.restaurant_id,
     branch_id: data.branch_id,
     table_id: data.table_id,
-    table_number: data.table_number
+    table_number: data.table_number,
+    categories: Array.isArray(data.categories) ? data.categories : [],
+    menu_items: Array.isArray(data.menu_items) ? data.menu_items : [],
+    restaurant_profile: data.restaurant_profile || null
   };
   document.getElementById("tableNumber").textContent = data.table_number;
   window.dispatchEvent(new CustomEvent("edmelcustomercontextready", {
@@ -821,25 +824,10 @@ async function loadMenuCatalog() {
   menuGrid.innerHTML = '<p class="empty-order">Loading menu…</p>';
   categoryMenu.innerHTML = "";
 
-  const headers = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": "Bearer " + SUPABASE_KEY
-  };
-
-  const branchFilter = "&or=" + encodeURIComponent("(branch_id.is.null,branch_id.eq." + BRANCH_ID + ")");
-  const [catResponse, itemResponse] = await Promise.all([
-    fetch(MENU_CATEGORIES_ENDPOINT + "?select=id,name,sort_order,is_active,image_url&restaurant_id=eq." + encodeURIComponent(RESTAURANT_ID) + "&is_active=eq.true" + branchFilter + "&order=sort_order.asc,name.asc", { headers }),
-    fetch(MENU_ITEMS_ENDPOINT + "?select=id,restaurant_id,category_id,name,description,price,image_url,is_available,sort_order,stock_product_id&restaurant_id=eq." + encodeURIComponent(RESTAURANT_ID) + "&is_available=eq.true" + branchFilter + "&order=sort_order.asc,name.asc", { headers })
-  ]);
-
-  const catData = await catResponse.json();
-  const itemData = await itemResponse.json();
-  if (!catResponse.ok) throw new Error(catData.message || catData.details || "Could not load menu categories.");
-  if (!itemResponse.ok) throw new Error(itemData.message || itemData.details || "Could not load menu items.");
-
-  categories = Array.isArray(catData) ? catData : [];
+  const resolvedContext = window.EDMEL_CUSTOMER_CONTEXT;
+  categories = Array.isArray(resolvedContext.categories) ? resolvedContext.categories : [];
   const activeCategoryIds = new Set(categories.map(c => c.id));
-  menu = (Array.isArray(itemData) ? itemData : [])
+  menu = (Array.isArray(resolvedContext.menu_items) ? resolvedContext.menu_items : [])
     .filter(item => activeCategoryIds.has(item.category_id))
     .map(item => ({
       id: item.id,
@@ -2333,8 +2321,6 @@ document
 <script>
 /* CENTRAL RESTAURANT BRANDING — restaurants is the single source of truth. */
 (function () {
-  const API = 'https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/restaurants';
-  const KEY = 'sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
   const NAME_SELECTORS = ['.hero h1'];
   const LOGO_MODE = 'customer';
   function setName(el, name) {
@@ -2419,19 +2405,12 @@ document
   window.applyRestaurantBranding = applyProfile;
   async function connect() {
     try {
-      const restaurantId = window.EDMEL_CUSTOMER_CONTEXT?.restaurant_id;
-      if (!restaurantId) return;
-      const response = await fetch(API + '?id=eq.' + encodeURIComponent(restaurantId) + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
-        headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }, cache: 'no-store'
-      });
-      if (!response.ok) throw new Error('Profile request failed: ' + response.status);
-      const rows = await response.json();
-      const profile = rows && rows[0];
+      const profile = window.EDMEL_CUSTOMER_CONTEXT?.restaurant_profile;
       if (!profile) return;
       applyProfile(profile);
       window.dispatchEvent(new CustomEvent('restaurantprofileloaded', { detail: profile }));
     } catch (error) {
-      console.warn('Could not load centralized restaurant profile:', error);
+      console.warn('Could not apply centralized restaurant profile:', error);
     }
   }
   window.addEventListener('restaurantprofilechanged', e => applyProfile(e.detail));
