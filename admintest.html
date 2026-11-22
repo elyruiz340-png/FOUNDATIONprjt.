@@ -3364,7 +3364,7 @@ render();if(manual)toast('Data refreshed')}
 catch(err){if(hasContent){toast('Could not refresh data: '+(err.message||String(err)),1)}else{$('#pg').innerHTML=`<div class="card"><span class="bd er">● Could not load orders</span><p>${esc(err.message||String(err))}</p><div class="tb"><button class="btn" data-a="refresh">Try again</button><button class="btn" data-a="signout">Sign out</button></div></div>`}}finally{pg.classList.remove('is-loading')}}
 
 /* HALINA MENU & CATEGORIES — Supabase-backed */
-const CURRENT_RESTAURANT_ID = null;
+
 let MENU_ROWS=[], CATEGORY_ROWS=[], MENU_STOCK_ROWS=[], menuLoadError='';
 const menuEsc=v=>esc(String(v??''));
 async function loadMenuData(){
