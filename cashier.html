@@ -8188,8 +8188,16 @@ background:
      HALINA MENU ENDPOINTS
      POS menu is loaded from the same Supabase tables as Admin/Ordering.
   ========================= */
-  const HALINA_RESTAURANT_ID =
-    "5e562ca7-38aa-4894-8265-ddca2f4e61b6";
+  function getEDMELRestaurantId() {
+    const id = window.EDMEL_TENANT_CONTEXT?.restaurant_id;
+    if (!id) throw new Error("Restaurant session context is missing. Please sign in again.");
+    return id;
+  }
+  function getEDMELBranchId() {
+    const id = window.EDMEL_TENANT_CONTEXT?.branch_id;
+    if (!id) throw new Error("Branch session context is missing. Please sign in again.");
+    return id;
+  }
   const MENU_ITEMS_ENDPOINT =
     SUPABASE_URL + "/rest/v1/menu_items";
   const MENU_CATEGORIES_ENDPOINT =
@@ -8435,7 +8443,7 @@ async function loadTables() {
   tablesContainer.innerHTML = '<div class="loading">Loading tables...</div>';
   try {
     const data = await callCashierTableRpc(TABLE_LIST_RPC, {
-      p_restaurant_id: HALINA_RESTAURANT_ID
+      p_restaurant_id: getEDMELRestaurantId()
     });
     cashierTablesCache = Array.isArray(data) ? data.slice() : [];
     cashierTablesCache.sort(function(a, b) {
@@ -8517,7 +8525,7 @@ async function updateTableStatus(table, newStatus, card, button) {
 
   try {
     await callCashierTableRpc(TABLE_UPDATE_RPC, {
-      p_restaurant_id: HALINA_RESTAURANT_ID,
+      p_restaurant_id: getEDMELRestaurantId(),
       p_table_id: table.id,
       p_table_number: table.table_number,
       p_seating_capacity: Number(table.seating_capacity || 4),
@@ -8561,17 +8569,17 @@ async function loadStocks() {
     '<div class="loading">Loading product stocks...</div>';
 
   try {
-    const response = await fetch(
-      STOCK_ENDPOINT +
-        "?select=id,product_id,product_name,stock_group,stock_total,stock_remaining,category,image_url&order=id.asc",
-      {
-        method: "GET",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: "Bearer " + SUPABASE_KEY
-        }
-      }
-    );
+    const stockQuery =
+      "?select=id,restaurant_id,branch_id,product_id,product_name,stock_group,stock_total,stock_remaining,category,image_url" +
+      "&restaurant_id=eq." + encodeURIComponent(getEDMELRestaurantId()) +
+      "&branch_id=eq." + encodeURIComponent(getEDMELBranchId()) +
+      "&order=id.asc";
+    const stockToken = window.EDMEL_ACCESS_TOKEN;
+    if (!stockToken) throw new Error("Your authenticated cashier session is unavailable.");
+    const response = await fetch(STOCK_ENDPOINT + stockQuery, {
+      method: "GET",
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + stockToken }
+    });
 
     const data = await response.json();
 
@@ -9288,7 +9296,9 @@ async function saveAllChanges() {
 
       for (const item of items) {
         const response = await fetch(
-          STOCK_ENDPOINT + "?id=eq." + encodeURIComponent(item.id),
+          STOCK_ENDPOINT + "?id=eq." + encodeURIComponent(item.id) +
+            "&restaurant_id=eq." + encodeURIComponent(getEDMELRestaurantId()) +
+            "&branch_id=eq." + encodeURIComponent(getEDMELBranchId()),
           {
             method: "PATCH",
             headers: {
@@ -9568,7 +9578,9 @@ if (
 
             STOCK_ENDPOINT +
             "?id=eq." +
-            encodeURIComponent(item.id),
+            encodeURIComponent(item.id) +
+            "&restaurant_id=eq." + encodeURIComponent(getEDMELRestaurantId()) +
+            "&branch_id=eq." + encodeURIComponent(getEDMELBranchId()),
 
             {
 
@@ -10298,10 +10310,9 @@ function escapePosMenuText(value) {
 }
 
 function menuRequestHeaders() {
-  return {
-    "apikey": SUPABASE_KEY,
-    "Authorization": "Bearer " + SUPABASE_KEY
-  };
+  const token = window.EDMEL_ACCESS_TOKEN;
+  if (!token) throw new Error("Your authenticated cashier session is unavailable.");
+  return { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + token };
 }
 
 function renderSupabasePosCategories(categories) {
@@ -10367,11 +10378,11 @@ async function loadCashierMenuFromSupabase() {
   try {
     const menuUrl = MENU_ITEMS_ENDPOINT +
       '?select=id,restaurant_id,category_id,name,price,is_available,sort_order,image_url,stock_product_id' +
-      '&restaurant_id=eq.' + encodeURIComponent(HALINA_RESTAURANT_ID) +
+      '&restaurant_id=eq.' + encodeURIComponent(getEDMELRestaurantId()) +
       '&is_available=eq.true&order=sort_order.asc,name.asc';
     const categoriesUrl = MENU_CATEGORIES_ENDPOINT +
       '?select=id,restaurant_id,name,sort_order,is_active' +
-      '&restaurant_id=eq.' + encodeURIComponent(HALINA_RESTAURANT_ID) +
+      '&restaurant_id=eq.' + encodeURIComponent(getEDMELRestaurantId()) +
       '&is_active=eq.true&order=sort_order.asc,name.asc';
 
     const results = await Promise.all([
@@ -11006,7 +11017,7 @@ async function cashierFetchOperatingDayOrders() {
   while (true) {
     const url = SUPABASE_URL + "/rest/v1/orders" +
       "?select=" + fields +
-      "&restaurant_id=eq." + encodeURIComponent(HALINA_RESTAURANT_ID) +
+      "&restaurant_id=eq." + encodeURIComponent(getEDMELRestaurantId()) +
       "&created_at=gte." + encodeURIComponent(sessionStart.toISOString()) +
       "&order=created_at.asc,id.asc" +
       "&limit=" + pageSize +
@@ -11056,7 +11067,7 @@ async function cashierFetchOutstandingPaymentOrders() {
   while (true) {
     const url = SUPABASE_URL + "/rest/v1/orders" +
       "?select=" + fields +
-      "&restaurant_id=eq." + encodeURIComponent(HALINA_RESTAURANT_ID) +
+      "&restaurant_id=eq." + encodeURIComponent(getEDMELRestaurantId()) +
       "&status=in.(served,completed)" +
       "&payment_status=eq.pending" +
       "&order=created_at.asc,id.asc" +
@@ -11698,11 +11709,11 @@ async function loadCashierReceiptSettings() {
   const [sharedResult, deviceResult] = await Promise.all([
     cashierAuthClient.from("restaurant_receipt_settings")
       .select("settings,logo_url")
-      .eq("restaurant_id", HALINA_RESTAURANT_ID)
+      .eq("restaurant_id", getEDMELRestaurantId())
       .maybeSingle(),
     cashierAuthClient.from("restaurant_printer_devices")
       .select("printer_name,printer_model,connection_type,paper_width,custom_width_mm,is_active")
-      .eq("restaurant_id", HALINA_RESTAURANT_ID)
+      .eq("restaurant_id", getEDMELRestaurantId())
       .eq("device_id", deviceId)
       .maybeSingle()
   ]);
@@ -13029,7 +13040,7 @@ let cashierPricingConfig={taxRules:[],serviceChargeRules:[],discountRules:[],vou
 function cashierRestaurantDate(){const z=String(window.HALINA_RESTAURANT_PROFILE?.timezone||'America/Chicago');try{return new Intl.DateTimeFormat('en-CA',{timeZone:z,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}catch(_){return new Date().toISOString().slice(0,10)}}
 function cashierRuleIsCurrent(r){const d=cashierRestaurantDate();return(!r.effective_from||String(r.effective_from)<=d)&&(!r.effective_to||String(r.effective_to)>=d)}
 function cashierDiscountAmount(t,v,b,m){let n=t==='percentage'?b*Number(v||0)/100:Number(v||0);if(m!==null&&m!==undefined)n=Math.min(n,Number(m));return Math.max(0,Math.min(b,n))}
-async function loadCashierPricingSettings(){if(!cashierAuthClient)return false;try{const {data:s,error:se}=await cashierAuthClient.auth.getSession();if(se)throw se;if(!s?.session?.user?.id)throw new Error('Cashier login is required to load pricing settings.');const id=HALINA_RESTAURANT_ID;const [t,sc,d,v,p]=await Promise.all([
+async function loadCashierPricingSettings(){if(!cashierAuthClient)return false;try{const {data:s,error:se}=await cashierAuthClient.auth.getSession();if(se)throw se;if(!s?.session?.user?.id)throw new Error('Cashier login is required to load pricing settings.');const id=getEDMELRestaurantId();const [t,sc,d,v,p]=await Promise.all([
 cashierAuthClient.from('restaurant_tax_rules').select('id,rule_name,tax_type,rate,calculation_method,tax_scope,effective_from,effective_to,is_active').eq('restaurant_id',id).eq('is_active',true),
 cashierAuthClient.from('restaurant_service_charge_rules').select('id,rule_name,display_label,charge_type,rate,applies_to,is_mandatory,tax_treatment,is_active,effective_from,effective_to').eq('restaurant_id',id).eq('is_active',true),
 cashierAuthClient.from('restaurant_discount_rules').select('id,rule_name,discount_category,discount_type,rate,max_discount_amount,minimum_subtotal,applies_to,requires_verification,effective_from,effective_to,is_active').eq('restaurant_id',id).eq('is_active',true),
@@ -13615,7 +13626,7 @@ if (acceptOrderBtn) {
       if (authError || !cashierAccessToken) throw new Error("Cashier login has expired. Sign in again.");
       const details = window.halinaGetOrderDetails();
       const breakdown = {currency:pricing.currency,calculated_at:new Date().toISOString(),subtotal:pricing.subtotal,discount_amount:pricing.discount,service_charge:pricing.serviceCharge,tax:pricing.tax,total:pricing.total,tax_rule_id:pricing.taxRuleId,tax_rule_ids:pricing.taxRuleIds,tax_rule_name:pricing.taxRuleName,tax_rate:pricing.taxRate,tax_types:pricing.taxTypes,tax_scope:pricing.taxScope,tax_calculation_method:pricing.taxCalculationMethod,service_charge_rule_id:pricing.serviceChargeRuleId,service_charge_label:pricing.serviceChargeLabel,service_charge_rate:pricing.serviceChargeRate,service_charge_type:pricing.serviceChargeType,service_charge_tax_treatment:pricing.serviceChargeTaxTreatment,discount_kind:pricing.discountKind,discount_id:pricing.discountId,discount_rate:pricing.discountRate,discount_type:pricing.discountType,discount_category:pricing.discountCategory,voucher_code:pricing.voucherCode};
-      const payload = {p_restaurant_id:HALINA_RESTAURANT_ID,p_table_number:details.tableNumber,p_order_type:details.orderType,p_items:items,p_subtotal:pricing.subtotal,p_tax:pricing.tax,p_discount_amount:pricing.discount,p_service_charge:pricing.serviceCharge,p_total:pricing.total,p_payment_method:cashierSelectedPaymentMethod==="pending"?(cashierPricingConfig.paymentMethods[0]?.method_key||"cash"):(cashierSelectedPaymentMethod||"cash"),p_payment_status:cashierSelectedPaymentMethod==="cash"?"paid":"pending",p_payment_reference:null,p_customer_name:details.customerName,p_customer_phone:details.customerPhone,p_special_instructions:details.deliveryAddress?"Delivery address: "+details.deliveryAddress:null,p_submission_key:getCashierOrderSubmissionKey({restaurant_id:HALINA_RESTAURANT_ID,order_type:details.orderType,items:items,pricing:{subtotal:pricing.subtotal,discount:pricing.discount,tax:pricing.tax,serviceCharge:pricing.serviceCharge,total:pricing.total,taxRuleId:pricing.taxRuleId,serviceChargeRuleId:pricing.serviceChargeRuleId,discountId:pricing.discountId},payment_method:cashierSelectedPaymentMethod||"cash"}),p_session_id:halinaStaffSessionId,p_pricing_breakdown:breakdown};
+      const payload = {p_restaurant_id:getEDMELRestaurantId(),p_table_number:details.tableNumber,p_order_type:details.orderType,p_items:items,p_subtotal:pricing.subtotal,p_tax:pricing.tax,p_discount_amount:pricing.discount,p_service_charge:pricing.serviceCharge,p_total:pricing.total,p_payment_method:cashierSelectedPaymentMethod==="pending"?(cashierPricingConfig.paymentMethods[0]?.method_key||"cash"):(cashierSelectedPaymentMethod||"cash"),p_payment_status:cashierSelectedPaymentMethod==="cash"?"paid":"pending",p_payment_reference:null,p_customer_name:details.customerName,p_customer_phone:details.customerPhone,p_special_instructions:details.deliveryAddress?"Delivery address: "+details.deliveryAddress:null,p_submission_key:getCashierOrderSubmissionKey({restaurant_id:getEDMELRestaurantId(),order_type:details.orderType,items:items,pricing:{subtotal:pricing.subtotal,discount:pricing.discount,tax:pricing.tax,serviceCharge:pricing.serviceCharge,total:pricing.total,taxRuleId:pricing.taxRuleId,serviceChargeRuleId:pricing.serviceChargeRuleId,discountId:pricing.discountId},payment_method:cashierSelectedPaymentMethod||"cash"}),p_session_id:halinaStaffSessionId,p_pricing_breakdown:breakdown};
       const {data:result,error:orderError}=await cashierAuthClient.rpc("place_order_with_pricing",payload);
       if(orderError)throw orderError;
       savedOrderId=result?.order_id;
@@ -14142,6 +14153,8 @@ async function startStaffPresence() {
 }
 
 async function endStaffPresence() {
+  window.EDMEL_ACCESS_TOKEN = null;
+  window.EDMEL_TENANT_CONTEXT = null;
   stopStaffHeartbeat();
   if (!halinaStaffSessionId) return;
   const sessionId = halinaStaffSessionId;
@@ -14835,10 +14848,8 @@ if (cashierLoginForm) {
         );
       }
 
-      if (cashierPinInput) {
-        cashierPinInput.value = "";
-      }
-
+      window.EDMEL_ACCESS_TOKEN = data.session.access_token;
+      if (cashierPinInput) cashierPinInput.value = "";
       loginSucceeded = true;
 
     } catch (error) {
