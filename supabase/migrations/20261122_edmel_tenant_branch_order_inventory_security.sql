@@ -401,7 +401,7 @@ BEGIN
     'duplicate_submission', false
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.edmel_customer_place_order(p_restaurant_id uuid, p_table_number text, p_table_id uuid, p_qr_token text, p_order_type text, p_items jsonb, p_payment_method text, p_special_instructions text, p_submission_key uuid)
@@ -650,7 +650,7 @@ BEGIN
     'payment_status','pending'
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.cashier_accept_order(p_order_id uuid, p_session_id uuid)
