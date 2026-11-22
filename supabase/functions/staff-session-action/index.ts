@@ -163,6 +163,7 @@ Deno.serve(async (req: Request) => {
         if (!/^[a-z0-9][a-z0-9-]{1,99}$/.test(restaurantSlug) || !branchId) {
           return json({ error: "Restaurant and branch are required" }, 400);
         }
+        if (session.logout_at) return json({ error: "Session already ended", expired: true }, 401);
         const { data: restaurant, error: restaurantError } = await admin.from("restaurants")
           .select("id").eq("slug", restaurantSlug).maybeSingle();
         if (restaurantError) return json({ error: "Unable to verify restaurant" }, 500);
@@ -194,12 +195,14 @@ Deno.serve(async (req: Request) => {
         if (branchError) return json({ error: "Unable to verify branch status" }, 500);
         if (!branch) return json({ error: "The selected branch is inactive or unavailable" }, 403);
         const now = new Date().toISOString();
-        const { error: updateError } = await admin.from("staff_sessions").update({
+        const { data: updatedSession, error: updateError } = await admin.from("staff_sessions").update({
           branch_id: branch.id,
           last_seen_at: now,
           last_activity_at: now,
-        }).eq("id", sessionId).eq("user_id", actorId).is("logout_at", null);
+        }).eq("id", sessionId).eq("user_id", actorId).is("logout_at", null)
+          .select("id").maybeSingle();
         if (updateError) return json({ error: "Unable to switch active branch" }, 500);
+        if (!updatedSession) return json({ error: "Session already ended", expired: true }, 401);
         return json({ success: true, restaurant_id: session.restaurant_id, branch_id: branch.id, branch_name: branch.name });
       }
 
