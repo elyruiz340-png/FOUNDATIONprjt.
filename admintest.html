@@ -3815,6 +3815,15 @@ const MANAGER_PERMISSION_MODULES=[
   {key:'receipts',label:'Receipts & Printers',description:'Control receipt configuration and printer settings.',recommended:['view'],actions:[['view','View Receipts & Printers','See receipt settings and connected printer information.'],['edit','Edit Receipts & Printers','Change eligible receipt and printer settings.'],['manage','Manage Receipts & Printers','Grant broader receipt and printer authority.']]},
   {key:'ai',label:'EDY — AI Assistant',description:'Control access to the restaurant AI assistant and supported settings.',recommended:['view'],actions:[['view','Use EDY Assistant','Access the AI assistant features enabled for this branch.'],['manage','Manage EDY Settings','Manage supported AI assistant settings.']]}
 ];
+const BRANCH_SETTINGS_PERMISSION_GROUPS=[
+  {key:'business_profile',label:'Business Profile',description:'Restaurant identity, contact details and branch business information.'},
+  {key:'tax',label:'Tax',description:'Tax configuration and applicable tax rules.'},
+  {key:'service_charge',label:'Service Charge',description:'Service charge configuration and rules.'},
+  {key:'discounts_vouchers',label:'Discounts & Vouchers',description:'Discount rules, voucher settings and eligibility.'},
+  {key:'payment_methods',label:'Payment Methods',description:'Enabled payment methods and payment configuration.'},
+  {key:'receipt_settings',label:'Receipt Settings',description:'Receipt layout, business details and customer-facing receipt options.'}
+];
+const BRANCH_SETTINGS_PERMISSION_ACTIONS=['view','manage','request','approve'];
 const MANAGER_PERMISSION_ACTIONS=['view','create','edit','delete','approve','manage'];
 const MANAGER_PERMISSION_PROFILES={
   'Operations Manager':{overview:['view'],sales:['view'],settings:['view'],orders:['view','create','edit','approve'],expenses:['view','create','edit'],staff:['view'],audit:['view'],inventory:['view','edit'],tables:['view','edit'],dispatcher:['view','edit'],payments:['view'],menu:['view'],discounts:['view'],tax:['view'],receipts:['view'],ai:['view']},
@@ -3833,7 +3842,7 @@ function managerPermissionsEditor(manager){
     '<section class="card"><h3>Recommended Profile</h3><div class="fl"><label for="managerPermissionProfile">Choose a starting profile</label><select id="managerPermissionProfile"><option value="Custom Access">Custom Access</option><option>Operations Manager</option><option>Branch Supervisor</option><option>Inventory Manager</option><option>Sales & Reporting Manager</option></select></div><button id="managerApplyProfile" class="btn" type="button">Apply Recommended Profile</button><p class="note" style="margin:10px 0 0">Profiles are templates. Existing customized permissions are not silently overwritten.</p></section></div>'+
     '<section class="card"><h3>Branch Assignment</h3><p class="note">Choose which active branches this Manager may access. Removing a branch here removes that branch assignment; it does not change other branches\' permission drafts.</p><div id="managerBranchList" class="g g2"><span class="mu">Loading branches…</span></div></section>'+
     '<section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3 style="margin-bottom:3px">Permission Scope</h3><p class="note">Choose where the permission configuration below will be applied.</p></div><select id="managerPermissionScope" aria-label="Permission scope"><option value="all">All assigned branches</option><option value="selected">Selected assigned branches</option><option value="custom">Customize per branch</option></select></div><div id="managerScopeTargets" style="margin:12px 0"></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><label for="managerPermissionBranch" class="mu">Preview branch</label><select id="managerPermissionBranch" aria-label="Preview branch"><option value="">Select a branch</option></select><span id="managerPermissionScopeNote" class="note">Choose a branch scope.</span></div></section>'+
-    '<section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3 style="margin-bottom:3px">Module Permissions</h3><p class="note">Turn a module on to reveal its recommended permissions. You can customize each permission.</p></div><span class="bd ok">Branch-scoped</span></div><div id="managerPermissionMatrix" style="display:grid;gap:10px;margin-top:12px"><p class="mu">Loading permissions…</p></div></section>'+
+    '<section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3 style="margin-bottom:3px">Module & Settings Permissions</h3><p class="note">Configure ordinary module access and the separate branch settings permissions below.</p></div><span class="bd ok">Branch-scoped</span></div><div id="managerPermissionMatrix" style="display:grid;gap:10px;margin-top:12px"><p class="mu">Loading permissions…</p></div></section>'+
     '<section class="card"><h3>Management Authority</h3><p class="note">These controls are separate from ordinary module visibility. Granting authority requires server-side validation.</p><div id="managerAuthorityControls"><label class="row"><span>Manage subordinate staff</span><input type="checkbox" data-authority="staff_management"></label><label class="row"><span>Submit approval request batches</span><input type="checkbox" data-authority="approval_request_access"></label><label class="row"><span>Assign staff to branches</span><input type="checkbox" data-authority="branch_assignment" disabled></label><label class="row"><span>Edit subordinate permissions</span><input type="checkbox" data-authority="permission_management" disabled></label></div><p class="note">Approval Request Access is saved per branch and enforced by Supabase. Branch assignment and subordinate permission-management controls remain unavailable until their backend workflows are implemented.</p></section>'+
     '<div class="tb" style="justify-content:space-between"><span id="managerPermissionStatus" class="note" role="status">Loading current branch access…</span><div style="display:flex;gap:8px"><button class="btn" type="button" data-a="close">Cancel</button><button class="btn pri" id="managerPermissionSave" type="button" disabled>Save Permissions</button></div></div></div>';
   const branchList=L.querySelector('#managerBranchList'),branchSelect=L.querySelector('#managerPermissionBranch'),matrix=L.querySelector('#managerPermissionMatrix'),status=L.querySelector('#managerPermissionStatus'),save=L.querySelector('#managerPermissionSave'),scopeSelect=L.querySelector('#managerPermissionScope'),scopeTargets=L.querySelector('#managerScopeTargets'),scopeNote=L.querySelector('#managerPermissionScopeNote');
@@ -3842,6 +3851,8 @@ function managerPermissionsEditor(manager){
   const normalize=raw=>{
     const p=clone(raw);
     if(!p.modules||typeof p.modules!=='object'||Array.isArray(p.modules))p.modules={};
+    if(p.modules.branch_settings&&typeof p.modules.branch_settings==='object'&&!Array.isArray(p.modules.branch_settings)&&(!p.branch_settings||typeof p.branch_settings!=='object'))p.branch_settings=clone(p.modules.branch_settings);
+    if(Object.prototype.hasOwnProperty.call(p.modules,'branch_settings'))delete p.modules.branch_settings;
     const legacyModuleMap={orders:'orders',tables:'tables',stocks:'inventory',dispatcher:'dispatcher',settings:'settings'};
     Object.entries(legacyModuleMap).forEach(([legacyKey,moduleKey])=>{
       if(p[legacyKey]!==true)return;
@@ -3900,6 +3911,38 @@ function managerPermissionsEditor(manager){
       return '<section class="card" style="padding:13px"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="min-width:0"><strong>'+def.label+'</strong><p class="note" style="margin:3px 0 0">'+def.description+'</p></div><label style="display:flex;align-items:center;gap:7px;white-space:nowrap"><span class="mu" style="font-size:12px">'+(enabled?'ON':'OFF')+'</span><input type="checkbox" data-module-toggle="'+def.key+'" '+(enabled?'checked':'')+' aria-label="Enable '+def.label+'" style="width:42px;height:22px;accent-color:#27966C"></label></div>'+
         (enabled?'<details open style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--mu)">Recommended permissions · '+recommended+' — customize</summary><div style="padding-top:8px">'+actionRows+(def.key==='expenses'?'<div style="border-top:1px solid var(--line);padding-top:12px;margin-top:8px"><label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" data-expense-approval '+(p.expense_approval_required!==false?'checked':'')+' style="margin-top:3px"><span><strong style="display:block;font-size:13px">Require Owner/Admin approval for Manager expense submissions</strong><small class="mu" style="display:block;line-height:1.4;margin-top:3px">When enabled, new expense submissions and supported changes stay pending until an authorized approver reviews them. When disabled, permitted actions can be saved directly.</small></span></label></div>':'')+'<p class="note" style="margin:8px 0 0">Only the selected actions are granted. Actions that are not supported by a connected workflow will remain unavailable until backend enforcement is implemented.</p></div></details>':'<p class="note" style="margin:8px 0 0">Turn on to choose which actions this Manager can use. No access is granted while this module is off.</p>')+'</section>';
     }).join('');
+    const settingsPermissions=p.branch_settings&&typeof p.branch_settings==='object'?p.branch_settings:{};
+    matrix.insertAdjacentHTML('beforeend',
+      '<section class="card" style="padding:14px"><div style="margin-bottom:10px"><strong>Branch Settings Permissions</strong><p class="note" style="margin:4px 0 0">These permissions apply only to the selected branch settings groups. Request and approval actions follow the configured approval policy.</p></div>'+
+      BRANCH_SETTINGS_PERMISSION_GROUPS.map(def=>{
+        const current=settingsPermissions[def.key]||{};
+        const controls=BRANCH_SETTINGS_PERMISSION_ACTIONS.map(action=>{
+          const checked=current[action]===true;
+          const label=action==='view'?'View':action==='manage'?'Manage':action==='request'?'Request':'Approve';
+          return '<label style="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font-size:12px"><input type="checkbox" data-branch-setting="'+def.key+'" data-setting-action="'+action+'" '+(checked?'checked':'')+'> '+label+'</label>';
+        }).join('');
+        return '<div style="padding:12px 0;border-top:1px solid var(--line)"><div style="font-weight:700">'+def.label+'</div><p class="note" style="margin:3px 0 8px">'+def.description+'</p><div style="display:flex;gap:7px;flex-wrap:wrap">'+controls+'</div></div>';
+      }).join('')+'</section>'
+    );
+    matrix.querySelectorAll('input[data-branch-setting][data-setting-action]').forEach(input=>input.addEventListener('change',()=>{
+      const group=input.dataset.branchSetting,action=input.dataset.settingAction;
+      const target=scopeMode==='custom'?currentDraft():(sharedDraft||(sharedDraft=clone(drafts[targets[0]]||{modules:{}})));
+      if(!target.branch_settings||typeof target.branch_settings!=='object'||Array.isArray(target.branch_settings))target.branch_settings={};
+      if(!target.branch_settings[group]||typeof target.branch_settings[group]!=='object'||Array.isArray(target.branch_settings[group]))target.branch_settings[group]={};
+      if(input.checked){
+        target.branch_settings[group][action]=true;
+        if(action!=='view')target.branch_settings[group].view=true;
+      }else{
+        target.branch_settings[group][action]=false;
+        if(action==='view')delete target.branch_settings[group];
+        else if(!BRANCH_SETTINGS_PERMISSION_ACTIONS.some(a=>target.branch_settings[group][a]===true))delete target.branch_settings[group];
+      }
+      if(!Object.keys(target.branch_settings[group]||{}).length)delete target.branch_settings[group];
+      if(!Object.keys(target.branch_settings).length)delete target.branch_settings;
+      if(scopeMode==='custom')drafts[branchSelect.value]=target;
+      else{sharedDraft=target;sharedDirty=true;syncSharedDraft();}
+      renderMatrix();
+    }));
     matrix.querySelectorAll('input[data-module-toggle]').forEach(input=>input.addEventListener('change',()=>{
       const key=input.dataset.moduleToggle,def=moduleDef(key);
       if(input.checked){def.recommended.forEach(a=>setDraftPermission(key,a,true));}
