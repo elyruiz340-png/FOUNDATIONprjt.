@@ -736,8 +736,9 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
   "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
 
-const RESTAURANT_ID =
-  "5e562ca7-38aa-4894-8265-ddca2f4e61b6";
+let RESTAURANT_ID = "";
+let BRANCH_ID = "";
+let CUSTOMER_CONTEXT_READY = false;
 
 const STOCK_ENDPOINT =
   SUPABASE_URL +
@@ -759,6 +760,44 @@ let sharedCartSaving = false;
 let sharedCartDirty = false;
 let sharedCartPollHandle = null;
 
+async function resolveCustomerQrContext() {
+  if (!sharedCartEnabled || !table) {
+    throw new Error("Please scan the QR code displayed at your table to open the correct restaurant and branch menu.");
+  }
+
+  const response = await fetch(SUPABASE_URL + "/functions/v1/edmel-customer-qr-context", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_KEY
+    },
+    body: JSON.stringify({
+      table_id: sharedTableId,
+      qr_token: sharedQrToken,
+      table_number: table
+    }),
+    cache: "no-store"
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.success !== true || !data.restaurant_id || !data.branch_id) {
+    throw new Error(data.error || "This table QR code could not be verified. Please ask staff for assistance.");
+  }
+
+  RESTAURANT_ID = data.restaurant_id;
+  BRANCH_ID = data.branch_id;
+  CUSTOMER_CONTEXT_READY = true;
+  window.EDMEL_CUSTOMER_CONTEXT = {
+    restaurant_id: data.restaurant_id,
+    branch_id: data.branch_id,
+    table_id: data.table_id,
+    table_number: data.table_number
+  };
+  document.getElementById("tableNumber").textContent = data.table_number;
+  window.dispatchEvent(new CustomEvent("edmelcustomercontextready", {
+    detail: window.EDMEL_CUSTOMER_CONTEXT
+  }));
+}
+
 document.getElementById("tableNumber").textContent =
   table || "?";
 
@@ -774,6 +813,9 @@ const MENU_ITEMS_ENDPOINT = SUPABASE_URL + "/rest/v1/menu_items";
 const MENU_CATEGORIES_ENDPOINT = SUPABASE_URL + "/rest/v1/menu_categories";
 
 async function loadMenuCatalog() {
+  if (!CUSTOMER_CONTEXT_READY || !RESTAURANT_ID || !BRANCH_ID) {
+    throw new Error("Restaurant and branch context has not been verified.");
+  }
   const menuGrid = document.getElementById("menuGrid");
   const categoryMenu = document.getElementById("categoryMenu");
   menuGrid.innerHTML = '<p class="empty-order">Loading menu…</p>';
@@ -784,9 +826,10 @@ async function loadMenuCatalog() {
     "Authorization": "Bearer " + SUPABASE_KEY
   };
 
+  const branchFilter = "&or=" + encodeURIComponent("(branch_id.is.null,branch_id.eq." + BRANCH_ID + ")");
   const [catResponse, itemResponse] = await Promise.all([
-    fetch(MENU_CATEGORIES_ENDPOINT + "?select=id,name,sort_order,is_active,image_url&restaurant_id=eq." + encodeURIComponent(RESTAURANT_ID) + "&is_active=eq.true&order=sort_order.asc,name.asc", { headers }),
-    fetch(MENU_ITEMS_ENDPOINT + "?select=id,restaurant_id,category_id,name,description,price,image_url,is_available,sort_order,stock_product_id&restaurant_id=eq." + encodeURIComponent(RESTAURANT_ID) + "&is_available=eq.true&order=sort_order.asc,name.asc", { headers })
+    fetch(MENU_CATEGORIES_ENDPOINT + "?select=id,name,sort_order,is_active,image_url&restaurant_id=eq." + encodeURIComponent(RESTAURANT_ID) + "&is_active=eq.true" + branchFilter + "&order=sort_order.asc,name.asc", { headers }),
+    fetch(MENU_ITEMS_ENDPOINT + "?select=id,restaurant_id,category_id,name,description,price,image_url,is_available,sort_order,stock_product_id&restaurant_id=eq." + encodeURIComponent(RESTAURANT_ID) + "&is_available=eq.true" + branchFilter + "&order=sort_order.asc,name.asc", { headers })
   ]);
 
   const catData = await catResponse.json();
@@ -1451,6 +1494,10 @@ let productStocks = {};
 
 async function loadProductStocks() {
 
+  if (!CUSTOMER_CONTEXT_READY || !RESTAURANT_ID || !BRANCH_ID) {
+    throw new Error("Restaurant and branch context has not been verified.");
+  }
+
   try {
     const response = await fetch(
       SUPABASE_URL + "/rest/v1/rpc/edmel_get_customer_stock_availability",
@@ -1825,6 +1872,11 @@ async function sendOrder() {
   errorBox.classList.remove("show");
   successBox.classList.remove("show");
 
+  if (!CUSTOMER_CONTEXT_READY || !RESTAURANT_ID || !BRANCH_ID || !sharedCartEnabled) {
+    errorBox.textContent = "This ordering session is not linked to a verified table QR code. Please scan the QR code again or ask staff for help.";
+    errorBox.classList.add("show");
+    return;
+  }
 
   if (!orderType) {
 
@@ -2260,6 +2312,7 @@ document
 (async function initializeCustomerMenu() {
   const menuGrid = document.getElementById("menuGrid");
   try {
+    await resolveCustomerQrContext();
     await Promise.all([loadProductStocks(), loadMenuCatalog()]);
     renderMenu();
     updateOrder();
@@ -2267,6 +2320,11 @@ document
     console.error("Customer menu initialization failed:", error);
     menuGrid.innerHTML = '<p class="empty-order">Could not load the menu from Supabase. Please refresh or contact staff.</p>';
     document.getElementById("categoryMenu").innerHTML = "";
+    const sendButton = document.getElementById("sendOrderButton");
+    if (sendButton) {
+      sendButton.disabled = true;
+      sendButton.textContent = "QR CODE REQUIRED";
+    }
   }
 })();
 </script>
@@ -2277,7 +2335,6 @@ document
 (function () {
   const API = 'https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/restaurants';
   const KEY = 'sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
-  const RESTAURANT_ID = '5e562ca7-38aa-4894-8265-ddca2f4e61b6';
   const NAME_SELECTORS = ['.hero h1'];
   const LOGO_MODE = 'customer';
   function setName(el, name) {
@@ -2362,7 +2419,9 @@ document
   window.applyRestaurantBranding = applyProfile;
   async function connect() {
     try {
-      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
+      const restaurantId = window.EDMEL_CUSTOMER_CONTEXT?.restaurant_id;
+      if (!restaurantId) return;
+      const response = await fetch(API + '?id=eq.' + encodeURIComponent(restaurantId) + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
         headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }, cache: 'no-store'
       });
       if (!response.ok) throw new Error('Profile request failed: ' + response.status);
@@ -2376,6 +2435,7 @@ document
     }
   }
   window.addEventListener('restaurantprofilechanged', e => applyProfile(e.detail));
+  window.addEventListener('edmelcustomercontextready', connect);
   window.addEventListener('focus', connect);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) connect(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', connect, { once: true });
