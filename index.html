@@ -1452,83 +1452,48 @@ let productStocks = {};
 async function loadProductStocks() {
 
   try {
+    const response = await fetch(
+      SUPABASE_URL + "/rest/v1/rpc/edmel_get_customer_stock_availability",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY
+        },
+        body: JSON.stringify({
+          p_restaurant_id: RESTAURANT_ID,
+          p_table_number: table,
+          p_table_id: sharedCartEnabled ? sharedTableId : null,
+          p_qr_token: sharedCartEnabled ? sharedQrToken : null
+        })
+      }
+    );
 
-    const response =
-      await fetch(
-        STOCK_ENDPOINT +
-        "?select=product_id,stock_group,stock_remaining",
-        {
-          method: "GET",
-
-          headers: {
-            "apikey":
-              SUPABASE_KEY,
-
-            "Authorization":
-              "Bearer " +
-              SUPABASE_KEY
-          }
-        }
-      );
-
-
-    const data =
-      await response.json();
-
+    const data = await response.json();
 
     if (!response.ok) {
-
       throw new Error(
-        data.message ||
-        data.error ||
-        data.hint ||
-        "Unable to load product stocks."
+        data.message || data.error || data.hint ||
+        "Unable to load stock availability for this table."
       );
-
     }
-
 
     productStocks = {};
 
-
-    data.forEach(function(item) {
-
-      if (!item.product_id) {
-        return;
-      }
-
-
-      productStocks[
-        item.product_id
-      ] = {
-
-        remaining:
-          Number(
-            item.stock_remaining
-          ) || 0,
-
-        stockGroup:
-          item.stock_group ||
-          item.product_id
-
+    (Array.isArray(data) ? data : []).forEach(function(item) {
+      if (!item.product_id) return;
+      productStocks[item.product_id] = {
+        remaining: Number(item.stock_remaining) || 0,
+        stockGroup: item.stock_group || item.product_id
       };
-
     });
 
-
-    console.log(
-      "Product stocks loaded:",
-      productStocks
-    );
-
+    console.log("Branch-scoped product availability loaded:", productStocks);
 
   } catch (error) {
-
-    console.error(
-      "Stock loading error:",
-      error
-    );
-
+    console.error("Stock availability loading error:", error);
+    productStocks = {};
   }
 
 }
