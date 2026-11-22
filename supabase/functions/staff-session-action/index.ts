@@ -43,29 +43,56 @@ Deno.serve(async (req: Request) => {
       if (!linkRows.length) return json({ error: "Active staff account not found" }, 403);
 
       if (action === "start") {
+        const restaurantSlug = typeof body.restaurant_slug === "string" ? body.restaurant_slug.trim().toLowerCase() : "";
         const branchIdInput = typeof body.branch_id === "string" ? body.branch_id : "";
+        if (!/^[a-z0-9][a-z0-9-]{1,99}$/.test(restaurantSlug)) {
+          return json({ error: "A valid restaurant slug is required" }, 400);
+        }
+
+        const { data: restaurant, error: restaurantError } = await admin.from("restaurants")
+          .select("id,slug").eq("slug", restaurantSlug).maybeSingle();
+        if (restaurantError) return json({ error: "Unable to verify restaurant" }, 500);
+        if (!restaurant) return json({ error: "Restaurant access not found" }, 403);
+
+        const tenantLinks = linkRows.filter((row: any) => row.restaurant_id === restaurant.id);
+        if (!tenantLinks.length) return json({ error: "No active staff account exists for this restaurant" }, 403);
+
         let selectedLink: any = null;
         let selectedBranchId = "";
-        for (const candidate of linkRows) {
+        for (const candidate of tenantLinks) {
           const { data: memberships, error: membershipError } = await admin.from("staff_branch_access")
             .select("branch_id,permissions,is_active")
-            .eq("restaurant_user_id", candidate.id).eq("is_active", true);
+            .eq("restaurant_user_id", candidate.id)
+            .eq("restaurant_id", restaurant.id)
+            .eq("is_active", true);
           if (membershipError) return json({ error: "Unable to verify branch access" }, 500);
           const activeMemberships = memberships || [];
           if (!activeMemberships.length) continue;
+
+          const ids = activeMemberships.map((m: any) => m.branch_id);
+          const { data: branches, error: branchError } = await admin.from("restaurant_branches")
+            .select("id,is_default")
+            .eq("restaurant_id", restaurant.id)
+            .eq("is_active", true)
+            .in("id", ids);
+          if (branchError) return json({ error: "Unable to load assigned branches" }, 500);
+
+          const activeBranchIds = new Set((branches || []).map((b: any) => b.id));
           if (branchIdInput) {
-            const match = activeMemberships.find((m: any) => m.branch_id === branchIdInput);
+            const match = activeMemberships.find((m: any) =>
+              m.branch_id === branchIdInput && activeBranchIds.has(m.branch_id)
+            );
             if (match) { selectedLink = candidate; selectedBranchId = match.branch_id; break; }
           } else {
-            const ids = activeMemberships.map((m: any) => m.branch_id);
-            const { data: branches, error: branchError } = await admin.from("restaurant_branches")
-              .select("id,is_default").in("id", ids).eq("is_active", true);
-            if (branchError) return json({ error: "Unable to load assigned branches" }, 500);
             const chosen = (branches || []).find((b: any) => b.is_default) || (branches || [])[0];
             if (chosen) { selectedLink = candidate; selectedBranchId = chosen.id; break; }
           }
         }
-        if (!selectedLink || !selectedBranchId) return json({ error: "No active branch access is assigned to this staff account" }, 403);
+
+        if (!selectedLink || !selectedBranchId) {
+          return json({ error: "No active branch access is assigned to this staff account in the selected restaurant" }, 403);
+        }
+
         const now = new Date().toISOString();
         const { data: session, error } = await admin.from("staff_sessions").insert({
           restaurant_id: selectedLink.restaurant_id,
@@ -75,12 +102,20 @@ Deno.serve(async (req: Request) => {
           login_at: now,
           last_seen_at: now,
           last_activity_at: now,
-        }).select("id,login_at,branch_id").single();
+        }).select("id,login_at,restaurant_id,restaurant_user_id,branch_id").single();
         if (error) {
           console.error("Session start failed", error.message);
           return json({ error: "Unable to record login" }, 500);
         }
-        return json({ success: true, session_id: session.id, login_at: session.login_at, branch_id: session.branch_id, inactivity_timeout_minutes: 30 });
+        return json({
+          success: true,
+          session_id: session.id,
+          login_at: session.login_at,
+          restaurant_id: session.restaurant_id,
+          restaurant_user_id: session.restaurant_user_id,
+          branch_id: session.branch_id,
+          inactivity_timeout_minutes: 30
+        });
       }
 
       if (!sessionId) return json({ error: "Session ID required" }, 400);
@@ -95,8 +130,12 @@ Deno.serve(async (req: Request) => {
         if (session.logout_at) return json({ error: "Session already ended", expired: true }, 401);
         const { data: membership, error: membershipError } = await admin.from("staff_branch_access")
           .select("is_active").eq("restaurant_user_id", session.restaurant_user_id)
+          .eq("restaurant_id", session.restaurant_id)
           .eq("branch_id", session.branch_id).maybeSingle();
-        if (membershipError || !membership?.is_active) {
+        const { data: activeBranch, error: branchError } = await admin.from("restaurant_branches")
+          .select("id").eq("id", session.branch_id)
+          .eq("restaurant_id", session.restaurant_id).eq("is_active", true).maybeSingle();
+        if (membershipError || !membership?.is_active || branchError || !activeBranch) {
           const now = new Date().toISOString();
           await admin.from("staff_sessions").update({ logout_at: now, last_seen_at: now, end_reason: "branch_access_removed" })
             .eq("id", sessionId).is("logout_at", null);
@@ -130,6 +169,9 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "remove_branch_access") {
+      return json({ error: "Manager branch-access removal must be submitted through an Admin approval batch." }, 409);
+    }
+    if (action === "__disabled_legacy_remove_branch_access") {
       const targetId = typeof body.restaurant_user_id === "string" ? body.restaurant_user_id : "";
       const branchId = typeof body.branch_id === "string" ? body.branch_id : "";
       if (!targetId || !branchId) return json({ error: "Staff account and branch are required" }, 400);
