@@ -2674,6 +2674,7 @@ document.addEventListener('change',e=>{
   captureOperatingHoursDraft();
 });
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
+document.addEventListener('change',e=>{if(e.target.id==='tmBranchSelect'){TABLE_BRANCH_ID=e.target.value||'';refreshTables().catch(error=>toast(error.message||'Unable to load selected branch tables.',1));}});
 document.addEventListener('submit',e=>{if(e.target.id==='tmAddForm')addTable(e);else if(e.target.id==='taxRuleForm')saveTaxRule(e);else if(e.target.id==='serviceChargeForm')saveServiceChargeRule(e);else if(e.target.id==='paymentMethodForm')savePaymentMethod(e);else if(e.target.id==='discountRuleForm')saveDiscountRule(e);else if(e.target.id==='voucherForm')saveVoucher(e)});
 document.addEventListener('change',e=>{if(e.target.id==='pmKey'){const n={cash:'Cash',card:'Card / Terminal',qr_manual:'Manual QR Payment',online:'Online Payment Gateway'};$('#pmName').value=n[e.target.value]||'';if(e.target.value==='cash'){$('#pmFeePercent').value='0';$('#pmFeeFixed').value='0';}}});
 document.addEventListener('keydown',e=>{const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
@@ -3139,15 +3140,20 @@ let CURRENT_RESTAURANT_ID=null;
 let CURRENT_RESTAURANT_SLUG='';
 let HALINA_TABLES=[];
 let HALINA_QR_BASE='';
+let TABLE_BRANCH_ID='';
 function tableManagementPage(){
+ const activeBranches=ADMIN_BRANCH_ROWS.filter(branch=>branch.is_active===true);
+ if(!TABLE_BRANCH_ID||!activeBranches.some(branch=>branch.id===TABLE_BRANCH_ID)){
+  TABLE_BRANCH_ID=(activeBranches.find(branch=>branch.id===ADMIN_BRANCH_SELECTED_ID)||activeBranches.find(branch=>branch.is_default)||activeBranches[0]||{}).id||'';
+ }
  const active=HALINA_TABLES.filter(x=>x.is_active).length;
  const inactive=HALINA_TABLES.length-active;
  const locked=HALINA_TABLES.filter(x=>x.is_locked).length;
  const seats=HALINA_TABLES.reduce((n,x)=>n+(Number(x.seating_capacity)||4),0);
  return `<div class="tm-wrap">
   <section class="tm-hero">
-   <div class="tm-hero-copy"><div class="tm-hero-icon">${I('branch',25)}</div><div><h3>Manage Your Tables</h3><p>Organize seating, control table access, and manage customer ordering QR codes.</p></div></div>
-   <button class="btn" data-a="tablesrefresh">${I('pulse',15)} Refresh</button>
+   <div class="tm-hero-copy"><div class="tm-hero-icon">${I('branch',25)}</div><div><h3>Branch Customer QR Ordering</h3><p>Manage tables and secure customer ordering QR codes for one selected branch.</p></div></div>
+   <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><label for="tmBranchSelect" class="mu">Branch</label><select id="tmBranchSelect" style="min-width:190px;max-width:100%">${activeBranches.map(branch=>'<option value="'+esc(branch.id)+'"'+(branch.id===TABLE_BRANCH_ID?' selected':'')+'>'+esc(branch.name)+'</option>').join('')}</select><button class="btn" data-a="tablesrefresh">${I('pulse',15)} Refresh</button></div>
   </section>
   <section class="tm-stats">
    <article class="tm-stat"><span class="tm-stat-icon">${I('branch',21)}</span><div><small>Total Tables</small><b>${HALINA_TABLES.length}</b></div></article>
@@ -3174,11 +3180,34 @@ function tableManagementPage(){
 }
 function tableQrUrl(t){const path=window.location.pathname.replace(/[^/]*$/,'index.html');const u=new URL(path,window.location.origin);u.searchParams.set('table',t.table_number);u.searchParams.set('table_id',t.id);u.searchParams.set('token',t.token);return u.href;}
 function drawTableQrs(){if(!window.QRCode)return;HALINA_TABLES.forEach(t=>{const el=document.getElementById('tmqr-'+t.id);if(el&&t.token){el.innerHTML='';new QRCode(el,{text:tableQrUrl(t),width:132,height:132,correctLevel:QRCode.CorrectLevel.M});}});}
-async function refreshTables(){if(!CURRENT_RESTAURANT_ID)return;const {data,error}=await sb.rpc('halina_list_restaurant_tables',{p_restaurant_id:CURRENT_RESTAURANT_ID});if(error)throw error;HALINA_TABLES=Array.isArray(data)?data:[];render();setTimeout(drawTableQrs,0);}
+async function refreshTables(){
+ if(!CURRENT_RESTAURANT_ID)return;
+ if(!ADMIN_BRANCH_LOADED)await loadAdminBranches();
+ const activeBranches=ADMIN_BRANCH_ROWS.filter(branch=>branch.is_active===true);
+ if(!TABLE_BRANCH_ID||!activeBranches.some(branch=>branch.id===TABLE_BRANCH_ID)){
+  TABLE_BRANCH_ID=(activeBranches.find(branch=>branch.id===ADMIN_BRANCH_SELECTED_ID)||activeBranches.find(branch=>branch.is_default)||activeBranches[0]||{}).id||'';
+ }
+ if(!TABLE_BRANCH_ID){HALINA_TABLES=[];render();return;}
+ const {data,error}=await sb.rpc('edmel_admin_list_branch_tables',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:TABLE_BRANCH_ID});
+ if(error)throw error;
+ HALINA_TABLES=Array.isArray(data)?data:[];
+ render();setTimeout(drawTableQrs,0);
+}
 async function tableRpc(name,args){const {data,error}=await sb.rpc(name,args);if(error)throw error;return data;}
 function tableById(id){return HALINA_TABLES.find(x=>x.id===id);}
-async function addTable(e){e.preventDefault();try{await tableRpc('halina_create_restaurant_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_number:$('#tmNumber').value.trim(),p_seating_capacity:Number($('#tmCapacity').value)});toast('Table created');await refreshTables();}catch(err){toast(err.message,1);}}
-async function updateTable(t,patch){await tableRpc('halina_update_restaurant_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_table_id:t.id,p_table_number:patch.table_number??t.table_number,p_seating_capacity:patch.seating_capacity??t.seating_capacity,p_is_active:patch.is_active??t.is_active,p_is_locked:patch.is_locked??t.is_locked});await refreshTables();}
+async function addTable(e){
+ e.preventDefault();
+ if(!TABLE_BRANCH_ID){toast('Select an active branch before creating a table.',1);return;}
+ try{
+  await tableRpc('edmel_admin_create_branch_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:TABLE_BRANCH_ID,p_table_number:$('#tmNumber').value.trim(),p_seating_capacity:Number($('#tmCapacity').value)});
+  toast('Table and customer QR code created for the selected branch');
+  await refreshTables();
+ }catch(err){toast(err.message,1);}
+}
+async function updateTable(t,patch){
+ await tableRpc('edmel_admin_update_branch_table',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:TABLE_BRANCH_ID,p_table_id:t.id,p_table_number:patch.table_number??t.table_number,p_seating_capacity:patch.seating_capacity??t.seating_capacity,p_is_active:patch.is_active??t.is_active,p_is_locked:patch.is_locked??t.is_locked});
+ await refreshTables();
+}
 function tableDownload(t){const el=document.getElementById('tmqr-'+t.id);const img=el?.querySelector('img')||el?.querySelector('canvas');if(!img)return;const url=img.tagName==='CANVAS'?img.toDataURL('image/png'):img.src;const a=document.createElement('a');a.href=url;a.download='HALINA-'+t.table_number.replace(/[^a-z0-9_-]/gi,'_')+'-QR.png';a.click();}
 async function tablePrintAll(){drawTableQrs();await new Promise(r=>setTimeout(r,250));const cards=HALINA_TABLES.map(t=>{const el=document.getElementById('tmqr-'+t.id),img=el?.querySelector('img');return img?`<article><h2>${esc(t.table_number)}</h2><img src="${img.src}"><p>Scan to order</p></article>`:''}).join('');const w=window.open('','_blank');if(!w){toast('Allow pop-ups to print QR codes',1);return;}w.document.write(`<html><head><title>HALINA Table QR Codes</title><style>body{font-family:Arial;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}article{border:1px solid #ddd;padding:16px;break-inside:avoid}img{width:180px;height:180px}
 </style>
@@ -4239,17 +4268,32 @@ A.staffresetpin=(button)=>{
   };
 };
 
-function staffAddForm(){
+async function staffAddForm(){
+  if(!ADMIN_BRANCH_LOADED){
+    await loadAdminBranches();
+  }
+  const activeBranches=ADMIN_BRANCH_ROWS.filter(branch=>branch.is_active===true);
+  if(!activeBranches.length){
+    toast('No active branches are available. Refresh branch information and try again.',1);
+    return;
+  }
+  const preferredBranch=activeBranches.some(branch=>branch.id===ADMIN_BRANCH_SELECTED_ID)
+    ? ADMIN_BRANCH_SELECTED_ID
+    : (activeBranches.find(branch=>branch.is_default===true)||activeBranches[0]).id;
+  const singleOptions=activeBranches.map(branch=>'<option value="'+esc(branch.id)+'"'+(branch.id===preferredBranch?' selected':'')+'>'+esc(branch.name)+' · '+esc(branch.code||'')+'</option>').join('');
+  const multiOptions=activeBranches.map(branch=>'<label class="row" style="justify-content:flex-start;gap:10px;padding:7px 0"><input type="checkbox" data-staff-branch="'+esc(branch.id)+'" '+(branch.id===preferredBranch?'checked':'')+'><span><strong>'+esc(branch.name)+'</strong><span class="mu" style="display:block;font-size:12px">'+esc(branch.code||'Branch')+'</span></span></label>').join('');
   L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="staffFormTitle">
-    <h3 id="staffFormTitle">Add Staff Member</h3><p class="note">Create a staff account with a username and initial six-digit PIN. No personal email is required.</p>
+    <h3 id="staffFormTitle">Add Staff Member</h3><p class="note">Create a staff account with an initial six-digit PIN. No personal email is required.</p>
     <form id="staffAddForm" autocomplete="off">
       <div class="fl"><label for="staffFullName">Full Name *</label><input id="staffFullName" required maxlength="100" placeholder="Enter full name"></div>
       <div class="fl"><label for="staffDisplayName">Display Name</label><input id="staffDisplayName" maxlength="60" placeholder="Optional display name"></div>
       <div class="fl"><label for="staffPosition">Position *</label><select id="staffPosition" required><option value="Cashier">Cashier</option><option value="Manager">Manager</option><option value="Kitchen Staff">Kitchen Staff</option><option value="Dispatcher">Dispatcher</option></select></div>
       <div class="fl"><label for="staffUsername">Username *</label><input id="staffUsername" required minlength="3" maxlength="40" autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9._-]+" placeholder="Create a unique username"></div>
       <div class="fl"><label for="staffRole">Account Role</label><input id="staffRole" value="Staff" disabled></div>
-      <div class="fl"><label for="staffPin">Initial Cashier PIN *</label><input id="staffPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter six-digit PIN"></div>
-      <div class="fl"><label for="staffPinConfirm">Confirm Cashier PIN *</label><input id="staffPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter six-digit PIN"></div>
+      <div class="fl" id="staffSingleBranchWrap"><label for="staffBranchSelect">Assigned Branch *</label><select id="staffBranchSelect" required>${singleOptions}</select></div>
+      <div class="fl" id="staffMultiBranchWrap" hidden><label>Assigned Branches *</label><div style="border:1px solid var(--bd);border-radius:12px;padding:10px;max-height:180px;overflow:auto">${multiOptions}</div><p class="note">Managers can be assigned to multiple active branches. The same initial permission set will apply to each selected branch.</p></div>
+      <div class="fl"><label for="staffPin">Initial Staff PIN *</label><input id="staffPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter six-digit PIN"></div>
+      <div class="fl"><label for="staffPinConfirm">Confirm Staff PIN *</label><input id="staffPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter six-digit PIN"></div>
       <div class="fl"><label>Permissions</label>
         <label class="row" for="staffPermOrders"><span>Orders</span><input id="staffPermOrders" type="checkbox" checked></label>
         <label class="row" for="staffPermVoid"><span>Void Orders</span><input id="staffPermVoid" type="checkbox"></label>
@@ -4258,32 +4302,47 @@ function staffAddForm(){
         <label class="row" for="staffPermDispatcher"><span>Dispatcher</span><input id="staffPermDispatcher" type="checkbox"></label>
         <label class="row" for="staffPermSettings"><span>Settings</span><input id="staffPermSettings" type="checkbox"></label>
       </div>
-      <p class="mu">PIN values are sent only to the secure account-creation endpoint and must not be logged or stored as plain text.</p>
+      <p class="mu">PIN values are sent only to the secure account-creation endpoint and are never logged or stored as plain text.</p>
       <p id="staffFormMsg" class="note" role="status" aria-live="polite"></p>
       <div class="tb"><button id="staffCreateBtn" class="btn pri" type="submit">Create Staff Account</button><button class="btn" type="button" data-a="close">Cancel</button></div>
     </form>
   </div>`;
   const form=L.querySelector('#staffAddForm'),submitBtn=L.querySelector('#staffCreateBtn'),message=L.querySelector('#staffFormMsg');
+  const positionInput=L.querySelector('#staffPosition');
+  const syncBranchControls=()=>{
+    const isManager=positionInput.value==='Manager';
+    L.querySelector('#staffSingleBranchWrap').hidden=isManager;
+    L.querySelector('#staffMultiBranchWrap').hidden=!isManager;
+    L.querySelector('#staffBranchSelect').required=!isManager;
+  };
+  positionInput.addEventListener('change',syncBranchControls);
+  syncBranchControls();
   L.querySelector('#staffFullName').focus();
   form.onsubmit=async event=>{
     event.preventDefault();
     if(!form.reportValidity())return;
     const fullName=L.querySelector('#staffFullName').value.trim();
     const displayName=L.querySelector('#staffDisplayName').value.trim();
-    const position=L.querySelector('#staffPosition').value;
+    const position=positionInput.value;
     const username=L.querySelector('#staffUsername').value.trim();
     const pin=L.querySelector('#staffPin').value;
     const confirmPin=L.querySelector('#staffPinConfirm').value;
     if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
+    const branchIds=position==='Manager'
+      ? [...L.querySelectorAll('[data-staff-branch]:checked')].map(input=>input.dataset.staffBranch)
+      : [L.querySelector('#staffBranchSelect').value];
+    if(!branchIds.length){message.textContent='Select at least one branch for this Manager.';return;}
+    if(position!=='Manager'&&branchIds.length!==1){message.textContent='Select exactly one branch.';return;}
     const permissions={orders:L.querySelector('#staffPermOrders').checked,void:L.querySelector('#staffPermVoid').checked,tables:L.querySelector('#staffPermTables').checked,stocks:L.querySelector('#staffPermStocks').checked,dispatcher:L.querySelector('#staffPermDispatcher').checked,settings:L.querySelector('#staffPermSettings').checked};
     submitBtn.disabled=true;message.textContent='Creating staff account securely…';
     try{
-      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:CURRENT_RESTAURANT_ID,full_name:fullName,display_name:displayName,position,username,permissions,pin}});
+      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:CURRENT_RESTAURANT_ID,branch_ids:branchIds,full_name:fullName,display_name:displayName,position,username,permissions,pin}});
       if(error){let errorMessage=error.message||'Unable to create staff account.';if(error.context&&typeof error.context.json==='function'){try{const detail=await error.context.json();if(detail&&detail.error)errorMessage=detail.error;}catch(_){}}throw new Error(errorMessage);}
       if(!data||data.success!==true)throw new Error(data?.error||'Staff account creation was not confirmed.');
       L.querySelector('#staffPin').value='';L.querySelector('#staffPinConfirm').value='';
       message.textContent='Staff account created. Refreshing staff list…';
-      try{await writeAdminAudit('Staff & Permissions','Created staff account','staff_account',data.restaurant_user_id||data.user_id||null,{full_name:fullName,display_name:displayName,position,username,permissions});}catch(ae){toast('Staff account created, but audit logging failed: '+(ae.message||String(ae)),1);}try{await loadStaffData();closeL();render();toast('Staff account created');}
+      try{await writeAdminAudit('Staff & Permissions','Created staff account','staff_account',data.staff_id||null,{full_name:fullName,display_name:displayName,position,username,branch_ids:branchIds,permissions});}catch(ae){toast('Staff account created, but audit logging failed: '+(ae.message||String(ae)),1);}
+      try{await loadStaffData();ADMIN_BRANCH_LOADED=false;await loadAdminBranches();closeL();render();toast('Staff account created and branch access assigned');}
       catch(refreshError){staffLoadError=refreshError.message||String(refreshError);closeL();render();toast('Staff created, but the list could not refresh');}
     }catch(error){L.querySelector('#staffPin').value='';L.querySelector('#staffPinConfirm').value='';message.textContent=error.message||'Unable to create staff account. Please try again.';submitBtn.disabled=false;}
   };
