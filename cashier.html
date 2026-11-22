@@ -10452,7 +10452,10 @@ if (posMenuGrid && !posMenuGrid.dataset.supabaseMenuBound) {
   });
 }
 
-loadCashierMenuFromSupabase();
+// Menu data is tenant-scoped; wait until authenticated restaurant/branch context exists.
+window.addEventListener("edmel:tenant-context-ready", function () {
+  loadCashierMenuFromSupabase();
+});
 
 
 /* =========================
@@ -15039,6 +15042,8 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   if (typeof loadTables === "function") tasks.push(loadTables());
   if (typeof loadStocks === "function") tasks.push(loadStocks());
   if (typeof loadOrders === "function") tasks.push(loadOrders());
+  if (typeof loadCashierMenuFromSupabase === "function") tasks.push(loadCashierMenuFromSupabase());
+  if (typeof window.halinaLoadOrderTables === "function") tasks.push(window.halinaLoadOrderTables());
   await Promise.all(tasks);
 };
 })();
@@ -15239,7 +15244,10 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
 
   setDeliveryDropdown(false);
   showDetails("dine_in");
-  window.halinaLoadOrderTables();
+  // The table selector requires the authenticated restaurant and branch context.
+  window.addEventListener("edmel:tenant-context-ready", function () {
+    window.halinaLoadOrderTables();
+  });
 })();
 </script>
 
