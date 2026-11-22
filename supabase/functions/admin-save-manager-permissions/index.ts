@@ -48,6 +48,41 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Select at least one active branch" }, 400);
     }
 
+    // Validate the new settings permission namespace before forwarding it.
+    // The database RPC remains the authoritative validator and atomic writer.
+    const allowedSettingsGroups = new Set([
+      "business_profile", "tax", "service_charge",
+      "discounts_vouchers", "payment_methods", "receipt_settings",
+    ]);
+    const allowedSettingsActions = new Set(["view", "manage", "request", "approve"]);
+    for (const assignment of assignments) {
+      if (!assignment || typeof assignment !== "object" || Array.isArray(assignment)) {
+        return json({ error: "Invalid branch permission assignment" }, 400);
+      }
+      const permissions = assignment.permissions;
+      if (!permissions || typeof permissions !== "object" || Array.isArray(permissions)) {
+        return json({ error: "Invalid branch permissions" }, 400);
+      }
+      if (Object.prototype.hasOwnProperty.call(permissions, "branch_settings")) {
+        const groups = permissions.branch_settings;
+        if (!groups || typeof groups !== "object" || Array.isArray(groups) ||
+            Object.keys(groups).some((key) => !allowedSettingsGroups.has(key))) {
+          return json({ error: "Invalid branch settings permissions" }, 400);
+        }
+        for (const actions of Object.values(groups)) {
+          if (!actions || typeof actions !== "object" || Array.isArray(actions) ||
+              Object.keys(actions).some((key) => !allowedSettingsActions.has(key)) ||
+              Object.values(actions).some((value) => typeof value !== "boolean")) {
+            return json({ error: "Invalid branch settings permission actions" }, 400);
+          }
+          if (Object.entries(actions).some(([key, value]) => key !== "view" && value === true) &&
+              actions.view !== true) {
+            return json({ error: "View permission is required for other settings actions" }, 400);
+          }
+        }
+      }
+    }
+
     const { data, error } = await admin.rpc("edmel_admin_save_manager_branch_permissions", {
       p_actor_user_id: actor.id,
       p_restaurant_id: restaurantId,
