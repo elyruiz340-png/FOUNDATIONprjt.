@@ -3752,7 +3752,7 @@ async function loadStaffData(){
 function staffBranchLabel(userId){
   if(staffBranchLoadError)return 'Unavailable';
   const assignments=STAFF_BRANCH_ASSIGNMENTS.filter(row=>
-    row.restaurant_user_id===userId&&row.is_active===true
+    row.restaurant_user_id===userId&&row.is_active!==false
   );
   if(assignments.length===0)return 'Unassigned';
   if(assignments.length>1)return 'Multiple active assignments';
