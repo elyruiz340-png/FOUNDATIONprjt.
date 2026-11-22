@@ -2696,7 +2696,7 @@ function inventoryAddForm(){
  btn.disabled=true;btn.textContent='Saving…';
  try{const slug=name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'stock-item';const productId=slug+'-'+Date.now().toString(36);let imageUrl='';
  if(file){const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=productId+'/'+Date.now()+'.'+ext;const up=await sb.storage.from('halina-stock-images').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;imageUrl=sb.storage.from('halina-stock-images').getPublicUrl(path).data.publicUrl}
- const payload={product_id:productId,product_name:name,category,stock_total:Math.round(total),stock_remaining:Math.round(remaining),stock_group:group||productId,image_url:imageUrl||null};
+ const payload={restaurant_id:CURRENT_RESTAURANT_ID,product_id:productId,product_name:name,category,stock_total:Math.round(total),stock_remaining:Math.round(remaining),stock_group:group||productId,image_url:imageUrl||null};
  const ins=await sb.from('PRODUCT_STOCK').insert(payload);if(ins.error)throw ins.error;
  closeL();await load(true);toast('Stock item saved to Supabase');
  }catch(ex){err.textContent=ex.message||'Could not save stock item.';btn.disabled=false;btn.textContent='Save stock item'}
