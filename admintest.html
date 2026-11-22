@@ -4072,11 +4072,34 @@ A.staffrefresh=async()=>{
   try{await loadStaffData();render();toast('Staff list refreshed');}
   catch(e){staffLoadError=e.message||String(e);render();}
 };
-A.staffeditprofile=(button)=>{
+A.staffeditprofile=async(button)=>{
   const staff=STAFF_ROWS.find(row=>row.id===button.dataset.id);
   if(!staff||String(staff.role||'').toLowerCase()!=='staff'){
     toast('Staff account could not be verified');return;
   }
+  try{
+    ADMIN_BRANCH_LOADED=false;
+    await loadAdminBranches();
+    if(ADMIN_BRANCH_ERROR)throw new Error(ADMIN_BRANCH_ERROR);
+  }catch(error){
+    toast('Unable to load branch assignments: '+(error.message||String(error)),1);
+    return;
+  }
+
+  const position=String(staff.position||'').trim().toLowerCase();
+  const canReassignBranch=['cashier','dispatcher','kitchen staff'].includes(position);
+  const activeBranches=ADMIN_BRANCH_ROWS.filter(branch=>branch.is_active===true);
+  const activeAssignments=ADMIN_BRANCH_ASSIGNMENTS.filter(row=>
+    row.restaurant_user_id===staff.id&&row.is_active!==false
+  );
+  const currentBranchId=activeAssignments.length===1?activeAssignments[0].branch_id:'';
+  const currentBranch=ADMIN_BRANCH_ROWS.find(branch=>branch.id===currentBranchId);
+  const branchOptions=activeBranches.map(branch=>
+    '<option value="'+esc(branch.id)+'"'+(branch.id===currentBranchId?' selected':'')+'>'+
+    esc(branch.name)+' · '+esc(branch.code||'')+'</option>'
+  ).join('');
+  const assignmentReady=canReassignBranch&&staff.is_active!==false&&activeAssignments.length===1&&activeBranches.length>0;
+
   L.innerHTML=`<div class="bk" data-a="close"></div>
     <div class="md staff-focus-panel" role="dialog" aria-modal="true" aria-labelledby="staffProfileTitle" aria-describedby="staffProfileDescription">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px">
@@ -4107,6 +4130,25 @@ A.staffeditprofile=(button)=>{
           <button id="staffProfileSaveBtn" class="btn pri" type="submit">Save Profile</button>
         </div>
       </form>
+      ${canReassignBranch?`<section class="card" style="margin-top:16px">
+        <h3 style="margin:0 0 6px">Branch Assignment</h3>
+        <p class="note">Move this staff account to one active branch. Existing branch permissions will be preserved. Any active staff session will be ended and the staff member must sign in again.</p>
+        <div class="fl">
+          <label for="staffBranchSelect">Assigned Branch</label>
+          <select id="staffBranchSelect" ${assignmentReady?'':'disabled'}>${branchOptions||'<option value="">No active branches available</option>'}</select>
+        </div>
+        ${activeAssignments.length!==1
+          ?'<p class="er" style="margin:8px 0">This account must have exactly one active branch assignment before it can be moved. No assignment has been changed.</p>'
+          :currentBranch
+            ?'<p class="mu" style="margin:8px 0">Current branch: <strong>'+esc(currentBranch.name)+'</strong></p>'
+            :'<p class="er" style="margin:8px 0">The current branch is not active or could not be identified.</p>'}
+        ${staff.is_active===false?'<p class="mu">Reactivate this staff account before changing its branch.</p>':''}
+        <p id="staffBranchMessage" class="note" role="status" aria-live="polite"></p>
+        <div class="staff-focus-actions">
+          <button id="staffBranchSaveBtn" class="btn pri" type="button" ${assignmentReady?'':'disabled'}>Save Branch Assignment</button>
+        </div>
+      </section>`:
+      '<section class="card" style="margin-top:16px"><h3 style="margin:0 0 6px">Branch Assignment</h3><p class="note">Manager branch access is managed separately through Manage Permissions.</p></section>'}
     </div>`;
   const form=L.querySelector('#staffProfileEditForm');
   const saveBtn=L.querySelector('#staffProfileSaveBtn');
@@ -4159,6 +4201,59 @@ A.staffeditprofile=(button)=>{
       saveBtn.disabled=false;
     }
   };
+
+  const branchSave=L.querySelector('#staffBranchSaveBtn');
+  if(branchSave){
+    branchSave.onclick=async()=>{
+      const select=L.querySelector('#staffBranchSelect');
+      const branchMessage=L.querySelector('#staffBranchMessage');
+      const newBranchId=select?.value||'';
+      const newBranch=activeBranches.find(branch=>branch.id===newBranchId);
+      if(!newBranchId||!newBranch){
+        branchMessage.textContent='Choose an active branch.';
+        return;
+      }
+      if(newBranchId===currentBranchId){
+        branchMessage.textContent='This staff member is already assigned to the selected branch.';
+        return;
+      }
+      const staffName=staff.display_name||staff.full_name||staff.cashier_username||'this staff member';
+      const oldBranchName=currentBranch?.name||'the current branch';
+      if(!confirm('Move '+staffName+' from '+oldBranchName+' to '+newBranch.name+'? Their active staff session will be ended, and they must sign in again.')){
+        return;
+      }
+      branchSave.disabled=true;
+      branchSave.textContent='Saving…';
+      branchMessage.textContent='Updating branch access and ending active staff sessions securely…';
+      try{
+        const {data,error}=await sb.functions.invoke('admin-reassign-staff-branch',{
+          body:{
+            restaurant_id:CURRENT_RESTAURANT_ID,
+            restaurant_user_id:staff.id,
+            branch_id:newBranchId
+          }
+        });
+        if(error){
+          let errorMessage=error.message||'Unable to update branch assignment.';
+          if(error.context&&typeof error.context.json==='function'){
+            try{const detail=await error.context.json();if(detail&&detail.error)errorMessage=detail.error;}catch(_){}
+          }
+          throw new Error(errorMessage);
+        }
+        if(!data||data.success!==true)throw new Error(data?.error||'Branch reassignment was not confirmed.');
+        ADMIN_BRANCH_LOADED=false;
+        await loadAdminBranches();
+        await loadStaffData();
+        closeL();
+        render();
+        toast(data.result?.unchanged?'Staff member is already assigned to that branch':'Staff branch updated. They must sign in again.');
+      }catch(error){
+        branchMessage.textContent=error.message||'Unable to save branch assignment. Please try again.';
+        branchSave.disabled=false;
+        branchSave.textContent='Save Branch Assignment';
+      }
+    };
+  }
 };
 A.staffhistory=()=>{
   const names=new Map(STAFF_ROWS.map(u=>[u.id,u.display_name||u.full_name||u.cashier_username||u.role||'Staff']));
