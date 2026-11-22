@@ -14032,7 +14032,7 @@ let halinaStaffInactivityTimer = null;
 let halinaStaffLastHeartbeatAt = 0;
 const HALINA_STAFF_INACTIVITY_MS = 30 * 60 * 1000;
 
-async function callStaffSessionAction(action, sessionId, activity = false) {
+async function callStaffSessionAction(action, sessionId, activity = false, branchId = null) {
   if (!cashierAuthClient) throw new Error("Cashier authentication is unavailable.");
   const { data: sessionData, error: sessionError } = await cashierAuthClient.auth.getSession();
   const session = sessionData && sessionData.session;
@@ -14049,7 +14049,8 @@ async function callStaffSessionAction(action, sessionId, activity = false) {
     body: JSON.stringify({
       action,
       ...(sessionId ? { session_id: sessionId } : {}),
-      ...(action === "start" && cashierSelectedRestaurantSlug ? { restaurant_slug: cashierSelectedRestaurantSlug } : {}),
+      ...( ["start", "list_branches", "switch_branch"].includes(action) && cashierSelectedRestaurantSlug ? { restaurant_slug: cashierSelectedRestaurantSlug } : {}),
+      ...(branchId ? { branch_id: branchId } : {}),
       ...(action === "heartbeat" ? { activity: activity === true } : {})
     })
   });
@@ -14126,6 +14127,7 @@ async function startStaffPresence() {
   const userId = data.session.user.id;
   if (halinaStaffSessionId && halinaStaffPresenceUserId === userId) {
     await sendStaffHeartbeat();
+    await loadCashierAssignedBranches();
     if (!halinaStaffHeartbeatTimer) {
       halinaStaffHeartbeatTimer = setInterval(sendStaffHeartbeat, 45000);
     }
@@ -14145,12 +14147,62 @@ async function startStaffPresence() {
     halinaStaffActivitySinceHeartbeat = true;
     scheduleStaffInactivityExpiry();
     await sendStaffHeartbeat();
+    await loadCashierAssignedBranches();
     stopStaffHeartbeat();
     halinaStaffHeartbeatTimer = setInterval(sendStaffHeartbeat, 45000);
   } catch (error) {
     console.warn("Could not start staff session tracking:", error.message || error);
   } finally {
     halinaStaffPresenceStarting = false;
+  }
+}
+
+async function loadCashierAssignedBranches() {
+  try {
+    const result = await callStaffSessionAction("list_branches", null, false);
+    const branches = Array.isArray(result.branches) ? result.branches : [];
+    let host = document.getElementById("cashierBranchSwitch");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "cashierBranchSwitch";
+      host.style.cssText = "position:fixed;top:12px;right:86px;z-index:90;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(130,150,130,.35);border-radius:12px;background:rgba(18,32,24,.94);color:#f4f7f1;box-shadow:0 8px 28px rgba(0,0,0,.18);backdrop-filter:blur(16px);";
+      host.innerHTML = '<label for="cashierBranchSelect" style="font-size:12px;font-weight:650;white-space:nowrap">Active Branch</label><select id="cashierBranchSelect" style="max-width:190px;min-width:110px;padding:7px 9px;border-radius:8px;border:1px solid rgba(180,200,180,.3);background:#24372b;color:#fff"></select><span id="cashierBranchStatus" style="font-size:11px;color:#b8d8c0"></span>';
+      document.body.appendChild(host);
+    }
+    const select = document.getElementById("cashierBranchSelect");
+    select.innerHTML = "";
+    branches.forEach(branch => {
+      const option = document.createElement("option");
+      option.value = branch.id;
+      option.textContent = branch.name || branch.code || "Branch";
+      select.appendChild(option);
+    });
+    select.value = window.EDMEL_TENANT_CONTEXT?.branch_id || "";
+    host.hidden = branches.length <= 1;
+    if (select.dataset.bound !== "1") {
+      select.dataset.bound = "1";
+      select.addEventListener("change", async () => {
+        const previousBranchId = window.EDMEL_TENANT_CONTEXT?.branch_id || "";
+        const nextBranchId = select.value;
+        if (!nextBranchId || nextBranchId === previousBranchId) return;
+        select.disabled = true;
+        const status = document.getElementById("cashierBranchStatus");
+        if (status) status.textContent = "Switching…";
+        try {
+          const result = await callStaffSessionAction("switch_branch", halinaStaffSessionId, false, nextBranchId);
+          window.EDMEL_TENANT_CONTEXT.branch_id = result.branch_id;
+          await window.EDMEL_REFRESH_CASHIER_BRANCH_DATA?.();
+          if (status) status.textContent = "Branch updated";
+        } catch (error) {
+          select.value = previousBranchId;
+          if (status) status.textContent = error.message || "Switch failed";
+        } finally {
+          select.disabled = false;
+        }
+      });
+    }
+  } catch (error) {
+    console.warn("Unable to load assigned branches:", error.message || error);
   }
 }
 
@@ -14989,6 +15041,13 @@ if (cashierLoginForm) {
  const originalLoad=window.loadTransactionHistory;
  if(typeof originalLoad==='function')window.loadTransactionHistory=async function(){await originalLoad();await loadPending();};
  setTimeout(loadPending,1200);
+window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
+  const tasks = [];
+  if (typeof loadTables === "function") tasks.push(loadTables());
+  if (typeof loadStocks === "function") tasks.push(loadStocks());
+  if (typeof loadOrders === "function") tasks.push(loadOrders());
+  await Promise.all(tasks);
+};
 })();
 
 </script>
