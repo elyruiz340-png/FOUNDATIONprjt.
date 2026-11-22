@@ -126,7 +126,7 @@ RETURNS TABLE (
   restaurant_slug text,
   restaurant_name text,
   role text,
-  position text
+  staff_position text
 )
 LANGUAGE sql
 STABLE
