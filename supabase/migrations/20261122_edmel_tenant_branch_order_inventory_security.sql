@@ -875,6 +875,8 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.place_order_with_stock(uuid, text, text, jsonb, numeric, text, text, text, text, uuid)
   FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.place_order_with_stock(uuid, text, text, jsonb, numeric, text, text, text, text, uuid, uuid)
+  FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.place_order_with_stock(uuid, text, text, jsonb, numeric, text, text, text, text, uuid, uuid)
   TO service_role;
 
