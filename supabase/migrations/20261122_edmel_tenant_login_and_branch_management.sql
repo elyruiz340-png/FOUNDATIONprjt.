@@ -17,7 +17,7 @@ RETURNS TABLE (
   restaurant_user_id uuid,
   restaurant_id uuid,
   role text,
-  position text,
+  staff_position text,
   permissions jsonb
 )
 LANGUAGE plpgsql
