@@ -6788,6 +6788,8 @@ background:
     <p id="cashierLoginSubtitle">Enter your cashier username to continue</p>
     <form id="cashierLoginForm" novalidate>
       <div id="cashierUsernameStep">
+        <label for="cashierRestaurantSlug">Restaurant Slug</label>
+        <input id="cashierRestaurantSlug" name="restaurant_slug" type="text" autocomplete="organization" placeholder="e.g. halina-bistro-cafe" maxlength="100" required>
         <label for="cashierUsername">Cashier Username</label>
         <input id="cashierUsername" name="username" type="text" autocomplete="username" required>
         <button id="cashierContinueButton" type="button">Continue</button>
@@ -13824,6 +13826,9 @@ const CASHIER_USERNAME_VALIDATE_URL =
 
 const cashierUsernameInput =
   document.getElementById("cashierUsername");
+const cashierRestaurantSlugInput =
+  document.getElementById("cashierRestaurantSlug");
+let cashierSelectedRestaurantSlug = "";
 
 const cashierUsernameStep =
   document.getElementById("cashierUsernameStep");
@@ -13873,7 +13878,14 @@ function cashierShowUsernameStep() {
 async function cashierShowPinStep() {
   if (cashierUsernameValidationInProgress) return;
 
+  const restaurantSlug = cashierRestaurantSlugInput.value.trim().toLowerCase();
   const username = cashierUsernameInput.value.trim();
+
+  if (!restaurantSlug) {
+    cashierLoginMessage.textContent = "Please enter your restaurant slug first.";
+    cashierRestaurantSlugInput.focus();
+    return;
+  }
 
   if (!username) {
     cashierLoginMessage.textContent =
@@ -13897,7 +13909,7 @@ async function cashierShowPinStep() {
           "apikey": SUPABASE_KEY,
           "Authorization": "Bearer " + SUPABASE_KEY
         },
-        body: JSON.stringify({ username })
+        body: JSON.stringify({ restaurant_slug: restaurantSlug, username })
       }
     );
 
@@ -13915,6 +13927,8 @@ async function cashierShowPinStep() {
       cashierUsernameInput.focus();
       return;
     }
+
+    cashierSelectedRestaurantSlug = restaurantSlug;
 
     /* Username preview removed from the PIN screen. */
 
@@ -14019,7 +14033,12 @@ async function callStaffSessionAction(action, sessionId, activity = false) {
       "apikey": SUPABASE_KEY,
       "Authorization": "Bearer " + session.access_token
     },
-    body: JSON.stringify({ action, ...(sessionId ? { session_id: sessionId } : {}), ...(action === "heartbeat" ? { activity: activity === true } : {}) })
+    body: JSON.stringify({
+      action,
+      ...(sessionId ? { session_id: sessionId } : {}),
+      ...(action === "start" && cashierSelectedRestaurantSlug ? { restaurant_slug: cashierSelectedRestaurantSlug } : {}),
+      ...(action === "heartbeat" ? { activity: activity === true } : {})
+    })
   });
   let result = {};
   try { result = await response.json(); } catch (_) {}
@@ -14103,6 +14122,11 @@ async function startStaffPresence() {
   try {
     stopStaffHeartbeat();
     const result = await callStaffSessionAction("start");
+    window.EDMEL_TENANT_CONTEXT = {
+      restaurant_id: result.restaurant_id,
+      branch_id: result.branch_id,
+      restaurant_slug: cashierSelectedRestaurantSlug
+    };
     halinaStaffSessionId = result.session_id;
     halinaStaffPresenceUserId = userId;
     halinaStaffActivitySinceHeartbeat = true;
@@ -14780,7 +14804,7 @@ if (cashierLoginForm) {
           "apikey": SUPABASE_KEY,
           "Authorization": "Bearer " + SUPABASE_KEY
         },
-        body: JSON.stringify({ username, pin })
+        body: JSON.stringify({ restaurant_slug: cashierSelectedRestaurantSlug, username, pin })
       });
 
       const result = await response.json();
