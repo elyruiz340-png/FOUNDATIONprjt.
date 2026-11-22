@@ -32,7 +32,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const action = typeof body.action === "string" ? body.action : "";
 
-    if (["start", "heartbeat", "end"].includes(action)) {
+    if (["start", "heartbeat", "end", "list_branches", "switch_branch"].includes(action)) {
       const sessionId = typeof body.session_id === "string" ? body.session_id : "";
       const { data: links, error: linkError } = await admin.from("restaurant_users")
         .select("id,user_id,restaurant_id,role,position,is_active")
@@ -41,6 +41,37 @@ Deno.serve(async (req: Request) => {
       const linkRows = (links || []).filter((r: any) =>
         r.restaurant_id && ["staff", "cashier", "dispatcher", "kitchen"].includes(String(r.role).toLowerCase()));
       if (!linkRows.length) return json({ error: "Active staff account not found" }, 403);
+
+      if (action === "list_branches") {
+        const restaurantSlug = typeof body.restaurant_slug === "string" ? body.restaurant_slug.trim().toLowerCase() : "";
+        if (!/^[a-z0-9][a-z0-9-]{1,99}$/.test(restaurantSlug)) {
+          return json({ error: "A valid restaurant slug is required" }, 400);
+        }
+        const { data: restaurant, error: restaurantError } = await admin.from("restaurants")
+          .select("id,slug").eq("slug", restaurantSlug).maybeSingle();
+        if (restaurantError) return json({ error: "Unable to verify restaurant" }, 500);
+        if (!restaurant) return json({ error: "Restaurant access not found" }, 403);
+        const tenantLinks = linkRows.filter((row: any) => row.restaurant_id === restaurant.id);
+        if (!tenantLinks.length) return json({ error: "No active staff access exists for this restaurant" }, 403);
+        const assignedIds = new Set<string>();
+        for (const candidate of tenantLinks) {
+          const { data: accessRows, error: accessError } = await admin.from("staff_branch_access")
+            .select("branch_id")
+            .eq("restaurant_user_id", candidate.id)
+            .eq("restaurant_id", restaurant.id)
+            .eq("is_active", true);
+          if (accessError) return json({ error: "Unable to load assigned branches" }, 500);
+          for (const row of accessRows || []) if (row.branch_id) assignedIds.add(row.branch_id);
+        }
+        if (!assignedIds.size) return json({ error: "No active branch assignments were found" }, 403);
+        const { data: branches, error: branchError } = await admin.from("restaurant_branches")
+          .select("id,name,code,is_default")
+          .eq("restaurant_id", restaurant.id)
+          .eq("is_active", true)
+          .in("id", [...assignedIds]);
+        if (branchError) return json({ error: "Unable to load assigned branches" }, 500);
+        return json({ success: true, restaurant_id: restaurant.id, branches: branches || [] });
+      }
 
       if (action === "start") {
         const restaurantSlug = typeof body.restaurant_slug === "string" ? body.restaurant_slug.trim().toLowerCase() : "";
@@ -125,6 +156,52 @@ Deno.serve(async (req: Request) => {
       if (sessionError || !session) return json({ error: "Session not found" }, 404);
       const linkedActor = linkRows.find((r: any) => r.id === session.restaurant_user_id);
       if (!linkedActor || linkedActor.restaurant_id !== session.restaurant_id) return json({ error: "Staff account is no longer active" }, 403);
+
+      if (action === "switch_branch") {
+        const restaurantSlug = typeof body.restaurant_slug === "string" ? body.restaurant_slug.trim().toLowerCase() : "";
+        const branchId = typeof body.branch_id === "string" ? body.branch_id : "";
+        if (!/^[a-z0-9][a-z0-9-]{1,99}$/.test(restaurantSlug) || !branchId) {
+          return json({ error: "Restaurant and branch are required" }, 400);
+        }
+        const { data: restaurant, error: restaurantError } = await admin.from("restaurants")
+          .select("id").eq("slug", restaurantSlug).maybeSingle();
+        if (restaurantError) return json({ error: "Unable to verify restaurant" }, 500);
+        if (!restaurant || restaurant.id !== session.restaurant_id) {
+          return json({ error: "The selected branch does not belong to this session's restaurant" }, 403);
+        }
+        const lastActivity = new Date(session.last_activity_at || session.last_seen_at || session.login_at || 0).getTime();
+        if (!Number.isFinite(lastActivity) || Date.now() - lastActivity >= INACTIVITY_TIMEOUT_MS) {
+          const now = new Date().toISOString();
+          await admin.from("staff_sessions").update({ logout_at: now, last_seen_at: now, end_reason: "inactivity_timeout" })
+            .eq("id", sessionId).eq("user_id", actorId).is("logout_at", null);
+          return json({ success: false, expired: true, error: "Session expired after 30 minutes of inactivity." }, 401);
+        }
+        const { data: assignment, error: assignmentError } = await admin.from("staff_branch_access")
+          .select("branch_id")
+          .eq("restaurant_user_id", session.restaurant_user_id)
+          .eq("restaurant_id", session.restaurant_id)
+          .eq("branch_id", branchId)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (assignmentError) return json({ error: "Unable to verify branch assignment" }, 500);
+        if (!assignment) return json({ error: "You are not assigned to this branch" }, 403);
+        const { data: branch, error: branchError } = await admin.from("restaurant_branches")
+          .select("id,name,code")
+          .eq("id", branchId)
+          .eq("restaurant_id", session.restaurant_id)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (branchError) return json({ error: "Unable to verify branch status" }, 500);
+        if (!branch) return json({ error: "The selected branch is inactive or unavailable" }, 403);
+        const now = new Date().toISOString();
+        const { error: updateError } = await admin.from("staff_sessions").update({
+          branch_id: branch.id,
+          last_seen_at: now,
+          last_activity_at: now,
+        }).eq("id", sessionId).eq("user_id", actorId).is("logout_at", null);
+        if (updateError) return json({ error: "Unable to switch active branch" }, 500);
+        return json({ success: true, restaurant_id: session.restaurant_id, branch_id: branch.id, branch_name: branch.name });
+      }
 
       if (action === "heartbeat") {
         if (session.logout_at) return json({ error: "Session already ended", expired: true }, 401);
