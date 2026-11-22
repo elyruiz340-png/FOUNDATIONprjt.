@@ -811,10 +811,7 @@ let menu = [];
 let categories = [];
 
 
-/* SUPABASE MENU CATALOG — categories and items come from Admin */
-const MENU_ITEMS_ENDPOINT = SUPABASE_URL + "/rest/v1/menu_items";
-const MENU_CATEGORIES_ENDPOINT = SUPABASE_URL + "/rest/v1/menu_categories";
-
+/* CUSTOMER MENU — categories and items are returned by the verified QR context. */
 async function loadMenuCatalog() {
   if (!CUSTOMER_CONTEXT_READY || !RESTAURANT_ID || !BRANCH_ID) {
     throw new Error("Restaurant and branch context has not been verified.");
@@ -2306,7 +2303,7 @@ document
     updateOrder();
   } catch (error) {
     console.error("Customer menu initialization failed:", error);
-    menuGrid.innerHTML = '<p class="empty-order">Could not load the menu from Supabase. Please refresh or contact staff.</p>';
+    menuGrid.textContent = error.message || "Could not verify this table or load its menu. Please ask staff for assistance.";
     document.getElementById("categoryMenu").innerHTML = "";
     const sendButton = document.getElementById("sendOrderButton");
     if (sendButton) {
