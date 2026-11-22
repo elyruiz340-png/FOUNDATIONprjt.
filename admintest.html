@@ -2555,7 +2555,7 @@ theme:t=>{const T=['light','neodark','dark'],v=t&&t.dataset&&t.dataset.v;const n
 order:t=>orderDrawer(t.dataset.i),
 cust:()=>modal('Customize Overview',WID.map(w=>[w[1],'checkbox',!S.w[w[0]]]),()=>true,'Done'),
 profile:()=>drawer('Account',`<p><b>${esc(S.user||'')}</b><br><span class="mu">Owner dashboard</span></p><button class="btn pri" data-a="signout">Sign out</button>`),
-signout:async()=>{await sb.auth.signOut();ORD.length=0;CURRENT_RESTAURANT_ID=null;CURRENT_RESTAURANT_SLUG='';CURRENT_AUTH_ROLE='';CURRENT_AUTH_USER_ID='';closeL();showLogin()},
+signout:async()=>{await sb.auth.signOut();ORD.length=0;CURRENT_RESTAURANT_ID=null;CURRENT_RESTAURANT_SLUG='';CURRENT_AUTH_ROLE='';CURRENT_AUTH_USER_ID='';ADMIN_BRANCH_ROWS=[];ADMIN_BRANCH_ASSIGNMENTS=[];ADMIN_BRANCH_STAFF=[];ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_LOADING=false;ADMIN_BRANCH_ERROR='';ADMIN_BRANCH_SELECTED_ID='';closeL();showLogin()},
 refresh:()=>load(true),
 csv:()=>{const r=['Order ID,Date,Branch,Type,Status,Payment,Total',...vis(ORD).map(o=>[o.id,'"'+o.t+'"','HALINA BISTRO CAFE',o.ty,o.s,o.pm,o.tot].join(','))].join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([r],{type:'text/csv'}));a.download='halina-orders.csv';a.click();toast('Downloaded halina-orders.csv')},
 print:()=>window.print(),
@@ -3522,6 +3522,8 @@ start=async function(){
   CURRENT_AUTH_ROLE=String(selected.role||'').toLowerCase();
   CURRENT_RESTAURANT_ID=selected.restaurant_id;
   CURRENT_RESTAURANT_SLUG=selected.restaurant_slug||'';
+  ADMIN_BRANCH_ROWS=[];ADMIN_BRANCH_ASSIGNMENTS=[];ADMIN_BRANCH_STAFF=[];
+  ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_LOADING=false;ADMIN_BRANCH_ERROR='';ADMIN_BRANCH_SELECTED_ID='';
   G.hidden=true;S.user=session.user.email;await load();
 };
 const originalLoad=load;
