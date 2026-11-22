@@ -2536,7 +2536,14 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
       p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_name:name,p_code:code,p_address:address,p_timezone:timezone
     });
     if(error)throw error;
-    closeL();ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
+    if(data?.success!==true||!data?.branch?.id)throw new Error(data?.error||'Branch creation was not confirmed by the database.');
+    ADMIN_BRANCH_SELECTED_ID=data.branch.id;
+    ADMIN_BRANCH_LOADED=false;
+    await loadAdminBranches();
+    if(!ADMIN_BRANCH_ROWS.some(branch=>branch.id===data.branch.id)){
+      throw new Error('The branch may have been created, but the refreshed branch list could not confirm it. Use Refresh data before trying again.');
+    }
+    closeL();
     toast('Branch created successfully.');
   }catch(e){toast(e.message||'Unable to create branch.',1);t.disabled=false;t.textContent='Create Branch';}
 },
@@ -2574,7 +2581,7 @@ hist:t=>{const x=INV[t.dataset.i];drawer(x.n+' — stock history',tbl(['Date','R
 addexp:()=>modal('Add expense',[['Category','text','Utilities',ECAT],['Description','text',''],['Amount (₱)','number',1000]],v=>{if(!(+v[2]>0)){toast('Enter an amount above zero.',1);return false}EXP.unshift({d:'Today',c:v[0],ds:v[1]||'—',a:+v[2],b:S.br||1});render();toast('Expense added — sample data, not saved')},'Add expense'),
 addstaff:()=>modal('Add staff',[['Name','text',''],['Role','text','Cashier',['Owner','Manager','Cashier','Dispatcher / Kitchen']]],v=>{if(!v[0].trim()){toast('Enter a name.',1);return false}STAFF.push({n:v[0],r:v[1],b:S.br||1,s:'Active',sh:'Off shift',l:'Never'});render();toast('Staff added')}),
 editstaff:t=>{const s=STAFF[t.dataset.i];modal('Edit '+esc(s.n),[['Role','text',s.r,['Owner','Manager','Cashier','Dispatcher / Kitchen']],['Account status','text',s.s,['Active','Suspended']]],v=>{s.r=v[0];s.s=v[1];render();toast('Staff updated')})},
-addbr:()=>modal('Add branch',[['Branch name','text','']],v=>{if(!v[0].trim()){toast('Enter a branch name.',1);return false}BS.push('Branch '+(BS.length+1)+' — '+v[0]);BASE.push(7000);AO.push(350);EXB.push(.28);fillBr();render();toast('Branch added')}),
+
 brd:t=>{const i=+t.dataset.i,f=fin('tm',[i]);drawer(BS[i],`<div class="big">${M(f.net)}</div><p class="mu">Net sales this month (sample)</p><div class="row"><span>Orders</span><b>${f.ord}</b></div><div class="row"><span>Recorded expenses</span><b>${M(EXP.filter(e=>e.b==i+1).reduce((a,e)=>a+e.a,0))}</b></div><div class="row"><span>Staff assigned</span><b>${STAFF.filter(s=>s.b==i+1).length}</b></div><div class="row"><span>Low-stock items</span><b>${INV.filter(x=>x.b==i+1&&x.q<=x.th).length}</b></div><button class="btn" style="margin-top:12px" data-a="close">Close</button>`)},
 hl:t=>{const h=HEALTH[t.dataset.i];drawer(h[0],`<p><span class="bd ${h[1]}">● ${h[2]}</span></p><p>${h[3]}</p>`)},
 test:()=>{toast('Simulated test passed for 4 of 5 services');setTimeout(()=>toast('AI service is offline in this demo. No AI API is connected.',1),500)},
