@@ -806,7 +806,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   if(!username||!/^[0-9]{6}$/.test(pin)){showLogin("Enter your username and six-digit PIN.");return;}
   button.disabled=true;button.textContent="Verifying...";$("loginMessage").textContent="";
   try{
-   const response=await fetch(SUPABASE_URL+"/functions/v1/cashier-login",{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({username,pin})});
+   const response=await fetch(SUPABASE_URL+"/functions/v1/cashier-login",{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({username,pin,expected_position:"manager"})});
    const result=await response.json().catch(()=>({}));
    if(!response.ok||!result.token_hash)throw new Error(result.error||"Invalid username or PIN.");
    const {data,error}=await sb.auth.verifyOtp({token_hash:result.token_hash,type:"magiclink"});
