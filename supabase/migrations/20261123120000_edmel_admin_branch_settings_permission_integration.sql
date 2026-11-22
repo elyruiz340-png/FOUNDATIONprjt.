@@ -213,7 +213,7 @@ BEGIN
   RETURN jsonb_build_object('success',true,'manager_id',v_manager.id,
     'branches_saved',v_branch_count,'deactivated_unselected_assignments',true);
 END;
-$function$
+$function$;
 
 REVOKE ALL ON FUNCTION public.edmel_admin_save_manager_branch_permissions(uuid,uuid,uuid,jsonb) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.edmel_admin_save_manager_branch_permissions(uuid,uuid,uuid,jsonb) TO service_role;
