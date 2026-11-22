@@ -14198,6 +14198,13 @@ function hideCashierPOS() {
 
 async function showCashierPOS(options = {}) {
   await startStaffPresence();
+  if (!window.EDMEL_TENANT_CONTEXT?.restaurant_id || !window.EDMEL_TENANT_CONTEXT?.branch_id) {
+    window.EDMEL_ACCESS_TOKEN = null;
+    window.EDMEL_TENANT_CONTEXT = null;
+    try { await cashierAuthClient?.auth.signOut({ scope: "local" }); } catch (_) {}
+    showCashierLogin("Unable to verify your restaurant and branch access. Please sign in again.");
+    return;
+  }
   const animateEntrance = options.animate === true;
   const loginScreen = cashierLoginScreen;
 
