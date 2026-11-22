@@ -8176,8 +8176,8 @@ background:
      TABLE MANAGEMENT RPC
      Uses the current authenticated cashier session.
   ========================= */
-  const TABLE_LIST_RPC = SUPABASE_URL + "/rest/v1/rpc/halina_list_restaurant_tables";
-  const TABLE_UPDATE_RPC = SUPABASE_URL + "/rest/v1/rpc/halina_update_restaurant_table";
+  const TABLE_LIST_RPC = SUPABASE_URL + "/rest/v1/rpc/edmel_list_branch_restaurant_tables";
+  const TABLE_UPDATE_RPC = SUPABASE_URL + "/rest/v1/rpc/edmel_update_branch_restaurant_table";
   /* =========================
      STOCK ENDPOINT
   ========================= */
@@ -8443,7 +8443,8 @@ async function loadTables() {
   tablesContainer.innerHTML = '<div class="loading">Loading tables...</div>';
   try {
     const data = await callCashierTableRpc(TABLE_LIST_RPC, {
-      p_restaurant_id: getEDMELRestaurantId()
+      p_restaurant_id: getEDMELRestaurantId(),
+      p_branch_id: getEDMELBranchId()
     });
     cashierTablesCache = Array.isArray(data) ? data.slice() : [];
     cashierTablesCache.sort(function(a, b) {
@@ -8526,6 +8527,7 @@ async function updateTableStatus(table, newStatus, card, button) {
   try {
     await callCashierTableRpc(TABLE_UPDATE_RPC, {
       p_restaurant_id: getEDMELRestaurantId(),
+      p_branch_id: getEDMELBranchId(),
       p_table_id: table.id,
       p_table_number: table.table_number,
       p_seating_capacity: Number(table.seating_capacity || 4),
