@@ -166,7 +166,7 @@ async function loadDispatcherAssignedBranches(restaurantSlug){
   }catch(error){console.warn('Unable to load assigned Dispatcher branches:',error.message||error);}
 }
 
-async function dispatcherLogin(event){event.preventDefault();const restaurantSlug=document.getElementById('dispatcherRestaurantSlug').value.trim().toLowerCase(),username=document.getElementById('dispatcherUsername').value.trim(),pin=document.getElementById('dispatcherPin').value,button=document.getElementById('dispatcherLoginButton'),message=document.getElementById('dispatcherLoginMessage');if(!restaurantSlug||!username||!/^[0-9]{6}$/.test(pin)){message.textContent='Enter your restaurant slug, username, and six-digit PIN.';return;}button.disabled=true;button.textContent='Verifying…';message.textContent='';try{const response=await fetch(SUPABASE_URL+'/functions/v1/dispatcher-login',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({restaurant_slug:restaurantSlug,username,pin})});const result=await response.json().catch(()=>({}));if(!response.ok||!result.token_hash)throw new Error(result.error||'Unable to sign in.');const {data,error}=await dispatcherAuthClient.auth.verifyOtp({token_hash:result.token_hash,type:'magiclink'});if(error||!data?.session?.access_token)throw new Error(error?.message||'Authentication could not be completed.');dispatcherAccessToken=data.session.access_token;const started=await dispatcherSessionAction('start',null,false,restaurantSlug);RESTAURANT_ID=started.restaurant_id;BRANCH_ID=started.branch_id;window.EDMEL_TENANT_CONTEXT={restaurant_id:started.restaurant_id,branch_id:started.branch_id,restaurant_slug:restaurantSlug};dispatcherSessionId=started.session_id;await loadDispatcherAssignedBranches(restaurantSlug);document.getElementById('dispatcherLogin').style.display='none';document.body.classList.add('dispatcher-authenticated');dispatcherHeartbeat=setInterval(async()=>{const activity=dispatcherActivitySinceHeartbeat;dispatcherActivitySinceHeartbeat=false;try{await dispatcherSessionAction('heartbeat',dispatcherSessionId,activity);}catch(_){await dispatcherSignOut('Your session expired. Please sign in again.');}},45000);await loadOrders();}catch(error){message.textContent=error.message||'Unable to sign in.';dispatcherAccessToken=null;try{await dispatcherAuthClient.auth.signOut({scope:'local'});}catch(_){}}finally{button.disabled=false;button.textContent='Sign In';}}
+async function dispatcherLogin(event){event.preventDefault();const restaurantSlug=document.getElementById('dispatcherRestaurantSlug').value.trim().toLowerCase(),username=document.getElementById('dispatcherUsername').value.trim(),pin=document.getElementById('dispatcherPin').value,button=document.getElementById('dispatcherLoginButton'),message=document.getElementById('dispatcherLoginMessage');if(!restaurantSlug||!username||!/^[0-9]{6}$/.test(pin)){message.textContent='Enter your restaurant slug, username, and six-digit PIN.';return;}button.disabled=true;button.textContent='Verifying…';message.textContent='';try{const response=await fetch(SUPABASE_URL+'/functions/v1/dispatcher-login',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({restaurant_slug:restaurantSlug,username,pin})});const result=await response.json().catch(()=>({}));if(!response.ok||!result.token_hash)throw new Error(result.error||'Unable to sign in.');const {data,error}=await dispatcherAuthClient.auth.verifyOtp({token_hash:result.token_hash,type:'magiclink'});if(error||!data?.session?.access_token)throw new Error(error?.message||'Authentication could not be completed.');dispatcherAccessToken=data.session.access_token;const started=await dispatcherSessionAction('start',null,false,restaurantSlug);RESTAURANT_ID=started.restaurant_id;BRANCH_ID=started.branch_id;window.EDMEL_TENANT_CONTEXT={restaurant_id:started.restaurant_id,branch_id:started.branch_id,restaurant_slug:restaurantSlug};window.dispatchEvent(new Event('edmel:tenant-context-ready'));dispatcherSessionId=started.session_id;await loadDispatcherAssignedBranches(restaurantSlug);document.getElementById('dispatcherLogin').style.display='none';document.body.classList.add('dispatcher-authenticated');dispatcherHeartbeat=setInterval(async()=>{const activity=dispatcherActivitySinceHeartbeat;dispatcherActivitySinceHeartbeat=false;try{await dispatcherSessionAction('heartbeat',dispatcherSessionId,activity);}catch(_){await dispatcherSignOut('Your session expired. Please sign in again.');}},45000);await loadOrders();}catch(error){message.textContent=error.message||'Unable to sign in.';dispatcherAccessToken=null;try{await dispatcherAuthClient.auth.signOut({scope:'local'});}catch(_){}}finally{button.disabled=false;button.textContent='Sign In';}}
 if(window.supabase?.createClient){dispatcherAuthClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false}});}
 if(dispatcherLoginForm)dispatcherLoginForm.addEventListener('submit',dispatcherLogin);
 ['pointerdown','keydown','touchstart','click','input','change'].forEach(name=>document.addEventListener(name,()=>{if(dispatcherSessionId)dispatcherActivitySinceHeartbeat=true;},{capture:true,passive:true}));
@@ -242,7 +242,9 @@ setInterval(()=>{if(dispatcherSessionId)loadOrders();},10000);
 (function () {
   const API = 'https://isqcuycjrbjtmqhzckvb.supabase.co/rest/v1/restaurants';
   const KEY = 'sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4';
-  const RESTAURANT_ID = '5e562ca7-38aa-4894-8265-ddca2f4e61b6';
+  function getRestaurantId() {
+    return window.EDMEL_TENANT_CONTEXT?.restaurant_id || "";
+  }
   const NAME_SELECTORS = ['.brand-copy h1'];
   const LOGO_MODE = 'dispatcher';
   function setName(el, name) {
@@ -367,7 +369,9 @@ setInterval(()=>{if(dispatcherSessionId)loadOrders();},10000);
   });
   async function connect() {
     try {
-      const response = await fetch(API + '?id=eq.' + RESTAURANT_ID + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
+      const restaurantId = getRestaurantId();
+      if (!restaurantId) return;
+      const response = await fetch(API + '?id=eq.' + encodeURIComponent(restaurantId) + '&select=name,logo_url,address,contact_number,email,website,currency,timezone,tax_rate,appearance_settings', {
         headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }, cache: 'no-store'
       });
       if (!response.ok) throw new Error('Profile request failed: ' + response.status);
@@ -379,6 +383,7 @@ setInterval(()=>{if(dispatcherSessionId)loadOrders();},10000);
     } catch (error) { console.warn('Could not load centralized restaurant profile:', error); }
   }
   window.addEventListener('restaurantprofilechanged', e => applyProfile(e.detail));
+  window.addEventListener('edmel:tenant-context-ready', connect);
   window.addEventListener('focus', connect);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) connect(); });
   startRestaurantClock();
