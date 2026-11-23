@@ -1372,6 +1372,13 @@ html[data-ui="glass"][data-glass-adj="1"] header{
 .branch-editor-actions .btn{height:38px;min-height:38px;padding:0 13px;border-radius:9px;font-size:12px;white-space:nowrap}
 .branch-editor-actions .branch-action-cancel{margin-right:auto}
 @media(max-width:560px){.md.staff-focus-panel[aria-label="Branch settings editor"]{width:calc(100vw - 18px)!important;max-height:88vh!important;padding:13px!important}.branch-mode-strip{gap:6px}.branch-mode-strip>span{padding:8px}.staff-focus-panel .branch-editor-actions{bottom:-13px;margin:0 -13px -13px;padding:10px 13px calc(10px + env(safe-area-inset-bottom));gap:6px}.branch-editor-actions .btn{flex:1;padding:0 8px;font-size:11px}.branch-editor-actions .branch-action-cancel{margin-right:0}}
+
+.branch-visual-form{display:grid;gap:14px}.branch-visual-form section{display:grid;gap:8px}.branch-visual-form h4{margin:0;font-size:13px}
+.branch-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.branch-form-field{display:grid;gap:4px;min-width:0;font-size:11px;font-weight:650}
+.branch-form-field input,.branch-form-field select,.branch-form-field textarea{width:100%;min-width:0;height:36px;padding:7px 9px;border:1px solid var(--bd);border-radius:8px;background:var(--s);color:var(--tx);font:inherit;font-weight:400}
+.branch-form-field textarea{height:auto;min-height:62px;resize:vertical}.branch-form-list{display:grid;gap:9px}.branch-form-row{padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--s);display:grid;gap:9px}
+.branch-form-row>.row{align-items:center}.branch-form-row>.row b{font-size:12px}.branch-form-row .btn,.branch-form-list>.row .btn{height:32px;min-height:32px;padding:0 10px;font-size:11px}
+@media(max-width:560px){.branch-form-grid{grid-template-columns:1fr}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -2565,6 +2572,70 @@ function adminBranchSettingPayloadHint(group){
   };
   return examples[group]||{};
 }
+
+let BRANCH_SETTINGS_EDITOR_DRAFT={};
+const BRANCH_SETTING_FIELDS={
+ tax:[['rule_name','Rule name','text'],['tax_type','Tax type','text'],['rate','Rate (%)','number'],['calculation_method','Calculation','select',['exclusive','inclusive']],['tax_scope','Applies to','text'],['effective_from','Starts','date'],['effective_to','Ends','date'],['is_active','Enabled','boolean'],['notes','Notes','text']],
+ service_charge:[['rule_name','Rule name','text'],['display_label','Receipt label','text'],['charge_type','Charge type','select',['percentage','fixed']],['rate','Rate / amount','number'],['applies_to','Order types','string-array'],['is_mandatory','Mandatory','boolean'],['is_active','Enabled','boolean'],['effective_from','Starts','date'],['effective_to','Ends','date'],['tax_treatment','Tax treatment','text'],['notes','Notes','text']],
+ discounts:[['rule_name','Rule name','text'],['discount_category','Category','text'],['discount_type','Type','select',['percentage','fixed']],['rate','Value','number'],['max_discount_amount','Maximum discount','number'],['minimum_subtotal','Minimum subtotal','number'],['applies_to','Order types','string-array'],['requires_verification','Verification required','boolean'],['effective_from','Starts','date'],['effective_to','Ends','date'],['is_active','Enabled','boolean'],['notes','Notes','text']],
+ vouchers:[['code','Voucher code','text'],['description','Description','text'],['discount_type','Type','select',['percentage','fixed']],['discount_value','Discount value','number'],['max_discount_amount','Maximum discount','number'],['minimum_order_amount','Minimum order','number'],['usage_limit','Usage limit','number'],['per_customer_limit','Per-customer limit','number'],['applies_to','Order types','string-array'],['starts_at','Starts','datetime-local'],['ends_at','Ends','datetime-local'],['is_active','Enabled','boolean'],['notes','Notes','text']],
+ methods:[['method_key','Method key','text'],['display_name','Display name','text'],['is_enabled','Enabled','boolean'],['provider_name','Provider','text'],['fee_percent','Fee (%)','number'],['fee_fixed','Fixed fee','number'],['qr_image_url','QR image URL','url'],['instructions','Instructions','text'],['sort_order','Display order','number']]
+};
+function adminBranchSetPath(root,path,value,kind){
+ const parts=path.split('.');let target=root;
+ for(let i=0;i<parts.length-1;i++){const k=parts[i];if(target[k]===undefined||target[k]===null)target[k]=/^\\d+$/.test(parts[i+1])?[]:{};target=target[k];}
+ const key=parts[parts.length-1];
+ if(kind==='number')target[key]=value===''?null:Number(value);
+ else if(kind==='boolean')target[key]=value==='true';
+ else if(kind==='string-array')target[key]=value.split(',').map(x=>x.trim()).filter(Boolean);
+ else target[key]=value===''?null:value;
+}
+function adminBranchFormField(path,label,type,value,options){
+ const v=value===null||value===undefined?'':Array.isArray(value)?value.join(', '):String(value);
+ const id='bsf_'+path.replace(/[^a-zA-Z0-9]/g,'_');
+ let control='';
+ if(type==='boolean')control='<select id="'+id+'" data-bsf-path="'+esc(path)+'" data-bsf-kind="boolean"><option value="true" '+(value===true?'selected':'')+'>Yes</option><option value="false" '+(value!==true?'selected':'')+'>No</option></select>';
+ else if(type==='select')control='<select id="'+id+'" data-bsf-path="'+esc(path)+'" data-bsf-kind="text">'+(options||[]).map(x=>'<option value="'+esc(x)+'" '+(v===x?'selected':'')+'>'+esc(x.replace(/_/g,' '))+'</option>').join('')+'</select>';
+ else if(type==='textarea')control='<textarea id="'+id+'" data-bsf-path="'+esc(path)+'" data-bsf-kind="text" rows="2">'+esc(v)+'</textarea>';
+ else control='<input id="'+id+'" type="'+(type==='string-array'?'text':type)+'" data-bsf-path="'+esc(path)+'" data-bsf-kind="'+(type==='string-array'?'string-array':type)+'" value="'+esc(v)+'" '+(type==='string-array'?'placeholder="Separate values with commas"':'')+'>';
+ return '<label class="branch-form-field" for="'+id+'"><span>'+esc(label)+'</span>'+control+'</label>';
+}
+function adminBranchRenderRows(group,key,rows,fields){
+ const list=Array.isArray(rows)?rows:[];
+ return '<div class="branch-form-list"><div class="row"><b>'+esc(key==='rules'?'Rules':key==='discounts'?'Discount rules':key==='vouchers'?'Vouchers':'Payment methods')+'</b><button class="btn" type="button" data-a="branch-settings-add-row" data-list="'+key+'">Add</button></div>'+
+ (list.length?list.map((row,index)=>'<div class="branch-form-row"><div class="row"><b>'+esc(row.rule_name||row.code||row.display_name||('Item '+(index+1)))+'</b><button class="btn" type="button" data-a="branch-settings-remove-row" data-list="'+key+'" data-index="'+index+'">Remove</button></div><div class="branch-form-grid">'+fields.map(f=>adminBranchFormField(key+'.'+index+'.'+f[0],f[1],f[2],row[f[0]],f[3])).join('')+'</div></div>').join(''):'<p class="note">No items yet. Select Add to create one.</p>')+'</div>';
+}
+function adminBranchRenderVisualForm(group,data){
+ const d=data&&typeof data==='object'?JSON.parse(JSON.stringify(data)):{};
+ if(group==='business_profile'){
+  d.restaurant=d.restaurant||{};d.business_settings=d.business_settings||{};
+  const a=d.restaurant,b=d.business_settings;
+  return '<div class="branch-visual-form"><section><h4>Restaurant details</h4><div class="branch-form-grid">'+[
+   ['restaurant.name','Restaurant name','text',a.name],['restaurant.email','Email','email',a.email],['restaurant.contact_number','Contact number','text',a.contact_number],['restaurant.address','Address','text',a.address],['restaurant.website','Website','url',a.website],['restaurant.logo_url','Logo URL','url',a.logo_url],['restaurant.currency','Currency','text',a.currency],['restaurant.timezone','Timezone','text',a.timezone],['restaurant.tax_rate','Default tax rate','number',a.tax_rate],['restaurant.tip_enabled','Tips enabled','boolean',a.tip_enabled],['restaurant.online_payment_enabled','Online payments','boolean',a.online_payment_enabled]
+  ].map(f=>adminBranchFormField(f[0],f[1],f[2],f[3])).join('')+'</div></section><section><h4>Business location</h4><div class="branch-form-grid">'+[
+   ['business_settings.country_code','Country code','text',b.country_code],['business_settings.region','State / Region','text',b.region],['business_settings.city','City','text',b.city],['business_settings.tax_registration_type','Tax registration','select',b.tax_registration_type,['NOT_SET','VAT','NON_VAT','TAX_EXEMPT']]
+  ].map(f=>adminBranchFormField(f[0],f[1],f[2],f[3],f[4])).join('')+'</div></section></div>';
+ }
+ if(group==='tax')return '<div class="branch-visual-form">'+adminBranchRenderRows(group,'rules',d.rules,BRANCH_SETTING_FIELDS.tax)+'</div>';
+ if(group==='service_charge')return '<div class="branch-visual-form">'+adminBranchRenderRows(group,'rules',d.rules,BRANCH_SETTING_FIELDS.service_charge)+'</div>';
+ if(group==='discounts_vouchers')return '<div class="branch-visual-form">'+adminBranchRenderRows(group,'discounts',d.discounts,BRANCH_SETTING_FIELDS.discounts)+adminBranchRenderRows(group,'vouchers',d.vouchers,BRANCH_SETTING_FIELDS.vouchers)+'</div>';
+ if(group==='payment_methods')return '<div class="branch-visual-form">'+adminBranchRenderRows(group,'methods',d.methods,BRANCH_SETTING_FIELDS.methods)+'</div>';
+ if(group==='receipt_settings'){
+  d.settings=d.settings||{};const r=d.settings;
+  const fields=[['title','Receipt title','text'],['restaurantName','Restaurant name','text'],['address','Address','text'],['phone','Phone','text'],['email','Email','email'],['footer','Footer message','textarea'],['logo','Logo URL','url'],['paperWidth','Paper width','select',['58','80']],['fontSize','Font size','select',['10','11','12','13','14']],['alignment','Alignment','select',['left','center','right']]];
+  const toggles=['showLogo','showDate','showOrder','showOrderType','showItems','showSubtotal','showDiscount','showTax','showService','showTotal','showPayment','showPhone','showEmail','showAddress'];
+  return '<div class="branch-visual-form"><section><h4>Receipt layout</h4><div class="branch-form-grid">'+fields.map(f=>adminBranchFormField('settings.'+f[0],f[1],f[2],r[f[0]],f[3])).join('')+'</div></section><section><h4>Display options</h4><div class="branch-form-grid">'+toggles.map(k=>adminBranchFormField('settings.'+k,k.replace(/^show/,'Show '),'boolean',r[k])).join('')+'</div></section></div>';
+ }
+ return '<p class="note">No visual editor is available for this setting group.</p>';
+}
+function adminBranchNewRow(list){
+ if(list==='rules'&&BRANCH_SETTINGS_EDITOR_GROUP==='service_charge')return {rule_name:'',display_label:'Service Charge',charge_type:'percentage',rate:0,applies_to:['dine_in'],is_mandatory:false,is_active:false,effective_from:null,effective_to:null,tax_treatment:'not_configured',notes:''};
+ if(list==='rules')return {rule_name:'',tax_type:'sales_tax',rate:0,calculation_method:'exclusive',tax_scope:'all',effective_from:null,effective_to:null,is_active:false,notes:''};
+ if(list==='discounts')return {rule_name:'',discount_category:'promotional',discount_type:'percentage',rate:0,max_discount_amount:null,minimum_subtotal:0,applies_to:['dine_in','takeout'],requires_verification:false,effective_from:null,effective_to:null,is_active:false,notes:''};
+ if(list==='vouchers')return {code:'',description:'',discount_type:'percentage',discount_value:0,max_discount_amount:null,minimum_order_amount:0,usage_limit:null,per_customer_limit:null,applies_to:['dine_in','takeout'],starts_at:null,ends_at:null,is_active:false,notes:''};
+ if(list==='methods')return {method_key:'cash',display_name:'Cash',is_enabled:true,provider_name:null,fee_percent:0,fee_fixed:0,qr_image_url:null,instructions:null,sort_order:1};
+ return {};
+}
 function adminBranchJsonChangedKeys(before,after){
   const keys=[...new Set([...Object.keys(before||{}),...Object.keys(after||{})])];
   return keys.filter(key=>JSON.stringify((before||{})[key])!==JSON.stringify((after||{})[key]));
@@ -2589,7 +2660,7 @@ async function openBranchSettingsEditor(branch,group){
     const effective=data.effective_data&&typeof data.effective_data==='object'?data.effective_data:{};
     if(group==='business_profile'&&effective.restaurant&&typeof effective.restaurant==='object')delete effective.restaurant.operating_hours;
     const mode=data.inheritance_mode||'inherit';
-    const currentJson=JSON.stringify(effective,null,2);
+    const currentJson=JSON.stringify(effective,null,2);\n    BRANCH_SETTINGS_EDITOR_DRAFT=JSON.parse(currentJson);
     const warning=mode==='independent'
       ? ''
       : mode==='inherit'
@@ -2599,7 +2670,7 @@ async function openBranchSettingsEditor(branch,group){
       '<div class="branch-editor-head"><div><div class="staff-focus-kicker">BRANCH SETTINGS</div><h3 class="staff-focus-title">'+esc(adminBranchSettingLabel(group))+'</h3><p class="branch-editor-sub">'+esc(branch.name)+'</p></div><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>'+
       '<div class="branch-mode-strip"><span><small>Mode</small><b>'+esc(mode.charAt(0).toUpperCase()+mode.slice(1))+'</b></span><span><small>Source</small><b>'+(mode==='inherit'?'Main Branch':mode==='override'?'Branch + Main fallback':'Independent copy')+'</b></span></div>'+
       '<div class="branch-editor-notice">'+(mode==='inherit'?'Changes here will create a branch-only override.':mode==='independent'?'Saving changes will switch this group to Override.':'Changes apply to this branch only.')+'</div>'+
-      '<label for="branchSettingsJson" class="branch-editor-label">Settings data</label><textarea id="branchSettingsJson" class="branch-json-editor" spellcheck="false" aria-label="Settings data">'+esc(currentJson)+'</textarea>'+
+      '<div class="branch-visual-form-wrap">'+adminBranchRenderVisualForm(group,BRANCH_SETTINGS_EDITOR_DRAFT)+'</div>'+
       '<details class="branch-advanced-json"><summary>Advanced details</summary><pre class="branch-json-preview">'+esc(JSON.stringify(adminBranchSettingPayloadHint(group),null,2))+'</pre></details>'+
       '<div class="branch-reason-field"><label for="branchSettingsReason">Change note <span>(optional)</span></label><input id="branchSettingsReason" maxlength="500" placeholder="Add a short note"></div>'+
       '<div id="branchSettingsReview" class="card branch-settings-review-card" hidden></div>'+
@@ -3096,6 +3167,12 @@ document.addEventListener('change',e=>{
     row?.querySelectorAll('input[type="time"]').forEach(input=>{input.disabled=!e.target.checked;});
   }
   captureOperatingHoursDraft();
+});
+
+document.addEventListener('change',e=>{
+ const t=e.target;if(!t||!t.dataset||!t.dataset.bsfPath)return;
+ adminBranchSetPath(BRANCH_SETTINGS_EDITOR_DRAFT,t.dataset.bsfPath,t.value,t.dataset.bsfKind||'text');
+ BRANCH_SETTINGS_EDITOR_REVIEW=null;
 });
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
 document.addEventListener('change',e=>{if(e.target.id==='tmBranchSelect'){TABLE_BRANCH_ID=e.target.value||'';refreshTables().catch(error=>toast(error.message||'Unable to load selected branch tables.',1));}});
