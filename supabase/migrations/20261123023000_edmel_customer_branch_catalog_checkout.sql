@@ -3,7 +3,7 @@ DO $patch$
 DECLARE v_def text;
 BEGIN
   v_def:=pg_get_functiondef('public.edmel_customer_place_order(uuid,text,uuid,text,text,jsonb,text,text,uuid)'::regprocedure);
-  v_def:=replace(v_def,'  v_branch_id uuid;','  v_branch_id uuid;\n  v_catalog_branch_id uuid;');
+  v_def:=replace(v_def,'  v_branch_id uuid;','  v_branch_id uuid;'||chr(10)||'  v_catalog_branch_id uuid;');
   v_def:=replace(v_def,
 $old$
   IF v_branch_id IS NULL OR NOT EXISTS (
@@ -53,7 +53,7 @@ DO $patch$
 DECLARE v_def text;
 BEGIN
   v_def:=pg_get_functiondef('public.edmel_get_customer_stock_availability(uuid,text,uuid,text)'::regprocedure);
-  v_def:=replace(v_def,'  v_branch_id uuid;','  v_branch_id uuid;\n  v_catalog_branch_id uuid;');
+  v_def:=replace(v_def,'  v_branch_id uuid;','  v_branch_id uuid;'||chr(10)||'  v_catalog_branch_id uuid;');
   v_def:=replace(v_def,
 $old$
   IF v_branch_id IS NULL OR NOT EXISTS (
