@@ -32,7 +32,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const action = typeof body.action === "string" ? body.action : "";
 
-    if (["start", "heartbeat", "end", "list_branches", "switch_branch"].includes(action)) {
+    if (["start", "heartbeat", "end", "list_branches", "switch_branch", "resume"].includes(action)) {
       const sessionId = typeof body.session_id === "string" ? body.session_id : "";
       const { data: links, error: linkError } = await admin.from("restaurant_users")
         .select("id,user_id,restaurant_id,role,position,is_active")
@@ -145,7 +145,7 @@ Deno.serve(async (req: Request) => {
           restaurant_id: session.restaurant_id,
           restaurant_user_id: session.restaurant_user_id,
           branch_id: session.branch_id,
-          inactivity_timeout_minutes: 30
+          inactivity_timeout_minutes: (String(selectedLink.position || "").toLowerCase() === "dispatcher" || String(selectedLink.role || "").toLowerCase() === "dispatcher") ? null : 30
         });
       }
 
@@ -156,6 +156,31 @@ Deno.serve(async (req: Request) => {
       if (sessionError || !session) return json({ error: "Session not found" }, 404);
       const linkedActor = linkRows.find((r: any) => r.id === session.restaurant_user_id);
       if (!linkedActor || linkedActor.restaurant_id !== session.restaurant_id) return json({ error: "Staff account is no longer active" }, 403);
+
+      const isDispatcherSession = String(linkedActor.position || "").toLowerCase() === "dispatcher" ||
+        String(linkedActor.role || "").toLowerCase() === "dispatcher";
+
+      if (action === "resume") {
+        if (session.logout_at) return json({ success: false, expired: true, error: "Session already ended" }, 401);
+        const { data: membership, error: membershipError } = await admin.from("staff_branch_access")
+          .select("is_active").eq("restaurant_user_id", session.restaurant_user_id)
+          .eq("restaurant_id", session.restaurant_id).eq("branch_id", session.branch_id).maybeSingle();
+        if (membershipError) return json({ error: "Unable to verify branch assignment" }, 500);
+        if (!membership?.is_active) return json({ success: false, expired: true, error: "Your access to this branch has ended." }, 403);
+        const { data: branch, error: branchError } = await admin.from("restaurant_branches")
+          .select("id,name").eq("id", session.branch_id)
+          .eq("restaurant_id", session.restaurant_id).eq("is_active", true).maybeSingle();
+        if (branchError) return json({ error: "Unable to verify branch status" }, 500);
+        if (!branch) return json({ success: false, expired: true, error: "This branch is inactive or unavailable." }, 403);
+        const { data: restaurant, error: restaurantError } = await admin.from("restaurants")
+          .select("slug").eq("id", session.restaurant_id).maybeSingle();
+        if (restaurantError) return json({ error: "Unable to verify restaurant" }, 500);
+        if (!restaurant?.slug) return json({ success: false, expired: true, error: "Restaurant access is unavailable." }, 403);
+        await admin.from("staff_sessions").update({ last_seen_at: new Date().toISOString() })
+          .eq("id", sessionId).eq("user_id", actorId).is("logout_at", null);
+        return json({ success: true, session_id: session.id, restaurant_id: session.restaurant_id,
+          branch_id: session.branch_id, restaurant_slug: restaurant.slug, branch_name: branch.name || "" });
+      }
 
       if (action === "switch_branch") {
         const restaurantSlug = typeof body.restaurant_slug === "string" ? body.restaurant_slug.trim().toLowerCase() : "";
@@ -171,7 +196,7 @@ Deno.serve(async (req: Request) => {
           return json({ error: "The selected branch does not belong to this session's restaurant" }, 403);
         }
         const lastActivity = new Date(session.last_activity_at || session.last_seen_at || session.login_at || 0).getTime();
-        if (!Number.isFinite(lastActivity) || Date.now() - lastActivity >= INACTIVITY_TIMEOUT_MS) {
+        if (!isDispatcherSession && (!Number.isFinite(lastActivity) || Date.now() - lastActivity >= INACTIVITY_TIMEOUT_MS)) {
           const now = new Date().toISOString();
           await admin.from("staff_sessions").update({ logout_at: now, last_seen_at: now, end_reason: "inactivity_timeout" })
             .eq("id", sessionId).eq("user_id", actorId).is("logout_at", null);
@@ -223,7 +248,7 @@ Deno.serve(async (req: Request) => {
         }
         const lastActivity = new Date(session.last_activity_at || session.last_seen_at || 0).getTime();
         const nowMs = Date.now();
-        if (!Number.isFinite(lastActivity) || nowMs - lastActivity >= INACTIVITY_TIMEOUT_MS) {
+        if (!isDispatcherSession && (!Number.isFinite(lastActivity) || nowMs - lastActivity >= INACTIVITY_TIMEOUT_MS)) {
           const now = new Date(nowMs).toISOString();
           const { error } = await admin.from("staff_sessions").update({
             logout_at: now, last_seen_at: now, end_reason: "inactivity_timeout",
@@ -237,7 +262,7 @@ Deno.serve(async (req: Request) => {
         const { error } = await admin.from("staff_sessions").update(updates)
           .eq("id", sessionId).is("logout_at", null);
         if (error) return json({ error: "Unable to update session activity" }, 500);
-        return json({ success: true, branch_id: session.branch_id, inactivity_timeout_minutes: 30, activity_recorded: body.activity === true });
+        return json({ success: true, branch_id: session.branch_id, inactivity_timeout_minutes: isDispatcherSession ? null : 30, activity_recorded: body.activity === true });
       }
 
       const now = new Date().toISOString();
