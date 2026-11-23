@@ -135,8 +135,8 @@ function setNotice(message){notice.textContent=message;notice.classList.toggle('
 let dispatcherAuthClient=null,dispatcherSessionId=null,dispatcherHeartbeat=null,dispatcherAccessToken=null,dispatcherActivitySinceHeartbeat=true;
 const dispatcherLoginForm=document.getElementById('dispatcherLoginForm');
 function dispatcherAuthHeaders(){if(!dispatcherAccessToken)throw new Error('Please sign in to continue.');return {apikey:SUPABASE_KEY,Authorization:'Bearer '+dispatcherAccessToken,'Content-Type':'application/json'};}
-async function dispatcherSessionAction(action,sessionId,activity=false,restaurantSlug="",branchId=""){const response=await fetch(SUPABASE_URL+'/functions/v1/staff-session-action',{method:'POST',headers:dispatcherAuthHeaders(),body:JSON.stringify({action,...(sessionId?{session_id:sessionId}:{}),...( ['start','list_branches','switch_branch'].includes(action)&&restaurantSlug?{restaurant_slug:restaurantSlug}:{}),...(branchId?{branch_id:branchId}:{}),...(action==='heartbeat'?{activity:activity===true}:{})})});const data=await response.json().catch(()=>({}));if(!response.ok||data.success!==true)throw new Error(data.error||'Staff session could not be verified.');return data;}
-async function dispatcherSignOut(message=''){if(dispatcherHeartbeat)clearInterval(dispatcherHeartbeat);dispatcherHeartbeat=null;RESTAURANT_ID="";BRANCH_ID="";window.EDMEL_TENANT_CONTEXT=null;const branchSwitch=document.getElementById('dispatcherBranchSwitch');if(branchSwitch)branchSwitch.style.display='none';const old=dispatcherSessionId;dispatcherSessionId=null;if(old){try{await dispatcherSessionAction('end',old);}catch(_){}}dispatcherAccessToken=null;document.body.classList.remove('dispatcher-authenticated');if(dispatcherAuthClient){try{await dispatcherAuthClient.auth.signOut({scope:'local'});}catch(_){}}document.getElementById('dispatcherLogin').style.display='grid';document.getElementById('dispatcherPin').value='';document.getElementById('dispatcherLoginMessage').textContent=message;}
+async function dispatcherSessionAction(action,sessionId,activity=false,restaurantSlug="",branchId=""){const response=await fetch(SUPABASE_URL+'/functions/v1/staff-session-action',{method:'POST',headers:dispatcherAuthHeaders(),body:JSON.stringify({action,...(sessionId?{session_id:sessionId}:{}),...( ['start','list_branches','switch_branch'].includes(action)&&restaurantSlug?{restaurant_slug:restaurantSlug}:{}),...(branchId?{branch_id:branchId}:{}),...(action==='heartbeat'?{activity:activity===true}:{})})});const data=await response.json().catch(()=>({}));if(!response.ok||data.success!==true){const error=new Error(data.error||'Staff session could not be verified.');error.status=response.status;error.expired=data.expired===true;throw error;}return data;}
+async function dispatcherSignOut(message=''){if(dispatcherHeartbeat)clearInterval(dispatcherHeartbeat);dispatcherHeartbeat=null;RESTAURANT_ID="";BRANCH_ID="";window.EDMEL_TENANT_CONTEXT=null;const branchSwitch=document.getElementById('dispatcherBranchSwitch');if(branchSwitch)branchSwitch.style.display='none';const old=dispatcherSessionId;dispatcherSessionId=null;try{localStorage.removeItem('edmel_dispatcher_session_id');}catch(_){}if(old){try{await dispatcherSessionAction('end',old);}catch(_){}}dispatcherAccessToken=null;document.body.classList.remove('dispatcher-authenticated');if(dispatcherAuthClient){try{await dispatcherAuthClient.auth.signOut({scope:'local'});}catch(_){}}document.getElementById('dispatcherLogin').style.display='grid';document.getElementById('dispatcherPin').value='';document.getElementById('dispatcherLoginMessage').textContent=message;}
 async function api(path,options={}){const response=await fetch(SUPABASE_URL+'/rest/v1/'+path,{...options,headers:{...dispatcherAuthHeaders(),...(options.headers||{})}});const text=await response.text();let data;try{data=text?JSON.parse(text):null}catch{data=text}if(!response.ok)throw new Error(data?.message||data?.details||data?.hint||String(data||'Supabase request failed'));return data;}
 async function loadDispatcherAssignedBranches(restaurantSlug){
   try{
@@ -202,13 +202,17 @@ async function dispatcherLogin(event){
   window.EDMEL_TENANT_CONTEXT={restaurant_id:started.restaurant_id,branch_id:started.branch_id,restaurant_slug:restaurantSlug};
   window.dispatchEvent(new Event('edmel:tenant-context-ready'));
   dispatcherSessionId=started.session_id;
+  localStorage.setItem('edmel_dispatcher_session_id',dispatcherSessionId);
   await loadDispatcherAssignedBranches(restaurantSlug);
   document.getElementById('dispatcherLogin').style.display='none';
   document.body.classList.add('dispatcher-authenticated');
   dispatcherHeartbeat=setInterval(async()=>{
    const activity=dispatcherActivitySinceHeartbeat;dispatcherActivitySinceHeartbeat=false;
-   try{await dispatcherSessionAction('heartbeat',dispatcherSessionId,activity);}
-   catch(_){await dispatcherSignOut('Your session expired. Please sign in again.');}
+   try{await dispatcherSessionAction('heartbeat',dispatcherSessionId,activity);if(navigator.onLine)setNotice('');}
+   catch(error){
+    if(error.status===401||error.status===403||error.status===404||error.expired)await dispatcherSignOut('Your Dispatcher session is no longer active. Please sign in again.');
+    else setNotice('Connection interrupted. Your Dispatcher session is being retained; reconnecting automatically.');
+   }
   },45000);
   await loadOrders();
  }catch(error){
@@ -217,8 +221,42 @@ async function dispatcherLogin(event){
   try{await dispatcherAuthClient.auth.signOut({scope:'local'});}catch(_){}
  }finally{button.disabled=false;button.textContent='Sign In';}
 }
-if(window.supabase?.createClient){dispatcherAuthClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false}});}
+if(window.supabase?.createClient){dispatcherAuthClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'edmel-dispatcher-auth'}});}
+async function restoreDispatcherSession(){
+ try{
+  const {data,error}=await dispatcherAuthClient.auth.getSession();
+  if(error||!data?.session?.access_token)return;
+  dispatcherAccessToken=data.session.access_token;
+  const savedId=localStorage.getItem('edmel_dispatcher_session_id');
+  if(!savedId){await dispatcherAuthClient.auth.signOut({scope:'local'});dispatcherAccessToken=null;return;}
+  const restored=await dispatcherSessionAction('resume',savedId);
+  dispatcherSessionId=restored.session_id;RESTAURANT_ID=restored.restaurant_id;BRANCH_ID=restored.branch_id;
+  window.EDMEL_TENANT_CONTEXT={restaurant_id:restored.restaurant_id,branch_id:restored.branch_id,restaurant_slug:restored.restaurant_slug};
+  window.dispatchEvent(new Event('edmel:tenant-context-ready'));
+  await loadDispatcherAssignedBranches(restored.restaurant_slug);
+  document.getElementById('dispatcherLogin').style.display='none';
+  document.body.classList.add('dispatcher-authenticated');
+  dispatcherHeartbeat=setInterval(async()=>{
+   const activity=dispatcherActivitySinceHeartbeat;dispatcherActivitySinceHeartbeat=false;
+   try{await dispatcherSessionAction('heartbeat',dispatcherSessionId,activity);if(navigator.onLine)setNotice('');}
+   catch(error){
+    if(error.status===401||error.status===403||error.status===404||error.expired)await dispatcherSignOut('Your Dispatcher session is no longer active. Please sign in again.');
+    else setNotice('Connection interrupted. Your Dispatcher session is being retained; reconnecting automatically.');
+   }
+  },45000);
+  await loadOrders();
+ }catch(error){
+  console.warn('Dispatcher session restore is pending:',error);
+  if(error.status===401||error.status===403||error.status===404||error.expired){
+   try{localStorage.removeItem('edmel_dispatcher_session_id');await dispatcherAuthClient.auth.signOut({scope:'local'});}catch(_){}
+   dispatcherAccessToken=null;
+   document.getElementById('dispatcherLoginMessage').textContent='Your previous session is no longer active. Please sign in again.';
+  }else document.getElementById('dispatcherLoginMessage').textContent='Unable to verify the saved session because the connection is unavailable. Please reconnect and refresh.';
+ }
+}
+if(dispatcherAuthClient)restoreDispatcherSession();
 if(dispatcherLoginForm)dispatcherLoginForm.addEventListener('submit',dispatcherLogin);
+window.addEventListener('online',()=>{if(dispatcherSessionId)dispatcherSessionAction('heartbeat',dispatcherSessionId,false).then(()=>setNotice('')).catch(error=>{if(error.status===401||error.status===403||error.status===404||error.expired)dispatcherSignOut('Your Dispatcher session is no longer active. Please sign in again.');});});
 ['pointerdown','keydown','touchstart','click','input','change'].forEach(name=>document.addEventListener(name,()=>{if(dispatcherSessionId)dispatcherActivitySinceHeartbeat=true;},{capture:true,passive:true}));
 const menuButton=document.getElementById('dispatcherMenuButton'),menu=document.getElementById('dispatcherMenu'),drawerEl=document.getElementById('unresolvedDrawer'),backdrop=document.getElementById('unresolvedBackdrop');
 function closeMenu(){menu?.classList.remove('open');menuButton?.setAttribute('aria-expanded','false');}
