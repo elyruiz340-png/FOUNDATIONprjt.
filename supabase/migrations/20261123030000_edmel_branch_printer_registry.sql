@@ -28,7 +28,7 @@ ALTER TABLE public.restaurant_printer_devices
   REFERENCES public.restaurant_branches(id,restaurant_id)
   ON DELETE RESTRICT;
 
-DROP INDEX IF EXISTS public.unique_restaurant_device;
+ALTER TABLE public.restaurant_printer_devices DROP CONSTRAINT IF EXISTS unique_restaurant_device;
 CREATE UNIQUE INDEX IF NOT EXISTS unique_restaurant_branch_device
 ON public.restaurant_printer_devices(restaurant_id,branch_id,device_id);
 CREATE INDEX IF NOT EXISTS idx_printer_devices_branch
