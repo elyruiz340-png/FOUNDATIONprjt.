@@ -10376,13 +10376,28 @@ async function loadCashierMenuFromSupabase() {
     '<div class="loading" role="status">Loading menu items from Supabase...</div>';
 
   try {
+    const catalogContextResponse = await fetch(SUPABASE_URL + "/rest/v1/rpc/edmel_get_branch_menu_catalog_context", {
+      method: "POST",
+      headers: Object.assign({ "Content-Type": "application/json" }, menuRequestHeaders()),
+      body: JSON.stringify({
+        p_restaurant_id: getEDMELRestaurantId(),
+        p_branch_id: getEDMELBranchId()
+      })
+    });
+    const catalogContext = await catalogContextResponse.json().catch(function() { return {}; });
+    if (!catalogContextResponse.ok || !catalogContext || !catalogContext.catalog_branch_id) {
+      throw new Error(catalogContext.message || catalogContext.details || catalogContext.hint || "Could not resolve the menu catalog for this branch.");
+    }
+    const catalogBranchId = catalogContext.catalog_branch_id;
     const menuUrl = MENU_ITEMS_ENDPOINT +
       '?select=id,restaurant_id,category_id,name,price,is_available,sort_order,image_url,stock_product_id' +
       '&restaurant_id=eq.' + encodeURIComponent(getEDMELRestaurantId()) +
+      '&branch_id=eq.' + encodeURIComponent(catalogBranchId) +
       '&is_available=eq.true&order=sort_order.asc,name.asc';
     const categoriesUrl = MENU_CATEGORIES_ENDPOINT +
       '?select=id,restaurant_id,name,sort_order,is_active' +
       '&restaurant_id=eq.' + encodeURIComponent(getEDMELRestaurantId()) +
+      '&branch_id=eq.' + encodeURIComponent(catalogBranchId) +
       '&is_active=eq.true&order=sort_order.asc,name.asc';
 
     const results = await Promise.all([
