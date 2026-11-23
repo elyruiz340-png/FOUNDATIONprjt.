@@ -2204,6 +2204,27 @@ html[data-ui="glass"][data-glass-adj="1"] :is(
 .ui2-color-swatch[aria-pressed="true"]{outline:2px solid var(--ac);outline-offset:2px}
 .ui2-frost-presets{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 12px}
 </style>
+
+<style id="edmel-branch-implementation">
+.branch-wizard-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:14px 0 18px}
+.branch-wizard-step{padding:8px 5px;border:1px solid var(--bd);border-radius:10px;text-align:center;color:var(--mu);font-size:11px;line-height:1.35}
+.branch-wizard-step strong{display:block;font-size:12px;margin-bottom:2px}
+.branch-wizard-step.active{border-color:var(--ac);background:var(--gh);color:var(--tx)}
+.branch-wizard-step.done{border-color:var(--ok);color:var(--ok)}
+.branch-wizard-panel[hidden],.branch-review-panel[hidden]{display:none!important}
+.branch-wizard-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)}
+.branch-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.branch-review-item{padding:10px;border:1px solid var(--bd);border-radius:10px;min-width:0}
+.branch-review-item small{display:block;color:var(--mu);margin-bottom:3px}
+.branch-setting-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-top:10px}
+.branch-setting-actions .btn{text-align:left;white-space:normal;min-height:44px}
+.branch-json-editor{width:100%;min-height:260px;resize:vertical;font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2;white-space:pre;}
+.branch-json-preview{max-height:220px;overflow:auto;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.branch-impact-list{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.branch-impact-list span{padding:4px 8px;border:1px solid var(--bd);border-radius:99px;font-size:11px;color:var(--mu)}
+@media(max-width:560px){.branch-wizard-steps{gap:4px}.branch-wizard-step{font-size:9px;padding:7px 2px}.branch-review-grid{grid-template-columns:1fr}.branch-json-editor{min-height:210px}}
+</style>
+
 </head>
 <body class="locked">
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -2466,13 +2487,13 @@ const ADMIN_BRANCH_SETTING_GROUPS=[
 function adminBranchMenuModeControl(value='inherit',id='branchCreateMenuMode',disabled=false){
   return '<div class="fl" style="margin-top:12px"><label for="'+id+'">Menu Catalog</label><select id="'+id+'" '+(disabled?'disabled':'')+' style="width:100%;padding:9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)">'+
     '<option value="inherit" '+(value==='inherit'?'selected':'')+'>Inherit Main Branch Menu</option>'+
-    '<option value="override" '+(value==='override'?'selected':'')+'>Override — Editable Branch Copy (master sync not automatic yet)</option>'+
+    '<option value="override" '+(value==='override'?'selected':'')+'>Override — Editable Branch Copy (manual sync pending)</option>'+
     '<option value="independent" '+(value==='independent'?'selected':'')+'>Independent — Standalone Snapshot</option>'+
-    '</select><p class="note" style="margin:4px 0 0">Inherit uses the Main Branch catalog live. Override creates an editable branch copy; master catalog updates are not auto-applied yet. Independent keeps a standalone snapshot. Inventory definitions are copied with zero opening quantities; existing stock balances are never copied.</p></div>';
+    '</select><p class="note" style="margin:4px 0 0">Inherit uses the Main Branch catalog live. Override creates an editable branch copy; Main Branch updates require a reviewed manual sync. Independent keeps a standalone snapshot. Inventory definitions are copied with zero opening quantities; existing stock balances are never copied.</p></div>';
 }
-function adminBranchModeControls(modes={}){
+function adminBranchModeControls(modes={},groups=ADMIN_BRANCH_SETTING_GROUPS){
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px">'+
-    ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>{
+    groups.map(([key,label])=>{
       const value=['inherit','override','independent'].includes(modes[key])?modes[key]:'inherit';
       return '<div class="card" style="padding:10px;margin:0"><label for="branchMode_'+key+'" style="display:block;font-weight:650;margin-bottom:6px">'+esc(label)+'</label>'+
         '<select id="branchMode_'+key+'" style="width:100%;padding:9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)">'+
@@ -2488,6 +2509,137 @@ function readAdminBranchModes(){
     modes[key]=$('#branchMode_'+key)?.value||'inherit';
   });
   return modes;
+}
+
+let BRANCH_SETTINGS_EDITOR_BRANCH=null;
+let BRANCH_SETTINGS_EDITOR_GROUP='';
+let BRANCH_SETTINGS_EDITOR_CONFIG=null;
+let BRANCH_SETTINGS_EDITOR_REVIEW=null;
+
+function adminBranchSettingLabel(group){
+  return ADMIN_BRANCH_SETTING_GROUPS.find(x=>x[0]===group)?.[1]||group;
+}
+function adminBranchSettingPayloadHint(group){
+  const examples={
+    business_profile:{restaurant:{operating_hours:{}},business_settings:{country_code:'US',region:'',city:'',tax_registration_type:'NOT_SET'}},
+    tax:{rules:[{rule_name:'Sales Tax',tax_type:'sales_tax',rate:0,calculation_method:'exclusive',tax_scope:'all',effective_from:'2026-01-01',effective_to:null,is_active:false,notes:''}]},
+    service_charge:{rules:[{rule_name:'Service Charge',display_label:'Service Charge',charge_type:'percentage',rate:0,applies_to:['dine_in'],is_mandatory:false,is_active:false,effective_from:'2026-01-01',effective_to:null,tax_treatment:'not_configured',notes:''}]},
+    discounts_vouchers:{discounts:[],vouchers:[]},
+    payment_methods:{methods:[{method_key:'cash',display_name:'Cash',is_enabled:true,provider_name:null,fee_percent:0,fee_fixed:0,qr_image_url:null,instructions:null,sort_order:1}]},
+    receipt_settings:{settings:{},logo_url:null}
+  };
+  return examples[group]||{};
+}
+function adminBranchJsonChangedKeys(before,after){
+  const keys=[...new Set([...Object.keys(before||{}),...Object.keys(after||{})])];
+  return keys.filter(key=>JSON.stringify((before||{})[key])!==JSON.stringify((after||{})[key]));
+}
+async function openBranchSettingsEditor(branch,group){
+  if(CURRENT_AUTH_ROLE!=='owner'){
+    toast('Only the restaurant Owner can edit branch settings from Admin.',1);return;
+  }
+  if(!branch||!branch.is_active||!ADMIN_BRANCH_SETTING_GROUPS.some(x=>x[0]===group))return;
+  BRANCH_SETTINGS_EDITOR_BRANCH=branch;
+  BRANCH_SETTINGS_EDITOR_GROUP=group;
+  BRANCH_SETTINGS_EDITOR_CONFIG=null;
+  BRANCH_SETTINGS_EDITOR_REVIEW=null;
+  L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true"><div class="staff-focus-kicker">Multi-Branch Management</div><h3 class="staff-focus-title">Loading '+esc(adminBranchSettingLabel(group))+'…</h3><p class="staff-focus-description">Loading the current effective settings and version before editing.</p></section>';
+  try{
+    const {data,error}=await sb.rpc('edmel_get_branch_setting_config',{
+      p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branch.id,p_setting_group:group
+    });
+    if(error)throw error;
+    if(data?.success!==true)throw new Error('The current branch settings could not be confirmed.');
+    BRANCH_SETTINGS_EDITOR_CONFIG=data;
+    const effective=data.effective_data&&typeof data.effective_data==='object'?data.effective_data:{};
+    const mode=data.inheritance_mode||'inherit';
+    const currentJson=JSON.stringify(effective,null,2);
+    const warning=mode==='independent'
+      ? '<div class="msg ai" style="max-width:none">This branch currently uses an Independent snapshot. Saving an edited payload will explicitly convert this setting group to Override. Reset to Inherit remains available.</div>'
+      : mode==='inherit'
+        ? '<div class="msg ai" style="max-width:none">This group currently follows Main Branch. Saving an edited payload creates a branch-specific Override; it will no longer automatically follow Main Branch for this group.</div>'
+        : '<div class="msg ai" style="max-width:none">This group already uses Override. Saving replaces the current branch override payload. Unspecified fields are not silently deleted from the editor because the effective configuration is loaded below.</div>';
+    L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Branch settings editor" style="width:min(760px,94vw);max-height:88vh">'+
+      '<div class="staff-focus-kicker">Branch Settings Editor</div><div class="row"><div><h3 class="staff-focus-title">'+esc(adminBranchSettingLabel(group))+'</h3><p class="note" style="margin:3px 0 0">'+esc(branch.name)+' · Version '+Number(data.version||0)+'</p></div><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>'+
+      '<div class="branch-review-grid"><div class="branch-review-item"><small>Current mode</small><b>'+esc(mode.charAt(0).toUpperCase()+mode.slice(1))+'</b></div><div class="branch-review-item"><small>Effective source</small><b>'+(mode==='inherit'?'Main Branch':mode==='override'?'Branch override + Main fallback':'Independent snapshot')+'</b></div></div>'+warning+
+      '<p class="note">Edit the complete settings payload for this group. The database validates allowed fields and types before saving. Existing transactions and receipts are not recalculated.</p>'+
+      '<label for="branchSettingsJson" style="display:block;font-weight:650;margin:10px 0 6px">Settings Payload (JSON)</label><textarea id="branchSettingsJson" class="branch-json-editor" spellcheck="false">'+esc(currentJson)+'</textarea>'+
+      '<details style="margin-top:8px"><summary class="mu" style="cursor:pointer">Show expected payload structure</summary><pre class="branch-json-preview">'+esc(JSON.stringify(adminBranchSettingPayloadHint(group),null,2))+'</pre></details>'+
+      '<div class="fl" style="margin-top:10px"><label for="branchSettingsReason">Reason for Change</label><input id="branchSettingsReason" maxlength="500" placeholder="Optional — recorded in the branch settings history"></div>'+
+      '<div id="branchSettingsReview" class="card" style="margin-top:10px;padding:12px" hidden></div>'+
+      '<div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn" data-a="branch-settings-reset">Reset to Inherit</button><button class="btn pri" data-a="branch-settings-review">Review Changes</button></div>'+
+      '</section>';
+  }catch(error){closeL();toast(error?.message||'Unable to load branch settings.',1);}
+}
+function reviewBranchSettingsPayload(){
+  const config=BRANCH_SETTINGS_EDITOR_CONFIG;
+  if(!config||!BRANCH_SETTINGS_EDITOR_BRANCH)return;
+  let payload;
+  try{payload=JSON.parse($('#branchSettingsJson')?.value||'');}
+  catch(_){toast('Enter valid JSON before reviewing the branch settings.',1);return;}
+  if(!payload||typeof payload!=='object'||Array.isArray(payload)||JSON.stringify(payload).length>65536){
+    toast('The settings payload must be a JSON object within the supported size.',1);return;
+  }
+  if(!Object.keys(payload).length){toast('The override payload cannot be empty. Use Reset to Inherit instead.',1);return;}
+  const before=config.effective_data&&typeof config.effective_data==='object'?config.effective_data:{};
+  const changed=adminBranchJsonChangedKeys(before,payload);
+  BRANCH_SETTINGS_EDITOR_REVIEW=payload;
+  const panel=$('#branchSettingsReview');
+  if(!panel)return;
+  const mode=config.inheritance_mode||'inherit';
+  panel.hidden=false;
+  panel.innerHTML='<div class="row"><b>Review Branch Settings Change</b><span class="bd wn">'+(mode==='independent'?'Independent → Override':mode==='inherit'?'Inherit → Override':'Override update')+'</span></div>'+
+    '<p class="note">'+(changed.length?changed.length+' top-level setting section(s) will change.':'No top-level differences detected; saving will still create or refresh the Override version.')+'</p>'+
+    '<div class="branch-impact-list">'+(changed.length?changed.map(k=>'<span>'+esc(k)+'</span>').join(''):'<span>No detected key changes</span>')+'</div>'+
+    '<p class="note">The change applies only to '+esc(BRANCH_SETTINGS_EDITOR_BRANCH.name)+' and is version-checked. Existing transaction history is preserved.</p>'+
+    '<details><summary style="cursor:pointer">Preview submitted payload</summary><pre class="branch-json-preview">'+esc(JSON.stringify(payload,null,2))+'</pre></details>'+
+    '<div class="staff-focus-actions"><button class="btn" data-a="branch-settings-review-cancel">Back to Editor</button><button class="btn pri" data-a="branch-settings-confirm">Confirm & Save Override</button></div>';
+}
+async function saveBranchSettingsOverride(){
+  const config=BRANCH_SETTINGS_EDITOR_CONFIG,branch=BRANCH_SETTINGS_EDITOR_BRANCH,group=BRANCH_SETTINGS_EDITOR_GROUP,payload=BRANCH_SETTINGS_EDITOR_REVIEW;
+  if(!config||!branch||!payload)return;
+  const button=$('[data-a="branch-settings-confirm"]');if(button){button.disabled=true;button.textContent='Saving…';}
+  try{
+    const {data,error}=await sb.rpc('edmel_submit_branch_setting_request',{
+      p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branch.id,p_setting_group:group,
+      p_request_type:'set_override',p_proposed_data:payload,p_base_version:Number(config.version||0),
+      p_reason:$('#branchSettingsReason')?.value.trim()||null
+    });
+    if(error)throw error;
+    if(data?.success!==true)throw new Error(data?.error||'The branch settings change was not confirmed.');
+    if(data.status==='pending'){
+      closeL();toast('Branch settings change submitted for approval. It is not active until approved.');return;
+    }
+    if(data.status!=='saved')throw new Error('The database did not confirm a saved branch settings version.');
+    const verified=await sb.rpc('edmel_get_branch_setting_config',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branch.id,p_setting_group:group});
+    if(verified.error)throw verified.error;
+    if(verified.data?.inheritance_mode!=='override'||Number(verified.data?.version||0)!==Number(data.version)){
+      throw new Error('The save was accepted, but the refreshed branch settings version could not be verified. Refresh the branch before making another change.');
+    }
+    closeL();toast(adminBranchSettingLabel(group)+' saved for '+branch.name+'.');
+  }catch(error){toast(error?.message||'Unable to save branch settings.',1);if(button){button.disabled=false;button.textContent='Confirm & Save Override';}}
+}
+async function resetBranchSettingsToInherit(){
+  const config=BRANCH_SETTINGS_EDITOR_CONFIG,branch=BRANCH_SETTINGS_EDITOR_BRANCH,group=BRANCH_SETTINGS_EDITOR_GROUP;
+  if(!config||!branch)return;
+  if((config.inheritance_mode||'inherit')==='inherit'){toast('This setting group already inherits Main Branch.');return;}
+  if(!confirm('Reset '+adminBranchSettingLabel(group)+' for '+branch.name+' to Main Branch inheritance? The branch override snapshot for this group will be cleared. Historical transactions remain unchanged.'))return;
+  const button=$('[data-a="branch-settings-reset"]');if(button){button.disabled=true;button.textContent='Resetting…';}
+  try{
+    const {data,error}=await sb.rpc('edmel_submit_branch_setting_request',{
+      p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branch.id,p_setting_group:group,
+      p_request_type:'reset_to_inherit',p_proposed_data:{},p_base_version:Number(config.version||0),
+      p_reason:$('#branchSettingsReason')?.value.trim()||'Owner reset branch setting to inherit Main Branch'
+    });
+    if(error)throw error;
+    if(data?.success!==true)throw new Error(data?.error||'The reset was not confirmed.');
+    if(data.status==='pending'){closeL();toast('Reset request submitted for approval. The current setting remains active until approved.');return;}
+    if(data.status!=='saved')throw new Error('The database did not confirm the reset.');
+    const verified=await sb.rpc('edmel_get_branch_setting_config',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branch.id,p_setting_group:group});
+    if(verified.error)throw verified.error;
+    if(verified.data?.inheritance_mode!=='inherit'||Number(verified.data?.version||0)!==Number(data.version))throw new Error('The reset was accepted, but the refreshed mode could not be verified.');
+    closeL();toast(adminBranchSettingLabel(group)+' now inherits Main Branch settings.');
+  }catch(error){toast(error?.message||'Unable to reset branch settings.',1);if(button){button.disabled=false;button.textContent='Reset to Inherit';}}
 }
 
 function renderAdminBranchesPage(){
@@ -2530,8 +2682,9 @@ function renderAdminBranchesPage(){
   }
   const canManageBranches=CURRENT_AUTH_ROLE==='owner';
   if(selected&&canManageBranches&&selected.is_active){
+    const settingButtons=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<button class="btn" type="button" data-a="branch-settings-edit" data-id="'+esc(selected.id)+'" data-group="'+esc(key)+'">'+esc(label)+'</button>').join('');
     detail=detail.replace('<h3 style="margin-top:14px">Staff assignments</h3>',
-      '<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-a="branch-edit" data-id="'+esc(selected.id)+'">Edit Branch</button></div><h3 style="margin-top:14px">Staff assignments</h3>');
+      '<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-a="branch-edit" data-id="'+esc(selected.id)+'">Edit Branch</button></div><h3 style="margin-top:14px">Branch Settings</h3><p class="note">Open a settings group to review its effective configuration, create a branch override, or reset it to Main Branch inheritance.</p><div class="branch-setting-actions">'+settingButtons+'</div><h3 style="margin-top:18px">Staff assignments</h3>');
   }
   const deactivateButton=canManageBranches&&selected&&selected.is_active&&!selected.is_default&&active.length>1
     ? '<button class="btn" data-a="branch-deactivate" data-id="'+esc(selected.id)+'">Deactivate Branch</button>' : '';
@@ -2574,21 +2727,60 @@ async function loadAdminBranches(){
   }
 }
 
+let ADMIN_BRANCH_CREATE_STEP=0;
+let ADMIN_BRANCH_EDIT_CURRENT_MODES={};
+function setAdminBranchCreateStep(step){
+  const max=4;ADMIN_BRANCH_CREATE_STEP=Math.max(0,Math.min(max,Number(step)||0));
+  for(let i=0;i<=max;i++){
+    const panel=$('#branchCreateStep'+i);if(panel)panel.hidden=i!==ADMIN_BRANCH_CREATE_STEP;
+    const marker=$('[data-branch-step="'+i+'"]');if(marker){marker.classList.toggle('active',i===ADMIN_BRANCH_CREATE_STEP);marker.classList.toggle('done',i<ADMIN_BRANCH_CREATE_STEP);}
+  }
+  const back=$('[data-a="branch-create-back"]'),next=$('[data-a="branch-create-next"]'),create=$('[data-a="branch-create-submit"]');
+  if(back)back.hidden=ADMIN_BRANCH_CREATE_STEP===0;
+  if(next)next.hidden=ADMIN_BRANCH_CREATE_STEP===4;
+  if(create)create.hidden=ADMIN_BRANCH_CREATE_STEP!==4;
+  if(ADMIN_BRANCH_CREATE_STEP===4)renderAdminBranchCreateReview();
+}
+function renderAdminBranchCreateReview(){
+  const panel=$('#branchCreateReview');if(!panel)return;
+  const modes=readAdminBranchModes();
+  const labels=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<div class="branch-review-item"><small>'+esc(label)+'</small><b>'+esc(modes[key]||'inherit')+'</b></div>').join('');
+  panel.innerHTML='<div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+esc($('#branchCreateName')?.value.trim()||'Not entered')+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+esc($('#branchCreateCode')?.value.trim().toUpperCase()||'Not entered')+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+esc($('#branchCreateTimezone')?.value.trim()||'Restaurant timezone')+'</b></div><div class="branch-review-item"><small>Address</small><b>'+esc($('#branchCreateAddress')?.value.trim()||'Not provided')+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+esc($('#branchCreateMenuMode')?.selectedOptions?.[0]?.textContent||'Inherit Main Branch Menu')+'</b></div></div><h4 style="margin:14px 0 6px">Business & Operations Modes</h4><div class="branch-review-grid">'+labels+'</div><div class="msg ai" style="max-width:none;margin-top:12px">Inventory definitions are provisioned with zero opening quantities. Existing stock balances, transactions, staff assignments, tables, QR tokens and printer registrations are not copied. Branch-specific setting values can be configured after creation in Branch Settings.</div>';
+}
 function openBranchCreateModal(){
-  L.innerHTML=`<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Add branch">
+  if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can create branches.',1);return;}
+  ADMIN_BRANCH_CREATE_STEP=0;
+  L.innerHTML=`<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Add branch" style="width:min(760px,94vw);max-height:88vh">
     <div class="staff-focus-kicker">Multi-Branch Management</div>
     <div class="row"><h3 class="staff-focus-title">Add Branch</h3><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>
-    <p class="staff-focus-description">Create a branch under this restaurant. The Owner will automatically have access. New branches start with inherited master settings unless you choose another mode below.</p>
-    <div class="fl"><label for="branchCreateName">Branch Name</label><input id="branchCreateName" maxlength="80" placeholder="e.g. Downtown Branch"></div>
-    <div class="fl"><label for="branchCreateCode">Branch Code</label><input id="branchCreateCode" maxlength="20" placeholder="e.g. DOWNTOWN"></div>
-    <div class="fl"><label for="branchCreateTimezone">Timezone</label><input id="branchCreateTimezone" maxlength="80" placeholder="Leave blank to use restaurant timezone"></div>
-    <div class="fl"><label for="branchCreateAddress">Branch Address</label><input id="branchCreateAddress" maxlength="240" placeholder="Branch address (optional)"></div>
-    <div style="margin-top:16px"><b>Settings Inheritance</b><p class="note" style="margin:5px 0">Inherit follows master settings. Override allows branch-specific values while unspecified values fall back to master. Independent starts with a snapshot of current master settings and stops following future master changes.</p></div>
-    ${adminBranchModeControls({})}
-    ${adminBranchMenuModeControl('inherit','branchCreateMenuMode')}
-    <div class="card" style="margin-top:12px;padding:11px"><b>Operational setup</b><p class="note" style="margin:5px 0 0">The selected menu mode controls catalog inheritance. Inventory definitions are provisioned with zero opening quantities. Tables and QR codes must be created for this branch; printer devices must be registered separately.</p></div>
-    <div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-create-submit">Add Branch</button></div>
+    <p class="staff-focus-description">Create a branch with its own identity and choose how its menu, inventory definitions and business settings relate to Main Branch.</p>
+    <div class="branch-wizard-steps"><div class="branch-wizard-step active" data-branch-step="0"><strong>1</strong>Branch Info</div><div class="branch-wizard-step" data-branch-step="1"><strong>2</strong>Menu & Inventory</div><div class="branch-wizard-step" data-branch-step="2"><strong>3</strong>Business Ops</div><div class="branch-wizard-step" data-branch-step="3"><strong>4</strong>Promotions & Payments</div><div class="branch-wizard-step" data-branch-step="4"><strong>5</strong>Review</div></div>
+    <div id="branchCreateStep0" class="branch-wizard-panel">
+      <h4>Branch Information</h4>
+      <div class="fl"><label for="branchCreateName">Branch Name *</label><input id="branchCreateName" maxlength="80" placeholder="e.g. Downtown Branch"></div>
+      <div class="fl"><label for="branchCreateCode">Branch Code *</label><input id="branchCreateCode" maxlength="20" placeholder="e.g. DOWNTOWN"></div>
+      <div class="fl"><label for="branchCreateTimezone">Timezone</label><input id="branchCreateTimezone" maxlength="80" placeholder="Leave blank to use restaurant timezone"></div>
+      <div class="fl"><label for="branchCreateAddress">Branch Address</label><input id="branchCreateAddress" maxlength="240" placeholder="Branch address (optional)"></div>
+    </div>
+    <div id="branchCreateStep1" class="branch-wizard-panel" hidden>
+      <h4>Menu & Inventory</h4>
+      ${adminBranchMenuModeControl('inherit','branchCreateMenuMode')}
+      <div class="card" style="margin-top:12px;padding:12px"><b>Inventory protection</b><p class="note" style="margin:5px 0 0">New branch inventory definitions are provisioned from the selected source catalog with zero opening quantities. Existing stock balances are never copied. Tables, QR codes and printers are registered separately for each branch.</p></div>
+    </div>
+    <div id="branchCreateStep2" class="branch-wizard-panel" hidden>
+      <h4>Business Operations</h4><p class="note">Choose how the branch will use Main Branch business profile, operating hours, tax and service charge settings.</p>
+      ${adminBranchModeControls({},ADMIN_BRANCH_SETTING_GROUPS.slice(0,3))}
+    </div>
+    <div id="branchCreateStep3" class="branch-wizard-panel" hidden>
+      <h4>Promotions & Payments</h4><p class="note">Choose how discounts, vouchers, payment methods and receipt settings will be inherited or maintained by this branch.</p>
+      ${adminBranchModeControls({},ADMIN_BRANCH_SETTING_GROUPS.slice(3))}
+    </div>
+    <div id="branchCreateStep4" class="branch-wizard-panel" hidden>
+      <h4>Review & Create</h4><div id="branchCreateReview"></div>
+    </div>
+    <div class="branch-wizard-nav"><button class="btn" data-a="branch-create-back" hidden>Back</button><div class="sp"></div><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-create-next">Continue</button><button class="btn pri" data-a="branch-create-submit" hidden>Create Branch</button></div>
   </section>`;
+  setAdminBranchCreateStep(0);
 }
 async function openBranchEditModal(branch){
   if(!branch||!branch.is_active){toast('Only active branches can be edited.',1);return;}
@@ -2602,6 +2794,7 @@ async function openBranchEditModal(branch){
       return [key,data?.inheritance_mode||'inherit'];
     }));
     const modes=Object.fromEntries(results);
+    ADMIN_BRANCH_EDIT_CURRENT_MODES={...modes};
     L.innerHTML=`<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Edit branch">
       <div class="staff-focus-kicker">Multi-Branch Management</div>
       <div class="row"><h3 class="staff-focus-title">Edit Branch</h3><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>
@@ -2614,8 +2807,9 @@ async function openBranchEditModal(branch){
       <div style="margin-top:16px"><b>Settings Inheritance</b><p class="note" style="margin:5px 0">Inherit follows master settings. Override keeps branch-specific values and uses master values as fallback. Independent preserves a standalone snapshot. Switching to Independent snapshots the current effective settings.</p></div>
       ${adminBranchModeControls(modes)}
       ${adminBranchMenuModeControl(branch.menu_catalog_mode||'inherit','branchEditMenuMode',branch.is_default===true)}
-      <div class="card" style="margin-top:12px;padding:11px"><b>Operational data protection</b><p class="note" style="margin:5px 0 0">This edit does not move historical transactions, staff access, tables or QR tokens. Menu mode changes may create a branch-specific catalog copy; stock quantities are never copied.</p></div>
-      <div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-edit-submit">Save Changes</button></div>
+      <div class="card" style="margin-top:12px;padding:11px"><b>Operational data protection</b><p class="note" style="margin:5px 0 0">This edit does not move historical transactions, staff access, tables or QR tokens. Menu mode changes may initialize a branch catalog copy and add missing inventory definitions with zero quantities. Existing branch catalog rows are not overwritten automatically.</p></div>
+      <div id="branchEditReview" class="card" style="margin-top:10px;padding:12px" hidden></div>
+      <div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-edit-review">Review Changes</button></div>
     </section>`;
   }catch(error){
     closeL();toast(error?.message||'Unable to load branch settings.',1);
@@ -2626,6 +2820,16 @@ const A={
 'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';render()},
 'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
 addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can create branches.',1);return;}openBranchCreateModal()},
+'branch-create-next':()=>{
+  if(ADMIN_BRANCH_CREATE_STEP===0){const name=$('#branchCreateName')?.value.trim()||'',code=$('#branchCreateCode')?.value.trim().toUpperCase()||'';if(!name||!code){toast('Enter the branch name and branch code before continuing.',1);return;}if(!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code)){toast('Branch code must contain 2 to 20 letters, numbers, underscores or hyphens.',1);return;}}
+  setAdminBranchCreateStep(ADMIN_BRANCH_CREATE_STEP+1);
+},
+'branch-create-back':()=>setAdminBranchCreateStep(ADMIN_BRANCH_CREATE_STEP-1),
+'branch-settings-edit':t=>{const branch=ADMIN_BRANCH_ROWS.find(x=>x.id===(t.dataset.id||ADMIN_BRANCH_SELECTED_ID));if(branch)openBranchSettingsEditor(branch,t.dataset.group||'');},
+'branch-settings-review':()=>reviewBranchSettingsPayload(),
+'branch-settings-review-cancel':()=>{BRANCH_SETTINGS_EDITOR_REVIEW=null;const panel=$('#branchSettingsReview');if(panel)panel.hidden=true;},
+'branch-settings-confirm':()=>saveBranchSettingsOverride(),
+'branch-settings-reset':()=>resetBranchSettingsToInherit(),
 'branch-create-submit':async t=>{
   const name=$('#branchCreateName')?.value.trim()||'';
   const code=$('#branchCreateCode')?.value.trim().toUpperCase()||'';
@@ -2653,6 +2857,19 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
   const branch=ADMIN_BRANCH_ROWS.find(x=>x.id===(t.dataset.id||ADMIN_BRANCH_SELECTED_ID));
   if(branch)openBranchEditModal(branch);
 },
+'branch-edit-review':()=>{
+  const id=$('#branchEditId')?.value||'',branch=ADMIN_BRANCH_ROWS.find(x=>x.id===id);if(!branch)return;
+  const name=$('#branchEditName')?.value.trim()||'',code=$('#branchEditCode')?.value.trim().toUpperCase()||'';
+  if(!name||!code||!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code)){toast('Enter a valid branch name and a branch code of 2 to 20 letters, numbers, underscores or hyphens.',1);return;}
+  const currentModes=ADMIN_BRANCH_EDIT_CURRENT_MODES||{},nextModes=readAdminBranchModes();
+  const panel=$('#branchEditReview');if(!panel)return;
+  const modeRows=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<div class="branch-review-item"><small>'+esc(label)+'</small><b>'+esc(currentModes[key]||'inherit')+' → '+esc(nextModes[key]||'inherit')+'</b></div>').join('');
+  const menuNext=$('#branchEditMenuMode')?.value||'inherit';
+  panel.hidden=false;
+  panel.innerHTML='<div class="row"><b>Review Branch Changes</b><span class="bd wn">Confirmation required</span></div><div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+esc(branch.name)+' → '+esc(name)+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+esc(branch.code)+' → '+esc(code)+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+esc(branch.timezone||'Restaurant default')+' → '+esc($('#branchEditTimezone')?.value.trim()||'Restaurant default')+'</b></div><div class="branch-review-item"><small>Address</small><b>'+esc(branch.address||'Not provided')+' → '+esc($('#branchEditAddress')?.value.trim()||'Not provided')+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+esc(branch.menu_catalog_mode||'inherit')+' → '+esc(menuNext)+'</b></div></div><h4 style="margin:14px 0 6px">Selected Settings Modes</h4><div class="branch-review-grid">'+modeRows+'</div><div class="msg ai" style="max-width:none;margin-top:12px">Mode changes affect only future configuration resolution for this branch. Switching to Independent snapshots the current effective settings. Switching to Inherit resumes Main Branch settings. Existing orders, payments, receipts, staff assignments, tables, QR tokens and stock balances are preserved. Menu catalog synchronization is not included in this save; it will be handled through a separate reviewed sync workflow.</div><div class="staff-focus-actions"><button class="btn" data-a="branch-edit-review-cancel">Back to Edit</button><button class="btn pri" data-a="branch-edit-confirm">Confirm & Save Changes</button></div>';
+},
+'branch-edit-review-cancel':()=>{const panel=$('#branchEditReview');if(panel)panel.hidden=true;},
+'branch-edit-confirm':t=>A['branch-edit-submit'](t),
 'branch-edit-submit':async t=>{
   const id=$('#branchEditId')?.value||'';
   const name=$('#branchEditName')?.value.trim()||'';
