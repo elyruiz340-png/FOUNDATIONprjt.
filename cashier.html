@@ -11725,10 +11725,11 @@ async function loadCashierReceiptSettings() {
   }
 
   const [sharedResult, deviceResult] = await Promise.all([
-    cashierAuthClient.from("restaurant_receipt_settings")
-      .select("settings,logo_url")
-      .eq("restaurant_id", getEDMELRestaurantId())
-      .maybeSingle(),
+    cashierAuthClient.rpc("edmel_get_branch_setting_config", {
+      p_restaurant_id: getEDMELRestaurantId(),
+      p_branch_id: getEDMELBranchId(),
+      p_setting_group: "receipt_settings"
+    }),
     cashierAuthClient.from("restaurant_printer_devices")
       .select("printer_name,printer_model,connection_type,paper_width,custom_width_mm,is_active")
       .eq("restaurant_id", getEDMELRestaurantId())
@@ -11737,11 +11738,13 @@ async function loadCashierReceiptSettings() {
   ]);
   if (sharedResult.error) throw sharedResult.error;
   if (deviceResult.error) throw deviceResult.error;
+  if (!sharedResult.data?.success) throw new Error("Branch receipt settings could not be resolved.");
 
-  const shared = sharedResult.data?.settings || {};
+  const sharedData = sharedResult.data.effective_data || {};
+  const shared = sharedData.settings || {};
   const device = deviceResult.data || {};
   const config = Object.assign({}, fallback, shared, {
-    logo: sharedResult.data?.logo_url || shared.logo || "",
+    logo: sharedData.logo_url || shared.logo || "",
     printerName: device.printer_name || "",
     printerModel: device.printer_model || "",
     connection: device.connection_type || shared.connection || "browser",
