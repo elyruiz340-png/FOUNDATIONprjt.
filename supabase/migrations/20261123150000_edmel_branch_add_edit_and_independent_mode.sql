@@ -73,7 +73,7 @@ $old$
         or v_override_data='{}'::jsonb then
     raise exception 'The branch setting payload is invalid or empty' using errcode='22023';
   end if;
-$new$,
+$old$,
 $new$
   if p_inheritance_mode='inherit' then
     v_override_data := '{}'::jsonb;
@@ -106,7 +106,7 @@ $old$
   v_effective:=case when v_mode='override'
     then private.edmel_jsonb_deep_merge(coalesce(v_master,'{}'::jsonb),v_data)
     else coalesce(v_master,'{}'::jsonb) end;
-$new$,
+$old$,
 $new$
   v_effective:=case
     when v_mode='independent' then v_data
