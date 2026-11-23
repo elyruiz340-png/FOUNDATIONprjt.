@@ -22,6 +22,10 @@ BEGIN
       AND rt.is_active=true
       AND rt.is_locked=false
     LIMIT 1;
+
+    IF v_table_id IS NULL THEN
+      RAISE EXCEPTION 'The selected table is not active for this restaurant';
+    END IF;
   END IF;
 $old$;
 
