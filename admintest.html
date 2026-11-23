@@ -2611,7 +2611,7 @@ function adminBranchRenderVisualForm(group,data){
   d.restaurant=d.restaurant||{};d.business_settings=d.business_settings||{};
   const a=d.restaurant,b=d.business_settings;
   return '<div class="branch-visual-form"><section><h4>Restaurant details</h4><div class="branch-form-grid">'+[
-   ['restaurant.name','Restaurant name','text',a.name],['restaurant.email','Email','email',a.email],['restaurant.contact_number','Contact number','text',a.contact_number],['restaurant.address','Address','text',a.address],['restaurant.website','Website','url',a.website],['restaurant.logo_url','Logo URL','url',a.logo_url],['restaurant.currency','Currency','text',a.currency],['restaurant.timezone','Timezone','text',a.timezone],['restaurant.tax_rate','Default tax rate','number',a.tax_rate],['restaurant.tip_enabled','Tips enabled','boolean',a.tip_enabled],['restaurant.online_payment_enabled','Online payments','boolean',a.online_payment_enabled]
+   ['restaurant.name','Restaurant name','text',a.name],['restaurant.email','Email','email',a.email],['restaurant.contact_number','Contact number','text',a.contact_number],['restaurant.address','Address (edit in branch details)','text',a.address],['restaurant.website','Website','url',a.website],['restaurant.logo_url','Logo URL','url',a.logo_url],['restaurant.currency','Currency','text',a.currency],['restaurant.timezone','Timezone','text',a.timezone],['restaurant.tax_rate','Default tax rate','number',a.tax_rate],['restaurant.tip_enabled','Tips enabled','boolean',a.tip_enabled],['restaurant.online_payment_enabled','Online payments','boolean',a.online_payment_enabled]
   ].map(f=>adminBranchFormField(f[0],f[1],f[2],f[3])).join('')+'</div></section><section><h4>Business location</h4><div class="branch-form-grid">'+[
    ['business_settings.country_code','Country code','text',b.country_code],['business_settings.region','State / Region','text',b.region],['business_settings.city','City','text',b.city],['business_settings.tax_registration_type','Tax registration','select',b.tax_registration_type,['NOT_SET','VAT','NON_VAT','TAX_EXEMPT']]
   ].map(f=>adminBranchFormField(f[0],f[1],f[2],f[3],f[4])).join('')+'</div></section></div>';
@@ -2978,6 +2978,18 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
 'branch-settings-review-cancel':()=>{BRANCH_SETTINGS_EDITOR_REVIEW=null;const panel=$('#branchSettingsReview');if(panel)panel.hidden=true;},
 'branch-settings-confirm':()=>saveBranchSettingsOverride(),
 'branch-settings-reset':()=>resetBranchSettingsToInherit(),
+'branch-settings-add-row':t=>{
+ const list=t.dataset.list;if(!BRANCH_SETTINGS_EDITOR_DRAFT||!['rules','discounts','vouchers','methods'].includes(list))return;
+ if(!Array.isArray(BRANCH_SETTINGS_EDITOR_DRAFT[list]))BRANCH_SETTINGS_EDITOR_DRAFT[list]=[];
+ BRANCH_SETTINGS_EDITOR_DRAFT[list].push(adminBranchNewRow(list));
+ const panel=$('.branch-visual-form-wrap');if(panel)panel.innerHTML=adminBranchRenderVisualForm(BRANCH_SETTINGS_EDITOR_GROUP,BRANCH_SETTINGS_EDITOR_DRAFT);
+},
+'branch-settings-remove-row':t=>{
+ const list=t.dataset.list,index=Number(t.dataset.index);
+ if(!Array.isArray(BRANCH_SETTINGS_EDITOR_DRAFT?.[list])||!Number.isInteger(index)||index<0||index>=BRANCH_SETTINGS_EDITOR_DRAFT[list].length)return;
+ BRANCH_SETTINGS_EDITOR_DRAFT[list].splice(index,1);
+ const panel=$('.branch-visual-form-wrap');if(panel)panel.innerHTML=adminBranchRenderVisualForm(BRANCH_SETTINGS_EDITOR_GROUP,BRANCH_SETTINGS_EDITOR_DRAFT);
+},
 'branch-create-submit':async t=>{
   const name=$('#branchCreateName')?.value.trim()||'';
   const code=$('#branchCreateCode')?.value.trim().toUpperCase()||'';
