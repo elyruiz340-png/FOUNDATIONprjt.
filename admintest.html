@@ -2466,9 +2466,9 @@ const ADMIN_BRANCH_SETTING_GROUPS=[
 function adminBranchMenuModeControl(value='inherit',id='branchCreateMenuMode',disabled=false){
   return '<div class="fl" style="margin-top:12px"><label for="'+id+'">Menu Catalog</label><select id="'+id+'" '+(disabled?'disabled':'')+' style="width:100%;padding:9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)">'+
     '<option value="inherit" '+(value==='inherit'?'selected':'')+'>Inherit Main Branch Menu</option>'+
-    '<option value="override" '+(value==='override'?'selected':'')+'>Override — Editable Branch Copy</option>'+
+    '<option value="override" '+(value==='override'?'selected':'')+'>Override — Editable Branch Copy (manual sync review)</option>'+
     '<option value="independent" '+(value==='independent'?'selected':'')+'>Independent — Standalone Snapshot</option>'+
-    '</select><p class="note" style="margin:4px 0 0">Inherit uses the Main Branch catalog live. Override and Independent create a branch-specific copy. Inventory definitions are copied with zero opening quantities; existing stock balances are never copied.</p></div>';
+    '</select><p class="note" style="margin:4px 0 0">Inherit uses the Main Branch catalog live. Override creates an editable branch copy; master catalog updates are not auto-applied yet. Independent keeps a standalone snapshot. Inventory definitions are copied with zero opening quantities; existing stock balances are never copied.</p></div>';
 }
 function adminBranchModeControls(modes={}){
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px">'+
@@ -2586,7 +2586,7 @@ function openBranchCreateModal(){
     <div style="margin-top:16px"><b>Settings Inheritance</b><p class="note" style="margin:5px 0">Inherit follows master settings. Override allows branch-specific values while unspecified values fall back to master. Independent starts with a snapshot of current master settings and stops following future master changes.</p></div>
     ${adminBranchModeControls({})}
     ${adminBranchMenuModeControl('inherit','branchCreateMenuMode')}
-    <div class="card" style="margin-top:12px;padding:11px"><b>Operational setup</b><p class="note" style="margin:5px 0 0">Menu items, inventory, tables and QR codes, and printer devices are branch-level operational setup. They will not be copied or changed by this form.</p></div>
+    <div class="card" style="margin-top:12px;padding:11px"><b>Operational setup</b><p class="note" style="margin:5px 0 0">The selected menu mode controls catalog inheritance. Inventory definitions are provisioned with zero opening quantities. Tables and QR codes must be created for this branch; printer devices must be registered separately.</p></div>
     <div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-create-submit">Add Branch</button></div>
   </section>`;
 }
@@ -2605,7 +2605,7 @@ async function openBranchEditModal(branch){
     L.innerHTML=`<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Edit branch">
       <div class="staff-focus-kicker">Multi-Branch Management</div>
       <div class="row"><h3 class="staff-focus-title">Edit Branch</h3><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>
-      <p class="staff-focus-description">Update this branch's identity and settings inheritance. Existing orders, payments, staff assignments, tables and stock records will not be moved or deleted.</p>
+      <p class="staff-focus-description">Update this branch's identity and settings inheritance. Existing orders, payments, staff assignments, tables and stock balances will not be moved or deleted. Changing menu mode may initialize a branch catalog copy and add missing inventory definitions with zero quantities.</p>
       <input type="hidden" id="branchEditId" value="${esc(branch.id)}">
       <div class="fl"><label for="branchEditName">Branch Name</label><input id="branchEditName" maxlength="80" value="${esc(branch.name||'')}"></div>
       <div class="fl"><label for="branchEditCode">Branch Code</label><input id="branchEditCode" maxlength="20" value="${esc(branch.code||'')}"></div>
@@ -2614,7 +2614,7 @@ async function openBranchEditModal(branch){
       <div style="margin-top:16px"><b>Settings Inheritance</b><p class="note" style="margin:5px 0">Inherit follows master settings. Override keeps branch-specific values and uses master values as fallback. Independent preserves a standalone snapshot. Switching to Independent snapshots the current effective settings.</p></div>
       ${adminBranchModeControls(modes)}
       ${adminBranchMenuModeControl(branch.menu_catalog_mode||'inherit','branchEditMenuMode',branch.is_default===true)}
-      <div class="card" style="margin-top:12px;padding:11px"><b>Operational data protection</b><p class="note" style="margin:5px 0 0">This edit does not change menu items, inventory, tables, QR tokens, printers, staff access or historical transactions.</p></div>
+      <div class="card" style="margin-top:12px;padding:11px"><b>Operational data protection</b><p class="note" style="margin:5px 0 0">This edit does not move historical transactions, staff access, tables or QR tokens. Menu mode changes may create a branch-specific catalog copy; stock quantities are never copied.</p></div>
       <div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-edit-submit">Save Changes</button></div>
     </section>`;
   }catch(error){
