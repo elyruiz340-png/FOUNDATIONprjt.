@@ -2583,7 +2583,7 @@ const BRANCH_SETTING_FIELDS={
 };
 function adminBranchSetPath(root,path,value,kind){
  const parts=path.split('.');let target=root;
- for(let i=0;i<parts.length-1;i++){const k=parts[i];if(target[k]===undefined||target[k]===null)target[k]=/^\\d+$/.test(parts[i+1])?[]:{};target=target[k];}
+ for(let i=0;i<parts.length-1;i++){const k=parts[i];if(target[k]===undefined||target[k]===null)target[k]=/^\d+$/.test(parts[i+1])?[]:{};target=target[k];}
  const key=parts[parts.length-1];
  if(kind==='number')target[key]=value===''?null:Number(value);
  else if(kind==='boolean')target[key]=value==='true';
@@ -2682,8 +2682,8 @@ function reviewBranchSettingsPayload(){
   const config=BRANCH_SETTINGS_EDITOR_CONFIG;
   if(!config||!BRANCH_SETTINGS_EDITOR_BRANCH)return;
   let payload;
-  try{payload=JSON.parse($('#branchSettingsJson')?.value||'');}
-  catch(_){toast('Enter valid JSON before reviewing the branch settings.',1);return;}
+  try{payload=JSON.parse(JSON.stringify(BRANCH_SETTINGS_EDITOR_DRAFT||{}));}
+  catch(_){toast('The branch settings form could not be prepared.',1);return;}
   if(!payload||typeof payload!=='object'||Array.isArray(payload)||JSON.stringify(payload).length>65536){
     toast('The settings payload must be a JSON object within the supported size.',1);return;
   }
