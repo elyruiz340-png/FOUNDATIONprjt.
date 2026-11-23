@@ -3604,6 +3604,7 @@ async function refreshMenu(){
   try{await loadMenuData();render();}catch(e){toast('Could not load Menu & Categories: '+(e.message||e),1);menuLoadError=e.message||String(e);render();}
 }
 function menuItemForm(id){
+  if(!MENU_CATALOG_EDITABLE){toast('Switch this branch to Override or Independent before editing its menu.',1);return;}
   const old=id?MENU_ROWS.find(x=>x.id===id):null;
   if(id&&!old){toast('Menu item not found. Refresh and try again.',1);return;}
   const cats=CATEGORY_ROWS.filter(c=>c.is_active || (old&&c.id===old.category_id));
@@ -3647,6 +3648,7 @@ function menuItemForm(id){
   $('#miName').focus();
 }
 function categoryForm(id){
+  if(!MENU_CATALOG_EDITABLE){toast('Switch this branch to Override or Independent before editing its categories.',1);return;}
   const old=id?CATEGORY_ROWS.find(x=>x.id===id):null;
   if(id&&!old){toast('Category not found. Refresh and try again.',1);return;}
   L.innerHTML=`<div class="bk" data-a="close"></div><form id="catForm" class="md" role="dialog" aria-modal="true" aria-label="${old?'Edit':'Add'} category"><h3>${old?'Edit category':'Add category'}</h3><div class="fl"><label for="catName">Category name *</label><input id="catName" required maxlength="80" value="${menuEsc(old?.name||'')}"></div><div class="fl"><label for="catDesc">Description</label><textarea id="catDesc" rows="2" maxlength="300">${menuEsc(old?.description||'')}</textarea></div>${menuImageUploadField('catPhoto','Category photo',old?.image_url)}<div class="fl"><label><input id="catActive" type="checkbox"${old?.is_active!==false?' checked':''}> Active category</label></div><div class="tb"><button class="btn pri" id="catSave" type="submit">${old?'Save category':'Create category'}</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="catErr" class="er" role="alert"></p></form>`;
@@ -3656,9 +3658,11 @@ function categoryForm(id){
   };$('#catName').focus();
 }
 function categoryManager(){
+  if(!MENU_CATALOG_EDITABLE){toast('This branch inherits its menu and is read-only.',1);return;}
   L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-label="Manage categories"><h3>Manage categories</h3><p class="note">Deactivate categories instead of deleting them to preserve existing menu links.</p><div class="tb"><button class="btn pri" data-a="catadd">+ Add category</button><button class="btn" data-a="close">Close</button></div>${CATEGORY_ROWS.map(c=>`<div class="row" style="padding:10px 0;border-bottom:1px solid var(--bd);gap:10px">${c.image_url?`<img src="${menuEsc(c.image_url)}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px">`:''}<div style="flex:1"><b>${menuEsc(c.name)}</b><div class="mu">${MENU_ROWS.filter(m=>m.category_id===c.id).length} items · ${c.is_active?'Active':'Inactive'}</div></div><button class="btn" data-a="catedit" data-i="${c.id}">Edit</button></div>`).join('')||empty('No categories yet.')}</div>`;
 }
 async function toggleMenuItem(id){
+  if(!MENU_CATALOG_EDITABLE){toast('This branch inherits its menu and is read-only.',1);return;}
   const item=MENU_ROWS.find(x=>x.id===id);if(!item)return;
   const res=await sb.from('menu_items').update({is_available:!item.is_available}).eq('id',id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('branch_id',ADMIN_MENU_CATALOG_BRANCH_ID);
   if(res.error){toast('Could not update availability: '+res.error.message,1);return}
