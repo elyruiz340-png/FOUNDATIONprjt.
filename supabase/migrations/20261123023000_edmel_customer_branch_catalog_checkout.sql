@@ -14,7 +14,7 @@ $old$
   ) THEN
     RAISE EXCEPTION 'The selected table does not belong to an active branch';
   END IF;
-$new$,
+$old$,
 $new$
   IF v_branch_id IS NULL OR NOT EXISTS (
     SELECT 1 FROM public.restaurant_branches b
@@ -64,7 +64,7 @@ $old$
   ) THEN
     RAISE EXCEPTION 'The selected table is not active for this restaurant';
   END IF;
-$new$,
+$old$,
 $new$
   IF v_branch_id IS NULL OR NOT EXISTS (
     SELECT 1 FROM public.restaurant_branches b
