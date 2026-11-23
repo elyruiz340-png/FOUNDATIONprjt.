@@ -2512,7 +2512,7 @@ function adminBranchAssignedStaff(branchId){
 }
 
 const ADMIN_BRANCH_SETTING_GROUPS=[
-  ['business_profile','Business Profile & Operating Hours'],
+  ['business_profile','Business Profile'],
   ['tax','Tax Settings'],
   ['service_charge','Service Charge'],
   ['discounts_vouchers','Discounts & Vouchers'],
@@ -2556,7 +2556,7 @@ function adminBranchSettingLabel(group){
 }
 function adminBranchSettingPayloadHint(group){
   const examples={
-    business_profile:{restaurant:{operating_hours:{}},business_settings:{country_code:'US',region:'',city:'',tax_registration_type:'NOT_SET'}},
+    business_profile:{restaurant:{},business_settings:{country_code:'US',region:'',city:'',tax_registration_type:'NOT_SET'}},
     tax:{rules:[{rule_name:'Sales Tax',tax_type:'sales_tax',rate:0,calculation_method:'exclusive',tax_scope:'all',effective_from:'2026-01-01',effective_to:null,is_active:false,notes:''}]},
     service_charge:{rules:[{rule_name:'Service Charge',display_label:'Service Charge',charge_type:'percentage',rate:0,applies_to:['dine_in'],is_mandatory:false,is_active:false,effective_from:'2026-01-01',effective_to:null,tax_treatment:'not_configured',notes:''}]},
     discounts_vouchers:{discounts:[],vouchers:[]},
@@ -2587,6 +2587,7 @@ async function openBranchSettingsEditor(branch,group){
     if(data?.success!==true)throw new Error('The current branch settings could not be confirmed.');
     BRANCH_SETTINGS_EDITOR_CONFIG=data;
     const effective=data.effective_data&&typeof data.effective_data==='object'?data.effective_data:{};
+    if(group==='business_profile'&&effective.restaurant&&typeof effective.restaurant==='object')delete effective.restaurant.operating_hours;
     const mode=data.inheritance_mode||'inherit';
     const currentJson=JSON.stringify(effective,null,2);
     const warning=mode==='independent'
