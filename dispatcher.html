@@ -221,7 +221,7 @@ async function dispatcherLogin(event){
   try{await dispatcherAuthClient.auth.signOut({scope:'local'});}catch(_){}
  }finally{button.disabled=false;button.textContent='Sign In';}
 }
-if(window.supabase?.createClient){dispatcherAuthClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'edmel-dispatcher-auth'}});}
+if(window.supabase?.createClient){dispatcherAuthClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'edmel-dispatcher-auth'}});dispatcherAuthClient.auth.onAuthStateChange((event,session)=>{if(session?.access_token)dispatcherAccessToken=session.access_token;else if(event==='SIGNED_OUT')dispatcherAccessToken=null;});}
 async function restoreDispatcherSession(){
  try{
   const {data,error}=await dispatcherAuthClient.auth.getSession();
