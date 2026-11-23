@@ -13059,16 +13059,47 @@ let cashierPricingConfig={taxRules:[],serviceChargeRules:[],discountRules:[],vou
 function cashierRestaurantDate(){const z=String(window.HALINA_RESTAURANT_PROFILE?.timezone||'America/Chicago');try{return new Intl.DateTimeFormat('en-CA',{timeZone:z,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}catch(_){return new Date().toISOString().slice(0,10)}}
 function cashierRuleIsCurrent(r){const d=cashierRestaurantDate();return(!r.effective_from||String(r.effective_from)<=d)&&(!r.effective_to||String(r.effective_to)>=d)}
 function cashierDiscountAmount(t,v,b,m){let n=t==='percentage'?b*Number(v||0)/100:Number(v||0);if(m!==null&&m!==undefined)n=Math.min(n,Number(m));return Math.max(0,Math.min(b,n))}
-async function loadCashierPricingSettings(){if(!cashierAuthClient)return false;try{const {data:s,error:se}=await cashierAuthClient.auth.getSession();if(se)throw se;if(!s?.session?.user?.id)throw new Error('Cashier login is required to load pricing settings.');const id=getEDMELRestaurantId();const [t,sc,d,v,p]=await Promise.all([
-cashierAuthClient.from('restaurant_tax_rules').select('id,rule_name,tax_type,rate,calculation_method,tax_scope,effective_from,effective_to,is_active').eq('restaurant_id',id).eq('is_active',true),
-cashierAuthClient.from('restaurant_service_charge_rules').select('id,rule_name,display_label,charge_type,rate,applies_to,is_mandatory,tax_treatment,is_active,effective_from,effective_to').eq('restaurant_id',id).eq('is_active',true),
-cashierAuthClient.from('restaurant_discount_rules').select('id,rule_name,discount_category,discount_type,rate,max_discount_amount,minimum_subtotal,applies_to,requires_verification,effective_from,effective_to,is_active').eq('restaurant_id',id).eq('is_active',true),
-cashierAuthClient.from('restaurant_vouchers').select('id,code,description,discount_type,discount_value,max_discount_amount,minimum_order_amount,usage_limit,per_customer_limit,applies_to,starts_at,ends_at,is_active').eq('restaurant_id',id).eq('is_active',true),
-cashierAuthClient.from('restaurant_payment_methods').select('id,method_key,display_name,is_enabled,provider_name,fee_percent,fee_fixed,qr_image_url,instructions,sort_order').eq('restaurant_id',id).eq('is_enabled',true).order('sort_order',{ascending:true})]);
-for(const r of [t,sc,d,v,p])if(r.error)throw r.error;
-cashierPricingConfig={taxRules:(t.data||[]).filter(cashierRuleIsCurrent).sort((a,b)=>String(b.effective_from||'').localeCompare(String(a.effective_from||''))),serviceChargeRules:(sc.data||[]).filter(cashierRuleIsCurrent).sort((a,b)=>String(b.effective_from||'').localeCompare(String(a.effective_from||''))),discountRules:(d.data||[]).filter(cashierRuleIsCurrent),vouchers:(v.data||[]).filter(x=>{const n=Date.now();return(!x.starts_at||new Date(x.starts_at).getTime()<=n)&&(!x.ends_at||new Date(x.ends_at).getTime()>=n)}),paymentMethods:p.data||[],loaded:true,error:''};
-cashierUpdatePaymentButtons();if(typeof renderCheckoutSummary==='function')renderCheckoutSummary();window.dispatchEvent(new CustomEvent('halinapricingsettingsloaded'));return true;
-}catch(e){cashierPricingConfig={taxRules:[],serviceChargeRules:[],discountRules:[],vouchers:[],paymentMethods:[],loaded:false,error:e.message||String(e)};cashierUpdatePaymentButtons();console.error('Cashier pricing settings could not be loaded:',e);return false}}
+async function loadCashierPricingSettings(){
+  if(!cashierAuthClient)return false;
+  try{
+    const {data:sessionData,error:sessionError}=await cashierAuthClient.auth.getSession();
+    if(sessionError)throw sessionError;
+    if(!sessionData?.session?.user?.id)throw new Error('Cashier login is required to load pricing settings.');
+    const p_restaurant_id=getEDMELRestaurantId();
+    const p_branch_id=getEDMELBranchId();
+    const [taxResult,serviceResult,discountResult,paymentResult]=await Promise.all([
+      cashierAuthClient.rpc('edmel_get_branch_setting_config',{p_restaurant_id,p_branch_id,p_setting_group:'tax'}),
+      cashierAuthClient.rpc('edmel_get_branch_setting_config',{p_restaurant_id,p_branch_id,p_setting_group:'service_charge'}),
+      cashierAuthClient.rpc('edmel_get_branch_setting_config',{p_restaurant_id,p_branch_id,p_setting_group:'discounts_vouchers'}),
+      cashierAuthClient.rpc('edmel_get_branch_setting_config',{p_restaurant_id,p_branch_id,p_setting_group:'payment_methods'})
+    ]);
+    for(const result of [taxResult,serviceResult,discountResult,paymentResult]){
+      if(result.error)throw result.error;
+      if(!result.data?.success)throw new Error('Branch pricing settings could not be resolved.');
+    }
+    const taxData=taxResult.data.effective_data||{};
+    const serviceData=serviceResult.data.effective_data||{};
+    const discountData=discountResult.data.effective_data||{};
+    const paymentData=paymentResult.data.effective_data||{};
+    cashierPricingConfig={
+      taxRules:(Array.isArray(taxData.rules)?taxData.rules:[]).filter(r=>r.is_active!==false&&cashierRuleIsCurrent(r)).sort((a,b)=>String(b.effective_from||'').localeCompare(String(a.effective_from||''))),
+      serviceChargeRules:(Array.isArray(serviceData.rules)?serviceData.rules:[]).filter(r=>r.is_active===true&&cashierRuleIsCurrent(r)).sort((a,b)=>String(b.effective_from||'').localeCompare(String(a.effective_from||''))),
+      discountRules:(Array.isArray(discountData.discounts)?discountData.discounts:[]).filter(r=>r.is_active===true&&cashierRuleIsCurrent(r)),
+      vouchers:(Array.isArray(discountData.vouchers)?discountData.vouchers:[]).filter(x=>{const n=Date.now();return x.is_active===true&&(!x.starts_at||new Date(x.starts_at).getTime()<=n)&&(!x.ends_at||new Date(x.ends_at).getTime()>=n)}),
+      paymentMethods:(Array.isArray(paymentData.methods)?paymentData.methods:[]).filter(x=>x.is_enabled===true).sort((a,b)=>Number(a.sort_order||0)-Number(b.sort_order||0)),
+      loaded:true,error:''
+    };
+    cashierUpdatePaymentButtons();
+    if(typeof renderCheckoutSummary==='function')renderCheckoutSummary();
+    window.dispatchEvent(new CustomEvent('halinapricingsettingsloaded'));
+    return true;
+  }catch(e){
+    cashierPricingConfig={taxRules:[],serviceChargeRules:[],discountRules:[],vouchers:[],paymentMethods:[],loaded:false,error:e.message||String(e)};
+    cashierUpdatePaymentButtons();
+    console.error('Cashier branch pricing settings could not be loaded:',e);
+    return false;
+  }
+}
 function cashierUpdatePaymentButtons(){const h=document.getElementById('checkoutPaymentMethods');if(!h)return;const k=new Set(cashierPricingConfig.paymentMethods.map(x=>String(x.method_key||'').toLowerCase()));const card=k.has('card')||k.has('qr_manual')||k.has('online')||k.has('debitcard');h.querySelectorAll('[data-payment-method]').forEach(b=>{const m=b.dataset.paymentMethod;if(m==='gift'||m==='discount')return;const ok=cashierPricingConfig.loaded&&(m==='cash'?k.has('cash'):m==='card'?card:m==='pending'?k.size>0:false);b.disabled=!ok;b.title=ok?'':'Enable this payment method in Admin Dashboard → Business Settings → Payment Methods.';b.setAttribute('aria-disabled',String(!ok))})}
 function getCashierPricing(){const subtotal=getCheckoutTotal();let det={};try{if(typeof window.halinaGetOrderDetails==='function')det=window.halinaGetOrderDetails()}catch(_){det={orderType:window.halinaSelectedOrderType||'dine_in'}}const type=det.orderType||window.halinaSelectedOrderType||'dine_in';let discount=0,label='',error='',rec=null;
 if(cashierAppliedDiscount){if(cashierAppliedDiscount.kind==='voucher'){rec=cashierPricingConfig.vouchers.find(x=>x.id===cashierAppliedDiscount.id);if(!rec)error='Voucher is no longer active or valid.';else if(rec.usage_limit!==null||rec.per_customer_limit!==null)error='This voucher has usage limits. Redemption tracking must be enabled before it can be applied.';else if(Array.isArray(rec.applies_to)&&!rec.applies_to.includes(type))error='Voucher does not apply to this order type.';else if(subtotal<Number(rec.minimum_order_amount||0))error='Minimum order amount not reached.';else{discount=cashierDiscountAmount(rec.discount_type,rec.discount_value,subtotal,rec.max_discount_amount);label=rec.code}}else{rec=cashierPricingConfig.discountRules.find(x=>x.id===cashierAppliedDiscount.id);if(!rec)error='Discount rule is no longer active.';else if(Array.isArray(rec.applies_to)&&!rec.applies_to.includes(type))error='Discount does not apply to this order type.';else if(subtotal<Number(rec.minimum_subtotal||0))error='Minimum subtotal not reached.';else{discount=cashierDiscountAmount(rec.discount_type,rec.rate,subtotal,rec.max_discount_amount);label=rec.rule_name}}if(error)cashierAppliedDiscount=null}
