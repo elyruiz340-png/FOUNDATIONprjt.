@@ -11733,6 +11733,7 @@ async function loadCashierReceiptSettings() {
     cashierAuthClient.from("restaurant_printer_devices")
       .select("printer_name,printer_model,connection_type,paper_width,custom_width_mm,is_active")
       .eq("restaurant_id", getEDMELRestaurantId())
+      .eq("branch_id", getEDMELBranchId())
       .eq("device_id", deviceId)
       .maybeSingle()
   ]);
