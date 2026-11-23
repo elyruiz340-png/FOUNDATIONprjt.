@@ -40,14 +40,21 @@ ON public.menu_categories(
 -- Inventory product identifiers are tenant-wide logical IDs with one physical
 -- stock row per branch. This allows the same menu item to deduct from each branch's
 -- independent quantity without changing the menu item's stock_product_id.
-ALTER TABLE public."PRODUCT_STOCK" DROP CONSTRAINT IF EXISTS product_stock_product_id_key;
+ALTER TABLE public.menu_items
+  DROP CONSTRAINT IF EXISTS menu_items_stock_product_id_fkey;
+ALTER TABLE public."PRODUCT_STOCK"
+  DROP CONSTRAINT IF EXISTS product_stock_product_id_key;
 DROP INDEX IF EXISTS public.product_stock_product_id_unique_idx;
+CREATE UNIQUE INDEX IF NOT EXISTS product_stock_branch_product_id_uidx
+ON public."PRODUCT_STOCK"(restaurant_id,branch_id,product_id);
 CREATE UNIQUE INDEX IF NOT EXISTS product_stock_unassigned_product_id_uidx
 ON public."PRODUCT_STOCK"(product_id)
 WHERE product_id IS NOT NULL AND branch_id IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS product_stock_branch_product_id_uidx
-ON public."PRODUCT_STOCK"(restaurant_id,branch_id,product_id)
-WHERE product_id IS NOT NULL AND branch_id IS NOT NULL;
+ALTER TABLE public.menu_items
+  ADD CONSTRAINT menu_items_stock_product_branch_fk
+  FOREIGN KEY (restaurant_id,branch_id,stock_product_id)
+  REFERENCES public."PRODUCT_STOCK"(restaurant_id,branch_id,product_id)
+  ON UPDATE CASCADE ON DELETE SET NULL (stock_product_id);
 
 CREATE OR REPLACE FUNCTION private.edmel_clone_branch_catalog(
   p_restaurant_id uuid,
