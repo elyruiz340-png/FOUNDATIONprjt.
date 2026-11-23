@@ -2466,7 +2466,7 @@ const ADMIN_BRANCH_SETTING_GROUPS=[
 function adminBranchMenuModeControl(value='inherit',id='branchCreateMenuMode',disabled=false){
   return '<div class="fl" style="margin-top:12px"><label for="'+id+'">Menu Catalog</label><select id="'+id+'" '+(disabled?'disabled':'')+' style="width:100%;padding:9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)">'+
     '<option value="inherit" '+(value==='inherit'?'selected':'')+'>Inherit Main Branch Menu</option>'+
-    '<option value="override" '+(value==='override'?'selected':'')+'>Override — Editable Branch Copy (manual sync review)</option>'+
+    '<option value="override" '+(value==='override'?'selected':'')+'>Override — Editable Branch Copy (master sync not automatic yet)</option>'+
     '<option value="independent" '+(value==='independent'?'selected':'')+'>Independent — Standalone Snapshot</option>'+
     '</select><p class="note" style="margin:4px 0 0">Inherit uses the Main Branch catalog live. Override creates an editable branch copy; master catalog updates are not auto-applied yet. Independent keeps a standalone snapshot. Inventory definitions are copied with zero opening quantities; existing stock balances are never copied.</p></div>';
 }
