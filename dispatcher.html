@@ -91,11 +91,11 @@ let servedOrders = [];
 let branchOperatingHours=null,branchTimezone='',currentOperatingCycle=null;
 let activeFilter = 'active';
 let busyIds = new Set();
-const terminalStatuses = ['completed','cancelled','served','dispatched','voided'];
+const dispatcherVisibleStatuses = ['accepted','confirmed','preparing','ready'];
 function safe(v){return String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function normalizeStatus(order){return String(order.status || order.order_status || 'pending').trim().toLowerCase();}
-function isOpen(order){return !terminalStatuses.includes(normalizeStatus(order));}
-function isNew(status){return ['pending','new','accepted','confirmed'].includes(status);}
+function isOpen(order){return dispatcherVisibleStatuses.includes(normalizeStatus(order));}
+function isNew(status){return ['accepted','confirmed'].includes(status);}
 function  prettyStatus(status) {
   if (
     status === "pending" ||
