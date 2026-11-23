@@ -3186,6 +3186,11 @@ document.addEventListener('change',e=>{
  adminBranchSetPath(BRANCH_SETTINGS_EDITOR_DRAFT,t.dataset.bsfPath,t.value,t.dataset.bsfKind||'text');
  BRANCH_SETTINGS_EDITOR_REVIEW=null;
 });
+document.addEventListener('change',e=>{
+ const t=e.target;if(!t||!t.dataset||!t.dataset.bsfPath)return;
+ adminBranchSetPath(BRANCH_SETTINGS_EDITOR_DRAFT,t.dataset.bsfPath,t.value,t.dataset.bsfKind||'text');
+ BRANCH_SETTINGS_EDITOR_REVIEW=null;
+});
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a]){A[t.dataset.a](t,e)}});
 document.addEventListener('change',e=>{if(e.target.id==='tmBranchSelect'){TABLE_BRANCH_ID=e.target.value||'';refreshTables().catch(error=>toast(error.message||'Unable to load selected branch tables.',1));}});
 document.addEventListener('submit',e=>{if(e.target.id==='tmAddForm')addTable(e);else if(e.target.id==='taxRuleForm')saveTaxRule(e);else if(e.target.id==='serviceChargeForm')saveServiceChargeRule(e);else if(e.target.id==='paymentMethodForm')savePaymentMethod(e);else if(e.target.id==='discountRuleForm')saveDiscountRule(e);else if(e.target.id==='voucherForm')saveVoucher(e)});
