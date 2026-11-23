@@ -40,7 +40,7 @@ ON public.menu_categories(
 -- Inventory product identifiers are tenant-wide logical IDs with one physical
 -- stock row per branch. This allows the same menu item to deduct from each branch's
 -- independent quantity without changing the menu item's stock_product_id.
-DROP INDEX IF EXISTS public.product_stock_product_id_key;
+ALTER TABLE public."PRODUCT_STOCK" DROP CONSTRAINT IF EXISTS product_stock_product_id_key;
 DROP INDEX IF EXISTS public.product_stock_product_id_unique_idx;
 CREATE UNIQUE INDEX IF NOT EXISTS product_stock_unassigned_product_id_uidx
 ON public."PRODUCT_STOCK"(product_id)
