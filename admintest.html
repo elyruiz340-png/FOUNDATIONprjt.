@@ -1337,6 +1337,31 @@ html[data-ui="glass"][data-glass-adj="1"] header{
   -webkit-backdrop-filter:none!important;
   backdrop-filter:none!important;
 }
+
+/* Compact branch settings editor */
+.md.staff-focus-panel[aria-label="Branch settings editor"]{width:min(620px,calc(100vw - 28px))!important;max-height:min(82vh,720px)!important;padding:16px!important;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.branch-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.branch-editor-head .staff-focus-kicker{font-size:10px;letter-spacing:.1em;margin:0 0 3px}
+.branch-editor-head .staff-focus-title{font-size:18px;line-height:1.25;margin:0}
+.branch-editor-sub{font-size:12px;color:var(--mu);margin:3px 0 0}
+.branch-mode-strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.branch-mode-strip>span{display:flex;flex-direction:column;gap:3px;min-width:0;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;background:var(--s)}
+.branch-mode-strip small{font-size:10px;color:var(--mu)}
+.branch-mode-strip b{font-size:12px;overflow-wrap:anywhere}
+.branch-editor-notice{font-size:11px;line-height:1.4;padding:9px 11px;border:1px solid var(--bd);border-radius:9px;background:var(--s);color:var(--mu)}
+.branch-editor-label{font-size:12px;font-weight:700;margin:0 0 -5px}
+.branch-json-editor{min-height:180px;max-height:260px;resize:vertical;font:11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;padding:10px;border-radius:9px;white-space:pre;overflow:auto}
+.branch-advanced-json{font-size:11px;color:var(--mu);margin-top:-4px}
+.branch-advanced-json summary{cursor:pointer;padding:3px 0}
+.branch-reason-field{display:grid;gap:5px}
+.branch-reason-field label{font-size:11px;font-weight:650}
+.branch-reason-field label span{font-weight:400;color:var(--mu)}
+.branch-reason-field input{width:100%;height:38px;min-width:0;padding:8px 10px;border:1px solid var(--bd);border-radius:9px;background:var(--s);color:var(--tx);font:inherit}
+.branch-settings-review-card{margin:0!important;padding:10px!important}
+.staff-focus-panel .branch-editor-actions{position:sticky;bottom:-16px;display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;margin:0 -16px -16px;padding:11px 16px 14px;background:var(--gf);border-top:1px solid var(--bd);backdrop-filter:blur(14px)}
+.branch-editor-actions .btn{height:38px;min-height:38px;padding:0 13px;border-radius:9px;font-size:12px;white-space:nowrap}
+.branch-editor-actions .branch-action-cancel{margin-right:auto}
+@media(max-width:560px){.md.staff-focus-panel[aria-label="Branch settings editor"]{width:calc(100vw - 18px)!important;max-height:88vh!important;padding:13px!important}.branch-mode-strip{gap:6px}.branch-mode-strip>span{padding:8px}.staff-focus-panel .branch-editor-actions{bottom:-13px;margin:0 -13px -13px;padding:10px 13px calc(10px + env(safe-area-inset-bottom));gap:6px}.branch-editor-actions .btn{flex:1;padding:0 8px;font-size:11px}.branch-editor-actions .branch-action-cancel{margin-right:0}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -2555,19 +2580,19 @@ async function openBranchSettingsEditor(branch,group){
     const mode=data.inheritance_mode||'inherit';
     const currentJson=JSON.stringify(effective,null,2);
     const warning=mode==='independent'
-      ? '<div class="msg ai" style="max-width:none">This branch currently uses an Independent snapshot. Saving an edited payload will explicitly convert this setting group to Override. Reset to Inherit remains available.</div>'
+      ? ''
       : mode==='inherit'
-        ? '<div class="msg ai" style="max-width:none">This group currently follows Main Branch. Saving an edited payload creates a branch-specific Override; it will no longer automatically follow Main Branch for this group.</div>'
-        : '<div class="msg ai" style="max-width:none">This group already uses Override. Saving replaces the current branch override payload. Unspecified fields are not silently deleted from the editor because the effective configuration is loaded below.</div>';
+        ? ''
+        : '';
     L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Branch settings editor" style="width:min(760px,94vw);max-height:88vh">'+
-      '<div class="staff-focus-kicker">Branch Settings Editor</div><div class="row"><div><h3 class="staff-focus-title">'+esc(adminBranchSettingLabel(group))+'</h3><p class="note" style="margin:3px 0 0">'+esc(branch.name)+' · Version '+Number(data.version||0)+'</p></div><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>'+
-      '<div class="branch-review-grid"><div class="branch-review-item"><small>Current mode</small><b>'+esc(mode.charAt(0).toUpperCase()+mode.slice(1))+'</b></div><div class="branch-review-item"><small>Effective source</small><b>'+(mode==='inherit'?'Main Branch':mode==='override'?'Branch override + Main fallback':'Independent snapshot')+'</b></div></div>'+warning+
-      '<p class="note">Edit the complete settings payload for this group. The database validates allowed fields and types before saving. Existing transactions and receipts are not recalculated.</p>'+
-      '<label for="branchSettingsJson" style="display:block;font-weight:650;margin:10px 0 6px">Settings Payload (JSON)</label><textarea id="branchSettingsJson" class="branch-json-editor" spellcheck="false">'+esc(currentJson)+'</textarea>'+
-      '<details style="margin-top:8px"><summary class="mu" style="cursor:pointer">Show expected payload structure</summary><pre class="branch-json-preview">'+esc(JSON.stringify(adminBranchSettingPayloadHint(group),null,2))+'</pre></details>'+
-      '<div class="fl" style="margin-top:10px"><label for="branchSettingsReason">Reason for Change</label><input id="branchSettingsReason" maxlength="500" placeholder="Optional — recorded in the branch settings history"></div>'+
-      '<div id="branchSettingsReview" class="card" style="margin-top:10px;padding:12px" hidden></div>'+
-      '<div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn" data-a="branch-settings-reset">Reset to Inherit</button><button class="btn pri" data-a="branch-settings-review">Review Changes</button></div>'+
+      '<div class="branch-editor-head"><div><div class="staff-focus-kicker">BRANCH SETTINGS</div><h3 class="staff-focus-title">'+esc(adminBranchSettingLabel(group))+'</h3><p class="branch-editor-sub">'+esc(branch.name)+'</p></div><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>'+
+      '<div class="branch-mode-strip"><span><small>Mode</small><b>'+esc(mode.charAt(0).toUpperCase()+mode.slice(1))+'</b></span><span><small>Source</small><b>'+(mode==='inherit'?'Main Branch':mode==='override'?'Branch + Main fallback':'Independent copy')+'</b></span></div>'+
+      '<div class="branch-editor-notice">'+(mode==='inherit'?'Changes here will create a branch-only override.':mode==='independent'?'Saving changes will switch this group to Override.':'Changes apply to this branch only.')+'</div>'+
+      '<label for="branchSettingsJson" class="branch-editor-label">Settings data</label><textarea id="branchSettingsJson" class="branch-json-editor" spellcheck="false" aria-label="Settings data">'+esc(currentJson)+'</textarea>'+
+      '<details class="branch-advanced-json"><summary>Advanced details</summary><pre class="branch-json-preview">'+esc(JSON.stringify(adminBranchSettingPayloadHint(group),null,2))+'</pre></details>'+
+      '<div class="branch-reason-field"><label for="branchSettingsReason">Change note <span>(optional)</span></label><input id="branchSettingsReason" maxlength="500" placeholder="Add a short note"></div>'+
+      '<div id="branchSettingsReview" class="card branch-settings-review-card" hidden></div>'+
+      '<div class="staff-focus-actions branch-editor-actions"><button class="btn branch-action-cancel" data-a="close">Cancel</button><button class="btn" data-a="branch-settings-reset">Reset to Inherit</button><button class="btn pri" data-a="branch-settings-review">Review</button></div>'+
       '</section>';
   }catch(error){closeL();toast(error?.message||'Unable to load branch settings.',1);}
 }
