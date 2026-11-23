@@ -39,7 +39,7 @@ Deno.serve(async (req: Request) => {
         .eq("user_id", actorId).eq("is_active", true);
       if (linkError) return json({ error: "Unable to verify staff access" }, 500);
       const linkRows = (links || []).filter((r: any) =>
-        r.restaurant_id && ["staff", "cashier", "dispatcher", "kitchen"].includes(String(r.role).toLowerCase()));
+        r.restaurant_id && ["staff", "cashier", "dispatcher", "kitchen"].includes(String(r.role).trim().toLowerCase()));
       if (!linkRows.length) return json({ error: "Active staff account not found" }, 403);
 
       if (action === "list_branches") {
@@ -145,7 +145,7 @@ Deno.serve(async (req: Request) => {
           restaurant_id: session.restaurant_id,
           restaurant_user_id: session.restaurant_user_id,
           branch_id: session.branch_id,
-          inactivity_timeout_minutes: (String(selectedLink.position || "").toLowerCase() === "dispatcher" || String(selectedLink.role || "").toLowerCase() === "dispatcher") ? null : 30
+          inactivity_timeout_minutes: (String(selectedLink.position || "").trim().toLowerCase() === "dispatcher" || String(selectedLink.role || "").trim().toLowerCase() === "dispatcher") ? null : 30
         });
       }
 
@@ -157,8 +157,8 @@ Deno.serve(async (req: Request) => {
       const linkedActor = linkRows.find((r: any) => r.id === session.restaurant_user_id);
       if (!linkedActor || linkedActor.restaurant_id !== session.restaurant_id) return json({ error: "Staff account is no longer active" }, 403);
 
-      const isDispatcherSession = String(linkedActor.position || "").toLowerCase() === "dispatcher" ||
-        String(linkedActor.role || "").toLowerCase() === "dispatcher";
+      const isDispatcherSession = String(linkedActor.position || "").trim().toLowerCase() === "dispatcher" ||
+        String(linkedActor.role || "").trim().toLowerCase() === "dispatcher";
 
       if (action === "resume") {
         if (session.logout_at) return json({ success: false, expired: true, error: "Session already ended" }, 401);
