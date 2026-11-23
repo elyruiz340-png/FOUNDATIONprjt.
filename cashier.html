@@ -10974,6 +10974,26 @@ function cashierLocalDateTimeToUtc(dateKey, timeText, timeZone) {
   return new Date(guess);
 }
 
+
+let cashierOperatingProfileBranchId='';
+async function cashierEnsureBranchOperatingProfile(){
+  const branchId=getEDMELBranchId();
+  if(cashierOperatingProfileBranchId===branchId&&window.HALINA_RESTAURANT_PROFILE?.branch_id===branchId)return;
+  if(!cashierAuthClient)throw new Error('Cashier authentication is unavailable for branch operating hours.');
+  const {data,error}=await cashierAuthClient.rpc('edmel_get_branch_setting_config',{
+    p_restaurant_id:getEDMELRestaurantId(),p_branch_id:branchId,p_setting_group:'business_profile'
+  });
+  if(error)throw error;
+  const branchProfile=data?.effective_data?.restaurant;
+  if(data?.success!==true||!branchProfile||!branchProfile.operating_hours)throw new Error('This branch operating schedule could not be loaded.');
+  window.HALINA_RESTAURANT_PROFILE=Object.assign({},window.HALINA_RESTAURANT_PROFILE||{},{
+    timezone:branchProfile.timezone||window.HALINA_RESTAURANT_PROFILE?.timezone||'UTC',
+    operating_hours:branchProfile.operating_hours,
+    branch_id:branchId
+  });
+  cashierOperatingProfileBranchId=branchId;
+}
+
 function cashierGetOperatingDayStart(now) {
   const currentTime = now instanceof Date ? now : new Date();
   const profile = window.HALINA_RESTAURANT_PROFILE || {};
@@ -11025,8 +11045,9 @@ function cashierGetOperatingDayStart(now) {
 }
 
 async function cashierFetchOperatingDayOrders() {
+  await cashierEnsureBranchOperatingProfile();
   const sessionStart = cashierGetOperatingDayStart(new Date());
-  const fields = "id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name";
+  const fields = "id,branch_id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name";
   const cashierSession = await getCashierTableSession();
   const pageSize = 1000;
   let offset = 0;
@@ -11036,6 +11057,7 @@ async function cashierFetchOperatingDayOrders() {
     const url = SUPABASE_URL + "/rest/v1/orders" +
       "?select=" + fields +
       "&restaurant_id=eq." + encodeURIComponent(getEDMELRestaurantId()) +
+      "&branch_id=eq." + encodeURIComponent(getEDMELBranchId()) +
       "&created_at=gte." + encodeURIComponent(sessionStart.toISOString()) +
       "&order=created_at.asc,id.asc" +
       "&limit=" + pageSize +
@@ -11076,7 +11098,7 @@ async function cashierFetchOperatingDayOrders() {
 }
 
 async function cashierFetchOutstandingPaymentOrders() {
-  const fields = "id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name";
+  const fields = "id,branch_id,order_number,table_number,order_type,items,subtotal,tax,discount_amount,service_charge,pricing_breakdown,total,status,payment_method,payment_status,payment_reference,created_at,completed_at,accepted_by_user_id,accepted_by_session_id,accepted_by_name,accepted_at,settled_by_user_id,settled_by_session_id,settled_by_name,settled_at,created_by_name";
   const cashierSession = await getCashierTableSession();
   const pageSize = 1000;
   let offset = 0;
@@ -11086,6 +11108,7 @@ async function cashierFetchOutstandingPaymentOrders() {
     const url = SUPABASE_URL + "/rest/v1/orders" +
       "?select=" + fields +
       "&restaurant_id=eq." + encodeURIComponent(getEDMELRestaurantId()) +
+      "&branch_id=eq." + encodeURIComponent(getEDMELBranchId()) +
       "&status=in.(served,completed)" +
       "&payment_status=eq.pending" +
       "&order=created_at.asc,id.asc" +
