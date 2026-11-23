@@ -5,9 +5,9 @@ DECLARE v_def text; v_old text; v_new text;
 BEGIN
   v_def:=pg_get_functiondef('public.edmel_has_branch_setting_permission(uuid,uuid,text,text)'::regprocedure);
   v_old:='  if v_role in (''owner'',''admin'') then return true; end if;';
-  v_new:=v_old||chr(10)||'  if v_action=''view'' and public.edmel_has_branch_permission(p_branch_id,''orders'') then return true; end if;';
+  v_new:=v_old||chr(10)||'  if p_action=''view'' and public.edmel_has_branch_permission(p_branch_id,''orders'') then return true; end if;';
   v_def:=replace(v_def,v_old,v_new);
-  IF position('v_action=''view'' and public.edmel_has_branch_permission(p_branch_id,''orders'')' in v_def)=0 THEN
+  IF position('p_action=''view'' and public.edmel_has_branch_permission(p_branch_id,''orders'')' in v_def)=0 THEN
     RAISE EXCEPTION 'Could not safely extend read-only branch settings access';
   END IF;
   EXECUTE v_def;
