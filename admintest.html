@@ -2660,7 +2660,8 @@ async function openBranchSettingsEditor(branch,group){
     const effective=data.effective_data&&typeof data.effective_data==='object'?data.effective_data:{};
     if(group==='business_profile'&&effective.restaurant&&typeof effective.restaurant==='object')delete effective.restaurant.operating_hours;
     const mode=data.inheritance_mode||'inherit';
-    const currentJson=JSON.stringify(effective,null,2);\n    BRANCH_SETTINGS_EDITOR_DRAFT=JSON.parse(currentJson);
+    const currentJson=JSON.stringify(effective,null,2);
+    BRANCH_SETTINGS_EDITOR_DRAFT=JSON.parse(currentJson);
     const warning=mode==='independent'
       ? ''
       : mode==='inherit'
