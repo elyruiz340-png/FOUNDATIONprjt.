@@ -2463,6 +2463,13 @@ const ADMIN_BRANCH_SETTING_GROUPS=[
   ['payment_methods','Payment Methods'],
   ['receipt_settings','Receipt Settings']
 ];
+function adminBranchMenuModeControl(value='inherit',id='branchCreateMenuMode',disabled=false){
+  return '<div class="fl" style="margin-top:12px"><label for="'+id+'">Menu Catalog</label><select id="'+id+'" '+(disabled?'disabled':'')+' style="width:100%;padding:9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)">'+
+    '<option value="inherit" '+(value==='inherit'?'selected':'')+'>Inherit Main Branch Menu</option>'+
+    '<option value="override" '+(value==='override'?'selected':'')+'>Override — Editable Branch Copy</option>'+
+    '<option value="independent" '+(value==='independent'?'selected':'')+'>Independent — Standalone Snapshot</option>'+
+    '</select><p class="note" style="margin:4px 0 0">Inherit uses the Main Branch catalog live. Override and Independent create a branch-specific copy. Inventory definitions are copied with zero opening quantities; existing stock balances are never copied.</p></div>';
+}
 function adminBranchModeControls(modes={}){
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px">'+
     ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>{
@@ -2542,7 +2549,7 @@ async function loadAdminBranches(){
     const restaurantId=CURRENT_RESTAURANT_ID;
     if(!restaurantId)throw new Error('Restaurant account could not be identified.');
     const [branchResult,assignmentResult,staffResult]=await Promise.all([
-      sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,is_default,is_active,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
+      sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,is_default,is_active,menu_catalog_mode,menu_source_branch_id,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
       sb.from('staff_branch_access').select('restaurant_user_id,restaurant_id,branch_id,is_active,created_at').eq('restaurant_id',restaurantId),
       sb.from('restaurant_users').select('id,restaurant_id,display_name,full_name,position,role,is_active').eq('restaurant_id',restaurantId)
     ]);
@@ -2578,6 +2585,7 @@ function openBranchCreateModal(){
     <div class="fl"><label for="branchCreateAddress">Branch Address</label><input id="branchCreateAddress" maxlength="240" placeholder="Branch address (optional)"></div>
     <div style="margin-top:16px"><b>Settings Inheritance</b><p class="note" style="margin:5px 0">Inherit follows master settings. Override allows branch-specific values while unspecified values fall back to master. Independent starts with a snapshot of current master settings and stops following future master changes.</p></div>
     ${adminBranchModeControls({})}
+    ${adminBranchMenuModeControl('inherit','branchCreateMenuMode')}
     <div class="card" style="margin-top:12px;padding:11px"><b>Operational setup</b><p class="note" style="margin:5px 0 0">Menu items, inventory, tables and QR codes, and printer devices are branch-level operational setup. They will not be copied or changed by this form.</p></div>
     <div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-create-submit">Add Branch</button></div>
   </section>`;
@@ -2605,6 +2613,7 @@ async function openBranchEditModal(branch){
       <div class="fl"><label for="branchEditAddress">Branch Address</label><input id="branchEditAddress" maxlength="240" value="${esc(branch.address||'')}"></div>
       <div style="margin-top:16px"><b>Settings Inheritance</b><p class="note" style="margin:5px 0">Inherit follows master settings. Override keeps branch-specific values and uses master values as fallback. Independent preserves a standalone snapshot. Switching to Independent snapshots the current effective settings.</p></div>
       ${adminBranchModeControls(modes)}
+      ${adminBranchMenuModeControl(branch.menu_catalog_mode||'inherit','branchEditMenuMode',branch.is_default===true)}
       <div class="card" style="margin-top:12px;padding:11px"><b>Operational data protection</b><p class="note" style="margin:5px 0 0">This edit does not change menu items, inventory, tables, QR tokens, printers, staff access or historical transactions.</p></div>
       <div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-edit-submit">Save Changes</button></div>
     </section>`;
@@ -2625,9 +2634,9 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
   if(!name||!code){toast('Branch name and code are required.',1);return;}
   t.disabled=true;t.textContent='Adding…';
   try{
-    const {data,error}=await sb.rpc('edmel_create_restaurant_branch_with_modes',{
+    const {data,error}=await sb.rpc('edmel_create_restaurant_branch_configured',{
       p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_name:name,p_code:code,p_address:address,
-      p_timezone:timezone,p_settings_modes:readAdminBranchModes()
+      p_timezone:timezone,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit'
     });
     if(error)throw error;
     if(data?.success!==true||!data?.branch?.id)throw new Error(data?.error||'Branch creation was not confirmed by the database.');
@@ -2653,9 +2662,9 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
   if(!id||!name||!code){toast('Branch name and code are required.',1);return;}
   t.disabled=true;t.textContent='Saving…';
   try{
-    const {data,error}=await sb.rpc('edmel_update_restaurant_branch',{
+    const {data,error}=await sb.rpc('edmel_update_restaurant_branch_configured',{
       p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_branch_id:id,p_name:name,p_code:code,
-      p_address:address,p_timezone:timezone,p_settings_modes:readAdminBranchModes()
+      p_address:address,p_timezone:timezone,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchEditMenuMode')?.value||'inherit'
     });
     if(error)throw error;
     if(data?.success!==true||data?.branch?.id!==id)throw new Error(data?.error||'Branch update was not confirmed by the database.');
@@ -3533,18 +3542,38 @@ catch(err){if(hasContent){toast('Could not refresh data: '+(err.message||String(
 
 let MENU_ROWS=[], CATEGORY_ROWS=[], MENU_STOCK_ROWS=[], menuLoadError='';
 const menuEsc=v=>esc(String(v??''));
+let MENU_BRANCH_ROWS=[], ADMIN_MENU_BRANCH_ID='', ADMIN_MENU_CATALOG_BRANCH_ID='', MENU_CATALOG_EDITABLE=true;
+async function loadMenuBranchOptions(){
+  const {data,error}=await sb.from('restaurant_branches')
+    .select('id,name,code,is_default,is_active,menu_catalog_mode,menu_source_branch_id')
+    .eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('is_active',true)
+    .order('is_default',{ascending:false}).order('name');
+  if(error)throw error;
+  MENU_BRANCH_ROWS=data||[];
+  if(!MENU_BRANCH_ROWS.length)throw new Error('No active branches are available for menu management.');
+  if(!MENU_BRANCH_ROWS.some(b=>b.id===ADMIN_MENU_BRANCH_ID))ADMIN_MENU_BRANCH_ID=(MENU_BRANCH_ROWS.find(b=>b.is_default)||MENU_BRANCH_ROWS[0]).id;
+}
+function selectedMenuBranch(){
+  return MENU_BRANCH_ROWS.find(b=>b.id===ADMIN_MENU_BRANCH_ID)||null;
+}
 async function loadMenuData(){
+  await loadMenuBranchOptions();
+  const branch=selectedMenuBranch();
+  if(!branch)throw new Error('Select an active branch before loading its menu.');
+  MENU_CATALOG_EDITABLE=branch.is_default===true||branch.menu_catalog_mode!=='inherit';
+  ADMIN_MENU_CATALOG_BRANCH_ID=MENU_CATALOG_EDITABLE?branch.id:(branch.menu_source_branch_id||MENU_BRANCH_ROWS.find(b=>b.is_default)?.id||branch.id);
   const [cr,mr,sr]=await Promise.all([
-    sb.from('menu_categories').select('id,restaurant_id,name,description,image_url,sort_order,is_active,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('sort_order').order('name'),
-    sb.from('menu_items').select('id,restaurant_id,category_id,name,description,price,image_url,is_available,sort_order,stock_product_id,created_at').eq('restaurant_id',CURRENT_RESTAURANT_ID).order('sort_order').order('name'),
-    sb.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,is_available,is_archived').not('product_id','is',null).order('product_name')
+    sb.from('menu_categories').select('id,restaurant_id,name,description,image_url,sort_order,is_active,created_at,branch_id').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('branch_id',ADMIN_MENU_CATALOG_BRANCH_ID).order('sort_order').order('name'),
+    sb.from('menu_items').select('id,restaurant_id,category_id,name,description,price,image_url,is_available,sort_order,stock_product_id,created_at,branch_id').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('branch_id',ADMIN_MENU_CATALOG_BRANCH_ID).order('sort_order').order('name'),
+    sb.from('PRODUCT_STOCK').select('id,product_id,product_name,stock_group,is_available,is_archived').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('branch_id',ADMIN_MENU_BRANCH_ID).not('product_id','is',null).order('product_name')
   ]);
   if(cr.error) throw cr.error;
   if(mr.error) throw mr.error;
   CATEGORY_ROWS=cr.data||[]; MENU_ROWS=mr.data||[];
   MENU_STOCK_ROWS=(sr.error?[]:(sr.data||[])).filter(x=>x.product_id && x.is_archived!==true);
-  menuLoadError=sr.error?('Menu loaded, but stock links could not be loaded: '+sr.error.message):'';
+  menuLoadError=sr.error?('Menu loaded, but branch stock links could not be loaded: '+sr.error.message):'';
 }
+
 function menuImageUploadField(id,label,current){
   return `<div class="fl"><label for="${id}">${label} (JPG, PNG, WebP; max 5 MB)</label><input id="${id}" type="file" accept="image/jpeg,image/png,image/webp"></div>${current?`<p class="note">Current image: <a href="${menuEsc(current)}" target="_blank" rel="noopener">View image</a></p>`:''}`;
 }
@@ -3561,11 +3590,16 @@ function menuPage(){
   const q=(S.f.q||'').trim().toLowerCase(),cat=S.f.mcat||'';
   const rows=MENU_ROWS.filter(m=>(!q||(m.name+' '+(m.description||'')).toLowerCase().includes(q))&&(!cat||m.category_id===cat));
   const catName=id=>CATEGORY_ROWS.find(c=>c.id===id)?.name||'No category';
-  return `<div class="tb"><input data-c="q" value="${menuEsc(S.f.q||'')}" placeholder="Search menu items…" aria-label="Search menu items"><select data-c="mcat" aria-label="Filter by category"><option value="">All categories</option>${CATEGORY_ROWS.map(c=>`<option value="${c.id}"${cat===c.id?' selected':''}>${menuEsc(c.name)}${c.is_active?'':' (inactive)'}</option>`).join('')}</select><button class="btn pri" data-a="menuadd">+ Add menu item</button><button class="btn" data-a="catmanage">Manage categories</button><button class="btn" data-a="menurefresh">Refresh</button></div>
-  <p class="mu">${CATEGORY_ROWS.length} categories · ${MENU_ROWS.length} menu items · HALINA BISTRO CAFE · Supabase</p>
+  const branch=selectedMenuBranch();
+  const options=MENU_BRANCH_ROWS.map(b=>'<option value="'+menuEsc(b.id)+'"'+(b.id===ADMIN_MENU_BRANCH_ID?' selected':'')+'>'+menuEsc(b.name)+(b.menu_catalog_mode==='inherit'&&!b.is_default?' · Inherited':'')+'</option>').join('');
+  const modeText=branch?.is_default?'Master catalog':branch?.menu_catalog_mode==='inherit'?'Inherited from '+(MENU_BRANCH_ROWS.find(b=>b.id===branch.menu_source_branch_id)?.name||'Main Branch'):branch?.menu_catalog_mode==='override'?'Branch override copy':'Independent branch catalog';
+  return `<div class="tb"><label class="fl" style="min-width:210px;margin:0"><span>Branch menu</span><select id="menuBranchSelect">${options}</select></label><button class="btn" data-a="menubranchload">Load Branch</button><input data-c="q" value="${menuEsc(S.f.q||'')}" placeholder="Search menu items…" aria-label="Search menu items"><select data-c="mcat" aria-label="Filter by category"><option value="">All categories</option>${CATEGORY_ROWS.map(c=>`<option value="${c.id}"${cat===c.id?' selected':''}>${menuEsc(c.name)}${c.is_active?'':' (inactive)'}</option>`).join('')}</select>${MENU_CATALOG_EDITABLE?'<button class="btn pri" data-a="menuadd">+ Add menu item</button><button class="btn" data-a="catmanage">Manage categories</button>':''}<button class="btn" data-a="menurefresh">Refresh</button></div>
+  <p class="mu">${menuEsc(modeText)} · ${CATEGORY_ROWS.length} categories · ${MENU_ROWS.length} menu items · Supabase</p>
+  ${!MENU_CATALOG_EDITABLE?'<div class="card"><b>This branch inherits its menu from the master branch.</b><p class="note">The menu is read-only here. Change its Menu Catalog mode to Override or Independent in Multi-Branch Management to create an editable branch copy.</p></div>':''}
   ${menuLoadError?`<p class="note">${menuEsc(menuLoadError)}</p>`:''}
-  <div class="g g2">${rows.map(m=>`<div class="card"><div class="row" style="align-items:flex-start;gap:12px">${m.image_url?`<img src="${menuEsc(m.image_url)}" alt="" style="width:76px;height:76px;object-fit:cover;border-radius:10px">`:`<div style="width:76px;height:76px;border-radius:10px;background:var(--sf);display:grid;place-items:center;color:var(--mu)">No photo</div>`}<div style="flex:1;min-width:0"><div class="row"><b>${menuEsc(m.name)}</b>${bdg(m.is_available?'Available':'Unavailable')}</div><div class="mu">${menuEsc(catName(m.category_id))}</div><div class="big">${M(Number(m.price)||0)}</div></div></div>${m.description?`<p class="mu">${menuEsc(m.description)}</p>`:''}<div class="tb"><button class="btn" data-a="menuedit" data-i="${m.id}">Edit item</button><button class="btn" data-a="menutoggle" data-i="${m.id}">${m.is_available?'Make unavailable':'Make available'}</button></div></div>`).join('')||`<div class="card">${empty(q||cat?'No menu items match this filter.':'No HALINA menu items yet. Add a category first, then create your first menu item.')}</div>`}</div>`;
+  <div class="g g2">${rows.map(m=>`<div class="card"><div class="row" style="align-items:flex-start;gap:12px">${m.image_url?`<img src="${menuEsc(m.image_url)}" alt="" style="width:76px;height:76px;object-fit:cover;border-radius:10px">`:`<div style="width:76px;height:76px;border-radius:10px;background:var(--sf);display:grid;place-items:center;color:var(--mu)">No photo</div>`}<div style="flex:1;min-width:0"><div class="row"><b>${menuEsc(m.name)}</b>${bdg(m.is_available?'Available':'Unavailable')}</div><div class="mu">${menuEsc(catName(m.category_id))}</div><div class="big">${M(Number(m.price)||0)}</div></div></div>${m.description?`<p class="mu">${menuEsc(m.description)}</p>`:''}${MENU_CATALOG_EDITABLE?`<div class="tb"><button class="btn" data-a="menuedit" data-i="${m.id}">Edit item</button><button class="btn" data-a="menutoggle" data-i="${m.id}">${m.is_available?'Make unavailable':'Make available'}</button></div>`:''}</div>`).join('')||`<div class="card">${empty(q||cat?'No menu items match this filter.':'No menu items have been configured for this branch.')}</div>`}</div>`;
 }
+
 async function refreshMenu(){
   try{await loadMenuData();render();}catch(e){toast('Could not load Menu & Categories: '+(e.message||e),1);menuLoadError=e.message||String(e);render();}
 }
@@ -3599,13 +3633,13 @@ function menuItemForm(id){
         const dup=CATEGORY_ROWS.find(c=>c.name.trim().toLowerCase()===cn.toLowerCase());
         if(dup)throw new Error('That category already exists. Choose it from the dropdown instead.');
         let catImage=null;const cf=$('#miNewCatPhoto').files[0];if(cf)catImage=await uploadMenuImage(cf,'categories');
-        const insCat=await sb.from('menu_categories').insert({restaurant_id:CURRENT_RESTAURANT_ID,name:cn,description:$('#miNewCatDesc').value.trim()||null,image_url:catImage,is_active:true}).select('id').single();
+        const insCat=await sb.from('menu_categories').insert({restaurant_id:CURRENT_RESTAURANT_ID,branch_id:ADMIN_MENU_CATALOG_BRANCH_ID,name:cn,description:$('#miNewCatDesc').value.trim()||null,image_url:catImage,is_active:true}).select('id').single();
         if(insCat.error)throw insCat.error;categoryId=insCat.data.id;
       }
       if(!categoryId)throw new Error('Choose a category.');
       let imageUrl=old?.image_url||null;if(file)imageUrl=await uploadMenuImage(file,'items');
-      const payload={restaurant_id:CURRENT_RESTAURANT_ID,category_id:categoryId,name,description:description||null,price,image_url:imageUrl,is_available:$('#miAvailable').checked,stock_product_id:$('#miStock').value||null};
-      const res=old?await sb.from('menu_items').update(payload).eq('id',old.id).eq('restaurant_id',CURRENT_RESTAURANT_ID):await sb.from('menu_items').insert(payload);
+      const payload={restaurant_id:CURRENT_RESTAURANT_ID,branch_id:ADMIN_MENU_CATALOG_BRANCH_ID,category_id:categoryId,name,description:description||null,price,image_url:imageUrl,is_available:$('#miAvailable').checked,stock_product_id:$('#miStock').value||null};
+      const res=old?await sb.from('menu_items').update(payload).eq('id',old.id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('branch_id',ADMIN_MENU_CATALOG_BRANCH_ID):await sb.from('menu_items').insert(payload);
       if(res.error)throw res.error;
       await loadMenuData();closeL();render();toast(old?'Menu item updated':'Menu item created');
     }catch(ex){err.textContent=ex.message||'Could not save menu item.';btn.disabled=false;btn.textContent=old?'Save item':'Create item';}
@@ -3617,7 +3651,7 @@ function categoryForm(id){
   if(id&&!old){toast('Category not found. Refresh and try again.',1);return;}
   L.innerHTML=`<div class="bk" data-a="close"></div><form id="catForm" class="md" role="dialog" aria-modal="true" aria-label="${old?'Edit':'Add'} category"><h3>${old?'Edit category':'Add category'}</h3><div class="fl"><label for="catName">Category name *</label><input id="catName" required maxlength="80" value="${menuEsc(old?.name||'')}"></div><div class="fl"><label for="catDesc">Description</label><textarea id="catDesc" rows="2" maxlength="300">${menuEsc(old?.description||'')}</textarea></div>${menuImageUploadField('catPhoto','Category photo',old?.image_url)}<div class="fl"><label><input id="catActive" type="checkbox"${old?.is_active!==false?' checked':''}> Active category</label></div><div class="tb"><button class="btn pri" id="catSave" type="submit">${old?'Save category':'Create category'}</button><button class="btn" type="button" data-a="close">Cancel</button></div><p id="catErr" class="er" role="alert"></p></form>`;
   $('#catForm').onsubmit=async e=>{e.preventDefault();const btn=$('#catSave'),err=$('#catErr'),name=$('#catName').value.trim(),file=$('#catPhoto').files[0];err.textContent='';if(!name){err.textContent='Category name is required.';return}const dup=CATEGORY_ROWS.find(c=>c.name.trim().toLowerCase()===name.toLowerCase()&&c.id!==old?.id);if(dup){err.textContent='That category already exists.';return}btn.disabled=true;btn.textContent='Saving…';
-    try{let imageUrl=old?.image_url||null;if(file)imageUrl=await uploadMenuImage(file,'categories');const payload={restaurant_id:CURRENT_RESTAURANT_ID,name,description:$('#catDesc').value.trim()||null,image_url:imageUrl,is_active:$('#catActive').checked};const res=old?await sb.from('menu_categories').update(payload).eq('id',old.id).eq('restaurant_id',CURRENT_RESTAURANT_ID):await sb.from('menu_categories').insert(payload);if(res.error)throw res.error;await loadMenuData();closeL();render();toast(old?'Category updated':'Category created');}
+    try{let imageUrl=old?.image_url||null;if(file)imageUrl=await uploadMenuImage(file,'categories');const payload={restaurant_id:CURRENT_RESTAURANT_ID,branch_id:ADMIN_MENU_CATALOG_BRANCH_ID,name,description:$('#catDesc').value.trim()||null,image_url:imageUrl,is_active:$('#catActive').checked};const res=old?await sb.from('menu_categories').update(payload).eq('id',old.id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('branch_id',ADMIN_MENU_CATALOG_BRANCH_ID):await sb.from('menu_categories').insert(payload);if(res.error)throw res.error;await loadMenuData();closeL();render();toast(old?'Category updated':'Category created');}
     catch(ex){err.textContent=ex.message||'Could not save category.';btn.disabled=false;btn.textContent=old?'Save category':'Create category';}
   };$('#catName').focus();
 }
@@ -3626,7 +3660,7 @@ function categoryManager(){
 }
 async function toggleMenuItem(id){
   const item=MENU_ROWS.find(x=>x.id===id);if(!item)return;
-  const res=await sb.from('menu_items').update({is_available:!item.is_available}).eq('id',id).eq('restaurant_id',CURRENT_RESTAURANT_ID);
+  const res=await sb.from('menu_items').update({is_available:!item.is_available}).eq('id',id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('branch_id',ADMIN_MENU_CATALOG_BRANCH_ID);
   if(res.error){toast('Could not update availability: '+res.error.message,1);return}
   await loadMenuData();render();toast(item.is_available?'Menu item marked unavailable':'Menu item is available');
 }
@@ -3634,6 +3668,7 @@ A.menuadd=()=>menuItemForm(null);
 A.menuedit=t=>menuItemForm(t.dataset.i);
 A.menutoggle=t=>toggleMenuItem(t.dataset.i);
 A.menurefresh=()=>refreshMenu();
+A.menubranchload=async()=>{const next=$('#menuBranchSelect')?.value||'';if(!next)return;ADMIN_MENU_BRANCH_ID=next;S.f.q='';S.f.mcat='';await refreshMenu();};
 A.catmanage=()=>categoryManager();
 A.catadd=()=>categoryForm(null);
 A.catedit=t=>categoryForm(t.dataset.i);
