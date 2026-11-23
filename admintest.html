@@ -1357,6 +1357,16 @@ html[data-ui="glass"][data-glass-adj="1"] header{
 .branch-reason-field label{font-size:11px;font-weight:650}
 .branch-reason-field label span{font-weight:400;color:var(--mu)}
 .branch-reason-field input{width:100%;height:38px;min-width:0;padding:8px 10px;border:1px solid var(--bd);border-radius:9px;background:var(--s);color:var(--tx);font:inherit}
+
+.branch-hours-editor{margin-top:14px;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--s)}
+.branch-hours-editor>.row{align-items:center;justify-content:space-between;gap:8px}
+.branch-hours-grid{display:grid;gap:7px;margin-top:10px}
+.branch-hours-row{display:grid;grid-template-columns:minmax(72px,1fr) 88px minmax(90px,1fr) 14px minmax(90px,1fr);align-items:center;gap:7px}
+.branch-hours-row b{font-size:12px}
+.branch-hours-row select,.branch-hours-row input{width:100%;min-width:0;height:36px;padding:6px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;font-size:12px}
+.branch-hours-row>span{text-align:center;color:var(--mu);font-size:11px}
+@media(max-width:560px){.branch-hours-row{grid-template-columns:1fr 84px 1fr 12px 1fr;gap:5px}.branch-hours-row b{font-size:11px}.branch-hours-row select,.branch-hours-row input{padding:5px;font-size:11px}}
+
 .branch-settings-review-card{margin:0!important;padding:10px!important}
 .staff-focus-panel .branch-editor-actions{position:sticky;bottom:-16px;display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;margin:0 -16px -16px;padding:11px 16px 14px;background:var(--gf);border-top:1px solid var(--bd);backdrop-filter:blur(14px)}
 .branch-editor-actions .btn{height:38px;min-height:38px;padding:0 13px;border-radius:9px;font-size:12px;white-space:nowrap}
@@ -2727,7 +2737,7 @@ async function loadAdminBranches(){
     const restaurantId=CURRENT_RESTAURANT_ID;
     if(!restaurantId)throw new Error('Restaurant account could not be identified.');
     const [branchResult,assignmentResult,staffResult]=await Promise.all([
-      sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,is_default,is_active,menu_catalog_mode,menu_source_branch_id,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
+      sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,operating_hours,is_default,is_active,menu_catalog_mode,menu_source_branch_id,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
       sb.from('staff_branch_access').select('restaurant_user_id,restaurant_id,branch_id,is_active,created_at').eq('restaurant_id',restaurantId),
       sb.from('restaurant_users').select('id,restaurant_id,display_name,full_name,position,role,is_active').eq('restaurant_id',restaurantId)
     ]);
@@ -2770,11 +2780,12 @@ function renderAdminBranchCreateReview(){
   const panel=$('#branchCreateReview');if(!panel)return;
   const modes=readAdminBranchModes();
   const labels=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<div class="branch-review-item"><small>'+esc(label)+'</small><b>'+esc(modes[key]||'inherit')+'</b></div>').join('');
-  panel.innerHTML='<div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+esc($('#branchCreateName')?.value.trim()||'Not entered')+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+esc($('#branchCreateCode')?.value.trim().toUpperCase()||'Not entered')+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+esc($('#branchCreateTimezone')?.value.trim()||'Restaurant timezone')+'</b></div><div class="branch-review-item"><small>Address</small><b>'+esc($('#branchCreateAddress')?.value.trim()||'Not provided')+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+esc($('#branchCreateMenuMode')?.selectedOptions?.[0]?.textContent||'Inherit Main Branch Menu')+'</b></div></div><h4 style="margin:14px 0 6px">Business & Operations Modes</h4><div class="branch-review-grid">'+labels+'</div><div class="msg ai" style="max-width:none;margin-top:12px">Inventory definitions are provisioned with zero opening quantities. Existing stock balances, transactions, staff assignments, tables, QR tokens and printer registrations are not copied. Branch-specific setting values can be configured after creation in Branch Settings.</div>';
+  panel.innerHTML='<div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+esc($('#branchCreateName')?.value.trim()||'Not entered')+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+esc($('#branchCreateCode')?.value.trim().toUpperCase()||'Not entered')+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+esc($('#branchCreateTimezone')?.value.trim()||'Restaurant timezone')+'</b></div><div class="branch-review-item"><small>Address</small><b>'+esc($('#branchCreateAddress')?.value.trim()||'Not provided')+'</b></div><div class="branch-review-item"><small>Operating Hours</small><b>'+esc(adminBranchOperatingHoursSummary(adminReadBranchOperatingHours('branchCreateHours')))+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+esc($('#branchCreateMenuMode')?.selectedOptions?.[0]?.textContent||'Inherit Main Branch Menu')+'</b></div></div><h4 style="margin:14px 0 6px">Business & Operations Modes</h4><div class="branch-review-grid">'+labels+'</div><div class="msg ai" style="max-width:none;margin-top:12px">Inventory definitions are provisioned with zero opening quantities. Existing stock balances, transactions, staff assignments, tables, QR tokens and printer registrations are not copied. Branch-specific setting values can be configured after creation in Branch Settings.</div>';
 }
 function openBranchCreateModal(){
   if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can create branches.',1);return;}
   ADMIN_BRANCH_CREATE_STEP=0;
+  const branchScheduleSeed=(ADMIN_BRANCH_ROWS.find(b=>b.is_default===true)||{}).operating_hours||{};
   L.innerHTML=`<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Add branch" style="width:min(760px,94vw);max-height:88vh">
     <div class="staff-focus-kicker">Multi-Branch Management</div>
     <div class="row"><h3 class="staff-focus-title">Add Branch</h3><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>
@@ -2793,7 +2804,8 @@ function openBranchCreateModal(){
       <div class="card" style="margin-top:12px;padding:12px"><b>Inventory protection</b><p class="note" style="margin:5px 0 0">New branch inventory definitions are provisioned from the selected source catalog with zero opening quantities. Existing stock balances are never copied. Tables, QR codes and printers are registered separately for each branch.</p></div>
     </div>
     <div id="branchCreateStep2" class="branch-wizard-panel" hidden>
-      <h4>Business Operations</h4><p class="note">Choose how the branch will use Main Branch business profile, operating hours, tax and service charge settings.</p>
+      <h4>Business Operations</h4><p class="note">Set this branch's own operating schedule, then choose how its other business settings relate to Main Branch.</p>
+      ${adminBranchOperatingHoursEditor(branchScheduleSeed,'branchCreateHours')}
       ${adminBranchModeControls({},ADMIN_BRANCH_SETTING_GROUPS.slice(0,3))}
     </div>
     <div id="branchCreateStep3" class="branch-wizard-panel" hidden>
@@ -2807,6 +2819,44 @@ function openBranchCreateModal(){
   </section>`;
   setAdminBranchCreateStep(0);
 }
+
+const ADMIN_BRANCH_WEEKDAYS=[
+  ['monday','Monday'],['tuesday','Tuesday'],['wednesday','Wednesday'],
+  ['thursday','Thursday'],['friday','Friday'],['saturday','Saturday'],['sunday','Sunday']
+];
+function adminBranchOperatingHoursEditor(hours,prefix){
+  const source=hours&&typeof hours==='object'?hours:{};
+  const rows=ADMIN_BRANCH_WEEKDAYS.map(([day,label])=>{
+    const config=source[day]&&typeof source[day]==='object'?source[day]:{};
+    const isOpen=config.is_open===true||config.is_open==='true';
+    const openTime=/^([01]\d|2[0-3]):[0-5]\d$/.test(String(config.open_time||''))?String(config.open_time):'09:00';
+    const closeTime=/^([01]\d|2[0-3]):[0-5]\d$/.test(String(config.close_time||''))?String(config.close_time):'17:00';
+    return '<div class="branch-hours-row"><b>'+label+'</b>'+
+      '<select id="'+prefix+'_'+day+'_is_open" aria-label="'+label+' status"><option value="true" '+(isOpen?'selected':'')+'>Open</option><option value="false" '+(!isOpen?'selected':'')+'>Closed</option></select>'+
+      '<input type="time" id="'+prefix+'_'+day+'_open_time" value="'+openTime+'" aria-label="'+label+' opening time">'+
+      '<span>to</span><input type="time" id="'+prefix+'_'+day+'_close_time" value="'+closeTime+'" aria-label="'+label+' closing time"></div>';
+  }).join('');
+  return '<div class="branch-hours-editor"><div class="row"><b>Branch Operating Hours</b><span class="mu">Independent schedule</span></div><p class="note">These hours belong only to this branch. Overnight schedules are supported.</p><div class="branch-hours-grid">'+rows+'</div></div>';
+}
+function adminReadBranchOperatingHours(prefix){
+  const hours={};
+  for(const [day,label] of ADMIN_BRANCH_WEEKDAYS){
+    const isOpen=$('#'+prefix+'_'+day+'_is_open')?.value==='true';
+    const openTime=$('#'+prefix+'_'+day+'_open_time')?.value||'';
+    const closeTime=$('#'+prefix+'_'+day+'_close_time')?.value||'';
+    if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(openTime)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(closeTime)){
+      throw new Error('Enter valid opening and closing times for '+label+'.');
+    }
+    hours[day]={is_open:isOpen,open_time:openTime,close_time:closeTime};
+  }
+  return hours;
+}
+function adminBranchOperatingHoursSummary(hours){
+  const h=hours&&typeof hours==='object'?hours:{};
+  const open=ADMIN_BRANCH_WEEKDAYS.filter(([day])=>h[day]?.is_open===true||h[day]?.is_open==='true');
+  return open.length?open.map(([day])=>day.slice(0,3).toUpperCase()+' '+String(h[day].open_time||'')+'–'+String(h[day].close_time||'')).join(' · '):'Closed all week';
+}
+
 async function openBranchEditModal(branch){
   if(!branch||!branch.is_active){toast('Only active branches can be edited.',1);return;}
   L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true"><div class="staff-focus-kicker">Multi-Branch Management</div><h3 class="staff-focus-title">Loading branch settings…</h3><p class="staff-focus-description">Reading the current inheritance modes before editing.</p></section>';
@@ -2829,6 +2879,7 @@ async function openBranchEditModal(branch){
       <div class="fl"><label for="branchEditCode">Branch Code</label><input id="branchEditCode" maxlength="20" value="${esc(branch.code||'')}"></div>
       <div class="fl"><label for="branchEditTimezone">Timezone</label><input id="branchEditTimezone" maxlength="80" value="${esc(branch.timezone||'')}" placeholder="e.g. America/Chicago"></div>
       <div class="fl"><label for="branchEditAddress">Branch Address</label><input id="branchEditAddress" maxlength="240" value="${esc(branch.address||'')}"></div>
+      ${adminBranchOperatingHoursEditor(branch.operating_hours,'branchEditHours')}
       <div style="margin-top:16px"><b>Settings Inheritance</b><p class="note" style="margin:5px 0">Inherit follows master settings. Override keeps branch-specific values and uses master values as fallback. Independent preserves a standalone snapshot. Switching to Independent snapshots the current effective settings.</p></div>
       ${adminBranchModeControls(modes)}
       ${adminBranchMenuModeControl(branch.menu_catalog_mode||'inherit','branchEditMenuMode',branch.is_default===true)}
@@ -2863,9 +2914,10 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
   if(!name||!code){toast('Branch name and code are required.',1);return;}
   t.disabled=true;t.textContent='Adding…';
   try{
-    const {data,error}=await sb.rpc('edmel_create_restaurant_branch_configured',{
+    const operatingHours=adminReadBranchOperatingHours('branchCreateHours');
+    const {data,error}=await sb.rpc('edmel_create_restaurant_branch_configured_with_hours',{
       p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_name:name,p_code:code,p_address:address,
-      p_timezone:timezone,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit'
+      p_timezone:timezone,p_operating_hours:operatingHours,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit'
     });
     if(error)throw error;
     if(data?.success!==true||!data?.branch?.id)throw new Error(data?.error||'Branch creation was not confirmed by the database.');
@@ -2891,7 +2943,7 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
   const modeRows=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<div class="branch-review-item"><small>'+esc(label)+'</small><b>'+esc(currentModes[key]||'inherit')+' → '+esc(nextModes[key]||'inherit')+'</b></div>').join('');
   const menuNext=$('#branchEditMenuMode')?.value||'inherit';
   panel.hidden=false;
-  panel.innerHTML='<div class="row"><b>Review Branch Changes</b><span class="bd wn">Confirmation required</span></div><div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+esc(branch.name)+' → '+esc(name)+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+esc(branch.code)+' → '+esc(code)+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+esc(branch.timezone||'Restaurant default')+' → '+esc($('#branchEditTimezone')?.value.trim()||'Restaurant default')+'</b></div><div class="branch-review-item"><small>Address</small><b>'+esc(branch.address||'Not provided')+' → '+esc($('#branchEditAddress')?.value.trim()||'Not provided')+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+esc(branch.menu_catalog_mode||'inherit')+' → '+esc(menuNext)+'</b></div></div><h4 style="margin:14px 0 6px">Selected Settings Modes</h4><div class="branch-review-grid">'+modeRows+'</div><div class="msg ai" style="max-width:none;margin-top:12px">Mode changes affect only future configuration resolution for this branch. Switching to Independent snapshots the current effective settings. Switching to Inherit resumes Main Branch settings. Existing orders, payments, receipts, staff assignments, tables, QR tokens and stock balances are preserved. Menu catalog synchronization is not included in this save; it will be handled through a separate reviewed sync workflow.</div><div class="staff-focus-actions"><button class="btn" data-a="branch-edit-review-cancel">Back to Edit</button><button class="btn pri" data-a="branch-edit-confirm">Confirm & Save Changes</button></div>';
+  panel.innerHTML='<div class="row"><b>Review Branch Changes</b><span class="bd wn">Confirmation required</span></div><div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+esc(branch.name)+' → '+esc(name)+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+esc(branch.code)+' → '+esc(code)+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+esc(branch.timezone||'Restaurant default')+' → '+esc($('#branchEditTimezone')?.value.trim()||'Restaurant default')+'</b></div><div class="branch-review-item"><small>Address</small><b>'+esc(branch.address||'Not provided')+' → '+esc($('#branchEditAddress')?.value.trim()||'Not provided')+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+esc(branch.menu_catalog_mode||'inherit')+' → '+esc(menuNext)+'</b></div></div><div class="branch-review-grid"><div class="branch-review-item"><small>Operating Hours</small><b>'+esc(adminBranchOperatingHoursSummary(adminReadBranchOperatingHours('branchEditHours')))+'</b></div></div><h4 style="margin:14px 0 6px">Selected Settings Modes</h4><div class="branch-review-grid">'+modeRows+'</div><div class="msg ai" style="max-width:none;margin-top:12px">Mode changes affect only future configuration resolution for this branch. Switching to Independent snapshots the current effective settings. Switching to Inherit resumes Main Branch settings. Existing orders, payments, receipts, staff assignments, tables, QR tokens and stock balances are preserved. Menu catalog synchronization is not included in this save; it will be handled through a separate reviewed sync workflow.</div><div class="staff-focus-actions"><button class="btn" data-a="branch-edit-review-cancel">Back to Edit</button><button class="btn pri" data-a="branch-edit-confirm">Confirm & Save Changes</button></div>';
 },
 'branch-edit-review-cancel':()=>{const panel=$('#branchEditReview');if(panel)panel.hidden=true;},
 'branch-edit-confirm':t=>A['branch-edit-submit'](t),
@@ -2904,9 +2956,10 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
   if(!id||!name||!code){toast('Branch name and code are required.',1);return;}
   t.disabled=true;t.textContent='Saving…';
   try{
-    const {data,error}=await sb.rpc('edmel_update_restaurant_branch_configured',{
+    const operatingHours=adminReadBranchOperatingHours('branchEditHours');
+    const {data,error}=await sb.rpc('edmel_update_restaurant_branch_configured_with_hours',{
       p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_branch_id:id,p_name:name,p_code:code,
-      p_address:address,p_timezone:timezone,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchEditMenuMode')?.value||'inherit'
+      p_address:address,p_timezone:timezone,p_operating_hours:operatingHours,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchEditMenuMode')?.value||'inherit'
     });
     if(error)throw error;
     if(data?.success!==true||data?.branch?.id!==id)throw new Error(data?.error||'Branch update was not confirmed by the database.');
