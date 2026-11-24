@@ -151,7 +151,7 @@ Deno.serve(async (req: Request) => {
 
       if (!sessionId) return json({ error: "Session ID required" }, 400);
       const { data: session, error: sessionError } = await admin.from("staff_sessions")
-        .select("id,restaurant_user_id,restaurant_id,branch_id,user_id,logout_at,last_seen_at,last_activity_at")
+        .select("id,restaurant_user_id,restaurant_id,branch_id,user_id,login_at,logout_at,last_seen_at,last_activity_at")
         .eq("id", sessionId).eq("user_id", actorId).maybeSingle();
       if (sessionError || !session) return json({ error: "Session not found" }, 404);
       const linkedActor = linkRows.find((r: any) => r.id === session.restaurant_user_id);
