@@ -8331,7 +8331,8 @@ reminderStyle.id = "stockSaveReminderStyles";
        );
        return;
      }
-     const isStockEditing =
+     try { sessionStorage.setItem("edmel_cashier_active_view", sectionId); } catch (_) {}
+      const isStockEditing =
        stockEditSaveBtn &&
        stockEditSaveBtn.getAttribute("aria-pressed") === "true";
      if (isStockEditing && sectionId !== "stocksSection") {
@@ -8405,7 +8406,37 @@ reminderStyle.id = "stockSaveReminderStyles";
  requestAnimationFrame(updateSidebarHighlight);
 })();
  
- /* LOAD TABLES FROM THE SHARED HALINA TABLE SYSTEM */
+ /* 
+/* CASHIER PAGE RESTORE + PAGE SKELETONS */
+function cashierEnsureSkeletonStyles(){
+ if(document.getElementById("cashierPageSkeletonStyles"))return;
+ const style=document.createElement("style");style.id="cashierPageSkeletonStyles";
+ style.textContent=".cashier-page-skeleton{display:grid;gap:12px;width:100%;padding:8px 2px}.cashier-skeleton-card{border:1px solid rgba(125,145,125,.16);border-radius:14px;background:rgba(245,248,243,.72);padding:16px;min-height:82px;overflow:hidden}.cashier-skeleton-line,.cashier-skeleton-dot{display:block;position:relative;overflow:hidden;background:#e6ebe3;border-radius:8px}.cashier-skeleton-line{height:11px;margin:8px 0;width:68%}.cashier-skeleton-line.short{width:34%}.cashier-skeleton-line.medium{width:52%}.cashier-skeleton-line.long{width:86%}.cashier-skeleton-line:after,.cashier-skeleton-dot:after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.78),transparent);animation:cashierSkeletonShimmer 1.25s infinite}.cashier-skeleton-dot{width:34px;height:34px;border-radius:50%;float:right}.cashier-skeleton-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}.cashier-skeleton-table{display:grid;gap:0}.cashier-skeleton-table .cashier-skeleton-card{min-height:44px;border-radius:0;padding:12px 16px}@keyframes cashierSkeletonShimmer{100%{transform:translateX(100%)}}@media(prefers-reduced-motion:reduce){.cashier-skeleton-line:after,.cashier-skeleton-dot:after{animation:none}}";
+ document.head.appendChild(style);
+}
+function cashierSkeletonMarkup(kind,count){
+ cashierEnsureSkeletonStyles();const total=Math.max(1,Math.min(Number(count)||4,8));
+ const card='<div class="cashier-skeleton-card"><span class="cashier-skeleton-dot"></span><span class="cashier-skeleton-line short"></span><span class="cashier-skeleton-line long"></span><span class="cashier-skeleton-line medium"></span></div>';
+ if(kind==="transactions")return '<div class="cashier-page-skeleton cashier-skeleton-table" role="status" aria-label="Loading transactions">'+Array.from({length:total},()=>'<div class="cashier-skeleton-card"><span class="cashier-skeleton-line long"></span></div>').join("")+'</div>';
+ return '<div class="cashier-page-skeleton cashier-skeleton-grid" role="status" aria-label="Loading page content">'+Array.from({length:total},()=>card).join("")+'</div>';
+}
+function cashierRestoreLastView(){
+ let id="posSection";try{const saved=sessionStorage.getItem("edmel_cashier_active_view");if(["posSection","ordersSection","transactionsSection","tablesSection","stocksSection","settingsSection"].includes(saved))id=saved;}catch(_){}
+ const button=document.querySelector('.pos-sidebar-btn[data-pos-section="'+id+'"]');if(button)button.click();
+}
+function cashierRestoreSafeViewState(){
+ try{const raw=sessionStorage.getItem("edmel_cashier_safe_view_state");if(!raw)return;const s=JSON.parse(raw);
+  if(typeof s.tablesSearch==="string"){const el=document.getElementById("tablesSearch");if(el)el.value=s.tablesSearch.slice(0,100);}
+  if(["all","open","locked","inactive"].includes(s.tableFilter)){cashierTableFilter=s.tableFilter;document.querySelectorAll("[data-table-filter]").forEach(b=>b.classList.toggle("active",b.dataset.tableFilter===s.tableFilter));}
+  if(["all","2","4","6","8"].includes(s.tablesCapacity)){const el=document.getElementById("tablesCapacityFilter");if(el)el.value=s.tablesCapacity;}
+ }catch(_){}
+}
+function cashierSaveSafeViewState(){try{sessionStorage.setItem("edmel_cashier_safe_view_state",JSON.stringify({tablesSearch:document.getElementById("tablesSearch")?.value||"",tableFilter:cashierTableFilter||"all",tablesCapacity:document.getElementById("tablesCapacityFilter")?.value||"all"}));}catch(_){}}
+document.getElementById("tablesSearch")?.addEventListener("input",cashierSaveSafeViewState);
+document.getElementById("tablesCapacityFilter")?.addEventListener("change",cashierSaveSafeViewState);
+document.querySelectorAll("[data-table-filter]").forEach(b=>b.addEventListener("click",cashierSaveSafeViewState));
+
+/* LOAD TABLES FROM THE SHARED HALINA TABLE SYSTEM */ */
 async function getCashierTableSession() {
   if (!cashierAuthClient) {
     throw new Error("Cashier authentication is unavailable. Please sign in again.");
@@ -8480,7 +8511,7 @@ function applyCashierTableFilters() {
 
 async function loadTables() {
   clearMessage();
-  tablesContainer.innerHTML = '<div class="loading">Loading tables...</div>';
+  tablesContainer.innerHTML = cashierSkeletonMarkup("tables",6);
   try {
     const data = await callCashierTableRpc(TABLE_LIST_RPC, {
       p_restaurant_id: getEDMELRestaurantId(),
@@ -8607,8 +8638,7 @@ async function updateTableStatus(table, newStatus, card, button) {
 async function loadStocks() {
   clearMessage();
 
-  stockContainer.innerHTML =
-    '<div class="loading">Loading product stocks...</div>';
+  stockContainer.innerHTML = cashierSkeletonMarkup("stocks",6);
 
   try {
     const stockQuery =
@@ -11182,6 +11212,7 @@ async function loadOrders() {
   const ordersContainer = document.getElementById("ordersContainer");
   if (!ordersContainer) return;
 
+  ordersContainer.innerHTML = cashierSkeletonMarkup("orders",5);
   try {
     const results = await Promise.all([cashierFetchOperatingDayOrders(), cashierFetchOutstandingPaymentOrders()]);
     const data = results[0];
@@ -12660,7 +12691,7 @@ async function loadTransactionHistory() {
   const rows = document.getElementById("transactionHistoryRows");
   if (!rows) return;
 
-  rows.innerHTML = '<tr><td colspan="7" class="transaction-history-empty">Loading transaction records...</td></tr>';
+  rows.innerHTML = '<tr><td colspan="7">' + cashierSkeletonMarkup("transactions",5) + '</td></tr>';
 
   try {
     const allRecords = [];
@@ -14587,6 +14618,7 @@ async function showCashierPOS(options = {}) {
     showCashierLogin("Unable to verify your restaurant and branch access. Please sign in again.");
     return;
   }
+  if(options.restoring){cashierRestoreSafeViewState();cashierRestoreLastView();}
   const animateEntrance = options.animate === true;
   const loginScreen = cashierLoginScreen;
 
@@ -15175,6 +15207,7 @@ if (cashierLogoutButton) {
       cashierShowUsernameStep();
 
       /* Reset POS navigation to Menu / Ordering. */
+      try{sessionStorage.removeItem("edmel_cashier_active_view");sessionStorage.removeItem("edmel_cashier_safe_view_state");}catch(_){}
       const posSection = document.getElementById("posSection");
 
       const sidebarButtons =
