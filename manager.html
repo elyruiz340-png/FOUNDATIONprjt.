@@ -513,7 +513,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   };
   $("managerBranchPolicyTitle").textContent=mode==="approval_required"?"Owner Approval Required":"Branch Creation Disabled";
   $("managerBranchPolicyDescription").textContent=descriptions[mode]||descriptions.not_allowed;
-  $("managerBranchCreateButton").disabled=!canCreate||mode==="not_allowed";
+  $("managerBranchCreateButton").disabled=!canCreate||mode!=="approval_required";
   $("managerBranchCreateButton").textContent="Request New Branch";
   $("managerBranchWorkspaceMessage").textContent=managerBranchError||(!canCreate?"Your account does not have Branch Create permission. Contact the Owner/Admin if you need to request a new branch.":"");
   const directoryFilter=$("managerBranchDirectoryFilter")?.value||"all";
