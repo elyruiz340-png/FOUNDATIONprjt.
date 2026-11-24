@@ -162,7 +162,7 @@ Deno.serve(async (req: Request) => {
 
       if (action === "unlock") {
         const pin = typeof body.pin === "string" ? body.pin : "";
-        if (!/^\\d{6}$/.test(pin)) return json({ error: "Enter your six-digit PIN." }, 400);
+        if (!/^\d{6}$/.test(pin)) return json({ error: "Enter your six-digit PIN." }, 400);
         if (session.logout_at) return json({ error: "Session already ended", expired: true }, 401);
         if (isDispatcherSession) return json({ error: "PIN unlock is not available for this session." }, 403);
 
