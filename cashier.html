@@ -14094,9 +14094,11 @@ let halinaStaffActivitySinceHeartbeat = true;
 let halinaStaffExpiryHandled = false;
 let halinaStaffInactivityTimer = null;
 let halinaStaffLastHeartbeatAt = 0;
+let halinaCashierLocked = false;
 const HALINA_STAFF_INACTIVITY_MS = 30 * 60 * 1000;
+const HALINA_CASHIER_SESSION_STORAGE_KEY = "edmel_cashier_session_id";
 
-async function callStaffSessionAction(action, sessionId, activity = false, branchId = null) {
+async function callStaffSessionAction(action, sessionId, activity = false, branchId = null, pin = null) {
   if (!cashierAuthClient) throw new Error("Cashier authentication is unavailable.");
   const { data: sessionData, error: sessionError } = await cashierAuthClient.auth.getSession();
   const session = sessionData && sessionData.session;
@@ -14115,7 +14117,8 @@ async function callStaffSessionAction(action, sessionId, activity = false, branc
       ...(sessionId ? { session_id: sessionId } : {}),
       ...( ["start", "list_branches", "switch_branch"].includes(action) && cashierSelectedRestaurantSlug ? { restaurant_slug: cashierSelectedRestaurantSlug } : {}),
       ...(branchId ? { branch_id: branchId } : {}),
-      ...(action === "heartbeat" ? { activity: activity === true } : {})
+      ...(action === "heartbeat" ? { activity: activity === true } : {}),
+      ...(action === "unlock" && pin ? { pin } : {})
     })
   });
   let result = {};
@@ -14123,6 +14126,7 @@ async function callStaffSessionAction(action, sessionId, activity = false, branc
   if (!response.ok || result.success !== true) {
     const error = new Error(result.error || "Could not update staff presence.");
     error.sessionExpired = result.expired === true;
+    error.sessionLocked = result.locked === true;
     throw error;
   }
   return result;
@@ -14138,12 +14142,142 @@ function clearStaffInactivityTimer() {
   halinaStaffInactivityTimer = null;
 }
 
-function scheduleStaffInactivityExpiry() {
+function ensureCashierLockOverlay() {
+  let overlay = document.getElementById("cashierLockOverlay");
+  if (overlay) return overlay;
+
+  if (!document.getElementById("cashierLockOverlayStyles")) {
+    const style = document.createElement("style");
+    style.id = "cashierLockOverlayStyles";
+    style.textContent = `
+      #cashierLockOverlay{position:fixed;inset:0;z-index:1000000;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 50% 18%,rgba(74,112,79,.22),transparent 42%),rgba(12,22,16,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+      #cashierLockOverlay[hidden]{display:none!important}
+      .cashier-lock-card{width:min(410px,100%);padding:34px 30px 28px;border:1px solid rgba(255,255,255,.22);border-radius:25px;background:linear-gradient(155deg,rgba(255,255,255,.97),rgba(244,248,241,.96));box-shadow:0 28px 90px rgba(0,0,0,.34);text-align:center;color:#203729}
+      .cashier-lock-icon{width:54px;height:54px;margin:0 auto 17px;border-radius:18px;display:grid;place-items:center;background:#e8f1e7;color:#28623c}
+      .cashier-lock-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .cashier-lock-card h2{margin:0;font-size:23px;font-weight:800;letter-spacing:-.035em}
+      .cashier-lock-card p{margin:9px 0 22px;color:#6b7b6e;font-size:13px;line-height:1.55}
+      .cashier-lock-pin{width:100%;height:54px;padding:0 16px;border:1px solid #d5e1d4;border-radius:13px;background:#fff;color:#1d3424;text-align:center;font-size:22px;font-weight:800;letter-spacing:.42em;outline:none}
+      .cashier-lock-pin:focus{border-color:#4c9360;box-shadow:0 0 0 4px rgba(64,139,82,.13)}
+      .cashier-lock-submit{width:100%;height:48px;margin-top:13px;border:0;border-radius:12px;background:linear-gradient(180deg,#32834d,#21683b);color:#fff;font-size:14px;font-weight:800;box-shadow:0 6px 16px rgba(36,111,61,.2);cursor:pointer}
+      .cashier-lock-submit:disabled{opacity:.6;cursor:wait}
+      .cashier-lock-message{min-height:19px;margin:13px 0 0!important;color:#a34b3d!important;font-size:12px!important}
+      .cashier-lock-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+      @media(max-width:480px){.cashier-lock-card{padding:28px 21px 23px;border-radius:21px}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  overlay = document.createElement("div");
+  overlay.id = "cashierLockOverlay";
+  overlay.hidden = true;
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-labelledby", "cashierLockTitle");
+  overlay.innerHTML = `
+    <form class="cashier-lock-card" id="cashierLockForm" autocomplete="off">
+      <div class="cashier-lock-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="4.5" y="10" width="15" height="11" rx="2.2"></rect><path d="M8 10V7a4 4 0 1 1 8 0v3"></path><path d="M12 14v3"></path></svg>
+      </div>
+      <h2 id="cashierLockTitle">Cashier Screen Locked</h2>
+      <p>Your session was locked after 30 minutes of inactivity. Enter your six-digit PIN to continue.</p>
+      <label for="cashierUnlockPin" class="cashier-lock-sr-only">Six-digit cashier PIN</label>
+      <input id="cashierUnlockPin" class="cashier-lock-pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" aria-label="Enter your six-digit cashier PIN" required>
+      <button id="cashierUnlockButton" class="cashier-lock-submit" type="submit">Unlock Screen</button>
+      <p id="cashierLockMessage" class="cashier-lock-message" role="status" aria-live="polite"></p>
+    </form>
+  `;
+  document.body.appendChild(overlay);
+
+  const pinInput = document.getElementById("cashierUnlockPin");
+  pinInput.addEventListener("input", () => {
+    pinInput.value = pinInput.value.replace(/\D/g, "").slice(0, 6);
+  });
+  document.getElementById("cashierLockForm").addEventListener("submit", unlockCashierScreen);
+  return overlay;
+}
+
+function setCashierProtectedInert(locked) {
+  cashierProtectedElements.forEach((element) => {
+    if (locked) {
+      if (element.dataset.cashierLockWasInert === undefined) {
+        element.dataset.cashierLockWasInert = element.inert ? "true" : "false";
+      }
+      element.inert = true;
+    } else if (element.dataset.cashierLockWasInert !== undefined) {
+      element.inert = element.dataset.cashierLockWasInert === "true";
+      delete element.dataset.cashierLockWasInert;
+    }
+  });
+}
+
+function lockCashierScreen() {
+  if (!halinaStaffSessionId || halinaCashierLocked) return;
+  halinaCashierLocked = true;
   clearStaffInactivityTimer();
-  if (!halinaStaffSessionId) return;
+  const overlay = ensureCashierLockOverlay();
+  setCashierProtectedInert(true);
+  document.body.classList.add("cashier-screen-locked");
+  overlay.hidden = false;
+  const pinInput = document.getElementById("cashierUnlockPin");
+  const message = document.getElementById("cashierLockMessage");
+  if (pinInput) pinInput.value = "";
+  if (message) message.textContent = "";
+  window.setTimeout(() => pinInput?.focus(), 40);
+}
+
+function clearCashierLockScreen() {
+  halinaCashierLocked = false;
+  const overlay = document.getElementById("cashierLockOverlay");
+  if (overlay) overlay.hidden = true;
+  document.body.classList.remove("cashier-screen-locked");
+  setCashierProtectedInert(false);
+}
+
+async function unlockCashierScreen(event) {
+  event.preventDefault();
+  if (!halinaCashierLocked || !halinaStaffSessionId) return;
+  const pinInput = document.getElementById("cashierUnlockPin");
+  const button = document.getElementById("cashierUnlockButton");
+  const message = document.getElementById("cashierLockMessage");
+  const pin = pinInput?.value || "";
+  if (!/^\d{6}$/.test(pin)) {
+    if (message) message.textContent = "Enter your six-digit PIN.";
+    pinInput?.focus();
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Verifying...";
+  if (message) message.textContent = "";
+  try {
+    await callStaffSessionAction("unlock", halinaStaffSessionId, false, null, pin);
+    clearCashierLockScreen();
+    if (pinInput) pinInput.value = "";
+    halinaStaffActivitySinceHeartbeat = false;
+    halinaStaffLastHeartbeatAt = Date.now();
+    scheduleStaffInactivityExpiry();
+  } catch (error) {
+    if (error.sessionExpired) {
+      await handleStaffInactivityExpiry();
+    } else if (message) {
+      message.textContent = error.message || "Unable to unlock. Check your PIN and try again.";
+      if (pinInput) pinInput.value = "";
+      pinInput?.focus();
+    }
+  } finally {
+    button.disabled = false;
+    button.textContent = "Unlock Screen";
+  }
+}
+
+function scheduleStaffInactivityExpiry(delayMs = HALINA_STAFF_INACTIVITY_MS) {
+  clearStaffInactivityTimer();
+  if (!halinaStaffSessionId || halinaCashierLocked) return;
+  const safeDelay = Math.max(0, Math.min(Number(delayMs) || HALINA_STAFF_INACTIVITY_MS, HALINA_STAFF_INACTIVITY_MS));
   halinaStaffInactivityTimer = setTimeout(() => {
-    handleStaffInactivityExpiry();
-  }, HALINA_STAFF_INACTIVITY_MS);
+    lockCashierScreen();
+  }, safeDelay);
 }
 
 async function handleStaffInactivityExpiry() {
@@ -14158,13 +14292,15 @@ async function handleStaffInactivityExpiry() {
   }
   halinaStaffSessionId = null;
   halinaStaffPresenceUserId = null;
+  try { localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY); } catch (_) {}
+  clearCashierLockScreen();
   hideCashierPOS();
   try {
     if (cashierAuthClient) await cashierAuthClient.auth.signOut({ scope: "local" });
   } catch (error) {
     console.warn("Could not clear the expired local session:", error.message || error);
   }
-  showCashierLogin("You were signed out after 30 minutes of inactivity. Please sign in again.");
+  showCashierLogin("Your cashier session is no longer active. Please sign in again.");
   halinaStaffExpiryHandled = false;
 }
 
@@ -14173,8 +14309,9 @@ async function sendStaffHeartbeat() {
   const activity = halinaStaffActivitySinceHeartbeat;
   halinaStaffActivitySinceHeartbeat = false;
   try {
-    await callStaffSessionAction("heartbeat", halinaStaffSessionId, activity);
+    const result = await callStaffSessionAction("heartbeat", halinaStaffSessionId, activity);
     halinaStaffLastHeartbeatAt = Date.now();
+    if (result.locked) lockCashierScreen();
   } catch (error) {
     if (error.sessionExpired) {
       await handleStaffInactivityExpiry();
@@ -14200,7 +14337,32 @@ async function startStaffPresence() {
   halinaStaffPresenceStarting = true;
   try {
     stopStaffHeartbeat();
-    const result = await callStaffSessionAction("start");
+    let result = null;
+    const savedSessionId = (() => {
+      try { return localStorage.getItem(HALINA_CASHIER_SESSION_STORAGE_KEY) || ""; }
+      catch (_) { return ""; }
+    })();
+
+    if (savedSessionId) {
+      try {
+        result = await callStaffSessionAction("resume", savedSessionId);
+      } catch (resumeError) {
+        if (resumeError.sessionExpired) {
+          try { localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY); } catch (_) {}
+          window.EDMEL_TENANT_CONTEXT = null;
+          window.EDMEL_ACCESS_TOKEN = null;
+          try { await cashierAuthClient.auth.signOut({ scope: "local" }); } catch (_) {}
+          showCashierLogin("Your previous cashier session has ended. Please sign in again.");
+          return;
+        }
+        throw resumeError;
+      }
+    } else {
+      result = await callStaffSessionAction("start");
+      try { localStorage.setItem(HALINA_CASHIER_SESSION_STORAGE_KEY, result.session_id); } catch (_) {}
+    }
+
+    cashierSelectedRestaurantSlug = String(result.restaurant_slug || cashierSelectedRestaurantSlug || "").trim().toLowerCase();
     window.EDMEL_TENANT_CONTEXT = {
       restaurant_id: result.restaurant_id,
       branch_id: result.branch_id,
@@ -14209,8 +14371,16 @@ async function startStaffPresence() {
     window.dispatchEvent(new Event("edmel:tenant-context-ready"));
     halinaStaffSessionId = result.session_id;
     halinaStaffPresenceUserId = userId;
-    halinaStaffActivitySinceHeartbeat = true;
-    scheduleStaffInactivityExpiry();
+    halinaStaffActivitySinceHeartbeat = false;
+    if (result.locked) {
+      lockCashierScreen();
+    } else {
+      scheduleStaffInactivityExpiry(
+        Number.isFinite(Number(result.inactivity_remaining_ms))
+          ? Number(result.inactivity_remaining_ms)
+          : HALINA_STAFF_INACTIVITY_MS
+      );
+    }
     await sendStaffHeartbeat();
     await loadCashierAssignedBranches();
     stopStaffHeartbeat();
@@ -14274,6 +14444,8 @@ async function loadCashierAssignedBranches() {
 async function endStaffPresence() {
   window.EDMEL_ACCESS_TOKEN = null;
   window.EDMEL_TENANT_CONTEXT = null;
+  try { localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY); } catch (_) {}
+  clearCashierLockScreen();
   const branchSwitch = document.getElementById("cashierBranchSwitch");
   if (branchSwitch) branchSwitch.style.display = "none";
   stopStaffHeartbeat();
@@ -14292,7 +14464,7 @@ async function endStaffPresence() {
 /* Only genuine user interaction refreshes the inactivity clock. */
 ["pointerdown", "keydown", "touchstart", "scroll", "click", "input", "change"].forEach((eventName) => {
   document.addEventListener(eventName, () => {
-    if (!halinaStaffSessionId) return;
+    if (!halinaStaffSessionId || halinaCashierLocked) return;
     halinaStaffActivitySinceHeartbeat = true;
     scheduleStaffInactivityExpiry();
     if (Date.now() - halinaStaffLastHeartbeatAt >= 10000) sendStaffHeartbeat();
@@ -14442,6 +14614,7 @@ async function showCashierPOS(options = {}) {
 
 function showCashierLogin(message = "") {
   /* Hide the cashier dashboard first. */
+  clearCashierLockScreen();
   hideCashierPOS();
 
   /* Clear any leftover login-screen animation effects. */
@@ -14780,6 +14953,8 @@ if (cashierAuthClient) {
     if (event === "SIGNED_OUT") {
       cashierPricingConfig = {taxRules:[],serviceChargeRules:[],discountRules:[],vouchers:[],paymentMethods:[],loaded:false,error:""};
       cashierUpdatePaymentButtons();
+      try { localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY); } catch (_) {}
+      clearCashierLockScreen();
       stopStaffHeartbeat();
       showCashierLogin("Your session has ended. Please sign in again.");
     }
@@ -14903,6 +15078,10 @@ if (cashierLogoutButton) {
       cashierLogoutButton.textContent = "Log Out";
     }
   });
+}
+const cashierSettingsLogoutButton = document.getElementById("cashierSettingsLogoutButton");
+if (cashierSettingsLogoutButton && cashierLogoutButton) {
+  cashierSettingsLogoutButton.addEventListener("click", () => cashierLogoutButton.click());
 }
 /* Authenticate with the server-side username + PIN check. */
 if (cashierLoginForm) {
