@@ -6049,6 +6049,10 @@ body:not(.restaurant-profile-ready) .cashier-login-brand, body:not(.restaurant-p
   @keyframes cashierRestoreShimmer{from{background-position:100% 0}to{background-position:-100% 0}}
   @media(prefers-reduced-motion:reduce){.cashier-restoration-mark span,.cashier-restoration-skeleton i{animation:none}}
 
+  #cashierLoginScreen[hidden] {
+    display: none !important;
+  }
+
   #cashierLoginScreen {
     position: fixed;
     inset: 0;
@@ -6815,7 +6819,7 @@ background:
 <!-- =========================
      CASHIER LOGIN SCREEN
 ========================= -->
-<div id="cashierLoginScreen" role="dialog" aria-modal="true" aria-labelledby="cashierLoginTitle">
+<div id="cashierLoginScreen" hidden role="dialog" aria-modal="true" aria-labelledby="cashierLoginTitle">
   <div class="cashier-login-card">
     <div class="cashier-login-brand">HALINA BISTRO CAFE</div>
     <h1 id="cashierLoginTitle">Welcome Back</h1>
@@ -14714,6 +14718,7 @@ function showCashierLogin(message = "") {
 
   /* Clear any leftover login-screen animation effects. */
   if (cashierLoginScreen) {
+    cashierLoginScreen.hidden = false;
     if (typeof cashierLoginScreen.getAnimations === "function") {
       cashierLoginScreen.getAnimations().forEach((animation) => {
         animation.cancel();
