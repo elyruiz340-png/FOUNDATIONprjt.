@@ -6957,6 +6957,10 @@ background:
     </svg>
   </button>
 <!-- CASHIER LOGOUT -->
+  <!-- MANUAL SCREEN LOCK -->
+  <button type="button" id="cashierManualLockButton" class="pos-sidebar-btn cashier-manual-lock-btn" aria-label="Lock Screen" title="Lock Screen" disabled>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10" width="15" height="11" rx="2.2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></svg>
+  </button>
   <div class="pos-sidebar-logout">
     <button
       type="button"
@@ -14098,6 +14102,7 @@ let halinaStaffLastHeartbeatAt = 0;
 let halinaCashierLocked = false;
 const HALINA_STAFF_INACTIVITY_MS = 30 * 60 * 1000;
 const HALINA_CASHIER_SESSION_STORAGE_KEY = "edmel_cashier_session_id";
+const HALINA_CASHIER_RESTAURANT_STORAGE_KEY = "edmel_cashier_restaurant_slug";
 
 async function callStaffSessionAction(action, sessionId, activity = false, branchId = null, pin = null) {
   if (!cashierAuthClient) throw new Error("Cashier authentication is unavailable.");
@@ -14227,6 +14232,11 @@ function lockCashierScreen() {
   window.setTimeout(() => pinInput?.focus(), 40);
 }
 
+const cashierManualLockButton = document.getElementById("cashierManualLockButton");
+if (cashierManualLockButton) cashierManualLockButton.addEventListener("click", () => {
+  if (halinaStaffSessionId && !halinaCashierLocked) lockCashierScreen();
+});
+
 function clearCashierLockScreen() {
   halinaCashierLocked = false;
   const overlay = document.getElementById("cashierLockOverlay");
@@ -14294,7 +14304,10 @@ async function handleStaffInactivityExpiry() {
   }
   halinaStaffSessionId = null;
   halinaStaffPresenceUserId = null;
-  try { localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY); } catch (_) {}
+  try {
+        localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY);
+        localStorage.removeItem(HALINA_CASHIER_RESTAURANT_STORAGE_KEY);
+      } catch (_) {}
   clearCashierLockScreen();
   hideCashierPOS();
   try {
@@ -14344,13 +14357,21 @@ async function startStaffPresence() {
       try { return localStorage.getItem(HALINA_CASHIER_SESSION_STORAGE_KEY) || ""; }
       catch (_) { return ""; }
     })();
+    const savedRestaurantSlug = (() => {
+      try { return localStorage.getItem(HALINA_CASHIER_RESTAURANT_STORAGE_KEY) || ""; }
+      catch (_) { return ""; }
+    })();
+    if (!cashierSelectedRestaurantSlug && savedRestaurantSlug) cashierSelectedRestaurantSlug = savedRestaurantSlug.trim().toLowerCase();
 
     if (savedSessionId) {
       try {
         result = await callStaffSessionAction("resume", savedSessionId);
       } catch (resumeError) {
         if (resumeError.sessionExpired) {
-          try { localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY); } catch (_) {}
+          try {
+        localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY);
+        localStorage.removeItem(HALINA_CASHIER_RESTAURANT_STORAGE_KEY);
+      } catch (_) {}
           window.EDMEL_TENANT_CONTEXT = null;
           window.EDMEL_ACCESS_TOKEN = null;
           try { await cashierAuthClient.auth.signOut({ scope: "local" }); } catch (_) {}
@@ -14373,6 +14394,8 @@ async function startStaffPresence() {
     window.dispatchEvent(new Event("edmel:tenant-context-ready"));
     halinaStaffSessionId = result.session_id;
     halinaStaffPresenceUserId = userId;
+    const manualLockButton = document.getElementById("cashierManualLockButton");
+    if (manualLockButton) manualLockButton.disabled = false;
     halinaStaffActivitySinceHeartbeat = false;
     if (result.locked) {
       lockCashierScreen();
@@ -14388,7 +14411,8 @@ async function startStaffPresence() {
     stopStaffHeartbeat();
     halinaStaffHeartbeatTimer = setInterval(sendStaffHeartbeat, 45000);
   } catch (error) {
-    console.warn("Could not start staff session tracking:", error.message || error);
+    console.error("Could not start staff session tracking:", error.message || error);
+    throw error;
   } finally {
     halinaStaffPresenceStarting = false;
   }
@@ -14447,7 +14471,10 @@ async function loadCashierAssignedBranches() {
 async function endStaffPresence() {
   window.EDMEL_ACCESS_TOKEN = null;
   window.EDMEL_TENANT_CONTEXT = null;
-  try { localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY); } catch (_) {}
+  try {
+        localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY);
+        localStorage.removeItem(HALINA_CASHIER_RESTAURANT_STORAGE_KEY);
+      } catch (_) {}
   clearCashierLockScreen();
   const branchSwitch = document.getElementById("cashierBranchSwitch");
   if (branchSwitch) branchSwitch.style.display = "none";
@@ -14493,7 +14520,13 @@ function hideCashierPOS() {
 ========================= */
 
 async function showCashierPOS(options = {}) {
-  await startStaffPresence();
+  try { await startStaffPresence(); }
+  catch (error) {
+    window.EDMEL_ACCESS_TOKEN = null;
+    window.EDMEL_TENANT_CONTEXT = null;
+    showCashierLogin(error.message || "Unable to establish your cashier session. Please sign in again.");
+    return;
+  }
   if (!window.EDMEL_TENANT_CONTEXT?.restaurant_id || !window.EDMEL_TENANT_CONTEXT?.branch_id) {
     window.EDMEL_ACCESS_TOKEN = null;
     window.EDMEL_TENANT_CONTEXT = null;
@@ -14935,6 +14968,7 @@ if (cashierAuthClient) {
     .then(async ({ data, error }) => {
       if (error) throw error;
       if (data.session) {
+        window.EDMEL_ACCESS_TOKEN = data.session.access_token;
         await loadCashierPricingSettings();
         showCashierPOS();
       } else {
@@ -14956,7 +14990,10 @@ if (cashierAuthClient) {
     if (event === "SIGNED_OUT") {
       cashierPricingConfig = {taxRules:[],serviceChargeRules:[],discountRules:[],vouchers:[],paymentMethods:[],loaded:false,error:""};
       cashierUpdatePaymentButtons();
-      try { localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY); } catch (_) {}
+      try {
+        localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY);
+        localStorage.removeItem(HALINA_CASHIER_RESTAURANT_STORAGE_KEY);
+      } catch (_) {}
       clearStaffInactivityTimer();
       stopStaffHeartbeat();
       halinaStaffSessionId = null;
@@ -15164,6 +15201,7 @@ if (cashierLoginForm) {
 
       cashierSelectedRestaurantSlug = String(result.restaurant_slug || "").trim().toLowerCase();
       if (!cashierSelectedRestaurantSlug) throw new Error("Restaurant workspace could not be resolved.");
+      try { localStorage.setItem(HALINA_CASHIER_RESTAURANT_STORAGE_KEY, cashierSelectedRestaurantSlug); } catch (_) {}
       window.EDMEL_ACCESS_TOKEN = data.session.access_token;
       if (cashierPinInput) cashierPinInput.value = "";
       loginSucceeded = true;
