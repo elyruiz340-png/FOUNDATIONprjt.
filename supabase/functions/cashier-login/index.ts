@@ -48,6 +48,31 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Invalid username or PIN" }, 401);
     }
 
+    // A locked cashier must resume and unlock the existing session, not create a new login.
+    const { data: activeSessions, error: activeSessionError } = await admin.from("staff_sessions")
+      .select("id,last_activity_at,login_at")
+      .eq("user_id", verified.cashier_user_id)
+      .eq("restaurant_id", verified.restaurant_id)
+      .eq("restaurant_user_id", verified.restaurant_user_id)
+      .is("logout_at", null)
+      .order("login_at", { ascending: false })
+      .limit(1);
+    if (activeSessionError) {
+      console.error("Unable to check active cashier session:", activeSessionError.message);
+      return json({ error: "Unable to verify the current cashier session." }, 500);
+    }
+    const activeSession = activeSessions?.[0];
+    if (activeSession) {
+      const lastActivityAt = new Date(activeSession.last_activity_at || activeSession.login_at || 0).getTime();
+      const isLocked = !Number.isFinite(lastActivityAt) || Date.now() - lastActivityAt >= 30 * 60 * 1000;
+      if (isLocked) {
+        return json({
+          error: "This cashier screen is locked. Return to the existing session and enter the current cashier PIN to unlock it.",
+          locked: true,
+        }, 423);
+      }
+    }
+
     const { data: userResult, error: userError } =
       await admin.auth.admin.getUserById(verified.cashier_user_id);
     const email = userResult?.user?.email;
