@@ -14008,12 +14008,7 @@ async function cashierShowPinStep() {
       return;
     }
 
-    cashierSelectedRestaurantSlug = String(result.restaurant_slug || "").trim().toLowerCase();
-    if (!cashierSelectedRestaurantSlug) {
-      throw new Error("Restaurant workspace could not be resolved. Please try again.");
-    }
-
-    /* Username preview removed from the PIN screen. */
+    /* Tenant details are returned only after the PIN is verified. */
 
     cashierUsernameStep.hidden = true;
     cashierPinStep.hidden = false;
@@ -15132,7 +15127,7 @@ if (cashierLoginForm) {
           "apikey": SUPABASE_KEY,
           "Authorization": "Bearer " + SUPABASE_KEY
         },
-        body: JSON.stringify({ restaurant_slug: cashierSelectedRestaurantSlug, username, pin, expected_position: "cashier" })
+        body: JSON.stringify({ username, pin, expected_position: "cashier" })
       });
 
       const result = await response.json();
