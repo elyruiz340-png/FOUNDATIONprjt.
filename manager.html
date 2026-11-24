@@ -164,21 +164,21 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
     <div class="stat"><span>Branch Requests</span><strong id="managerBranchRequestCount">—</strong></div>
     <div class="stat"><span>Creation Policy</span><strong id="managerBranchPolicyStatus" style="font-size:17px">—</strong></div>
    </div>
-   <section class="panel">
-    <div class="panel-head"><div><h2>Branch Creation Policy</h2><p>Branch creation is controlled by the Owner/Admin and your assigned permissions.</p></div></div>
+   <details class="panel">
+    <summary class="panel-head" style="cursor:pointer;list-style:none"><div><h2>Branch Creation Policy & Actions</h2><p>Owner-controlled policy and your permitted branch creation action.</p></div></summary>
     <div class="panel-body" style="padding-top:14px">
      <div class="manager-branch-policy"><div><strong id="managerBranchPolicyTitle">Loading policy…</strong><p id="managerBranchPolicyDescription">Checking your branch creation access.</p></div><button class="primary" id="managerBranchCreateButton" type="button" disabled>Create / Request Branch</button></div>
      <div class="note" id="managerBranchWorkspaceMessage" style="padding-top:10px" aria-live="polite"></div>
     </div>
-   </section>
+   </details>
    <section class="panel" style="margin-top:16px">
-    <div class="panel-head"><div><h2>My Assigned Branches</h2><p>Only active branches assigned to your Manager account are shown.</p></div></div>
+    <div class="panel-head"><div><h2>My Assigned Branches</h2><p>All Branches shows only active branches assigned to you with Branch View permission.</p></div><label class="branch-select" style="margin-left:auto"><span>Filter</span><select id="managerBranchDirectoryFilter" aria-label="Filter assigned branches"><option value="all">All Branches</option></select></label></div>
     <div class="panel-body" style="padding-top:14px"><div id="managerBranchDirectory" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px"><div class="empty">Loading assigned branches…</div></div></div>
    </section>
-   <section class="panel" style="margin-top:16px">
-    <div class="panel-head"><div><h2>My Branch Creation Requests</h2><p>Track submitted requests and review outcomes.</p></div></div>
+   <details class="panel" style="margin-top:16px">
+    <summary class="panel-head" style="cursor:pointer;list-style:none"><div><h2>My Branch Creation Requests</h2><p>Track submitted requests and review outcomes.</p></div></summary>
     <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Branch</th><th>Status</th><th>Submitted</th><th>Review Note</th></tr></thead><tbody id="managerBranchRequestRows"><tr><td colspan="4" class="empty">Loading requests…</td></tr></tbody></table></div></div>
-   </section>
+   </details>
    <div class="manager-branch-modal" id="managerBranchCreateModal" hidden>
     <form class="manager-expense-dialog manager-branch-dialog" id="managerBranchCreateForm">
      <div class="row" style="justify-content:space-between;align-items:center"><h2 id="managerBranchModalTitle">Create Branch</h2><button class="secondary" id="managerBranchCloseButton" type="button">Close</button></div>
@@ -410,7 +410,13 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   $("managerBranchCreateButton").disabled=!canCreate||mode==="not_allowed";
   $("managerBranchCreateButton").textContent=mode==="approval_required"?"Request New Branch":"Create New Branch";
   $("managerBranchWorkspaceMessage").textContent=managerBranchError||(!canCreate?"Your account does not have Branch Create permission. Contact the Owner/Admin if you need to request a new branch.":"");
-  $("managerBranchDirectory").innerHTML=branches.length?branches.map(branch=>'<div class="manager-branch-card"><strong>'+esc(branch.name)+'</strong><small>'+esc(branch.code||"")+' · '+(branch.is_default?"Main Branch":"Assigned Branch")+'</small><small>'+(branch.is_active?"Active":"Inactive")+'</small></div>').join(""):'<div class="empty">No active assigned branches.</div>';
+  const directoryFilter=$("managerBranchDirectoryFilter")?.value||"all";
+  if($("managerBranchDirectoryFilter")){
+   $("managerBranchDirectoryFilter").innerHTML='<option value="all">All Branches</option>'+branches.map(branch=>'<option value="'+esc(branch.id)+'">'+esc(branch.name)+'</option>').join("");
+   $("managerBranchDirectoryFilter").value=directoryFilter==="all"||branches.some(branch=>branch.id===directoryFilter)?directoryFilter:"all";
+  }
+  const visibleBranches=directoryFilter==="all"?branches:branches.filter(branch=>branch.id===directoryFilter);
+  $("managerBranchDirectory").innerHTML=visibleBranches.length?visibleBranches.map(branch=>'<div class="manager-branch-card"><strong>'+esc(branch.name)+'</strong><small>'+esc(branch.code||"")+' · '+(branch.is_default?"Main Branch":"Assigned Branch")+'</small><small>'+(branch.is_active?"Active":"Inactive")+'</small></div>').join(""):'<div class="empty">No active assigned branches match this filter.</div>';
   const rows=managerBranchRequests.map(request=>{
    const data=request.request_data&&typeof request.request_data==="object"?request.request_data:{};
    return '<tr><td><strong>'+esc(data.name||"Unnamed branch")+'</strong><div class="staff-user">'+esc(data.code||"")+'</div></td><td><span class="status '+(request.status==="approved"?"online":request.status==="rejected"?"removed":"")+'">'+esc(request.status||"Unknown")+'</span></td><td>'+esc(request.created_at?new Date(request.created_at).toLocaleString():"—")+'</td><td>'+esc(request.decision_reason||"—")+'</td></tr>';
@@ -1034,6 +1040,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   sessionStorage.setItem("edmel_manager_branch",next.id);
   await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
  });
+ $("managerBranchDirectoryFilter")?.addEventListener("change",()=>renderManagerBranchWorkspace());
  $("managerBranchRefreshButton")?.addEventListener("click",()=>loadManagerBranchWorkspace().catch(error=>showManagerBranchWorkspaceError(error.message||"Unable to refresh branches.")));
  $("managerBranchCreateButton")?.addEventListener("click",()=>{try{openManagerBranchModal();}catch(error){showManagerBranchWorkspaceError(error.message);}});
  $("managerBranchCloseButton")?.addEventListener("click",closeManagerBranchModal);
