@@ -2777,12 +2777,12 @@ async function loadAdminBranchGovernance(){
   }
 }
 function renderAdminBranchGovernance(){
-  const canManage=['owner','admin'].includes(String(CURRENT_AUTH_ROLE||'').toLowerCase());
+  const canManage=String(CURRENT_AUTH_ROLE||'').toLowerCase()==='owner';
   const mode=['allowed','approval_required','not_allowed'].includes(ADMIN_BRANCH_POLICY?.manager_creation_mode)
     ?ADMIN_BRANCH_POLICY.manager_creation_mode:'not_allowed';
   const options=[
     ['not_allowed','Not Allowed','Managers cannot create branches or submit requests.'],
-    ['approval_required','Approval Required','Managers submit requests for Owner/Admin review.'],
+    ['approval_required','Approval Required','Managers submit requests for Owner review.'],
     ['allowed','Allowed','Managers can create fully configured branches directly.']
   ].map(([value,label,description])=>'<option value="'+value+'" '+(mode===value?'selected':'')+'>'+label+' — '+description+'</option>').join('');
   const requestRows=ADMIN_BRANCH_REQUESTS.map(request=>{
@@ -2797,9 +2797,9 @@ function renderAdminBranchGovernance(){
   }).join('');
   const policyControl=canManage
     ?'<div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:260px"><label for="branchManagerCreationPolicy" class="mu" style="display:block;margin-bottom:6px">Manager Branch Creation Policy</label><select id="branchManagerCreationPolicy" style="width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)">'+options+'</select></div><button class="btn pri" data-a="branch-policy-save">Save Policy</button></div>'
-    :'<div class="note">Only the Owner or Admin can change this policy.</div>';
+    :'<div class="note">Only the Owner can change this policy.</div>';
   return '<section class="card" style="margin-bottom:14px"><div class="row"><div><div class="mu">Branch Creation Governance</div><h3 style="margin:3px 0 4px">Manager Access Policy</h3><p class="note" style="margin:0">Controls whether Managers can create branches directly, request approval, or have no branch creation access.</p></div><span class="bd '+(mode==='allowed'?'ok':mode==='approval_required'?'wn':'')+'">'+esc(mode.replace('_',' '))+'</span></div><div style="margin-top:14px">'+(ADMIN_BRANCH_GOVERNANCE_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_GOVERNANCE_ERROR)+'</div>':policyControl)+'</div></section>'+
-    '<section class="card" style="margin-bottom:14px"><div class="row"><div><div class="mu">Branch Management</div><h3 style="margin:3px 0 4px">Manager Branch Requests</h3><p class="note" style="margin:0">Approving a request creates the configured branch and gives the requesting Manager branch-only access. Other operational permissions remain unchanged.</p></div><button class="btn" data-a="branch-governance-refresh">Refresh</button></div><div class="tw" style="margin-top:12px"><table><thead><tr><th>Requested Branch</th><th>Status</th><th>Submitted</th><th>Requested By</th><th>Review</th></tr></thead><tbody>'+(ADMIN_BRANCH_GOVERNANCE_LOADING?'<tr><td colspan="5"><div class="empty">Loading branch requests…</div></td></tr>':requestRows||'<tr><td colspan="5"><div class="empty">No branch creation requests.</div></td></tr>')+'</tbody></table></div></section>';
+    '<section class="card" style="margin-bottom:14px"><div class="row"><div><div class="mu">Branch Management</div><h3 style="margin:3px 0 4px">Manager Branch Requests</h3><p class="note" style="margin:0">Owner approval creates the configured branch and gives the requesting Manager branch-only access. Other operational permissions remain unchanged.</p></div><button class="btn" data-a="branch-governance-refresh">Refresh</button></div><div class="tw" style="margin-top:12px"><table><thead><tr><th>Requested Branch</th><th>Status</th><th>Submitted</th><th>Requested By</th><th>Review</th></tr></thead><tbody>'+(ADMIN_BRANCH_GOVERNANCE_LOADING?'<tr><td colspan="5"><div class="empty">Loading branch requests…</div></td></tr>':requestRows||'<tr><td colspan="5"><div class="empty">No branch creation requests.</div></td></tr>')+'</tbody></table></div></section>';
 }
 
 function renderAdminBranchesPage(){
@@ -2890,6 +2890,8 @@ async function loadAdminBranches(){
 
 let ADMIN_BRANCH_CREATE_STEP=0;
 let ADMIN_BRANCH_EDIT_CURRENT_MODES={};
+let ADMIN_BRANCH_WORKSPACE_MODE='create';
+let ADMIN_BRANCH_WORKSPACE_BRANCH=null;
 function setAdminBranchCreateStep(step){
   const max=4;ADMIN_BRANCH_CREATE_STEP=Math.max(0,Math.min(max,Number(step)||0));
   for(let i=0;i<=max;i++){
@@ -2904,48 +2906,43 @@ function setAdminBranchCreateStep(step){
 }
 function renderAdminBranchCreateReview(){
   const panel=$('#branchCreateReview');if(!panel)return;
-  const modes=readAdminBranchModes();
-  const labels=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<div class="branch-review-item"><small>'+esc(label)+'</small><b>'+esc(modes[key]||'inherit')+'</b></div>').join('');
-  panel.innerHTML='<div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+esc($('#branchCreateName')?.value.trim()||'Not entered')+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+esc($('#branchCreateCode')?.value.trim().toUpperCase()||'Not entered')+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+esc($('#branchCreateTimezone')?.value.trim()||'Restaurant timezone')+'</b></div><div class="branch-review-item"><small>Address</small><b>'+esc($('#branchCreateAddress')?.value.trim()||'Not provided')+'</b></div><div class="branch-review-item"><small>Operating Hours</small><b>'+esc(adminBranchOperatingHoursSummary(adminReadBranchOperatingHours('branchCreateHours')))+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+esc($('#branchCreateMenuMode')?.selectedOptions?.[0]?.textContent||'Inherit Main Branch Menu')+'</b></div></div><h4 style="margin:14px 0 6px">Business & Operations Modes</h4><div class="branch-review-grid">'+labels+'</div><div class="msg ai" style="max-width:none;margin-top:12px">Inventory definitions are provisioned with zero opening quantities. Existing stock balances, transactions, staff assignments, tables, QR tokens and printer registrations are not copied. Branch-specific setting values can be configured after creation in Branch Settings.</div>';
+  const editing=ADMIN_BRANCH_WORKSPACE_MODE==='edit';
+  const branch=ADMIN_BRANCH_WORKSPACE_BRANCH||null;
+  const nextModes=readAdminBranchModes(),currentModes=ADMIN_BRANCH_EDIT_CURRENT_MODES||{};
+  const labels=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<div class="branch-review-item"><small>'+esc(label)+'</small><b>'+(editing?esc(currentModes[key]||'inherit')+' → ':'')+esc(nextModes[key]||'inherit')+'</b></div>').join('');
+  const name=$('#branchCreateName')?.value.trim()||'Not entered',code=$('#branchCreateCode')?.value.trim().toUpperCase()||'Not entered';
+  const timezone=$('#branchCreateTimezone')?.value.trim()||'Restaurant timezone',address=$('#branchCreateAddress')?.value.trim()||'Not provided';
+  const hours=adminBranchOperatingHoursSummary(adminReadBranchOperatingHours('branchCreateHours'));
+  const menuMode=$('#branchCreateMenuMode')?.value||'inherit',menuLabel=$('#branchCreateMenuMode')?.selectedOptions?.[0]?.textContent||menuMode;
+  const compare=(before,after)=>esc(before||'Not set')+' → '+esc(after||'Not set');
+  const summary=editing?
+    '<div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+compare(branch?.name,name)+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+compare(branch?.code,code)+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+compare(branch?.timezone||'Restaurant default',timezone)+'</b></div><div class="branch-review-item"><small>Address</small><b>'+compare(branch?.address||'Not provided',address)+'</b></div><div class="branch-review-item"><small>Operating Hours</small><b>'+compare(adminBranchOperatingHoursSummary(branch?.operating_hours),hours)+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+compare(branch?.menu_catalog_mode||'inherit',menuMode)+'</b></div></div>' :
+    '<div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+esc(name)+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+esc(code)+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+esc(timezone)+'</b></div><div class="branch-review-item"><small>Address</small><b>'+esc(address)+'</b></div><div class="branch-review-item"><small>Operating Hours</small><b>'+esc(hours)+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+esc(menuLabel)+'</b></div></div>';
+  panel.innerHTML=summary+'<h4 style="margin:14px 0 6px">Business & Operations Modes</h4><div class="branch-review-grid">'+labels+'</div><div class="msg ai" style="max-width:none;margin-top:12px">'+(editing?'Only the selected branch profile, operating hours and configuration modes are updated. Historical transactions, staff assignments, tables, QR tokens and stock balances remain unchanged.':'Inventory definitions are provisioned with zero opening quantities. Existing stock balances, transactions, staff assignments, tables, QR tokens and printer registrations are not copied.')+'</div>';
 }
-function openBranchCreateModal(){
-  if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can create branches.',1);return;}
-  ADMIN_BRANCH_CREATE_STEP=0;
-  const branchScheduleSeed=(ADMIN_BRANCH_ROWS.find(b=>b.is_default===true)||{}).operating_hours||{};
-  L.innerHTML=`<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Add branch" style="width:min(760px,94vw);max-height:88vh">
-    <div class="staff-focus-kicker">Multi-Branch Management</div>
-    <div class="row"><h3 class="staff-focus-title">Add Branch</h3><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>
-    <p class="staff-focus-description">Create a branch with its own identity and choose how its menu, inventory definitions and business settings relate to Main Branch.</p>
-    <div class="branch-wizard-steps"><div class="branch-wizard-step active" data-branch-step="0"><strong>1</strong>Branch Info</div><div class="branch-wizard-step" data-branch-step="1"><strong>2</strong>Menu & Inventory</div><div class="branch-wizard-step" data-branch-step="2"><strong>3</strong>Business Ops</div><div class="branch-wizard-step" data-branch-step="3"><strong>4</strong>Promotions & Payments</div><div class="branch-wizard-step" data-branch-step="4"><strong>5</strong>Review</div></div>
-    <div id="branchCreateStep0" class="branch-wizard-panel">
-      <h4>Branch Information</h4>
-      <div class="fl"><label for="branchCreateName">Branch Name *</label><input id="branchCreateName" maxlength="80" placeholder="e.g. Downtown Branch"></div>
-      <div class="fl"><label for="branchCreateCode">Branch Code *</label><input id="branchCreateCode" maxlength="20" placeholder="e.g. DOWNTOWN"></div>
-      <div class="fl"><label for="branchCreateTimezone">Timezone</label><input id="branchCreateTimezone" maxlength="80" placeholder="Leave blank to use restaurant timezone"></div>
-      <div class="fl"><label for="branchCreateAddress">Branch Address</label><input id="branchCreateAddress" maxlength="240" placeholder="Branch address (optional)"></div>
-    </div>
-    <div id="branchCreateStep1" class="branch-wizard-panel" hidden>
-      <h4>Menu & Inventory</h4>
-      ${adminBranchMenuModeControl('inherit','branchCreateMenuMode')}
-      <div class="card" style="margin-top:12px;padding:12px"><b>Inventory protection</b><p class="note" style="margin:5px 0 0">New branch inventory definitions are provisioned from the selected source catalog with zero opening quantities. Existing stock balances are never copied. Tables, QR codes and printers are registered separately for each branch.</p></div>
-    </div>
-    <div id="branchCreateStep2" class="branch-wizard-panel" hidden>
-      <h4>Business Operations</h4><p class="note">Set this branch's own operating schedule, then choose how its other business settings relate to Main Branch.</p>
-      ${adminBranchOperatingHoursEditor(branchScheduleSeed,'branchCreateHours')}
-      ${adminBranchModeControls({},ADMIN_BRANCH_SETTING_GROUPS.slice(0,3))}
-    </div>
-    <div id="branchCreateStep3" class="branch-wizard-panel" hidden>
-      <h4>Promotions & Payments</h4><p class="note">Choose how discounts, vouchers, payment methods and receipt settings will be inherited or maintained by this branch.</p>
-      ${adminBranchModeControls({},ADMIN_BRANCH_SETTING_GROUPS.slice(3))}
-    </div>
-    <div id="branchCreateStep4" class="branch-wizard-panel" hidden>
-      <h4>Review & Create</h4><div id="branchCreateReview"></div>
-    </div>
-    <div class="branch-wizard-nav"><button class="btn" data-a="branch-create-back" hidden>Back</button><div class="sp"></div><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-create-next">Continue</button><button class="btn pri" data-a="branch-create-submit" hidden>Create Branch</button></div>
-  </section>`;
+function openBranchWorkspace(mode,branch,modes){
+  const editing=mode==='edit';
+  ADMIN_BRANCH_WORKSPACE_MODE=editing?'edit':'create';ADMIN_BRANCH_WORKSPACE_BRANCH=editing?branch:null;
+  ADMIN_BRANCH_EDIT_CURRENT_MODES=editing?{...(modes||{})}:{};ADMIN_BRANCH_CREATE_STEP=0;
+  const seed=(ADMIN_BRANCH_ROWS.find(b=>b.is_default===true)||{}).operating_hours||{};
+  const hours=editing?(branch?.operating_hours||{}):seed,initialModes=editing?(modes||{}):{};
+  const title=editing?'Edit Branch':'Add Branch';
+  const intro=editing?'Update this branch using the same configuration workspace used when creating a branch. Existing transactions and operational records are preserved.':'Create a branch with its own identity and choose how its menu, inventory definitions and business settings relate to Main Branch.';
+  const menuMode=editing?(branch?.menu_catalog_mode||'inherit'):'inherit',menuDisabled=editing&&branch?.is_default===true;
+  L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Branch configuration workspace" style="width:min(820px,94vw);max-height:90vh">'+
+    '<div class="staff-focus-kicker">Multi-Branch Management · Branch Configuration</div>'+
+    '<div class="row"><h3 class="staff-focus-title">'+title+'</h3><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>'+
+    '<p class="staff-focus-description">'+intro+'</p>'+
+    '<div class="branch-wizard-steps"><div class="branch-wizard-step active" data-branch-step="0"><strong>1</strong>Branch Profile</div><div class="branch-wizard-step" data-branch-step="1"><strong>2</strong>Menu & Inventory</div><div class="branch-wizard-step" data-branch-step="2"><strong>3</strong>Business Operations</div><div class="branch-wizard-step" data-branch-step="3"><strong>4</strong>Promotions & Payments</div><div class="branch-wizard-step" data-branch-step="4"><strong>5</strong>Review & Save</div></div>'+
+    '<div id="branchCreateStep0" class="branch-wizard-panel"><h4>Branch Profile</h4><div class="fl"><label for="branchCreateName">Branch Name *</label><input id="branchCreateName" maxlength="80" placeholder="e.g. Downtown Branch" value="'+esc(branch?.name||'')+'"></div><div class="fl"><label for="branchCreateCode">Branch Code *</label><input id="branchCreateCode" maxlength="20" placeholder="e.g. DOWNTOWN" value="'+esc(branch?.code||'')+'"></div><div class="fl"><label for="branchCreateTimezone">Timezone</label><input id="branchCreateTimezone" maxlength="80" placeholder="Leave blank to use restaurant timezone" value="'+esc(branch?.timezone||'')+'"></div><div class="fl"><label for="branchCreateAddress">Branch Address</label><input id="branchCreateAddress" maxlength="240" placeholder="Branch address (optional)" value="'+esc(branch?.address||'')+'"></div></div>'+
+    '<div id="branchCreateStep1" class="branch-wizard-panel" hidden><h4>Menu & Inventory</h4>'+adminBranchMenuModeControl(menuMode,'branchCreateMenuMode',menuDisabled)+'<div class="card" style="margin-top:12px;padding:12px"><b>Inventory protection</b><p class="note" style="margin:5px 0 0">New branch inventory definitions are provisioned from the selected source catalog with zero opening quantities. Existing stock balances are never copied. Tables, QR codes and printers are registered separately for each branch.</p></div></div>'+
+    '<div id="branchCreateStep2" class="branch-wizard-panel" hidden><h4>Business Operations</h4><p class="note">Set this branch schedule, then choose how its business profile, tax and service charge settings relate to Main Branch.</p>'+adminBranchOperatingHoursEditor(hours,'branchCreateHours')+adminBranchModeControls(initialModes,ADMIN_BRANCH_SETTING_GROUPS.slice(0,3))+'</div>'+
+    '<div id="branchCreateStep3" class="branch-wizard-panel" hidden><h4>Promotions & Payments</h4><p class="note">Choose how discounts, vouchers, payment methods and receipt settings will be inherited or maintained by this branch.</p>'+adminBranchModeControls(initialModes,ADMIN_BRANCH_SETTING_GROUPS.slice(3))+'</div>'+
+    '<div id="branchCreateStep4" class="branch-wizard-panel" hidden><h4>Review & Save</h4><div id="branchCreateReview"></div></div>'+
+    '<div class="branch-wizard-nav"><button class="btn" data-a="branch-create-back" hidden>Back</button><div class="sp"></div><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-create-next">Continue</button><button class="btn pri" data-a="branch-create-submit" hidden>'+(editing?'Save Changes':'Create Branch')+'</button></div></section>';
   setAdminBranchCreateStep(0);
 }
-
+function openBranchCreateModal(){openBranchWorkspace('create',null,{});}
 const ADMIN_BRANCH_WEEKDAYS=[
   ['monday','Monday'],['tuesday','Tuesday'],['wednesday','Wednesday'],
   ['thursday','Thursday'],['friday','Friday'],['saturday','Saturday'],['sunday','Sunday']
@@ -2985,37 +2982,15 @@ function adminBranchOperatingHoursSummary(hours){
 
 async function openBranchEditModal(branch){
   if(!branch||!branch.is_active){toast('Only active branches can be edited.',1);return;}
-  L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true"><div class="staff-focus-kicker">Multi-Branch Management</div><h3 class="staff-focus-title">Loading branch settings…</h3><p class="staff-focus-description">Reading the current inheritance modes before editing.</p></section>';
+  L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true"><div class="staff-focus-kicker">Multi-Branch Management</div><h3 class="staff-focus-title">Loading branch configuration…</h3><p class="staff-focus-description">Preparing the shared Add/Edit workspace with the current settings.</p></section>';
   try{
     const results=await Promise.all(ADMIN_BRANCH_SETTING_GROUPS.map(async([key])=>{
-      const {data,error}=await sb.rpc('edmel_get_branch_setting_config',{
-        p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branch.id,p_setting_group:key
-      });
-      if(error)throw error;
-      return [key,data?.inheritance_mode||'inherit'];
+      const {data,error}=await sb.rpc('edmel_get_branch_setting_config',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branch.id,p_setting_group:key});
+      if(error)throw error;if(data?.success!==true)throw new Error('Unable to confirm the current '+adminBranchSettingLabel(key)+' configuration.');
+      return [key,data.inheritance_mode||'inherit'];
     }));
-    const modes=Object.fromEntries(results);
-    ADMIN_BRANCH_EDIT_CURRENT_MODES={...modes};
-    L.innerHTML=`<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Edit branch">
-      <div class="staff-focus-kicker">Multi-Branch Management</div>
-      <div class="row"><h3 class="staff-focus-title">Edit Branch</h3><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>
-      <p class="staff-focus-description">Update this branch's identity and settings inheritance. Existing orders, payments, staff assignments, tables and stock balances will not be moved or deleted. Changing menu mode may initialize a branch catalog copy and add missing inventory definitions with zero quantities.</p>
-      <input type="hidden" id="branchEditId" value="${esc(branch.id)}">
-      <div class="fl"><label for="branchEditName">Branch Name</label><input id="branchEditName" maxlength="80" value="${esc(branch.name||'')}"></div>
-      <div class="fl"><label for="branchEditCode">Branch Code</label><input id="branchEditCode" maxlength="20" value="${esc(branch.code||'')}"></div>
-      <div class="fl"><label for="branchEditTimezone">Timezone</label><input id="branchEditTimezone" maxlength="80" value="${esc(branch.timezone||'')}" placeholder="e.g. America/Chicago"></div>
-      <div class="fl"><label for="branchEditAddress">Branch Address</label><input id="branchEditAddress" maxlength="240" value="${esc(branch.address||'')}"></div>
-      ${adminBranchOperatingHoursEditor(branch.operating_hours,'branchEditHours')}
-      <div style="margin-top:16px"><b>Settings Inheritance</b><p class="note" style="margin:5px 0">Inherit follows master settings. Override keeps branch-specific values and uses master values as fallback. Independent preserves a standalone snapshot. Switching to Independent snapshots the current effective settings.</p></div>
-      ${adminBranchModeControls(modes)}
-      ${adminBranchMenuModeControl(branch.menu_catalog_mode||'inherit','branchEditMenuMode',branch.is_default===true)}
-      <div class="card" style="margin-top:12px;padding:11px"><b>Operational data protection</b><p class="note" style="margin:5px 0 0">This edit does not move historical transactions, staff access, tables or QR tokens. Menu mode changes may initialize a branch catalog copy and add missing inventory definitions with zero quantities. Existing branch catalog rows are not overwritten automatically.</p></div>
-      <div id="branchEditReview" class="card" style="margin-top:10px;padding:12px" hidden></div>
-      <div class="staff-focus-actions"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-edit-review">Review Changes</button></div>
-    </section>`;
-  }catch(error){
-    closeL();toast(error?.message||'Unable to load branch settings.',1);
-  }
+    openBranchWorkspace('edit',branch,Object.fromEntries(results));
+  }catch(error){closeL();toast(error?.message||'Unable to load branch configuration.',1);}
 }
 
 const A={
@@ -3075,29 +3050,24 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
  const panel=$('.branch-visual-form-wrap');if(panel)panel.innerHTML=adminBranchRenderVisualForm(BRANCH_SETTINGS_EDITOR_GROUP,BRANCH_SETTINGS_EDITOR_DRAFT);
 },
 'branch-create-submit':async t=>{
-  const name=$('#branchCreateName')?.value.trim()||'';
-  const code=$('#branchCreateCode')?.value.trim().toUpperCase()||'';
-  const timezone=$('#branchCreateTimezone')?.value.trim()||null;
-  const address=$('#branchCreateAddress')?.value.trim()||null;
-  if(!name||!code){toast('Branch name and code are required.',1);return;}
-  t.disabled=true;t.textContent='Adding…';
-  try{
-    const operatingHours=adminReadBranchOperatingHours('branchCreateHours');
-    const {data,error}=await sb.rpc('edmel_create_restaurant_branch_configured_with_hours',{
-      p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_name:name,p_code:code,p_address:address,
-      p_timezone:timezone,p_operating_hours:operatingHours,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit'
-    });
-    if(error)throw error;
-    if(data?.success!==true||!data?.branch?.id)throw new Error(data?.error||'Branch creation was not confirmed by the database.');
-    ADMIN_BRANCH_SELECTED_ID=data.branch.id;ADMIN_BRANCH_LOADED=false;
-    await loadAdminBranches();
-    if(!ADMIN_BRANCH_ROWS.some(branch=>branch.id===data.branch.id)){
-      throw new Error('The branch may have been created, but the refreshed branch list could not confirm it. Use Refresh data before trying again.');
-    }
-    closeL();toast('Branch added successfully.');
-  }catch(e){toast(e.message||'Unable to add branch.',1);t.disabled=false;t.textContent='Add Branch';}
-},
-'branch-edit':t=>{
+   const editing=ADMIN_BRANCH_WORKSPACE_MODE==='edit',branch=ADMIN_BRANCH_WORKSPACE_BRANCH,id=editing?(branch?.id||''):'';
+   const name=$('#branchCreateName')?.value.trim()||'',code=$('#branchCreateCode')?.value.trim().toUpperCase()||'';
+   const timezone=$('#branchCreateTimezone')?.value.trim()||null,address=$('#branchCreateAddress')?.value.trim()||null;
+   if(editing&&!id){toast('The branch selected for editing could not be identified.',1);return;}
+   if(!name||!code||!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code)){toast('Enter a valid branch name and a branch code of 2 to 20 letters, numbers, underscores or hyphens.',1);return;}
+   t.disabled=true;t.textContent=editing?'Saving…':'Creating…';
+   try{
+     const operatingHours=adminReadBranchOperatingHours('branchCreateHours');
+     const payload=editing?{p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_branch_id:id,p_name:name,p_code:code,p_address:address,p_timezone:timezone,p_operating_hours:operatingHours,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit'}:{p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_name:name,p_code:code,p_address:address,p_timezone:timezone,p_operating_hours:operatingHours,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit'};
+     const {data,error}=await sb.rpc(editing?'edmel_update_restaurant_branch_configured_with_hours':'edmel_create_restaurant_branch_configured_with_hours',payload);
+     if(error)throw error;const savedId=editing?id:data?.branch?.id;
+     if(data?.success!==true||!savedId||(editing&&data?.branch?.id!==id))throw new Error(data?.error||(editing?'Branch update':'Branch creation')+' was not confirmed by the database.');
+     ADMIN_BRANCH_SELECTED_ID=savedId;ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
+     if(!ADMIN_BRANCH_ROWS.some(row=>row.id===savedId))throw new Error('The save may have succeeded, but the refreshed branch list could not confirm it. Use Refresh data before retrying.');
+     ADMIN_BRANCH_WORKSPACE_MODE='create';ADMIN_BRANCH_WORKSPACE_BRANCH=null;closeL();toast(editing?'Branch updated successfully.':'Branch added successfully.');
+   }catch(error){toast(error?.message||(editing?'Unable to update branch.':'Unable to add branch.'),1);t.disabled=false;t.textContent=editing?'Save Changes':'Create Branch';}
+ },
+ 'branch-edit':t=>{
   if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can edit branches.',1);return;}
   const branch=ADMIN_BRANCH_ROWS.find(x=>x.id===(t.dataset.id||ADMIN_BRANCH_SELECTED_ID));
   if(branch)openBranchEditModal(branch);
