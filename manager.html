@@ -511,7 +511,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    approval_required:"You can submit a branch request. An Owner/Admin must approve it before the branch is created.",
    allowed:"You can create a fully configured branch directly. Your new branch access will be limited to Branch View and Branch Create."
   };
-  $("managerBranchPolicyTitle").textContent=mode==="approval_required"?"Owner/Admin Approval Required":mode==="allowed"?"Direct Creation Allowed":"Branch Creation Disabled";
+  $("managerBranchPolicyTitle").textContent=mode==="approval_required"?"Owner Approval Required":"Branch Creation Disabled";
   $("managerBranchPolicyDescription").textContent=descriptions[mode]||descriptions.not_allowed;
   $("managerBranchCreateButton").disabled=!canCreate||mode==="not_allowed";
   $("managerBranchCreateButton").textContent=mode==="approval_required"?"Request New Branch":"Create New Branch";
