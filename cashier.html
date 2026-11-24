@@ -6798,7 +6798,7 @@ background:
 ========================= -->
 
 
-<div id="cashierRestorationScreen" role="status" aria-live="polite">
+<div id="cashierRestorationScreen" hidden role="status" aria-live="polite">
   <div class="cashier-restoration-card">
     <div class="cashier-restoration-mark" aria-hidden="true"><span></span><span></span><span></span></div>
     <p class="cashier-restoration-eyebrow">EDMEL CASHIER</p>
@@ -15012,7 +15012,8 @@ function showCashierRestorationError(message){
   if(skeleton)skeleton.hidden=true;
 }
 function resetCashierRestoration(){
-  if(cashierRestorationScreen)cashierRestorationScreen.hidden=false;
+  // Keep normal session restoration invisible; show the panel only if recovery fails.
+  if(cashierRestorationScreen)cashierRestorationScreen.hidden=true;
   if(cashierRestorationTitle)cashierRestorationTitle.textContent="Restoring Session";
   if(cashierRestorationMessage)cashierRestorationMessage.textContent="Securely checking your cashier access…";
   if(cashierRestorationActions)cashierRestorationActions.hidden=true;
