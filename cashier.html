@@ -14274,7 +14274,8 @@ async function unlockCashierScreen(event) {
 function scheduleStaffInactivityExpiry(delayMs = HALINA_STAFF_INACTIVITY_MS) {
   clearStaffInactivityTimer();
   if (!halinaStaffSessionId || halinaCashierLocked) return;
-  const safeDelay = Math.max(0, Math.min(Number(delayMs) || HALINA_STAFF_INACTIVITY_MS, HALINA_STAFF_INACTIVITY_MS));
+  const requestedDelay = Number(delayMs);
+  const safeDelay = Math.max(0, Math.min(Number.isFinite(requestedDelay) ? requestedDelay : HALINA_STAFF_INACTIVITY_MS, HALINA_STAFF_INACTIVITY_MS));
   halinaStaffInactivityTimer = setTimeout(() => {
     lockCashierScreen();
   }, safeDelay);
@@ -14430,6 +14431,7 @@ async function loadCashierAssignedBranches() {
           if (status) status.textContent = "Branch updated";
         } catch (error) {
           select.value = previousBranchId;
+          if (error.sessionLocked) lockCashierScreen();
           if (status) status.textContent = error.message || "Switch failed";
         } finally {
           select.disabled = false;
