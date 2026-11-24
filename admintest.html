@@ -2267,7 +2267,50 @@ html[data-ui="glass"][data-glass-adj="1"] :is(
 @media(max-width:560px){.branch-wizard-steps{gap:4px}.branch-wizard-step{font-size:9px;padding:7px 2px}.branch-review-grid{grid-template-columns:1fr}.branch-json-editor{min-height:210px}}
 </style>
 
-</head>
+<style id="edmel-branch-workspace-refinement">
+.branch-config-workspace{width:min(980px,96vw)!important;max-height:92vh!important;padding:0!important;overflow:hidden;display:flex;flex-direction:column;background:var(--pop-bg,var(--s));color:var(--tx)}
+.branch-config-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:22px 26px 16px;border-bottom:1px solid var(--bd)}
+.branch-config-eyebrow{font-size:10px;letter-spacing:.12em;font-weight:750;color:var(--mu);margin-bottom:7px}
+.branch-config-header .staff-focus-title{margin:0;font-size:22px;line-height:1.2;color:var(--tx)}
+.branch-config-header .staff-focus-description{margin:6px 0 0;max-width:650px;color:var(--mu);font-size:13px;line-height:1.5}
+.branch-config-layout{padding:18px 26px 22px;overflow:auto;display:grid;gap:14px;align-content:start}
+.branch-config-section{min-width:0;padding:17px 18px;border:1px solid var(--bd);border-radius:12px;background:var(--s);color:var(--tx);box-shadow:none}
+.branch-section-heading{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.branch-section-index{width:28px;height:28px;display:grid;place-items:center;flex:none;border-radius:8px;background:var(--gh);color:var(--ac);font-size:11px;font-weight:750}
+.branch-section-heading h4{margin:0;color:var(--tx);font-size:14px;font-weight:700}
+.branch-section-heading p{margin:3px 0 0;color:var(--mu);font-size:11px;line-height:1.4}
+.branch-config-workspace .branch-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 16px}
+.branch-config-workspace .fl{min-width:0;margin:0}
+.branch-config-workspace .fl label{display:block;margin:0 0 6px;color:var(--mu);font-size:11px;font-weight:650}
+.branch-config-workspace .fl input{width:100%;height:40px;padding:9px 11px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;font-size:13px;box-shadow:none}
+.branch-config-workspace .fl input:focus{outline:2px solid color-mix(in srgb,var(--ac) 28%,transparent);border-color:var(--ac)}
+.branch-config-workspace .note,.branch-config-workspace p{color:var(--mu);line-height:1.5}
+.branch-config-workspace .branch-hours-editor{margin:0;padding:0;border:0;background:transparent}
+.branch-config-workspace .branch-hours-grid{gap:6px;margin-top:10px}
+.branch-config-workspace .branch-hours-row{grid-template-columns:minmax(90px,1fr) auto minmax(105px,.8fr) 18px minmax(105px,.8fr);gap:9px;padding:5px 0;border-bottom:1px solid var(--bd)}
+.branch-config-workspace .branch-hours-row b{color:var(--tx);font-size:12px;font-weight:600}
+.branch-config-workspace .branch-hours-row select,.branch-config-workspace .branch-hours-row input{height:36px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px}
+.branch-config-workspace .branch-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.branch-mode-card{min-width:0;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg)}
+.branch-mode-label{margin-bottom:9px;color:var(--tx);font-size:12px;font-weight:650}
+.branch-segment{display:flex;align-items:stretch;gap:3px;padding:3px;border:1px solid var(--bd);border-radius:9px;background:var(--s);min-width:0}
+.branch-segment-option{flex:1;min-width:0;min-height:34px;padding:6px 8px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--mu);font:inherit;font-size:11px;font-weight:600;line-height:1.25;cursor:pointer;white-space:normal}
+.branch-segment-option[aria-pressed="true"]{background:var(--pop-sel,var(--gh));border-color:var(--bd);color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.07)}
+.branch-segment-option:disabled{opacity:.45;cursor:not-allowed}
+.branch-hidden-value{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}
+.branch-menu-mode-card{padding:13px}.branch-menu-mode-card .note{margin:8px 0 0;font-size:11px}
+.branch-info-note{margin-top:11px;padding:10px 12px;border-left:2px solid var(--ac);background:var(--bg);color:var(--mu);font-size:11px;line-height:1.5}
+.branch-governance-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr);gap:12px}
+.branch-governance-card{min-width:0;padding:13px;border:1px solid var(--bd);border-radius:10px;background:var(--bg)}
+.branch-subheading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.branch-subheading h5{margin:0;color:var(--tx);font-size:12px;font-weight:700}.branch-subheading p{margin:4px 0 0;color:var(--mu);font-size:11px;line-height:1.4}
+.branch-policy-control{display:grid;gap:10px}.branch-policy-segment{flex-direction:column}.branch-policy-segment .branch-segment-option{text-align:left;min-height:36px}
+.branch-governance-card .tw{max-width:100%;overflow-x:auto}.branch-governance-card table{font-size:11px}
+.branch-governance-card th{color:var(--mu);font-weight:650;text-align:left}.branch-governance-card td{color:var(--tx);vertical-align:top}.branch-governance-card .btn{font-size:11px;min-height:32px}
+.branch-config-workspace .branch-config-footer{display:flex;align-items:center;gap:9px;padding:13px 26px calc(13px + env(safe-area-inset-bottom));border-top:1px solid var(--bd);background:var(--gf);flex:none}
+.branch-config-workspace .branch-config-footer .btn{min-height:39px;padding:0 15px;border-radius:8px;font-size:12px}
+@media(max-width:680px){.branch-config-workspace{width:calc(100vw - 12px)!important;max-height:94vh!important}.branch-config-header{padding:16px 15px 13px}.branch-config-layout{padding:12px 14px 16px;gap:10px}.branch-config-section{padding:13px;border-radius:10px}.branch-config-workspace .branch-form-grid,.branch-config-workspace .branch-mode-grid,.branch-governance-grid{grid-template-columns:1fr}.branch-config-workspace .branch-hours-row{grid-template-columns:1fr 78px 1fr 12px 1fr;gap:5px}.branch-config-workspace .branch-hours-row b{font-size:11px}.branch-config-workspace .branch-hours-row select,.branch-config-workspace .branch-hours-row input{font-size:11px;padding:5px}.branch-config-workspace .branch-config-footer{padding:10px 14px calc(10px + env(safe-area-inset-bottom));gap:6px}.branch-config-workspace .branch-config-footer .btn{flex:1;padding:0 8px}}
+</style></head>
 <body class="locked">
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="wpl" id="wpl" aria-hidden="true"></div>
@@ -2537,23 +2580,11 @@ const ADMIN_BRANCH_SETTING_GROUPS=[
   ['receipt_settings','Receipt Settings']
 ];
 function adminBranchMenuModeControl(value='inherit',id='branchCreateMenuMode',disabled=false){
-  return '<div class="fl" style="margin-top:12px"><label for="'+id+'">Menu Catalog</label><select id="'+id+'" '+(disabled?'disabled':'')+' style="width:100%;padding:9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)">'+
-    '<option value="inherit" '+(value==='inherit'?'selected':'')+'>Inherit Main Branch Menu</option>'+
-    '<option value="override" '+(value==='override'?'selected':'')+'>Override — Editable Branch Copy (manual sync pending)</option>'+
-    '<option value="independent" '+(value==='independent'?'selected':'')+'>Independent — Standalone Snapshot</option>'+
-    '</select><p class="note" style="margin:4px 0 0">Inherit uses the Main Branch catalog live. Override creates an editable branch copy; Main Branch updates require a reviewed manual sync. Independent keeps a standalone snapshot. Inventory definitions are copied with zero opening quantities; existing stock balances are never copied.</p></div>';
+ const choices=[['inherit','Inherit Main Branch'],['override','Editable Copy'],['independent','Independent']];
+ return '<div class="branch-mode-card branch-menu-mode-card"><div class="branch-mode-label">Menu Catalog</div><div class="branch-segment" role="group" aria-label="Menu catalog mode">'+choices.map(([v,label])=>'<button type="button" class="branch-segment-option" data-a="branch-toggle-value" data-target="'+id+'" data-value="'+v+'" aria-pressed="'+(value===v?'true':'false')+'" '+(disabled?'disabled':'')+'>'+label+'</button>').join('')+'</div><select id="'+id+'" class="branch-hidden-value" aria-hidden="true" tabindex="-1" '+(disabled?'disabled':'')+'><option value="inherit" '+(value==='inherit'?'selected':'')+'>Inherit</option><option value="override" '+(value==='override'?'selected':'')+'>Override</option><option value="independent" '+(value==='independent'?'selected':'')+'>Independent</option></select><p class="note">Inherit follows Main Branch. Editable Copy creates a branch copy for reviewed manual sync. Independent keeps a standalone snapshot.</p></div>';
 }
 function adminBranchModeControls(modes={},groups=ADMIN_BRANCH_SETTING_GROUPS){
-  return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px">'+
-    groups.map(([key,label])=>{
-      const value=['inherit','override','independent'].includes(modes[key])?modes[key]:'inherit';
-      return '<div class="card" style="padding:10px;margin:0"><label for="branchMode_'+key+'" style="display:block;font-weight:650;margin-bottom:6px">'+esc(label)+'</label>'+
-        '<select id="branchMode_'+key+'" style="width:100%;padding:9px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx)">'+
-        '<option value="inherit" '+(value==='inherit'?'selected':'')+'>Inherit</option>'+
-        '<option value="override" '+(value==='override'?'selected':'')+'>Override</option>'+
-        '<option value="independent" '+(value==='independent'?'selected':'')+'>Independent</option>'+
-        '</select></div>';
-    }).join('')+'</div>';
+ return '<div class="branch-mode-grid">'+groups.map(([key,label])=>{const value=['inherit','override','independent'].includes(modes[key])?modes[key]:'inherit',choices=[['inherit','Inherit'],['override','Override'],['independent','Independent']];return '<div class="branch-mode-card"><div class="branch-mode-label">'+esc(label)+'</div><div class="branch-segment" role="group" aria-label="'+esc(label)+' mode">'+choices.map(([v,text])=>'<button type="button" class="branch-segment-option" data-a="branch-toggle-value" data-target="branchMode_'+esc(key)+'" data-value="'+v+'" aria-pressed="'+(value===v?'true':'false')+'">'+text+'</button>').join('')+'</div><select id="branchMode_'+esc(key)+'" class="branch-hidden-value" aria-hidden="true" tabindex="-1"><option value="inherit" '+(value==='inherit'?'selected':'')+'>Inherit</option><option value="override" '+(value==='override'?'selected':'')+'>Override</option><option value="independent" '+(value==='independent'?'selected':'')+'>Independent</option></select></div>';}).join('')+'</div>';
 }
 function readAdminBranchModes(){
   const modes={};
@@ -2801,11 +2832,9 @@ function renderAdminBranchGovernance(){
       :'—';
     return '<tr><td><b>'+esc(data.name||'Unnamed branch')+'</b><div class="mu">'+esc(data.code||'')+'</div></td><td>'+esc(request.status||'Unknown')+'</td><td>'+esc(created)+'</td><td>'+esc(request.requested_by?'Manager request':'—')+'</td><td>'+actions+decision+'</td></tr>';
   }).join('');
-  const policyControl=canManage
-    ?'<div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:260px"><label for="branchManagerCreationPolicy" class="mu" style="display:block;margin-bottom:6px">Manager Branch Creation Policy</label><select id="branchManagerCreationPolicy" style="width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)">'+options+'</select></div><button class="btn pri" data-a="branch-policy-save">Save Policy</button></div>'
-    :'<div class="note">Only the Owner can change this policy.</div>';
-  return '<section class="card" style="margin-bottom:14px"><div class="row"><div><div class="mu">Branch Creation Governance</div><h3 style="margin:3px 0 4px">Manager Access Policy</h3><p class="note" style="margin:0">Controls whether Managers can create branches directly, request approval, or have no branch creation access.</p></div><span class="bd '+(mode==='allowed'?'ok':mode==='approval_required'?'wn':'')+'">'+esc(mode.replace('_',' '))+'</span></div><div style="margin-top:14px">'+(ADMIN_BRANCH_GOVERNANCE_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_GOVERNANCE_ERROR)+'</div>':policyControl)+'</div></section>'+
-    '<section class="card" style="margin-bottom:14px"><div class="row"><div><div class="mu">Branch Management</div><h3 style="margin:3px 0 4px">Manager Branch Requests</h3><p class="note" style="margin:0">Owner approval creates the configured branch and gives the requesting Manager branch-only access. Other operational permissions remain unchanged.</p></div><button class="btn" data-a="branch-governance-refresh">Refresh</button></div><div class="tw" style="margin-top:12px"><table><thead><tr><th>Requested Branch</th><th>Status</th><th>Submitted</th><th>Requested By</th><th>Review</th></tr></thead><tbody>'+(ADMIN_BRANCH_GOVERNANCE_LOADING?'<tr><td colspan="5"><div class="empty">Loading branch requests…</div></td></tr>':requestRows||'<tr><td colspan="5"><div class="empty">No branch creation requests.</div></td></tr>')+'</tbody></table></div></section>';
+  const policyChoices=[['not_allowed','Not Allowed'],['approval_required','Approval Required'],['allowed','Allowed']];
+  const policyControl=canManage?'<div class="branch-policy-control"><div class="branch-segment branch-policy-segment" role="group" aria-label="Manager branch creation policy">'+policyChoices.map(([value,label])=>'<button type="button" class="branch-segment-option" data-a="branch-toggle-value" data-target="branchManagerCreationPolicy" data-value="'+value+'" aria-pressed="'+(mode===value?'true':'false')+'">'+label+'</button>').join('')+'</div><select id="branchManagerCreationPolicy" class="branch-hidden-value" aria-hidden="true" tabindex="-1">'+policyChoices.map(([value,label])=>'<option value="'+value+'" '+(mode===value?'selected':'')+'>'+label+'</option>').join('')+'</select><button class="btn pri" data-a="branch-policy-save">Save Policy</button></div>':'<div class="note">Only the Owner can change this policy.</div>';
+  return '<div class="branch-governance-grid"><section class="branch-governance-card"><div class="branch-subheading"><div><h5>Manager Creation Policy</h5><p>Control how Managers create new branches.</p></div><span class="bd '+(mode==='allowed'?'ok':mode==='approval_required'?'wn':'')+'">'+esc(mode.replace('_',' '))+'</span></div>'+(ADMIN_BRANCH_GOVERNANCE_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_GOVERNANCE_ERROR)+'</div>':policyControl)+'</section><section class="branch-governance-card"><div class="branch-subheading"><div><h5>Manager Approval Requests</h5><p>Review requests submitted by branch Managers.</p></div><button class="btn" data-a="branch-governance-refresh">Refresh</button></div>'+(ADMIN_BRANCH_GOVERNANCE_LOADING?'<div class="empty">Loading requests…</div>':requestRows?'<div class="tw"><table><thead><tr><th>Branch</th><th>Status</th><th>Submitted</th><th>Requested By</th><th>Review</th></tr></thead><tbody>'+requestRows+'</tbody></table></div>':'<div class="empty">No pending or previous requests.</div>')+'</section></div>';
 }
 
 async function loadAdminBranchDrafts(){
@@ -2980,27 +3009,19 @@ function renderAdminBranchCreateReview(){
   panel.innerHTML=summary+'<h4 style="margin:14px 0 6px">Business & Operations Modes</h4><div class="branch-review-grid">'+labels+'</div>'+(editing&&branch?adminBranchReadinessMarkup(branch.id,true):'')+(editing&&branch?'<h4 style="margin:14px 0 6px">Branch Settings</h4><div class="branch-setting-actions">'+ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<button class="btn" type="button" data-a="branch-settings-edit" data-id="'+esc(branch.id)+'" data-group="'+esc(key)+'">'+esc(label)+'</button>').join('')+'</div>':'')+'<h4 style="margin:14px 0 6px">Branch Governance</h4>'+renderAdminBranchGovernance()+'<div class="msg ai" style="max-width:none;margin-top:12px">'+(editing?'Only the selected branch profile, operating hours and configuration modes are updated. Historical transactions, staff assignments, tables, QR tokens and stock balances remain unchanged.':'Inventory definitions are provisioned with zero opening quantities. Existing stock balances, transactions, staff assignments, tables, QR tokens and printer registrations are not copied.')+'</div>';
 }
 function openBranchWorkspace(mode,branch,modes,draftId=''){
-  const editing=mode==='edit';
-  ADMIN_BRANCH_WORKSPACE_MODE=editing?'edit':'create';ADMIN_BRANCH_WORKSPACE_BRANCH=editing?branch:null;
-  ADMIN_BRANCH_WORKSPACE_DRAFT_ID=editing?'':(draftId||'');
-  ADMIN_BRANCH_EDIT_CURRENT_MODES=editing?{...(modes||{})}:{};ADMIN_BRANCH_CREATE_STEP=0;
-  const seed=(ADMIN_BRANCH_ROWS.find(b=>b.is_default===true)||{}).operating_hours||{};
-  const hours=editing?(branch?.operating_hours||{}):(branch?.operating_hours||seed),initialModes=modes||{};
-  const title=editing?'Edit Branch':'Add Branch';
-  const intro=editing?'Update this branch using the same configuration workspace used when creating a branch. Existing transactions and operational records are preserved.':'Create a branch with its own identity and choose how its menu, inventory definitions and business settings relate to Main Branch.';
-  const menuMode=branch?.menu_catalog_mode||'inherit',menuDisabled=editing&&branch?.is_default===true;
-  L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Branch configuration workspace" style="width:min(820px,94vw);max-height:90vh">'+
-    '<div class="staff-focus-kicker">Multi-Branch Management · Branch Configuration</div>'+
-    '<div class="row"><h3 class="staff-focus-title">'+title+'</h3><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>'+
-    '<p class="staff-focus-description">'+intro+'</p>'+
-    '<div class="branch-wizard-steps"><div class="branch-wizard-step active" data-branch-step="0"><strong>1</strong>Branch Profile</div><div class="branch-wizard-step" data-branch-step="1"><strong>2</strong>Menu & Inventory</div><div class="branch-wizard-step" data-branch-step="2"><strong>3</strong>Business Operations</div><div class="branch-wizard-step" data-branch-step="3"><strong>4</strong>Promotions & Payments</div><div class="branch-wizard-step" data-branch-step="4"><strong>5</strong>Review & Save</div></div>'+
-    '<div id="branchCreateStep0" class="branch-wizard-panel"><h4>Branch Profile</h4><div class="fl"><label for="branchCreateName">Branch Name *</label><input id="branchCreateName" maxlength="80" placeholder="e.g. Downtown Branch" value="'+esc(branch?.name||'')+'"></div><div class="fl"><label for="branchCreateCode">Branch Code *</label><input id="branchCreateCode" maxlength="20" placeholder="e.g. DOWNTOWN" value="'+esc(branch?.code||'')+'"></div><div class="fl"><label for="branchCreateTimezone">Timezone</label><input id="branchCreateTimezone" maxlength="80" placeholder="Leave blank to use restaurant timezone" value="'+esc(branch?.timezone||'')+'"></div><div class="fl"><label for="branchCreateAddress">Branch Address</label><input id="branchCreateAddress" maxlength="240" placeholder="Branch address (optional)" value="'+esc(branch?.address||'')+'"></div></div>'+
-    '<div id="branchCreateStep1" class="branch-wizard-panel" hidden><h4>Menu & Inventory</h4>'+adminBranchMenuModeControl(menuMode,'branchCreateMenuMode',menuDisabled)+'<div class="card" style="margin-top:12px;padding:12px"><b>Inventory protection</b><p class="note" style="margin:5px 0 0">New branch inventory definitions are provisioned from the selected source catalog with zero opening quantities. Existing stock balances are never copied. Tables, QR codes and printers are registered separately for each branch.</p></div></div>'+
-    '<div id="branchCreateStep2" class="branch-wizard-panel" hidden><h4>Business Operations</h4><p class="note">Set this branch schedule, then choose how its business profile, tax and service charge settings relate to Main Branch.</p>'+adminBranchOperatingHoursEditor(hours,'branchCreateHours')+adminBranchModeControls(initialModes,ADMIN_BRANCH_SETTING_GROUPS.slice(0,3))+'</div>'+
-    '<div id="branchCreateStep3" class="branch-wizard-panel" hidden><h4>Promotions & Payments</h4><p class="note">Choose how discounts, vouchers, payment methods and receipt settings will be inherited or maintained by this branch.</p>'+adminBranchModeControls(initialModes,ADMIN_BRANCH_SETTING_GROUPS.slice(3))+'</div>'+
-    '<div id="branchCreateStep4" class="branch-wizard-panel" hidden><h4>Review & Save</h4><div id="branchCreateReview"></div></div>'+
-    '<div class="branch-wizard-nav"><button class="btn" data-a="branch-create-back" hidden>Back</button><div class="sp"></div>'+(editing?'':'<button class="btn" data-a="branch-draft-save">'+(ADMIN_BRANCH_WORKSPACE_DRAFT_ID?'Update Draft':'Save Draft')+'</button>')+'<button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-create-next">Continue</button><button class="btn pri" data-a="branch-create-submit" hidden>'+(editing?'Save Changes':'Create Branch')+'</button></div></section>';
-  setAdminBranchCreateStep(0);
+ const editing=mode==='edit';ADMIN_BRANCH_WORKSPACE_MODE=editing?'edit':'create';ADMIN_BRANCH_WORKSPACE_BRANCH=editing?branch:null;ADMIN_BRANCH_WORKSPACE_DRAFT_ID=editing?'':(draftId||'');ADMIN_BRANCH_EDIT_CURRENT_MODES=editing?{...(modes||{})}:{};
+ const seed=(ADMIN_BRANCH_ROWS.find(b=>b.is_default===true)||{}).operating_hours||{},hours=editing?(branch?.operating_hours||{}):(branch?.operating_hours||seed),initialModes=modes||branch?.settings_modes||{};
+ const title=editing?'Edit Branch':'Add Branch',intro=editing?'Update branch details and configuration. Existing transactions and operational records are preserved.':'Set up branch details and choose which settings it shares with Main Branch.',menuMode=branch?.menu_catalog_mode||'inherit',menuDisabled=editing&&branch?.is_default===true;
+ L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel branch-config-workspace" role="dialog" aria-modal="true" aria-label="Branch configuration workspace">'+
+ '<div class="branch-config-header"><div><div class="branch-config-eyebrow">MULTI-BRANCH MANAGEMENT</div><h3 class="staff-focus-title">'+title+'</h3><p class="staff-focus-description">'+intro+'</p></div><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>'+
+ '<div class="branch-config-layout">'+
+ '<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">01</span><div><h4>Branch Profile</h4><p>Identity and location</p></div></div><div class="branch-form-grid"><div class="fl"><label for="branchCreateName">Branch Name *</label><input id="branchCreateName" maxlength="80" placeholder="e.g. Downtown Branch" value="'+esc(branch?.name||'')+'"></div><div class="fl"><label for="branchCreateCode">Branch Code *</label><input id="branchCreateCode" maxlength="20" placeholder="e.g. DOWNTOWN" value="'+esc(branch?.code||'')+'"></div><div class="fl"><label for="branchCreateTimezone">Timezone</label><input id="branchCreateTimezone" maxlength="80" placeholder="Restaurant timezone" value="'+esc(branch?.timezone||'')+'"></div><div class="fl"><label for="branchCreateAddress">Branch Address</label><input id="branchCreateAddress" maxlength="240" placeholder="Branch address (optional)" value="'+esc(branch?.address||'')+'"></div></div></section>'+
+ '<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">02</span><div><h4>Operating Hours</h4><p>Weekly schedule for this branch</p></div></div>'+adminBranchOperatingHoursEditor(hours,'branchCreateHours')+'</section>'+
+ '<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">03</span><div><h4>Menu & Inventory</h4><p>Catalog sharing and inventory setup</p></div></div>'+adminBranchMenuModeControl(menuMode,'branchCreateMenuMode',menuDisabled)+'<div class="branch-info-note">New branch inventory definitions use zero opening quantities. Existing stock balances are not copied. Tables, QR codes and printers are configured separately for each branch.</div></section>'+
+ '<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">04</span><div><h4>Business Settings</h4><p>Choose which settings are shared or managed independently</p></div></div>'+adminBranchModeControls(initialModes,ADMIN_BRANCH_SETTING_GROUPS)+'</section>'+
+ '<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance()+'</section>'+
+ (editing&&branch?'<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">06</span><div><h4>Setup Readiness</h4><p>Branch configuration status</p></div></div>'+adminBranchReadinessMarkup(branch.id,true)+'</section>':'')+
+ '</div><div class="branch-config-footer"><button class="btn branch-action-cancel" data-a="close">Cancel</button><span class="sp"></span>'+(editing?'':'<button class="btn" data-a="branch-draft-save">'+(ADMIN_BRANCH_WORKSPACE_DRAFT_ID?'Update Draft':'Save Draft')+'</button>')+'<button class="btn pri" data-a="branch-create-submit">'+(editing?'Save Changes':'Create Branch')+'</button></div></section>';
 }
 function openBranchCreateModal(){openBranchWorkspace('create',null,{});}
 const ADMIN_BRANCH_WEEKDAYS=[
@@ -3059,6 +3080,7 @@ const A={
 'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
 'branch-drafts-refresh':async()=>{await loadAdminBranchDrafts();if(S.page==='branches')render();},
 'branch-readiness-refresh':async t=>{await loadAdminBranchReadiness(t.dataset.id||ADMIN_BRANCH_SELECTED_ID);},
+'branch-toggle-value':t=>{const id=t.dataset.target||'',value=t.dataset.value||'',target=id?$('#'+id):null;if(!target||!['inherit','override','independent','allowed','approval_required','not_allowed'].includes(value))return;target.value=value;const group=t.closest('.branch-segment');if(group)group.querySelectorAll('[data-a="branch-toggle-value"]').forEach(button=>button.setAttribute('aria-pressed',button===t?'true':'false'));},
 'branch-draft-save':async t=>{await saveAdminBranchDraft(t);},
 'branch-draft-resume':t=>{const draft=ADMIN_BRANCH_DRAFTS.find(x=>x.id===(t.dataset.id||''));if(draft)openAdminBranchDraft(draft);},
 'branch-draft-delete':async t=>{
