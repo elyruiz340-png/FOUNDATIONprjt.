@@ -8406,7 +8406,6 @@ reminderStyle.id = "stockSaveReminderStyles";
  requestAnimationFrame(updateSidebarHighlight);
 })();
  
- /* 
 /* CASHIER PAGE RESTORE + PAGE SKELETONS */
 function cashierEnsureSkeletonStyles(){
  if(document.getElementById("cashierPageSkeletonStyles"))return;
@@ -8436,7 +8435,7 @@ document.getElementById("tablesSearch")?.addEventListener("input",cashierSaveSaf
 document.getElementById("tablesCapacityFilter")?.addEventListener("change",cashierSaveSafeViewState);
 document.querySelectorAll("[data-table-filter]").forEach(b=>b.addEventListener("click",()=>window.setTimeout(cashierSaveSafeViewState,0)));
 
-/* LOAD TABLES FROM THE SHARED HALINA TABLE SYSTEM */ */
+/* LOAD TABLES FROM THE SHARED HALINA TABLE SYSTEM */
 async function getCashierTableSession() {
   if (!cashierAuthClient) {
     throw new Error("Cashier authentication is unavailable. Please sign in again.");
