@@ -2908,7 +2908,6 @@ async function saveAdminBranchDraft(button){
     if(data?.success!==true||!data?.draft_id)throw new Error('The branch draft was not confirmed by the database.');
     ADMIN_BRANCH_WORKSPACE_DRAFT_ID=data.draft_id;
     await loadAdminBranchDrafts();
-    if(S.page==='branches')render();
     toast('Branch draft saved. It has not created an active branch.');
     button.textContent='Draft Saved';
   }catch(error){
@@ -3108,7 +3107,7 @@ const A={
     await loadAdminBranchReadiness(branchId);toast(wasSkipped?'Setup marked as required.':'Setup marked as skipped.');
   }catch(error){toast(error?.message||'Unable to update setup readiness.',1);t.disabled=false;}
 },
-'branch-governance-refresh':async()=>{await loadAdminBranchGovernance();if(S.page==='branches')render();},
+'branch-governance-refresh':async()=>{await loadAdminBranchGovernance();const panel=$('#branchGovernanceWorkspace');if(panel)panel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance();},
 'branch-policy-save':async t=>{
   const mode=$('#branchManagerCreationPolicy')?.value||'';
   if(!['allowed','approval_required','not_allowed'].includes(mode)){toast('Choose a valid Manager branch creation policy.',1);return;}
@@ -3135,7 +3134,7 @@ const A={
     if(error)throw error;
     if(data?.success!==true||data.status!==decision)throw new Error('The branch request review was not confirmed.');
     await loadAdminBranchGovernance();const governancePanel=$('#branchGovernanceWorkspace');if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance();
-    if(decision==='approved'){ADMIN_BRANCH_LOADED=false;await loadAdminBranches();openBranchWorkspace('create',null,{});}
+    if(decision==='approved'){ADMIN_BRANCH_LOADED=false;await loadAdminBranches();}
     toast(decision==='approved'?'Branch request approved and branch created.':'Branch request rejected.');
   }catch(error){toast(error?.message||'Unable to review this branch request.',1);t.disabled=false;t.textContent=decision==='approved'?'Approve & Create':'Reject';}
 },
