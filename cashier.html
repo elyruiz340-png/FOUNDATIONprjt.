@@ -14572,6 +14572,7 @@ async function showCashierPOS(options = {}) {
   catch (error) {
     window.EDMEL_ACCESS_TOKEN = null;
     window.EDMEL_TENANT_CONTEXT = null;
+    if (options.restoring) throw error;
     showCashierLogin(error.message || "Unable to establish your cashier session. Please sign in again.");
     return;
   }
@@ -15054,7 +15055,7 @@ async function restoreCashierSession(){
     if(error)throw error;
     if(data.session){
       window.EDMEL_ACCESS_TOKEN=data.session.access_token;
-      await showCashierPOS();
+      await showCashierPOS({ restoring: true });
       hideCashierRestoration();
     }else{
       hideCashierRestoration();
