@@ -296,7 +296,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
      </div>
      <div class="field"><label>Branch Operating Hours *</label><div class="manager-branch-hours" id="managerBranchHoursEditor"></div></div>
      <div class="field"><label>Business & Operations Settings Modes</label><div class="manager-branch-mode-grid" id="managerBranchModesEditor"></div></div>
-     <div class="field"><label for="managerBranchMenuMode">Menu Catalog</label><select id="managerBranchMenuMode"><option value="inherit">Inherit Main Branch Menu</option><option value="override">Override — Editable Branch Copy</option><option value="independent">Independent — Standalone Snapshot</option></select></div>
+     <div class="field"><label for="managerBranchMenuMode">Menu Catalog</label><select id="managerBranchMenuMode"><option value="inherit">Inherit Main Branch Menu</option><option value="override" selected>Copy — Editable Branch Catalog</option><option value="independent">Independent — Standalone Snapshot</option></select></div>
      <div class="hint">A newly created branch receives Branch View and Branch Create permissions only. Owner/Admin must separately grant operational permissions. Existing stock balances, transactions, tables, QR tokens and printer registrations are not copied.</div>
      <div class="message" id="managerBranchFormMessage" role="alert"></div>
      <div class="row"><button class="secondary" id="managerBranchCancelButton" type="button">Cancel</button><button class="primary" id="managerBranchSubmitButton" type="submit">Submit</button></div>
@@ -491,11 +491,11 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   if(mode==="not_allowed")throw new Error("The Owner/Admin has disabled Manager branch creation.");
   $("managerBranchHoursEditor").innerHTML=managerBranchHoursMarkup();
   $("managerBranchModesEditor").innerHTML=managerBranchModesMarkup();
-  $("managerBranchModalTitle").textContent=mode==="approval_required"?"Request New Branch":"Create New Branch";
+  $("managerBranchModalTitle").textContent="Request New Branch";
   $("managerBranchModalDescription").textContent=mode==="approval_required"
    ?"Submit this branch configuration for Owner/Admin approval. The branch will not be created until it is approved."
    :"Create a fully configured branch under the Owner/Admin policy.";
-  $("managerBranchSubmitButton").textContent=mode==="approval_required"?"Submit Branch Request":"Create Branch";
+  $("managerBranchSubmitButton").textContent="Submit Branch Request";
   $("managerBranchTimezone").value="";
   $("managerBranchCreateModal").hidden=false;
   $("managerBranchName").focus();
@@ -514,7 +514,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   $("managerBranchPolicyTitle").textContent=mode==="approval_required"?"Owner Approval Required":"Branch Creation Disabled";
   $("managerBranchPolicyDescription").textContent=descriptions[mode]||descriptions.not_allowed;
   $("managerBranchCreateButton").disabled=!canCreate||mode==="not_allowed";
-  $("managerBranchCreateButton").textContent=mode==="approval_required"?"Request New Branch":"Create New Branch";
+  $("managerBranchCreateButton").textContent="Request New Branch";
   $("managerBranchWorkspaceMessage").textContent=managerBranchError||(!canCreate?"Your account does not have Branch Create permission. Contact the Owner/Admin if you need to request a new branch.":"");
   const directoryFilter=$("managerBranchDirectoryFilter")?.value||"all";
   if($("managerBranchDirectoryFilter")){
@@ -587,45 +587,28 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const timezone=$("managerBranchTimezone").value.trim();
   const address=$("managerBranchAddress").value.trim()||null;
   if(!name||name.length>80)throw new Error("Branch name must contain 1 to 80 characters.");
-  if(!/^[A-Z0-9][A-Z0-9_-]{0,19}$/.test(code))throw new Error("Branch code must contain 1 to 20 letters, numbers, hyphens or underscores.");
+  if(!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code))throw new Error("Branch code must contain 2 to 20 letters, numbers, hyphens or underscores.");
   if(!timezone||timezone.length>80)throw new Error("Enter a valid IANA timezone, such as Asia/Manila.");
   try{new Intl.DateTimeFormat("en-US",{timeZone:timezone});}catch(_){throw new Error("Enter a valid IANA timezone, such as Asia/Manila.");}
   const settingsModes={};
   for(const key of ["business_profile","tax","service_charge","discounts_vouchers","payment_methods","receipt_settings"])settingsModes[key]=$("managerBranchMode_"+key).value;
-  const payload={
-   name,code,address,timezone,
-   operating_hours:managerReadBranchOperatingHours(),
-   settings_modes:settingsModes,
-   menu_catalog_mode:$("managerBranchMenuMode").value
-  };
+  const payload={name,code,address,timezone,operating_hours:managerReadBranchOperatingHours(),settings_modes:settingsModes,menu_catalog_mode:$("managerBranchMenuMode").value};
   const mode=managerBranchPolicy?.manager_creation_mode||"not_allowed";
-  if(mode==="not_allowed"||!managerCanCreateBranch())throw new Error("Branch creation is not allowed for your account.");
-  button.disabled=true;button.textContent=mode==="approval_required"?"Submitting…":"Creating…";
+  if(mode!=="approval_required"||!managerCanCreateBranch())throw new Error("Branch requests must be enabled by the Owner/Admin before you can submit.");
+  button.disabled=true;button.textContent="Submitting…";
   $("managerBranchFormMessage").textContent="";
   try{
-   if(mode==="approval_required"){
-    const {data,error}=await sb.rpc("edmel_submit_branch_creation_request",{p_restaurant_id:RESTAURANT_ID,p_request_data:payload});
-    if(error)throw error;
-    if(data?.success!==true||!data?.request_id)throw new Error("The branch request was not confirmed by the database.");
-    closeManagerBranchModal();
-    notify("Branch creation request submitted for Owner/Admin review.");
-   }else{
-    const {data,error}=await sb.rpc("edmel_create_restaurant_branch_configured_with_hours",{
-     p_restaurant_slug:RESTAURANT_SLUG,p_name:name,p_code:code,p_address:address,p_timezone:timezone,
-     p_operating_hours:payload.operating_hours,p_settings_modes:settingsModes,p_menu_catalog_mode:payload.menu_catalog_mode
-    });
-    if(error)throw error;
-    if(data?.success!==true||!data?.branch?.id)throw new Error("Branch creation was not confirmed by the database.");
-    closeManagerBranchModal();
-    await refreshManagerAssignedBranches(data.branch.id);
-    notify("Branch created. Your new access is limited to Branch View and Branch Create until the Owner/Admin grants other permissions.");
-   }
+   const {data,error}=await sb.rpc("edmel_submit_branch_creation_request",{p_restaurant_id:RESTAURANT_ID,p_request_data:payload});
+   if(error)throw error;
+   if(data?.success!==true||!data?.request_id)throw new Error("The branch request was not confirmed by the database.");
+   closeManagerBranchModal();
+   notify("Branch request submitted for Owner review. The branch will not be operational until the Owner activates it.");
    await loadManagerBranchWorkspace();
   }catch(error){
    $("managerBranchFormMessage").textContent=error.message||"Unable to submit the branch request.";
   }finally{
    button.disabled=false;
-   button.textContent=managerBranchPolicy?.manager_creation_mode==="approval_required"?"Submit Branch Request":"Create Branch";
+   button.textContent="Submit Branch Request";
   }
  }
 
