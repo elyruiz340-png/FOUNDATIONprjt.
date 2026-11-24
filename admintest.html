@@ -2288,7 +2288,7 @@ html[data-ui="glass"][data-glass-adj="1"] :is(
 .branch-config-workspace .branch-hours-editor{margin:0;padding:0;border:0;background:transparent}
 .branch-config-workspace .branch-hours-grid{gap:6px;margin-top:10px}
 .branch-config-workspace .branch-hours-row{grid-template-columns:minmax(90px,1fr) auto minmax(105px,.8fr) 18px minmax(105px,.8fr);gap:9px;padding:5px 0;border-bottom:1px solid var(--bd)}
-.branch-config-workspace .branch-hours-row b{color:var(--tx);font-size:12px;font-weight:600}
+.branch-config-workspace .branch-hours-row b{color:var(--tx);font-size:12px;font-weight:600}.branch-config-workspace .branch-hours-toggle{min-width:112px}.branch-config-workspace .branch-hours-toggle .branch-segment-option{min-height:30px;padding:4px 7px;font-size:10px}
 .branch-config-workspace .branch-hours-row select,.branch-config-workspace .branch-hours-row input{height:36px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px}
 .branch-config-workspace .branch-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .branch-mode-card{min-width:0;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg)}
@@ -3019,7 +3019,7 @@ function openBranchWorkspace(mode,branch,modes,draftId=''){
  '<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">02</span><div><h4>Operating Hours</h4><p>Weekly schedule for this branch</p></div></div>'+adminBranchOperatingHoursEditor(hours,'branchCreateHours')+'</section>'+
  '<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">03</span><div><h4>Menu & Inventory</h4><p>Catalog sharing and inventory setup</p></div></div>'+adminBranchMenuModeControl(menuMode,'branchCreateMenuMode',menuDisabled)+'<div class="branch-info-note">New branch inventory definitions use zero opening quantities. Existing stock balances are not copied. Tables, QR codes and printers are configured separately for each branch.</div></section>'+
  '<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">04</span><div><h4>Business Settings</h4><p>Choose which settings are shared or managed independently</p></div></div>'+adminBranchModeControls(initialModes,ADMIN_BRANCH_SETTING_GROUPS)+'</section>'+
- '<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance()+'</section>'+
+ '<section id="branchGovernanceWorkspace" class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance()+'</section>'+
  (editing&&branch?'<section class="branch-config-section"><div class="branch-section-heading"><span class="branch-section-index">06</span><div><h4>Setup Readiness</h4><p>Branch configuration status</p></div></div>'+adminBranchReadinessMarkup(branch.id,true)+'</section>':'')+
  '</div><div class="branch-config-footer"><button class="btn branch-action-cancel" data-a="close">Cancel</button><span class="sp"></span>'+(editing?'':'<button class="btn" data-a="branch-draft-save">'+(ADMIN_BRANCH_WORKSPACE_DRAFT_ID?'Update Draft':'Save Draft')+'</button>')+'<button class="btn pri" data-a="branch-create-submit">'+(editing?'Save Changes':'Create Branch')+'</button></div></section>';
 }
@@ -3036,7 +3036,7 @@ function adminBranchOperatingHoursEditor(hours,prefix){
     const openTime=/^([01]\d|2[0-3]):[0-5]\d$/.test(String(config.open_time||''))?String(config.open_time):'09:00';
     const closeTime=/^([01]\d|2[0-3]):[0-5]\d$/.test(String(config.close_time||''))?String(config.close_time):'17:00';
     return '<div class="branch-hours-row"><b>'+label+'</b>'+
-      '<select id="'+prefix+'_'+day+'_is_open" aria-label="'+label+' status"><option value="true" '+(isOpen?'selected':'')+'>Open</option><option value="false" '+(!isOpen?'selected':'')+'>Closed</option></select>'+
+      '<div class="branch-segment branch-hours-toggle" role="group" aria-label="'+label+' status"><button type="button" class="branch-segment-option" data-a="branch-toggle-value" data-target="'+prefix+'_'+day+'_is_open" data-value="true" aria-pressed="'+(isOpen?'true':'false')+'">Open</button><button type="button" class="branch-segment-option" data-a="branch-toggle-value" data-target="'+prefix+'_'+day+'_is_open" data-value="false" aria-pressed="'+(!isOpen?'true':'false')+'">Closed</button></div><select id="'+prefix+'_'+day+'_is_open" class="branch-hidden-value" aria-hidden="true" tabindex="-1"><option value="true" '+(isOpen?'selected':'')+'>Open</option><option value="false" '+(!isOpen?'selected':'')+'>Closed</option></select>'+
       '<input type="time" id="'+prefix+'_'+day+'_open_time" value="'+openTime+'" aria-label="'+label+' opening time">'+
       '<span>to</span><input type="time" id="'+prefix+'_'+day+'_close_time" value="'+closeTime+'" aria-label="'+label+' closing time"></div>';
   }).join('');
@@ -3080,7 +3080,7 @@ const A={
 'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
 'branch-drafts-refresh':async()=>{await loadAdminBranchDrafts();if(S.page==='branches')render();},
 'branch-readiness-refresh':async t=>{await loadAdminBranchReadiness(t.dataset.id||ADMIN_BRANCH_SELECTED_ID);},
-'branch-toggle-value':t=>{const id=t.dataset.target||'',value=t.dataset.value||'',target=id?$('#'+id):null;if(!target||!['inherit','override','independent','allowed','approval_required','not_allowed'].includes(value))return;target.value=value;const group=t.closest('.branch-segment');if(group)group.querySelectorAll('[data-a="branch-toggle-value"]').forEach(button=>button.setAttribute('aria-pressed',button===t?'true':'false'));},
+'branch-toggle-value':t=>{const id=t.dataset.target||'',value=t.dataset.value||'',target=id?$('#'+id):null;if(!target||!['inherit','override','independent','allowed','approval_required','not_allowed','true','false'].includes(value))return;target.value=value;const group=t.closest('.branch-segment');if(group)group.querySelectorAll('[data-a="branch-toggle-value"]').forEach(button=>button.setAttribute('aria-pressed',button===t?'true':'false'));},
 'branch-draft-save':async t=>{await saveAdminBranchDraft(t);},
 'branch-draft-resume':t=>{const draft=ADMIN_BRANCH_DRAFTS.find(x=>x.id===(t.dataset.id||''));if(draft)openAdminBranchDraft(draft);},
 'branch-draft-delete':async t=>{
@@ -3117,7 +3117,7 @@ const A={
     const {data,error}=await sb.rpc('edmel_set_branch_creation_policy',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_manager_creation_mode:mode});
     if(error)throw error;
     if(data?.success!==true)throw new Error('The branch creation policy was not confirmed.');
-    ADMIN_BRANCH_POLICY=data;await loadAdminBranchGovernance();render();toast('Manager branch creation policy saved.');
+    ADMIN_BRANCH_POLICY=data;await loadAdminBranchGovernance();const governancePanel=$('#branchGovernanceWorkspace');if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance();toast('Manager branch creation policy saved.');
   }catch(error){toast(error?.message||'Unable to save the branch creation policy.',1);t.disabled=false;t.textContent='Save Policy';}
 },
 'branch-request-review':async t=>{
@@ -3134,7 +3134,8 @@ const A={
     const {data,error}=await sb.rpc('edmel_review_branch_creation_request',{p_request_id:request.id,p_decision:decision,p_reason:reason.trim()});
     if(error)throw error;
     if(data?.success!==true||data.status!==decision)throw new Error('The branch request review was not confirmed.');
-    ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
+    await loadAdminBranchGovernance();const governancePanel=$('#branchGovernanceWorkspace');if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance();
+    if(decision==='approved'){ADMIN_BRANCH_LOADED=false;await loadAdminBranches();openBranchWorkspace('create',null,{});}
     toast(decision==='approved'?'Branch request approved and branch created.':'Branch request rejected.');
   }catch(error){toast(error?.message||'Unable to review this branch request.',1);t.disabled=false;t.textContent=decision==='approved'?'Approve & Create':'Reject';}
 },
