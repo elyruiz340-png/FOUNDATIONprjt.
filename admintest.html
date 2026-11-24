@@ -2509,6 +2509,10 @@ let ADMIN_BRANCH_LOADED=false;
 let ADMIN_BRANCH_ERROR='';
 let ADMIN_BRANCH_SELECTED_ID='';
 let ADMIN_GLOBAL_BRANCH_FILTER='all';
+let ADMIN_BRANCH_POLICY={manager_creation_mode:'not_allowed'};
+let ADMIN_BRANCH_REQUESTS=[];
+let ADMIN_BRANCH_GOVERNANCE_ERROR='';
+let ADMIN_BRANCH_GOVERNANCE_LOADING=false;
 
 function adminBranchAssignedStaff(branchId){
   const activeAssignments=ADMIN_BRANCH_ASSIGNMENTS.filter(a=>a.branch_id===branchId&&a.is_active!==false);
@@ -2750,6 +2754,54 @@ async function resetBranchSettingsToInherit(){
   }catch(error){toast(error?.message||'Unable to reset branch settings.',1);if(button){button.disabled=false;button.textContent='Reset to Inherit';}}
 }
 
+
+async function loadAdminBranchGovernance(){
+  if(ADMIN_BRANCH_GOVERNANCE_LOADING)return;
+  ADMIN_BRANCH_GOVERNANCE_LOADING=true;
+  ADMIN_BRANCH_GOVERNANCE_ERROR='';
+  try{
+    const restaurantId=CURRENT_RESTAURANT_ID;
+    if(!restaurantId)throw new Error('Restaurant account could not be identified.');
+    const [policyResult,requestResult]=await Promise.all([
+      sb.rpc('edmel_get_branch_creation_policy',{p_restaurant_id:restaurantId}),
+      sb.rpc('edmel_list_branch_creation_requests',{p_restaurant_id:restaurantId,p_status:'all'})
+    ]);
+    if(policyResult.error)throw policyResult.error;
+    if(requestResult.error)throw requestResult.error;
+    ADMIN_BRANCH_POLICY=policyResult.data||{manager_creation_mode:'not_allowed'};
+    ADMIN_BRANCH_REQUESTS=Array.isArray(requestResult.data?.requests)?requestResult.data.requests:[];
+  }catch(error){
+    ADMIN_BRANCH_GOVERNANCE_ERROR=error?.message||String(error);
+  }finally{
+    ADMIN_BRANCH_GOVERNANCE_LOADING=false;
+  }
+}
+function renderAdminBranchGovernance(){
+  const canManage=['owner','admin'].includes(String(CURRENT_AUTH_ROLE||'').toLowerCase());
+  const mode=['allowed','approval_required','not_allowed'].includes(ADMIN_BRANCH_POLICY?.manager_creation_mode)
+    ?ADMIN_BRANCH_POLICY.manager_creation_mode:'not_allowed';
+  const options=[
+    ['not_allowed','Not Allowed','Managers cannot create branches or submit requests.'],
+    ['approval_required','Approval Required','Managers submit requests for Owner/Admin review.'],
+    ['allowed','Allowed','Managers can create fully configured branches directly.']
+  ].map(([value,label,description])=>'<option value="'+value+'" '+(mode===value?'selected':'')+'>'+label+' — '+description+'</option>').join('');
+  const requestRows=ADMIN_BRANCH_REQUESTS.map(request=>{
+    const data=request.request_data&&typeof request.request_data==='object'?request.request_data:{};
+    const pending=request.status==='pending';
+    const created=request.created_at?new Date(request.created_at).toLocaleString():'—';
+    const decision=request.decision_reason?'<div class="note" style="margin-top:4px">Review note: '+esc(request.decision_reason)+'</div>':'';
+    const actions=pending&&canManage
+      ?'<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn pri" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="approved">Approve & Create</button><button class="btn" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="rejected">Reject</button></div>'
+      :'—';
+    return '<tr><td><b>'+esc(data.name||'Unnamed branch')+'</b><div class="mu">'+esc(data.code||'')+'</div></td><td>'+esc(request.status||'Unknown')+'</td><td>'+esc(created)+'</td><td>'+esc(request.requested_by?'Manager request':'—')+'</td><td>'+actions+decision+'</td></tr>';
+  }).join('');
+  const policyControl=canManage
+    ?'<div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:260px"><label for="branchManagerCreationPolicy" class="mu" style="display:block;margin-bottom:6px">Manager Branch Creation Policy</label><select id="branchManagerCreationPolicy" style="width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)">'+options+'</select></div><button class="btn pri" data-a="branch-policy-save">Save Policy</button></div>'
+    :'<div class="note">Only the Owner or Admin can change this policy.</div>';
+  return '<section class="card" style="margin-bottom:14px"><div class="row"><div><div class="mu">Branch Creation Governance</div><h3 style="margin:3px 0 4px">Manager Access Policy</h3><p class="note" style="margin:0">Controls whether Managers can create branches directly, request approval, or have no branch creation access.</p></div><span class="bd '+(mode==='allowed'?'ok':mode==='approval_required'?'wn':'')+'">'+esc(mode.replace('_',' '))+'</span></div><div style="margin-top:14px">'+(ADMIN_BRANCH_GOVERNANCE_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_GOVERNANCE_ERROR)+'</div>':policyControl)+'</div></section>'+
+    '<section class="card" style="margin-bottom:14px"><div class="row"><div><div class="mu">Branch Management</div><h3 style="margin:3px 0 4px">Manager Branch Requests</h3><p class="note" style="margin:0">Approving a request creates the configured branch and gives the requesting Manager branch-only access. Other operational permissions remain unchanged.</p></div><button class="btn" data-a="branch-governance-refresh">Refresh</button></div><div class="tw" style="margin-top:12px"><table><thead><tr><th>Requested Branch</th><th>Status</th><th>Submitted</th><th>Requested By</th><th>Review</th></tr></thead><tbody>'+(ADMIN_BRANCH_GOVERNANCE_LOADING?'<tr><td colspan="5"><div class="empty">Loading branch requests…</div></td></tr>':requestRows||'<tr><td colspan="5"><div class="empty">No branch creation requests.</div></td></tr>')+'</tbody></table></div></section>';
+}
+
 function renderAdminBranchesPage(){
   if(ADMIN_BRANCH_LOADING&&!ADMIN_BRANCH_LOADED){
     return '<div class="card"><div class="mu">Multi-Branch Management</div><h3>Loading branch information…</h3><p class="note">Reading branch records and staff assignments from the current restaurant.</p></div>';
@@ -2796,7 +2848,7 @@ function renderAdminBranchesPage(){
   }
   const deactivateButton=canManageBranches&&selected&&selected.is_active&&!selected.is_default&&active.length>1
     ? '<button class="btn" data-a="branch-deactivate" data-id="'+esc(selected.id)+'">Deactivate Branch</button>' : '';
-  return '<div class="tb"><div><div class="ttl">Multi-Branch Management</div><div class="note" style="margin:3px 0 0">Live branch records and staff assignments for this restaurant.</div></div><span class="sp"></span>'+(canManageBranches?'<button class="btn pri" data-a="addbr">Add Branch</button>':'')+deactivateButton+'<button class="btn" data-a="branch-refresh">Refresh data</button></div>'+
+  return renderAdminBranchGovernance()+'<div class="tb"><div><div class="ttl">Multi-Branch Management</div><div class="note" style="margin:3px 0 0">Live branch records and staff assignments for this restaurant.</div></div><span class="sp"></span>'+(canManageBranches?'<button class="btn pri" data-a="addbr">Add Branch</button>':'')+deactivateButton+'<button class="btn" data-a="branch-refresh">Refresh data</button></div>'+
     '<div class="g k"><div class="card"><div class="mu">Total branches</div><div class="big">'+branches.length+'</div></div><div class="card"><div class="mu">Active branches</div><div class="big">'+active.length+'</div></div><div class="card"><div class="mu">Inactive branches</div><div class="big">'+inactive.length+'</div></div><div class="card"><div class="mu">Default branch</div><div class="big" style="font-size:19px">'+esc(defaultBranch?defaultBranch.name:'Not set')+'</div></div></div>'+
     '<div class="card"><div class="row"><div><h3 style="margin:0">Branch directory</h3><p class="note" style="margin:3px 0 0">Select a branch to review its details and staff assignments.</p></div><span class="mu">'+branches.length+' record(s)</span></div>'+
     (branches.length?'<div class="g g2" style="margin:12px 0 0">'+branchCards+'</div>':'<div class="empty">No branches have been created for this restaurant.</div>')+'</div>'+detail+
@@ -2826,6 +2878,7 @@ async function loadAdminBranches(){
     const activeBranchIds=ADMIN_BRANCH_ROWS.filter(b=>b.is_active===true).map(b=>b.id);
     if(ADMIN_GLOBAL_BRANCH_FILTER!=='all'&&!activeBranchIds.includes(ADMIN_GLOBAL_BRANCH_FILTER))ADMIN_GLOBAL_BRANCH_FILTER='all';
     ADMIN_BRANCH_LOADED=true;
+    await loadAdminBranchGovernance();
     fillBr();
   }catch(error){
     ADMIN_BRANCH_ERROR=error?.message||String(error);
@@ -2968,6 +3021,36 @@ async function openBranchEditModal(branch){
 const A={
 'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';render()},
 'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
+'branch-governance-refresh':async()=>{await loadAdminBranchGovernance();if(S.page==='branches')render();},
+'branch-policy-save':async t=>{
+  const mode=$('#branchManagerCreationPolicy')?.value||'';
+  if(!['allowed','approval_required','not_allowed'].includes(mode)){toast('Choose a valid Manager branch creation policy.',1);return;}
+  t.disabled=true;t.textContent='Saving…';
+  try{
+    const {data,error}=await sb.rpc('edmel_set_branch_creation_policy',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_manager_creation_mode:mode});
+    if(error)throw error;
+    if(data?.success!==true)throw new Error('The branch creation policy was not confirmed.');
+    ADMIN_BRANCH_POLICY=data;await loadAdminBranchGovernance();render();toast('Manager branch creation policy saved.');
+  }catch(error){toast(error?.message||'Unable to save the branch creation policy.',1);t.disabled=false;t.textContent='Save Policy';}
+},
+'branch-request-review':async t=>{
+  const request=ADMIN_BRANCH_REQUESTS.find(row=>row.id===t.dataset.id);
+  const decision=t.dataset.decision;
+  if(!request||request.status!=='pending'||!['approved','rejected'].includes(decision))return;
+  const branchName=request.request_data?.name||'this branch';
+  if(decision==='approved'&&!confirm('Approve the request and create '+branchName+'? The requester will receive Branch View and Branch Create permissions only.'))return;
+  const reason=prompt(decision==='approved'?'Enter the approval reason (at least 3 characters):':'Enter the rejection reason (at least 3 characters):','');
+  if(reason===null)return;
+  if(reason.trim().length<3||reason.trim().length>500){toast('Enter a review reason between 3 and 500 characters.',1);return;}
+  t.disabled=true;t.textContent=decision==='approved'?'Creating…':'Rejecting…';
+  try{
+    const {data,error}=await sb.rpc('edmel_review_branch_creation_request',{p_request_id:request.id,p_decision:decision,p_reason:reason.trim()});
+    if(error)throw error;
+    if(data?.success!==true||data.status!==decision)throw new Error('The branch request review was not confirmed.');
+    ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
+    toast(decision==='approved'?'Branch request approved and branch created.':'Branch request rejected.');
+  }catch(error){toast(error?.message||'Unable to review this branch request.',1);t.disabled=false;t.textContent=decision==='approved'?'Approve & Create':'Reject';}
+},
 addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can create branches.',1);return;}openBranchCreateModal()},
 'branch-create-next':()=>{
   if(ADMIN_BRANCH_CREATE_STEP===0){const name=$('#branchCreateName')?.value.trim()||'',code=$('#branchCreateCode')?.value.trim().toUpperCase()||'';if(!name||!code){toast('Enter the branch name and branch code before continuing.',1);return;}if(!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code)){toast('Branch code must contain 2 to 20 letters, numbers, underscores or hyphens.',1);return;}}
