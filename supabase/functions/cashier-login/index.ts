@@ -22,24 +22,57 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const restaurantSlug = typeof body.restaurant_slug === "string" ? body.restaurant_slug.trim().toLowerCase() : "";
     const username = typeof body.username === "string" ? body.username.trim() : "";
     const pin = typeof body.pin === "string" ? body.pin : "";
-    const expectedPosition = typeof body.expected_position === "string" ? body.expected_position.trim().toLowerCase() : "cashier";
+    const expectedPosition = typeof body.expected_position === "string"
+      ? body.expected_position.trim().toLowerCase()
+      : "cashier";
 
-    if (!/^[a-z0-9][a-z0-9-]{1,99}$/.test(restaurantSlug) ||
-        username.length === 0 || username.length > 80 ||
+    if (username.length === 0 || username.length > 80 ||
         !/^[a-zA-Z0-9._-]+$/.test(username) ||
-        !/^\d{6}$/.test(pin)) {
-      return json({ error: "Invalid restaurant, username, or PIN" }, 400);
+        !/^\d{6}$/.test(pin) ||
+        expectedPosition !== "cashier") {
+      return json({ error: "Invalid username, PIN, or cashier access" }, 400);
     }
 
     const admin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    // Resolve the tenant from the globally unique staff username. If legacy
+    // duplicate usernames exist, fail closed rather than selecting a tenant.
+    const { data: staffRows, error: staffError } = await admin
+      .from("restaurant_users")
+      .select("id,restaurant_id,cashier_username,role,position,is_active")
+      .eq("is_active", true)
+      .ilike("cashier_username", username);
+
+    if (staffError) {
+      console.error("Cashier staff lookup failed:", staffError.message);
+      return json({ error: "Unable to verify login" }, 500);
+    }
+
+    const matches = (staffRows || []).filter((row: any) =>
+      String(row.role || "").trim().toLowerCase() === "staff" &&
+      String(row.position || "").trim().toLowerCase() === expectedPosition &&
+      String(row.cashier_username || "").trim().toLowerCase() === username.toLowerCase()
+    );
+    if (matches.length !== 1) return json({ error: "Invalid username or PIN" }, 401);
+
+    const staff = matches[0];
+    const { data: restaurant, error: restaurantError } = await admin
+      .from("restaurants")
+      .select("id,slug")
+      .eq("id", staff.restaurant_id)
+      .maybeSingle();
+
+    if (restaurantError || !restaurant?.slug) {
+      console.error("Cashier restaurant lookup failed:", restaurantError?.message || "Restaurant not found");
+      return json({ error: "Unable to resolve cashier workspace" }, 500);
+    }
+
     const { data, error } = await admin.rpc("edmel_verify_staff_login_credentials", {
-      p_restaurant_slug: restaurantSlug,
+      p_restaurant_slug: restaurant.slug,
       p_username: username,
       p_pin: pin,
     });
@@ -50,9 +83,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const verified = Array.isArray(data) ? data[0] : data;
-    if (!verified?.cashier_user_id || !verified?.restaurant_id || !verified?.restaurant_user_id ||
+    if (!verified?.cashier_user_id ||
+        !verified?.restaurant_id ||
+        !verified?.restaurant_user_id ||
+        verified.restaurant_user_id !== staff.id ||
+        verified.restaurant_id !== staff.restaurant_id ||
         String(verified.staff_position || "").trim().toLowerCase() !== expectedPosition) {
-      return json({ error: "Invalid username, PIN, or cashier access" }, 401);
+      return json({ error: "Invalid username or PIN" }, 401);
     }
 
     const { data: userResult, error: userError } =
@@ -75,7 +112,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Unable to complete login" }, 500);
     }
 
-    return json({ token_hash: tokenHash, type: "magiclink", restaurant_slug: restaurantSlug });
+    return json({ token_hash: tokenHash, type: "magiclink", restaurant_slug: restaurant.slug });
   } catch (error) {
     console.error("Cashier login failed:", error);
     return json({ error: "Unable to complete login" }, 500);
