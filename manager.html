@@ -49,6 +49,21 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
 .manager-expense-modal{position:fixed;inset:0;z-index:50;background:rgba(13,24,17,.48);backdrop-filter:blur(5px);display:grid;place-items:center;padding:18px}.manager-expense-modal[hidden]{display:none}.manager-expense-dialog{width:min(560px,100%);max-height:90vh;overflow:auto;background:var(--panel,#fff);color:var(--text);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.22);display:grid;gap:13px}.manager-expense-dialog h2{margin:0;font-size:21px}.manager-expense-dialog .field{display:grid;gap:6px}.manager-expense-dialog .field label{font-size:12px;font-weight:800;color:var(--muted)}.manager-expense-dialog input,.manager-expense-dialog select,.manager-expense-dialog textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel,#fff);color:var(--text);font:inherit}.manager-expense-dialog .row{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-start}.manager-expense-dialog .row button{flex:1}
 @media(max-width:680px){.top-actions{gap:6px;flex-wrap:wrap;justify-content:flex-end}.top-actions .branch-select{padding:6px 8px;max-width:190px}.branch-select select{max-width:120px}.top-actions .user-pill{display:none}.manager-expense-dialog{padding:16px}}
 
+
+.manager-branch-policy{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--surface2)}
+.manager-branch-policy strong{display:block;font-size:14px}.manager-branch-policy p{margin:3px 0 0;color:var(--muted);font-size:12px}
+.manager-branch-card{padding:15px;border:1px solid var(--line);border-radius:13px;background:var(--surface2);display:grid;gap:5px}
+.manager-branch-card strong{font-size:14px}.manager-branch-card small{color:var(--muted)}
+.manager-branch-modal{position:fixed;inset:0;z-index:70;background:rgba(13,24,17,.52);backdrop-filter:blur(6px);display:grid;place-items:center;padding:14px}
+.manager-branch-modal[hidden]{display:none}
+.manager-branch-dialog{width:min(760px,100%);max-height:92vh;overflow:auto}
+.manager-branch-hours{display:grid;gap:7px}
+.manager-branch-hour{display:grid;grid-template-columns:1fr 105px 1fr 22px 1fr;align-items:center;gap:7px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+.manager-branch-hour strong{font-size:12px}.manager-branch-hour input,.manager-branch-hour select,.manager-branch-mode select{min-width:0;width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface);color:var(--text)}
+.manager-branch-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.manager-branch-mode{display:grid;gap:5px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+.manager-branch-mode label{font-size:11px;font-weight:800}
+@media(max-width:600px){.manager-branch-hour{grid-template-columns:1fr 90px 1fr 16px 1fr}.manager-branch-hour strong{grid-column:1/-1}.manager-branch-mode-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -141,7 +156,49 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
    </section>
    <div class="permission-note" style="margin-top:16px">Profit reporting is available in the Admin Dashboard after sales and approved expense records are connected. True profit still requires verified recipe and ingredient costing.</div>
   </div>
- </main>
+ 
+  <div id="branchesWorkspace" hidden>
+   <div class="welcome"><div><h1>Multi-Branch Management</h1><p>View your assigned branches and create or request additional branches according to Owner/Admin policy.</p></div><button class="secondary" id="managerBranchRefreshButton" type="button">Refresh</button></div>
+   <div class="stats">
+    <div class="stat"><span>Assigned Branches</span><strong id="managerBranchCount">—</strong></div>
+    <div class="stat"><span>Branch Requests</span><strong id="managerBranchRequestCount">—</strong></div>
+    <div class="stat"><span>Creation Policy</span><strong id="managerBranchPolicyStatus" style="font-size:17px">—</strong></div>
+   </div>
+   <section class="panel">
+    <div class="panel-head"><div><h2>Branch Creation Policy</h2><p>Branch creation is controlled by the Owner/Admin and your assigned permissions.</p></div></div>
+    <div class="panel-body" style="padding-top:14px">
+     <div class="manager-branch-policy"><div><strong id="managerBranchPolicyTitle">Loading policy…</strong><p id="managerBranchPolicyDescription">Checking your branch creation access.</p></div><button class="primary" id="managerBranchCreateButton" type="button" disabled>Create / Request Branch</button></div>
+     <div class="note" id="managerBranchWorkspaceMessage" style="padding-top:10px" aria-live="polite"></div>
+    </div>
+   </section>
+   <section class="panel" style="margin-top:16px">
+    <div class="panel-head"><div><h2>My Assigned Branches</h2><p>Only active branches assigned to your Manager account are shown.</p></div></div>
+    <div class="panel-body" style="padding-top:14px"><div id="managerBranchDirectory" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px"><div class="empty">Loading assigned branches…</div></div></div>
+   </section>
+   <section class="panel" style="margin-top:16px">
+    <div class="panel-head"><div><h2>My Branch Creation Requests</h2><p>Track submitted requests and review outcomes.</p></div></div>
+    <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Branch</th><th>Status</th><th>Submitted</th><th>Review Note</th></tr></thead><tbody id="managerBranchRequestRows"><tr><td colspan="4" class="empty">Loading requests…</td></tr></tbody></table></div></div>
+   </section>
+   <div class="manager-branch-modal" id="managerBranchCreateModal" hidden>
+    <form class="manager-expense-dialog manager-branch-dialog" id="managerBranchCreateForm">
+     <div class="row" style="justify-content:space-between;align-items:center"><h2 id="managerBranchModalTitle">Create Branch</h2><button class="secondary" id="managerBranchCloseButton" type="button">Close</button></div>
+     <p class="note" id="managerBranchModalDescription">Enter the branch information and operating configuration.</p>
+     <div class="form-grid">
+      <div class="field"><label for="managerBranchName">Branch Name *</label><input id="managerBranchName" maxlength="80" required placeholder="e.g. Downtown Branch"></div>
+      <div class="field"><label for="managerBranchCode">Branch Code *</label><input id="managerBranchCode" maxlength="20" required placeholder="e.g. DOWNTOWN"></div>
+      <div class="field"><label for="managerBranchTimezone">IANA Timezone *</label><input id="managerBranchTimezone" maxlength="80" required placeholder="e.g. Asia/Manila"></div>
+      <div class="field"><label for="managerBranchAddress">Branch Address</label><input id="managerBranchAddress" maxlength="240" placeholder="Optional branch address"></div>
+     </div>
+     <div class="field"><label>Branch Operating Hours *</label><div class="manager-branch-hours" id="managerBranchHoursEditor"></div></div>
+     <div class="field"><label>Business & Operations Settings Modes</label><div class="manager-branch-mode-grid" id="managerBranchModesEditor"></div></div>
+     <div class="field"><label for="managerBranchMenuMode">Menu Catalog</label><select id="managerBranchMenuMode"><option value="inherit">Inherit Main Branch Menu</option><option value="override">Override — Editable Branch Copy</option><option value="independent">Independent — Standalone Snapshot</option></select></div>
+     <div class="hint">A newly created branch receives Branch View and Branch Create permissions only. Owner/Admin must separately grant operational permissions. Existing stock balances, transactions, tables, QR tokens and printer registrations are not copied.</div>
+     <div class="message" id="managerBranchFormMessage" role="alert"></div>
+     <div class="row"><button class="secondary" id="managerBranchCancelButton" type="button">Cancel</button><button class="primary" id="managerBranchSubmitButton" type="submit">Submit</button></div>
+    </form>
+   </div>
+  </div>
+</main>
  </div>
 </section>
 
@@ -214,6 +271,11 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
  function moduleAccess(key, action="view"){
   const p=ownPermissions||{};
   if(key==="staff"&&p.staff_management===true)return true;
+  if(key==="branches"){
+   return (managerAccess||[]).some(access=>access.is_active===true&&access.permissions?.modules?.branches&&(
+    access.permissions.modules.branches[action]===true||access.permissions.modules.branches.manage===true||access.permissions.modules.branches.create===true
+   ));
+  }
   if(p.modules&&typeof p.modules==="object"){
    const grant=p.modules[key];
    if(grant&&typeof grant==="object"&&(grant[action]===true||grant.manage===true))return true;
@@ -266,15 +328,21 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   });
   const realStaffWorkspace=key==="staff"&&ownPermissions?.staff_management===true;
   const realExpensesWorkspace=key==="expenses"&&moduleAccess("expenses","view");
+  const realBranchesWorkspace=key==="branches"&&moduleAccess("branches","view");
   $("staffWorkspace").hidden=!realStaffWorkspace;
   $("expensesWorkspace").hidden=!realExpensesWorkspace;
-  $("modulePlaceholder").hidden=realStaffWorkspace||realExpensesWorkspace;
+  $("branchesWorkspace").hidden=!realBranchesWorkspace;
+  $("modulePlaceholder").hidden=realStaffWorkspace||realExpensesWorkspace||realBranchesWorkspace;
   if(realStaffWorkspace){
    $("moduleTitle").textContent="Staff & Permissions";
    return;
   }
   if(realExpensesWorkspace){
    loadManagerExpenses().catch(error=>showManagerExpenseError(error.message||"Unable to load expenses."));
+   return;
+  }
+  if(realBranchesWorkspace){
+   loadManagerBranchWorkspace().catch(error=>showManagerBranchWorkspaceError(error.message||"Unable to load branch management."));
    return;
   }
   $("moduleTitle").textContent=item[1];
@@ -284,8 +352,171 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   $("modulePermissionNote").textContent="Branch: "+(activeBranch?.name||"Assigned branch")+". This view is limited to branches assigned to your Manager account.";
  }
 
+
+ function managerCanCreateBranch(){
+  return (managerAccess||[]).some(access=>access.is_active===true&&access.permissions?.modules?.branches?.create===true);
+ }
+ function managerBranchHoursMarkup(){
+  const days=[["monday","Monday",true],["tuesday","Tuesday",true],["wednesday","Wednesday",true],["thursday","Thursday",true],["friday","Friday",true],["saturday","Saturday",false],["sunday","Sunday",false]];
+  return days.map(([key,label,open])=>'<div class="manager-branch-hour"><strong>'+label+'</strong><select id="managerBranch_'+key+'_open" aria-label="'+label+' status"><option value="true" '+(open?'selected':'')+'>Open</option><option value="false" '+(!open?'selected':'')+'>Closed</option></select><input type="time" id="managerBranch_'+key+'_start" value="09:00" aria-label="'+label+' opening time"><span>to</span><input type="time" id="managerBranch_'+key+'_end" value="17:00" aria-label="'+label+' closing time"></div>').join("");
+ }
+ function managerBranchModesMarkup(){
+  const groups=[["business_profile","Business Profile"],["tax","Tax Settings"],["service_charge","Service Charge"],["discounts_vouchers","Discounts & Vouchers"],["payment_methods","Payment Methods"],["receipt_settings","Receipt Settings"]];
+  return groups.map(([key,label])=>'<div class="manager-branch-mode"><label for="managerBranchMode_'+key+'">'+label+'</label><select id="managerBranchMode_'+key+'"><option value="inherit">Inherit</option><option value="override">Override</option><option value="independent">Independent</option></select></div>').join("");
+ }
+ function managerReadBranchOperatingHours(){
+  const hours={};
+  for(const [day,label] of [["monday","Monday"],["tuesday","Tuesday"],["wednesday","Wednesday"],["thursday","Thursday"],["friday","Friday"],["saturday","Saturday"],["sunday","Sunday"]]){
+   const open=$("managerBranch_"+day+"_open")?.value==="true";
+   const openTime=$("managerBranch_"+day+"_start")?.value||"";
+   const closeTime=$("managerBranch_"+day+"_end")?.value||"";
+   if(!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(openTime)||!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(closeTime))throw new Error("Enter valid opening and closing times for "+label+".");
+   hours[day]={is_open:open,open_time:openTime,close_time:closeTime};
+  }
+  return hours;
+ }
+ function closeManagerBranchModal(){
+  $("managerBranchCreateModal").hidden=true;
+  $("managerBranchCreateForm").reset();
+  $("managerBranchFormMessage").textContent="";
+ }
+ function openManagerBranchModal(){
+  if(!managerCanCreateBranch())throw new Error("Branch Create permission has not been granted for your Manager account.");
+  const mode=managerBranchPolicy?.manager_creation_mode||"not_allowed";
+  if(mode==="not_allowed")throw new Error("The Owner/Admin has disabled Manager branch creation.");
+  $("managerBranchHoursEditor").innerHTML=managerBranchHoursMarkup();
+  $("managerBranchModesEditor").innerHTML=managerBranchModesMarkup();
+  $("managerBranchModalTitle").textContent=mode==="approval_required"?"Request New Branch":"Create New Branch";
+  $("managerBranchModalDescription").textContent=mode==="approval_required"
+   ?"Submit this branch configuration for Owner/Admin approval. The branch will not be created until it is approved."
+   :"Create a fully configured branch under the Owner/Admin policy.";
+  $("managerBranchSubmitButton").textContent=mode==="approval_required"?"Submit Branch Request":"Create Branch";
+  $("managerBranchTimezone").value="";
+  $("managerBranchCreateModal").hidden=false;
+  $("managerBranchName").focus();
+ }
+ function renderManagerBranchWorkspace(){
+  $("managerBranchCount").textContent=String(branches.length);
+  $("managerBranchRequestCount").textContent=String(managerBranchRequests.length);
+  const mode=managerBranchPolicy?.manager_creation_mode||"not_allowed";
+  $("managerBranchPolicyStatus").textContent=mode.replace("_"," ");
+  const canCreate=managerCanCreateBranch();
+  const descriptions={
+   not_allowed:"The Owner/Admin has disabled Manager branch creation. You can still view your assigned branches.",
+   approval_required:"You can submit a branch request. An Owner/Admin must approve it before the branch is created.",
+   allowed:"You can create a fully configured branch directly. Your new branch access will be limited to Branch View and Branch Create."
+  };
+  $("managerBranchPolicyTitle").textContent=mode==="approval_required"?"Owner/Admin Approval Required":mode==="allowed"?"Direct Creation Allowed":"Branch Creation Disabled";
+  $("managerBranchPolicyDescription").textContent=descriptions[mode]||descriptions.not_allowed;
+  $("managerBranchCreateButton").disabled=!canCreate||mode==="not_allowed";
+  $("managerBranchCreateButton").textContent=mode==="approval_required"?"Request New Branch":"Create New Branch";
+  $("managerBranchWorkspaceMessage").textContent=managerBranchError||(!canCreate?"Your account does not have Branch Create permission. Contact the Owner/Admin if you need to request a new branch.":"");
+  $("managerBranchDirectory").innerHTML=branches.length?branches.map(branch=>'<div class="manager-branch-card"><strong>'+esc(branch.name)+'</strong><small>'+esc(branch.code||"")+' · '+(branch.is_default?"Main Branch":"Assigned Branch")+'</small><small>'+(branch.is_active?"Active":"Inactive")+'</small></div>').join(""):'<div class="empty">No active assigned branches.</div>';
+  const rows=managerBranchRequests.map(request=>{
+   const data=request.request_data&&typeof request.request_data==="object"?request.request_data:{};
+   return '<tr><td><strong>'+esc(data.name||"Unnamed branch")+'</strong><div class="staff-user">'+esc(data.code||"")+'</div></td><td><span class="status '+(request.status==="approved"?"online":request.status==="rejected"?"removed":"")+'">'+esc(request.status||"Unknown")+'</span></td><td>'+esc(request.created_at?new Date(request.created_at).toLocaleString():"—")+'</td><td>'+esc(request.decision_reason||"—")+'</td></tr>';
+  }).join("");
+  $("managerBranchRequestRows").innerHTML=rows||'<tr><td colspan="4" class="empty">No branch creation requests yet.</td></tr>';
+ }
+ function showManagerBranchWorkspaceError(message){
+  managerBranchError=message||"Unable to load branch management.";
+  $("managerBranchWorkspaceMessage").textContent=managerBranchError;
+ }
+ async function refreshManagerAssignedBranches(preferredBranchId=null){
+  const {data:access,error:accessError}=await sb.from("staff_branch_access")
+   .select("branch_id,restaurant_id,permissions,is_active")
+   .eq("restaurant_user_id",managerLink.id).eq("restaurant_id",RESTAURANT_ID).eq("is_active",true);
+  if(accessError)throw accessError;
+  managerAccess=access||[];
+  const ids=managerAccess.map(row=>row.branch_id);
+  if(!ids.length)throw new Error("No active branch has been assigned to this Manager account.");
+  const {data:rows,error:branchError}=await sb.from("restaurant_branches")
+   .select("id,name,code,is_default,is_active").eq("restaurant_id",RESTAURANT_ID).in("id",ids).eq("is_active",true);
+  if(branchError)throw branchError;
+  branches=rows||[];
+  if(!branches.length)throw new Error("No active assigned branch is available for this Manager account.");
+  activeBranch=branches.find(branch=>branch.id===preferredBranchId)||branches.find(branch=>branch.id===activeBranch?.id)||branches.find(branch=>branch.is_default)||branches[0];
+  ownPermissions=managerAccess.find(row=>row.branch_id===activeBranch.id)?.permissions||{};
+  $("branchSelect").innerHTML=branches.map(branch=>'<option value="'+esc(branch.id)+'">'+esc(branch.name)+'</option>').join("");
+  $("branchSelect").value=activeBranch.id;
+  sessionStorage.setItem("edmel_manager_branch",activeBranch.id);
+  renderManagerNavigation();
+ }
+ async function loadManagerBranchWorkspace(){
+  if(managerBranchLoading)return;
+  managerBranchLoading=true;managerBranchError="";
+  try{
+   await refreshManagerAssignedBranches();
+   if(managerCanCreateBranch()){
+    const [policyResult,requestResult]=await Promise.all([
+     sb.rpc("edmel_get_branch_creation_policy",{p_restaurant_id:RESTAURANT_ID}),
+     sb.rpc("edmel_list_branch_creation_requests",{p_restaurant_id:RESTAURANT_ID,p_status:"all"})
+    ]);
+    if(policyResult.error)throw policyResult.error;
+    if(requestResult.error)throw requestResult.error;
+    managerBranchPolicy=policyResult.data||{manager_creation_mode:"not_allowed"};
+    managerBranchRequests=Array.isArray(requestResult.data?.requests)?requestResult.data.requests:[];
+   }else{
+    managerBranchPolicy={manager_creation_mode:"not_allowed"};
+    managerBranchRequests=[];
+   }
+   renderManagerBranchWorkspace();
+  }catch(error){showManagerBranchWorkspaceError(error.message||"Unable to load branch management.");}
+  finally{managerBranchLoading=false;}
+ }
+ async function submitManagerBranchCreation(event){
+  event.preventDefault();
+  const button=$("managerBranchSubmitButton");
+  const name=$("managerBranchName").value.trim();
+  const code=$("managerBranchCode").value.trim().toUpperCase();
+  const timezone=$("managerBranchTimezone").value.trim();
+  const address=$("managerBranchAddress").value.trim()||null;
+  if(!name||name.length>80)throw new Error("Branch name must contain 1 to 80 characters.");
+  if(!/^[A-Z0-9][A-Z0-9_-]{0,19}$/.test(code))throw new Error("Branch code must contain 1 to 20 letters, numbers, hyphens or underscores.");
+  if(!timezone||timezone.length>80)throw new Error("Enter a valid IANA timezone, such as Asia/Manila.");
+  try{new Intl.DateTimeFormat("en-US",{timeZone:timezone});}catch(_){throw new Error("Enter a valid IANA timezone, such as Asia/Manila.");}
+  const settingsModes={};
+  for(const key of ["business_profile","tax","service_charge","discounts_vouchers","payment_methods","receipt_settings"])settingsModes[key]=$("managerBranchMode_"+key).value;
+  const payload={
+   name,code,address,timezone,
+   operating_hours:managerReadBranchOperatingHours(),
+   settings_modes:settingsModes,
+   menu_catalog_mode:$("managerBranchMenuMode").value
+  };
+  const mode=managerBranchPolicy?.manager_creation_mode||"not_allowed";
+  if(mode==="not_allowed"||!managerCanCreateBranch())throw new Error("Branch creation is not allowed for your account.");
+  button.disabled=true;button.textContent=mode==="approval_required"?"Submitting…":"Creating…";
+  $("managerBranchFormMessage").textContent="";
+  try{
+   if(mode==="approval_required"){
+    const {data,error}=await sb.rpc("edmel_submit_branch_creation_request",{p_restaurant_id:RESTAURANT_ID,p_request_data:payload});
+    if(error)throw error;
+    if(data?.success!==true||!data?.request_id)throw new Error("The branch request was not confirmed by the database.");
+    closeManagerBranchModal();
+    notify("Branch creation request submitted for Owner/Admin review.");
+   }else{
+    const {data,error}=await sb.rpc("edmel_create_restaurant_branch_configured_with_hours",{
+     p_restaurant_slug:RESTAURANT_SLUG,p_name:name,p_code:code,p_address:address,p_timezone:timezone,
+     p_operating_hours:payload.operating_hours,p_settings_modes:settingsModes,p_menu_catalog_mode:payload.menu_catalog_mode
+    });
+    if(error)throw error;
+    if(data?.success!==true||!data?.branch?.id)throw new Error("Branch creation was not confirmed by the database.");
+    closeManagerBranchModal();
+    await refreshManagerAssignedBranches(data.branch.id);
+    notify("Branch created. Your new access is limited to Branch View and Branch Create until the Owner/Admin grants other permissions.");
+   }
+   await loadManagerBranchWorkspace();
+  }catch(error){
+   $("managerBranchFormMessage").textContent=error.message||"Unable to submit the branch request.";
+  }finally{
+   button.disabled=false;
+   button.textContent=managerBranchPolicy?.manager_creation_mode==="approval_required"?"Submit Branch Request":"Create Branch";
+  }
+ }
+
  let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true, managerAuthUserId=null, managerExpenseRows=[], managerExpenseCategories=[], managerExpenseRequests=[], managerExpenseNotifications=[], managerEmergencyRequests=[], managerEmergencyNotifications=[], managerExpenseCurrency="USD", managerExpenseLoading=false;
  let pendingApprovalActions=[], approvalBatches=[];
+ let managerBranchPolicy={manager_creation_mode:"not_allowed"},managerBranchRequests=[],managerBranchLoading=false,managerBranchError="";
 
  function showLogin(message=""){ $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden"); $("loginMessage").textContent=message; }
  function showApp(){ $("loginView").classList.add("hidden"); $("appView").classList.remove("hidden"); }
@@ -796,6 +1027,12 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   sessionStorage.setItem("edmel_manager_branch",next.id);
   await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
  });
+ $("managerBranchRefreshButton")?.addEventListener("click",()=>loadManagerBranchWorkspace().catch(error=>showManagerBranchWorkspaceError(error.message||"Unable to refresh branches.")));
+ $("managerBranchCreateButton")?.addEventListener("click",()=>{try{openManagerBranchModal();}catch(error){showManagerBranchWorkspaceError(error.message);}});
+ $("managerBranchCloseButton")?.addEventListener("click",closeManagerBranchModal);
+ $("managerBranchCancelButton")?.addEventListener("click",closeManagerBranchModal);
+ $("managerBranchCreateModal")?.addEventListener("click",event=>{if(event.target===$("managerBranchCreateModal"))closeManagerBranchModal();});
+ $("managerBranchCreateForm")?.addEventListener("submit",event=>submitManagerBranchCreation(event).catch(error=>{$("managerBranchFormMessage").textContent=error.message||"Unable to submit branch details.";}));
  $("managerExpenseRefreshButton")?.addEventListener("click",()=>loadManagerExpenses().catch(error=>showManagerExpenseError(error.message||"Unable to refresh expenses.")));
  $("managerExpenseAddButton")?.addEventListener("click",()=>openManagerExpenseForm());
  $("managerEmergencyAddButton")?.addEventListener("click",()=>openManagerEmergencyForm());
