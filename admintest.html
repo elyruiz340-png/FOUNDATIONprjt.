@@ -2879,6 +2879,7 @@ async function saveAdminBranchDraft(button){
     if(data?.success!==true||!data?.draft_id)throw new Error('The branch draft was not confirmed by the database.');
     ADMIN_BRANCH_WORKSPACE_DRAFT_ID=data.draft_id;
     await loadAdminBranchDrafts();
+    if(S.page==='branches')render();
     toast('Branch draft saved. It has not created an active branch.');
     button.textContent='Draft Saved';
   }catch(error){
@@ -3191,7 +3192,7 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
      if(!editing&&ADMIN_BRANCH_WORKSPACE_DRAFT_ID){
        const {data:cleanupData,error:cleanupError}=await sb.rpc('edmel_delete_branch_draft',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_draft_id:ADMIN_BRANCH_WORKSPACE_DRAFT_ID});
        if(cleanupError||cleanupData?.success!==true)draftCleanupWarning=' The branch was created, but its saved draft remains in Branch Drafts and can be deleted there.';
-       else{ADMIN_BRANCH_WORKSPACE_DRAFT_ID='';await loadAdminBranchDrafts();}
+       else{ADMIN_BRANCH_WORKSPACE_DRAFT_ID='';await loadAdminBranchDrafts();if(S.page==='branches')render();}
      }
      ADMIN_BRANCH_WORKSPACE_MODE='create';ADMIN_BRANCH_WORKSPACE_BRANCH=null;closeL();toast((editing?'Branch updated successfully.':'Branch added successfully.')+draftCleanupWarning,draftCleanupWarning?1:0);
    }catch(error){toast(error?.message||(editing?'Unable to update branch.':'Unable to add branch.'),1);t.disabled=false;t.textContent=editing?'Save Changes':'Create Branch';}
