@@ -2817,11 +2817,6 @@ function renderAdminBranchGovernance(){
   const canManage=String(CURRENT_AUTH_ROLE||'').toLowerCase()==='owner';
   const mode=['approval_required','not_allowed'].includes(ADMIN_BRANCH_POLICY?.manager_creation_mode)
     ?ADMIN_BRANCH_POLICY.manager_creation_mode:'not_allowed';
-  const options=[
-    ['not_allowed','Not Allowed','Managers cannot create branches or submit requests.'],
-    ['approval_required','Approval Required','Managers submit requests for Owner review.'],
-    ['approval_required','Approval Required','Managers submit requests for Owner review and final activation.']
-  ].map(([value,label,description])=>'<option value="'+value+'" '+(mode===value?'selected':'')+'>'+label+' — '+description+'</option>').join('');
   const requestRows=ADMIN_BRANCH_REQUESTS.map(request=>{
     const data=request.request_data&&typeof request.request_data==='object'?request.request_data:{};
     const pending=request.status==='pending';
@@ -2834,7 +2829,7 @@ function renderAdminBranchGovernance(){
       :'—';
     return '<tr><td><b>'+esc(data.name||'Unnamed branch')+'</b><div class="mu">'+esc(data.code||'')+'</div>'+configDetails+'</td><td>'+esc(request.status||'Unknown')+'</td><td>'+esc(created)+'</td><td>'+esc(request.requested_by?'Manager request':'—')+'</td><td>'+actions+decision+'</td></tr>';
   }).join('');
-  const policyChoices=[['not_allowed','Not Allowed'],['approval_required','Approval Required'],['allowed','Allowed']];
+  const policyChoices=[['not_allowed','Not Allowed'],['approval_required','Approval Required']];
   const policyControl=canManage?'<div class="branch-policy-control"><div class="branch-segment branch-policy-segment" role="group" aria-label="Manager branch creation policy">'+policyChoices.map(([value,label])=>'<button type="button" class="branch-segment-option" data-a="branch-toggle-value" data-target="branchManagerCreationPolicy" data-value="'+value+'" aria-pressed="'+(mode===value?'true':'false')+'">'+label+'</button>').join('')+'</div><select id="branchManagerCreationPolicy" class="branch-hidden-value" aria-hidden="true" tabindex="-1">'+policyChoices.map(([value,label])=>'<option value="'+value+'" '+(mode===value?'selected':'')+'>'+label+'</option>').join('')+'</select><button class="btn pri" data-a="branch-policy-save">Save Policy</button></div>':'<div class="note">Only the Owner can change this policy.</div>';
   return '<div class="branch-governance-grid"><section class="branch-governance-card"><div class="branch-subheading"><div><h5>Manager Creation Policy</h5><p>Control how Managers create new branches.</p></div><span class="bd '+(mode==='allowed'?'ok':mode==='approval_required'?'wn':'')+'">'+esc(mode.replace('_',' '))+'</span></div>'+(ADMIN_BRANCH_GOVERNANCE_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_GOVERNANCE_ERROR)+'</div>':policyControl)+'</section><section class="branch-governance-card"><div class="branch-subheading"><div><h5>Manager Approval Requests</h5><p>Review requests submitted by branch Managers.</p></div><button class="btn" data-a="branch-governance-refresh">Refresh</button></div>'+(ADMIN_BRANCH_GOVERNANCE_LOADING?'<div class="empty">Loading requests…</div>':requestRows?'<div class="tw"><table><thead><tr><th>Branch</th><th>Status</th><th>Submitted</th><th>Requested By</th><th>Review</th></tr></thead><tbody>'+requestRows+'</tbody></table></div>':'<div class="empty">No pending or previous requests.</div>')+'</section></div>';
 }
