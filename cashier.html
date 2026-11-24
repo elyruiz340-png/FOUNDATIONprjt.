@@ -14221,7 +14221,7 @@ function setCashierProtectedInert(locked) {
   });
 }
 
-function lockCashierScreen() {
+async function lockCashierScreen(options = {}) {
   if (!halinaStaffSessionId || halinaCashierLocked) return;
   halinaCashierLocked = true;
   clearStaffInactivityTimer();
@@ -14234,6 +14234,16 @@ function lockCashierScreen() {
   if (pinInput) pinInput.value = "";
   if (message) message.textContent = "";
   window.setTimeout(() => pinInput?.focus(), 40);
+
+  // Persist the lock server-side so refresh or a second login cannot bypass it.
+  if (options.persist !== false) {
+    try {
+      await callStaffSessionAction("lock", halinaStaffSessionId);
+    } catch (error) {
+      console.error("Cashier screen lock could not be persisted:", error.message || error);
+      if (message) message.textContent = "Secure lock confirmation failed. Keep this screen open and contact your Owner/Admin.";
+    }
+  }
 }
 
 const cashierManualLockButton = document.getElementById("cashierManualLockButton");
@@ -14330,7 +14340,7 @@ async function sendStaffHeartbeat() {
   try {
     const result = await callStaffSessionAction("heartbeat", halinaStaffSessionId, activity);
     halinaStaffLastHeartbeatAt = Date.now();
-    if (result.locked) lockCashierScreen();
+    if (result.locked) void lockCashierScreen({ persist: false });
   } catch (error) {
     if (error.sessionExpired) {
       await handleStaffInactivityExpiry();
@@ -14402,7 +14412,7 @@ async function startStaffPresence() {
     if (manualLockButton) manualLockButton.disabled = false;
     halinaStaffActivitySinceHeartbeat = false;
     if (result.locked) {
-      lockCashierScreen();
+      void lockCashierScreen({ persist: false });
     } else {
       scheduleStaffInactivityExpiry(
         Number.isFinite(Number(result.inactivity_remaining_ms))
@@ -14653,6 +14663,13 @@ async function showCashierPOS(options = {}) {
 ========================= */
 
 function showCashierLogin(message = "") {
+  // A locked, authenticated cashier must unlock the existing session; never show login over it.
+  if (halinaCashierLocked && halinaStaffSessionId) {
+    const lockMessage = document.getElementById("cashierLockMessage");
+    if (lockMessage && message) lockMessage.textContent = message;
+    return;
+  }
+
   /* Hide the cashier dashboard first. */
   clearCashierLockScreen();
   hideCashierPOS();
@@ -15137,6 +15154,11 @@ if (cashierLoginForm) {
   cashierLoginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
+    if (halinaCashierLocked || halinaStaffSessionId) {
+      showCashierLogin("This cashier session is locked. Enter the current cashier PIN on the lock screen to continue.");
+      return;
+    }
+
     if (!cashierAuthClient) {
       showCashierLogin(
         "Authentication is unavailable. Refresh and try again."
@@ -15182,7 +15204,9 @@ if (cashierLoginForm) {
         throw new Error(
           response.status === 401
             ? "Invalid username or PIN."
-            : "Unable to sign in. Please try again."
+            : (response.status === 423
+                ? (result.error || "This cashier screen is locked. Return to the existing session and enter the current cashier PIN.")
+                : (result.error || "Unable to sign in. Please try again."))
         );
       }
 
