@@ -8434,7 +8434,7 @@ function cashierRestoreSafeViewState(){
 function cashierSaveSafeViewState(){try{sessionStorage.setItem("edmel_cashier_safe_view_state",JSON.stringify({tablesSearch:document.getElementById("tablesSearch")?.value||"",tableFilter:cashierTableFilter||"all",tablesCapacity:document.getElementById("tablesCapacityFilter")?.value||"all"}));}catch(_){}}
 document.getElementById("tablesSearch")?.addEventListener("input",cashierSaveSafeViewState);
 document.getElementById("tablesCapacityFilter")?.addEventListener("change",cashierSaveSafeViewState);
-document.querySelectorAll("[data-table-filter]").forEach(b=>b.addEventListener("click",cashierSaveSafeViewState));
+document.querySelectorAll("[data-table-filter]").forEach(b=>b.addEventListener("click",()=>window.setTimeout(cashierSaveSafeViewState,0)));
 
 /* LOAD TABLES FROM THE SHARED HALINA TABLE SYSTEM */ */
 async function getCashierTableSession() {
