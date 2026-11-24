@@ -160,7 +160,7 @@ Deno.serve(async (req: Request) => {
       const staffPosition = String(linkedActor.position || "").trim().toLowerCase();
       const staffRole = String(linkedActor.role || "").trim().toLowerCase();
       const isDispatcherSession = staffPosition === "dispatcher" || staffRole === "dispatcher";
-      const isCashierSession = staffPosition === "cashier" || staffRole === "cashier";
+      const isCashierSession = staffPosition === "cashier" || staffRole === "cashier" || (staffRole === "staff" && staffPosition === "");
 
       if (action === "unlock") {
         const pin = typeof body.pin === "string" ? body.pin : "";
