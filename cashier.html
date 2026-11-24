@@ -14957,8 +14957,12 @@ if (cashierAuthClient) {
       cashierPricingConfig = {taxRules:[],serviceChargeRules:[],discountRules:[],vouchers:[],paymentMethods:[],loaded:false,error:""};
       cashierUpdatePaymentButtons();
       try { localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY); } catch (_) {}
-      clearCashierLockScreen();
+      clearStaffInactivityTimer();
       stopStaffHeartbeat();
+      halinaStaffSessionId = null;
+      halinaStaffPresenceUserId = null;
+      halinaStaffActivitySinceHeartbeat = false;
+      clearCashierLockScreen();
       showCashierLogin("Your session has ended. Please sign in again.");
     }
   });
