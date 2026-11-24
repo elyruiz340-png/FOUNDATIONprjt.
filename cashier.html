@@ -10476,6 +10476,10 @@ window.addEventListener("edmel:tenant-context-ready", function () {
   loadCashierMenuFromSupabase();
 });
 
+window.addEventListener("edmel:tenant-context-ready", function () {
+  loadCashierPricingSettings();
+});
+
 
 /* =========================
    ADD TO CART
@@ -14969,8 +14973,7 @@ if (cashierAuthClient) {
       if (error) throw error;
       if (data.session) {
         window.EDMEL_ACCESS_TOKEN = data.session.access_token;
-        await loadCashierPricingSettings();
-        showCashierPOS();
+        await showCashierPOS();
       } else {
         showCashierLogin();
       }
@@ -14984,7 +14987,9 @@ if (cashierAuthClient) {
 
   /* Return to login if the session is signed out. */
   cashierAuthClient.auth.onAuthStateChange((event) => {
-    if (["SIGNED_IN","TOKEN_REFRESHED","USER_UPDATED"].includes(event)) {
+    if (["TOKEN_REFRESHED","USER_UPDATED"].includes(event) &&
+        window.EDMEL_TENANT_CONTEXT?.restaurant_id &&
+        window.EDMEL_TENANT_CONTEXT?.branch_id) {
       window.setTimeout(() => { loadCashierPricingSettings(); }, 0);
     }
     if (event === "SIGNED_OUT") {
