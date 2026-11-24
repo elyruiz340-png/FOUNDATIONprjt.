@@ -22,46 +22,44 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const restaurantSlug = typeof body.restaurant_slug === "string" ? body.restaurant_slug.trim().toLowerCase() : "";
     const username = typeof body.username === "string" ? body.username.trim() : "";
-
-    if (!/^[a-z0-9][a-z0-9-]{1,99}$/.test(restaurantSlug) ||
-        !/^[a-zA-Z0-9._-]{1,80}$/.test(username)) {
-      return json({ valid: false });
-    }
+    if (!/^[a-zA-Z0-9._-]{1,80}$/.test(username)) return json({ valid: false });
 
     const admin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    // Usernames are globally unique across EDMEL. Refuse ambiguous matches instead
+    // of guessing which restaurant workspace the cashier intended to access.
+    const { data: staffRows, error: staffError } = await admin
+      .from("restaurant_users")
+      .select("id,restaurant_id,cashier_username,role,is_active")
+      .eq("is_active", true)
+      .ilike("cashier_username", username);
+
+    if (staffError) {
+      console.error("Global cashier username lookup failed:", staffError.message);
+      return json({ error: "Unable to validate username" }, 500);
+    }
+
+    const matches = (staffRows || []).filter((row: any) =>
+      String(row.role || "").trim().toLowerCase() === "staff" &&
+      String(row.cashier_username || "").trim().toLowerCase() === username.toLowerCase()
+    );
+    if (matches.length !== 1) return json({ valid: false });
+
+    const staff = matches[0];
     const { data: restaurant, error: restaurantError } = await admin
       .from("restaurants")
-      .select("id")
-      .eq("slug", restaurantSlug)
+      .select("id,slug")
+      .eq("id", staff.restaurant_id)
       .maybeSingle();
 
     if (restaurantError) {
-      console.error("Tenant lookup failed:", restaurantError.message);
+      console.error("Cashier restaurant lookup failed:", restaurantError.message);
       return json({ error: "Unable to validate username" }, 500);
     }
-    if (!restaurant) return json({ valid: false });
-
-    const { data: staffRows, error: staffError } = await admin
-      .from("restaurant_users")
-      .select("id,cashier_username,role")
-      .eq("restaurant_id", restaurant.id)
-      .eq("is_active", true);
-
-    if (staffError) {
-      console.error("Tenant staff lookup failed:", staffError.message);
-      return json({ error: "Unable to validate username" }, 500);
-    }
-
-    const staff = (staffRows || []).find((row: any) =>
-      String(row.role || "").toLowerCase() === "staff" &&
-      String(row.cashier_username || "").trim().toLowerCase() === username.toLowerCase()
-    );
-    if (!staff) return json({ valid: false });
+    if (!restaurant?.slug) return json({ valid: false });
 
     const { data: credentials, error: credentialsError } = await admin
       .from("cashier_credentials")
@@ -79,7 +77,7 @@ Deno.serve(async (req: Request) => {
       .from("staff_branch_access")
       .select("branch_id")
       .eq("restaurant_user_id", staff.id)
-      .eq("restaurant_id", restaurant.id)
+      .eq("restaurant_id", staff.restaurant_id)
       .eq("is_active", true);
 
     if (accessError) {
@@ -93,7 +91,7 @@ Deno.serve(async (req: Request) => {
     const { data: activeBranches, error: branchError } = await admin
       .from("restaurant_branches")
       .select("id")
-      .eq("restaurant_id", restaurant.id)
+      .eq("restaurant_id", staff.restaurant_id)
       .eq("is_active", true)
       .in("id", branchIds);
 
@@ -102,7 +100,10 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Unable to validate username" }, 500);
     }
 
-    return json({ valid: Array.isArray(activeBranches) && activeBranches.length > 0 });
+    return json({
+      valid: Array.isArray(activeBranches) && activeBranches.length > 0,
+      restaurant_slug: restaurant.slug,
+    });
   } catch (error) {
     console.error("Username validation failed:", error);
     return json({ error: "Unable to validate username" }, 500);
