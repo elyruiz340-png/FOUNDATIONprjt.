@@ -157,14 +157,16 @@ Deno.serve(async (req: Request) => {
       const linkedActor = linkRows.find((r: any) => r.id === session.restaurant_user_id);
       if (!linkedActor || linkedActor.restaurant_id !== session.restaurant_id) return json({ error: "Staff account is no longer active" }, 403);
 
-      const isDispatcherSession = String(linkedActor.position || "").trim().toLowerCase() === "dispatcher" ||
-        String(linkedActor.role || "").trim().toLowerCase() === "dispatcher";
+      const staffPosition = String(linkedActor.position || "").trim().toLowerCase();
+      const staffRole = String(linkedActor.role || "").trim().toLowerCase();
+      const isDispatcherSession = staffPosition === "dispatcher" || staffRole === "dispatcher";
+      const isCashierSession = staffPosition === "cashier" || staffRole === "cashier";
 
       if (action === "unlock") {
         const pin = typeof body.pin === "string" ? body.pin : "";
         if (!/^\d{6}$/.test(pin)) return json({ error: "Enter your six-digit PIN." }, 400);
         if (session.logout_at) return json({ error: "Session already ended", expired: true }, 401);
-        if (isDispatcherSession) return json({ error: "PIN unlock is not available for this session." }, 403);
+        if (!isCashierSession) return json({ error: "PIN unlock is available only for Cashier sessions." }, 403);
 
         const restaurantSlugResult = await admin.from("restaurants")
           .select("slug").eq("id", session.restaurant_id).maybeSingle();
@@ -232,7 +234,7 @@ Deno.serve(async (req: Request) => {
         if (!restaurant?.slug) return json({ success: false, expired: true, error: "Restaurant access is unavailable." }, 403);
         const nowMs = Date.now();
         const lastActivity = new Date(session.last_activity_at || session.login_at || 0).getTime();
-        const locked = !isDispatcherSession && (!Number.isFinite(lastActivity) || nowMs - lastActivity >= INACTIVITY_TIMEOUT_MS);
+        const locked = isCashierSession && (!Number.isFinite(lastActivity) || nowMs - lastActivity >= INACTIVITY_TIMEOUT_MS);
         const remaining = locked ? 0 : Math.max(0, INACTIVITY_TIMEOUT_MS - (nowMs - lastActivity));
         await admin.from("staff_sessions").update({ last_seen_at: new Date(nowMs).toISOString() })
           .eq("id", sessionId).eq("user_id", actorId).is("logout_at", null);
@@ -256,7 +258,13 @@ Deno.serve(async (req: Request) => {
         }
         const lastActivity = new Date(session.last_activity_at || session.login_at || 0).getTime();
         if (!isDispatcherSession && (!Number.isFinite(lastActivity) || Date.now() - lastActivity >= INACTIVITY_TIMEOUT_MS)) {
-          return json({ success: false, locked: true, error: "Cashier screen is locked. Enter your PIN to continue." }, 423);
+          if (isCashierSession) {
+            return json({ success: false, locked: true, error: "Cashier screen is locked. Enter your PIN to continue." }, 423);
+          }
+          const now = new Date().toISOString();
+          await admin.from("staff_sessions").update({ logout_at: now, last_seen_at: now, end_reason: "inactivity_timeout" })
+            .eq("id", sessionId).eq("user_id", actorId).is("logout_at", null);
+          return json({ success: false, expired: true, error: "Session expired after 30 minutes of inactivity." }, 401);
         }
         const { data: assignment, error: assignmentError } = await admin.from("staff_branch_access")
           .select("branch_id")
@@ -306,11 +314,18 @@ Deno.serve(async (req: Request) => {
         const nowMs = Date.now();
         if (!isDispatcherSession && (!Number.isFinite(lastActivity) || nowMs - lastActivity >= INACTIVITY_TIMEOUT_MS)) {
           const now = new Date(nowMs).toISOString();
-          const { error } = await admin.from("staff_sessions").update({ last_seen_at: now })
-            .eq("id", sessionId).is("logout_at", null);
-          if (error) return json({ error: "Unable to update session heartbeat" }, 500);
-          return json({ success: true, locked: true, branch_id: session.branch_id,
-            inactivity_timeout_minutes: 30, activity_recorded: false });
+          if (isCashierSession) {
+            const { error } = await admin.from("staff_sessions").update({ last_seen_at: now })
+              .eq("id", sessionId).is("logout_at", null);
+            if (error) return json({ error: "Unable to update session heartbeat" }, 500);
+            return json({ success: true, locked: true, branch_id: session.branch_id,
+              inactivity_timeout_minutes: 30, activity_recorded: false });
+          }
+          const { error } = await admin.from("staff_sessions").update({
+            logout_at: now, last_seen_at: now, end_reason: "inactivity_timeout",
+          }).eq("id", sessionId).is("logout_at", null);
+          if (error) return json({ error: "Unable to close inactive session" }, 500);
+          return json({ success: false, expired: true, error: "Session expired after 30 minutes of inactivity." }, 401);
         }
         const now = new Date(nowMs).toISOString();
         const updates: Record<string, string> = { last_seen_at: now };
