@@ -32,7 +32,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json();
     const action = typeof body.action === "string" ? body.action : "";
 
-    if (["start", "heartbeat", "end", "list_branches", "switch_branch", "resume", "unlock"].includes(action)) {
+    if (["start", "heartbeat", "end", "list_branches", "switch_branch", "resume", "unlock", "lock"].includes(action)) {
       const sessionId = typeof body.session_id === "string" ? body.session_id : "";
       const { data: links, error: linkError } = await admin.from("restaurant_users")
         .select("id,user_id,restaurant_id,role,position,is_active,cashier_username")
@@ -161,6 +161,22 @@ Deno.serve(async (req: Request) => {
       const staffRole = String(linkedActor.role || "").trim().toLowerCase();
       const isDispatcherSession = staffPosition === "dispatcher" || staffRole === "dispatcher";
       const isCashierSession = staffPosition === "cashier" || staffRole === "cashier" || (staffRole === "staff" && staffPosition === "");
+
+      if (action === "lock") {
+        if (session.logout_at) return json({ error: "Session already ended", expired: true }, 401);
+        if (!isCashierSession) return json({ error: "Screen lock is available only for Cashier sessions." }, 403);
+        const nowMs = Date.now();
+        const now = new Date(nowMs).toISOString();
+        const lockedActivityAt = new Date(nowMs - INACTIVITY_TIMEOUT_MS - 1000).toISOString();
+        const { data: lockedSession, error: lockError } = await admin.from("staff_sessions").update({
+          last_seen_at: now,
+          last_activity_at: lockedActivityAt,
+        }).eq("id", sessionId).eq("user_id", actorId).is("logout_at", null)
+          .select("id").maybeSingle();
+        if (lockError) return json({ error: "Unable to secure the cashier screen lock." }, 500);
+        if (!lockedSession) return json({ error: "Session already ended", expired: true }, 401);
+        return json({ success: true, locked: true, lock_reason: "manual" });
+      }
 
       if (action === "unlock") {
         const pin = typeof body.pin === "string" ? body.pin : "";
