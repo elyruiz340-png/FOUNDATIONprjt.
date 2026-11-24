@@ -2828,7 +2828,7 @@ function renderAdminBranchGovernance(){
     const created=request.created_at?new Date(request.created_at).toLocaleString():'—';
     const decision=request.decision_reason?'<div class="note" style="margin-top:4px">Review note: '+esc(request.decision_reason)+'</div>':'';
     const actions=pending&&canManage
-      ?'<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn pri" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="approved">Approve & Create</button><button class="btn" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="rejected">Reject</button></div>'
+      ?'<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn pri" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="approved">Approve for Setup</button><button class="btn" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="rejected">Reject</button></div>'
       :'—';
     return '<tr><td><b>'+esc(data.name||'Unnamed branch')+'</b><div class="mu">'+esc(data.code||'')+'</div></td><td>'+esc(request.status||'Unknown')+'</td><td>'+esc(created)+'</td><td>'+esc(request.requested_by?'Manager request':'—')+'</td><td>'+actions+decision+'</td></tr>';
   }).join('');
@@ -2924,16 +2924,16 @@ function openAdminBranchDraft(draft){
 function renderAdminBranchesPage(){
   if(ADMIN_BRANCH_LOADING&&!ADMIN_BRANCH_LOADED)return '<div class="card"><div class="mu">Multi-Branch Management</div><h3>Loading branch information…</h3></div>';
   if(ADMIN_BRANCH_ERROR&&!ADMIN_BRANCH_LOADED)return '<div class="card"><h3>Unable to load branch information</h3><p class="er">'+esc(ADMIN_BRANCH_ERROR)+'</p><button class="btn pri" data-a="branch-refresh">Try again</button></div>';
-  const branches=ADMIN_BRANCH_ROWS,active=branches.filter(b=>b.is_active===true),inactive=branches.filter(b=>b.is_active!==true),defaultBranch=branches.find(b=>b.is_default===true);
+  const branches=ADMIN_BRANCH_ROWS,active=branches.filter(b=>b.is_active===true),inactive=branches.filter(b=>b.is_active!==true),pending=branches.filter(b=>b.lifecycle_status==='pending_activation'),defaultBranch=branches.find(b=>b.is_default===true);
   const selected=branches.find(b=>b.id===ADMIN_BRANCH_SELECTED_ID)||defaultBranch||branches[0]||null,canManageBranches=CURRENT_AUTH_ROLE==='owner';
   const branchCards=branches.map(b=>{
     const assigned=adminBranchAssignedStaff(b.id),activeStaff=assigned.filter(u=>u.is_active===true&&u.assignment?.is_active!==false),managers=activeStaff.filter(u=>String(u.position||'').toLowerCase()==='manager'),isSelected=selected?.id===b.id;
-    return '<button type="button" class="card kp" data-a="branch-filter-select" data-id="'+esc(b.id)+'" aria-pressed="'+(isSelected?'true':'false')+'" style="text-align:left;width:100%;cursor:pointer;'+(isSelected?'border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)':'')+'"><div class="row"><b>'+esc(b.name)+'</b><span class="bd '+(b.is_active?'ok':'wn')+'">'+(b.is_active?'Active':'Inactive')+'</span></div><div class="mu">'+esc(b.code)+' · '+(b.is_default?'Default branch':'Additional branch')+'</div><div class="mu" style="margin-top:6px">'+activeStaff.length+' active staff · '+managers.length+' Manager(s)</div></button>';
+    return '<button type="button" class="card kp" data-a="branch-filter-select" data-id="'+esc(b.id)+'" aria-pressed="'+(isSelected?'true':'false')+'" style="text-align:left;width:100%;cursor:pointer;'+(isSelected?'border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)':'')+'"><div class="row"><b>'+esc(b.name)+'</b><span class="bd '+(b.lifecycle_status==='pending_activation'?'wn':b.is_active?'ok':'wn')+'">'+(b.lifecycle_status==='pending_activation'?'Pending Activation':b.is_active?'Active':'Deactivated')+'</span></div><div class="mu">'+esc(b.code)+' · '+(b.is_default?'Default branch':'Additional branch')+'</div><div class="mu" style="margin-top:6px">'+activeStaff.length+' active staff · '+managers.length+' Manager(s)</div></button>';
   }).join('');
   let detail='';
   if(selected){
     const assigned=adminBranchAssignedStaff(selected.id),activeAssigned=assigned.filter(u=>u.is_active===true&&u.assignment?.is_active!==false),inactiveAssigned=assigned.filter(u=>u.is_active!==true||u.assignment?.is_active!==true);
-    detail='<div class="card" style="margin-top:14px"><div class="row"><div><div class="mu">Branch Details</div><h3 style="margin:3px 0">'+esc(selected.name)+'</h3></div><span class="bd '+(selected.is_active?'ok':'wn')+'">'+(selected.is_active?'Active':'Inactive')+'</span></div><div class="g g2"><div><div class="mu">Branch Code</div><b>'+esc(selected.code)+'</b></div><div><div class="mu">Default Branch</div><b>'+(selected.is_default?'Yes':'No')+'</b></div><div><div class="mu">Timezone</div><b>'+esc(selected.timezone||'Not set')+'</b></div><div><div class="mu">Address</div><b>'+esc(selected.address||'Not provided')+'</b></div><div><div class="mu">Active Staff</div><b>'+activeAssigned.length+'</b></div><div><div class="mu">Inactive Staff / Assignments</div><b>'+inactiveAssigned.length+'</b></div></div>'+(canManageBranches?adminBranchReadinessMarkup(selected.id,false):'')+(canManageBranches&&selected.is_active?'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn pri" data-a="branch-edit" data-id="'+esc(selected.id)+'">Edit Branch</button></div>':'')+'</div>';
+    detail='<div class="card" style="margin-top:14px"><div class="row"><div><div class="mu">Branch Details</div><h3 style="margin:3px 0">'+esc(selected.name)+'</h3></div><span class="bd '+(selected.lifecycle_status==='pending_activation'?'wn':selected.is_active?'ok':'wn')+'">'+(selected.lifecycle_status==='pending_activation'?'Pending Activation':selected.is_active?'Active':'Deactivated')+'</span></div><div class="g g2"><div><div class="mu">Branch Code</div><b>'+esc(selected.code)+'</b></div><div><div class="mu">Default Branch</div><b>'+(selected.is_default?'Yes':'No')+'</b></div><div><div class="mu">Timezone</div><b>'+esc(selected.timezone||'Not set')+'</b></div><div><div class="mu">Address</div><b>'+esc(selected.address||'Not provided')+'</b></div><div><div class="mu">Active Staff</div><b>'+activeAssigned.length+'</b></div><div><div class="mu">Inactive Staff / Assignments</div><b>'+inactiveAssigned.length+'</b></div></div>'+(canManageBranches?adminBranchReadinessMarkup(selected.id,selected.lifecycle_status==='pending_activation'):'')+(canManageBranches&&selected.lifecycle_status==='pending_activation'?'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn pri" data-a="branch-activate" data-id="'+esc(selected.id)+'">Activate Branch</button></div>':canManageBranches&&selected.is_active?'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn pri" data-a="branch-edit" data-id="'+esc(selected.id)+'">Edit Branch</button></div>':'')+'</div>';
   }else detail='<div class="card" style="margin-top:14px"><div class="empty">No branches are available.</div></div>';
   const deactivateButton=canManageBranches&&selected&&selected.is_active&&!selected.is_default&&active.length>1?'<button class="btn" data-a="branch-deactivate" data-id="'+esc(selected.id)+'">Deactivate Branch</button>':'';
   const showDrafts=canManageBranches&&(ADMIN_BRANCH_DRAFTS_LOADING||!!ADMIN_BRANCH_DRAFTS_ERROR||ADMIN_BRANCH_DRAFTS.length>0);
@@ -2948,7 +2948,7 @@ async function loadAdminBranches(){
     const restaurantId=CURRENT_RESTAURANT_ID;
     if(!restaurantId)throw new Error('Restaurant account could not be identified.');
     const [branchResult,assignmentResult,staffResult]=await Promise.all([
-      sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,operating_hours,is_default,is_active,menu_catalog_mode,menu_source_branch_id,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
+      sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,operating_hours,is_default,is_active,lifecycle_status,menu_catalog_mode,menu_source_branch_id,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
       sb.from('staff_branch_access').select('restaurant_user_id,restaurant_id,branch_id,is_active,created_at').eq('restaurant_id',restaurantId),
       sb.from('restaurant_users').select('id,restaurant_id,display_name,full_name,position,role,is_active').eq('restaurant_id',restaurantId)
     ]);
@@ -3124,19 +3124,19 @@ const A={
   const decision=t.dataset.decision;
   if(!request||request.status!=='pending'||!['approved','rejected'].includes(decision))return;
   const branchName=request.request_data?.name||'this branch';
-  if(decision==='approved'&&!confirm('Approve the request and create '+branchName+'? The requester will receive Branch View and Branch Create permissions only.'))return;
+  if(decision==='approved'&&!confirm('Approve '+branchName+' for setup? It will remain unavailable until setup is complete and you activate it.'))return;
   const reason=prompt(decision==='approved'?'Enter the approval reason (at least 3 characters):':'Enter the rejection reason (at least 3 characters):','');
   if(reason===null)return;
   if(reason.trim().length<3||reason.trim().length>500){toast('Enter a review reason between 3 and 500 characters.',1);return;}
-  t.disabled=true;t.textContent=decision==='approved'?'Creating…':'Rejecting…';
+  t.disabled=true;t.textContent=decision==='approved'?'Approving…':'Rejecting…';
   try{
     const {data,error}=await sb.rpc('edmel_review_branch_creation_request',{p_request_id:request.id,p_decision:decision,p_reason:reason.trim()});
     if(error)throw error;
     if(data?.success!==true||data.status!==decision)throw new Error('The branch request review was not confirmed.');
     await loadAdminBranchGovernance();const governancePanel=$('#branchGovernanceWorkspace');if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance();
     if(decision==='approved'){ADMIN_BRANCH_LOADED=false;await loadAdminBranches();}
-    toast(decision==='approved'?'Branch request approved and branch created.':'Branch request rejected.');
-  }catch(error){toast(error?.message||'Unable to review this branch request.',1);t.disabled=false;t.textContent=decision==='approved'?'Approve & Create':'Reject';}
+    toast(decision==='approved'?'Branch request approved. Complete setup, then activate the branch.':'Branch request rejected.');
+  }catch(error){toast(error?.message||'Unable to review this branch request.',1);t.disabled=false;t.textContent=decision==='approved'?'Approve for Setup':'Reject';}
 },
 addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can create branches.',1);return;}openBranchCreateModal()},
 'branch-create-next':()=>{
@@ -3225,7 +3225,22 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
     closeL();toast('Branch updated successfully.');
   }catch(e){toast(e.message||'Unable to update branch.',1);t.disabled=false;t.textContent='Save Changes';}
 },
-'branch-deactivate':async t=>{
+'branch-activate':async t=>{
+   if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can activate branches.',1);return;}
+   const id=t.dataset.id||ADMIN_BRANCH_SELECTED_ID;
+   const branch=ADMIN_BRANCH_ROWS.find(x=>x.id===id);
+   if(!branch||branch.lifecycle_status!=='pending_activation'){toast('This branch is not pending activation.',1);return;}
+   if(!confirm('Activate '+branch.name+'? The branch will become available to assigned users and operational dashboards.'))return;
+   t.disabled=true;t.textContent='Checking setup…';
+   try{
+     const {data,error}=await sb.rpc('edmel_activate_restaurant_branch',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:id});
+     if(error)throw error;
+     if(data?.success!==true||data?.lifecycle_status!=='active')throw new Error('Branch activation was not confirmed by the database.');
+     ADMIN_BRANCH_SELECTED_ID=id;ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
+     toast('Branch activated successfully.');
+   }catch(error){toast(error?.message||'Unable to activate this branch.',1);t.disabled=false;t.textContent='Activate Branch';}
+ },
+ 'branch-deactivate':async t=>{
   if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can deactivate branches.',1);return;}
   const id=t.dataset.id||ADMIN_BRANCH_SELECTED_ID;
   const branch=ADMIN_BRANCH_ROWS.find(x=>x.id===id);
