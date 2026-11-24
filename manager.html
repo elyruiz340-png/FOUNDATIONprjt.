@@ -272,9 +272,8 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
   const p=ownPermissions||{};
   if(key==="staff"&&p.staff_management===true)return true;
   if(key==="branches"){
-   return (managerAccess||[]).some(access=>access.is_active===true&&access.permissions?.modules?.branches&&(
-    access.permissions.modules.branches[action]===true||access.permissions.modules.branches.manage===true||access.permissions.modules.branches.create===true
-   ));
+   const grant=p.modules?.branches;
+   return !!(grant&&typeof grant==="object"&&(grant[action]===true||grant.manage===true));
   }
   if(p.modules&&typeof p.modules==="object"){
    const grant=p.modules[key];
@@ -428,13 +427,17 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
    .eq("restaurant_user_id",managerLink.id).eq("restaurant_id",RESTAURANT_ID).eq("is_active",true);
   if(accessError)throw accessError;
   managerAccess=access||[];
-  const ids=managerAccess.map(row=>row.branch_id);
-  if(!ids.length)throw new Error("No active branch has been assigned to this Manager account.");
+  const visibleAccess=managerAccess.filter(row=>{
+   const grant=row.permissions?.modules?.branches;
+   return grant&&typeof grant==="object"&&grant.view===true;
+  });
+  const ids=visibleAccess.map(row=>row.branch_id);
+  if(!ids.length)throw new Error("No assigned branch has Branch View permission. Contact the Owner to review your branch access.");
   const {data:rows,error:branchError}=await sb.from("restaurant_branches")
    .select("id,name,code,is_default,is_active").eq("restaurant_id",RESTAURANT_ID).in("id",ids).eq("is_active",true);
   if(branchError)throw branchError;
   branches=rows||[];
-  if(!branches.length)throw new Error("No active assigned branch is available for this Manager account.");
+  if(!branches.length)throw new Error("No active assigned branch with Branch View permission is available.");
   activeBranch=branches.find(branch=>branch.id===preferredBranchId)||branches.find(branch=>branch.id===activeBranch?.id)||branches.find(branch=>branch.is_default)||branches[0];
   ownPermissions=managerAccess.find(row=>row.branch_id===activeBranch.id)?.permissions||{};
   $("branchSelect").innerHTML=branches.map(branch=>'<option value="'+esc(branch.id)+'">'+esc(branch.name)+'</option>').join("");
@@ -578,14 +581,18 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
     .eq("restaurant_user_id",managerLink.id).eq("restaurant_id",RESTAURANT_ID).eq("is_active",true);
   if(accessError)throw accessError;
   managerAccess=access||[];
-  const branchIds=managerAccess.map(row=>row.branch_id);
-  if(!branchIds.length)throw new Error("No active branch has been assigned to this Manager account.");
+  const visibleBranchAccess=managerAccess.filter(row=>{
+    const grant=row.permissions?.modules?.branches;
+    return grant&&typeof grant==="object"&&grant.view===true;
+  });
+  const branchIds=visibleBranchAccess.map(row=>row.branch_id);
+  if(!branchIds.length)throw new Error("No assigned branch has Branch View permission. Contact the Owner to review your branch access.");
   const {data:branchRows,error:branchError}=await sb.from("restaurant_branches")
     .select("id,name,code,is_default,is_active").eq("restaurant_id",RESTAURANT_ID)
     .in("id",branchIds).eq("is_active",true);
   if(branchError)throw branchError;
   branches=(branchRows||[]);
-  if(!branches.length)throw new Error("No active assigned branch is available for this Manager account.");
+  if(!branches.length)throw new Error("No active assigned branch with Branch View permission is available.");
   const preferred=sessionStorage.getItem("edmel_manager_branch");
   activeBranch=branches.find(b=>b.id===preferred)||branches.find(b=>b.is_default)||branches[0];
   ownPermissions=managerAccess.find(a=>a.branch_id===activeBranch.id)?.permissions||{};
