@@ -6029,6 +6029,26 @@ body:not(.restaurant-profile-ready) .cashier-login-brand, body:not(.restaurant-p
      PREMIUM DARK GLASS THEME
   ========================= */
 
+  #cashierRestorationScreen{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 22%,rgba(222,231,216,.72),transparent 48%),#f4f1e8;color:#304536;font-family:Inter,Arial,sans-serif}
+  #cashierRestorationScreen[hidden]{display:none!important}
+  .cashier-restoration-card{width:min(420px,100%);padding:38px 30px;border:1px solid #d3dacb;border-radius:24px;background:rgba(255,254,249,.94);box-shadow:0 18px 55px rgba(49,67,48,.09),inset 0 1px 0 #fff;text-align:center}
+  .cashier-restoration-mark{width:54px;height:54px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;gap:4px;border:1px solid #dce5d7;border-radius:17px;background:#eef3e9}
+  .cashier-restoration-mark span{width:5px;height:18px;border-radius:8px;background:#63836a;animation:cashierRestorePulse 1s ease-in-out infinite alternate}
+  .cashier-restoration-mark span:nth-child(2){height:26px;animation-delay:.18s}
+  .cashier-restoration-mark span:nth-child(3){animation-delay:.36s}
+  .cashier-restoration-eyebrow{margin:0 0 8px;color:#7c8b78;font-size:10px;font-weight:800;letter-spacing:1.8px}
+  #cashierRestorationTitle{margin:0;color:#2d4333;font-size:22px;font-weight:750}
+  #cashierRestorationMessage{margin:10px 0 0;color:#748071;font-size:13px;line-height:1.55}
+  .cashier-restoration-skeleton{display:flex;justify-content:center;gap:7px;margin-top:25px}
+  .cashier-restoration-skeleton i{display:block;width:46px;height:5px;border-radius:8px;background:linear-gradient(90deg,#e6eadf,#cbd8c8,#e6eadf);background-size:200% 100%;animation:cashierRestoreShimmer 1.25s linear infinite}
+  #cashierRestorationActions{margin-top:22px;gap:9px;flex-direction:column}
+  #cashierRestorationActions:not([hidden]){display:flex}
+  #cashierRestorationActions button{min-height:42px;border:1px solid #d7e1d2;border-radius:10px;background:#315b42;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+  #cashierRestorationActions button+button{background:#fffdf8;color:#526450}
+  @keyframes cashierRestorePulse{from{transform:scaleY(.62);opacity:.55}to{transform:scaleY(1);opacity:1}}
+  @keyframes cashierRestoreShimmer{from{background-position:100% 0}to{background-position:-100% 0}}
+  @media(prefers-reduced-motion:reduce){.cashier-restoration-mark span,.cashier-restoration-skeleton i{animation:none}}
+
   #cashierLoginScreen {
     position: fixed;
     inset: 0;
@@ -6777,6 +6797,20 @@ background:
      POS NAVIGATION
 ========================= -->
 
+
+<div id="cashierRestorationScreen" role="status" aria-live="polite">
+  <div class="cashier-restoration-card">
+    <div class="cashier-restoration-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+    <p class="cashier-restoration-eyebrow">EDMEL CASHIER</p>
+    <h1 id="cashierRestorationTitle">Restoring Session</h1>
+    <p id="cashierRestorationMessage">Securely checking your cashier access…</p>
+    <div class="cashier-restoration-skeleton" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div id="cashierRestorationActions" hidden>
+      <button id="cashierRestorationRetry" type="button">Try Again</button>
+      <button id="cashierRestorationSignIn" type="button">Return to Sign In</button>
+    </div>
+  </div>
+</div>
 
 <!-- =========================
      CASHIER LOGIN SCREEN
@@ -14576,6 +14610,7 @@ async function showCashierPOS(options = {}) {
     if (loginScreen) {
       loginScreen.style.display = "none";
     }
+    hideCashierRestoration();
 
     return;
   }
@@ -14654,6 +14689,7 @@ async function showCashierPOS(options = {}) {
   if (loginScreen) {
     loginScreen.style.display = "none";
   }
+  hideCashierRestoration();
 }
 
 
@@ -14663,6 +14699,7 @@ async function showCashierPOS(options = {}) {
 ========================= */
 
 function showCashierLogin(message = "") {
+  hideCashierRestoration();
   // A locked, authenticated cashier must unlock the existing session; never show login over it.
   if (halinaCashierLocked && halinaStaffSessionId) {
     const lockMessage = document.getElementById("cashierLockMessage");
@@ -14956,8 +14993,31 @@ function setCashierLoginLoading(isLoading) {
     stopCashierFanAnimation();
   }
 }
-/* Hide the POS immediately while checking the session. */
-showCashierLogin();
+/* Keep the login and protected POS hidden until session restoration is resolved. */
+const cashierRestorationScreen = document.getElementById("cashierRestorationScreen");
+const cashierRestorationTitle = document.getElementById("cashierRestorationTitle");
+const cashierRestorationMessage = document.getElementById("cashierRestorationMessage");
+const cashierRestorationActions = document.getElementById("cashierRestorationActions");
+const cashierRestorationRetry = document.getElementById("cashierRestorationRetry");
+const cashierRestorationSignIn = document.getElementById("cashierRestorationSignIn");
+let cashierRestorationInProgress = false;
+function hideCashierRestoration(){if(cashierRestorationScreen)cashierRestorationScreen.hidden=true;}
+function showCashierRestorationError(message){
+  if(cashierRestorationScreen)cashierRestorationScreen.hidden=false;
+  if(cashierRestorationTitle)cashierRestorationTitle.textContent="Connection Problem";
+  if(cashierRestorationMessage)cashierRestorationMessage.textContent=message||"We couldn't verify your cashier session. Check your connection and try again.";
+  if(cashierRestorationActions)cashierRestorationActions.hidden=false;
+  const skeleton=cashierRestorationScreen?.querySelector(".cashier-restoration-skeleton");
+  if(skeleton)skeleton.hidden=true;
+}
+function resetCashierRestoration(){
+  if(cashierRestorationScreen)cashierRestorationScreen.hidden=false;
+  if(cashierRestorationTitle)cashierRestorationTitle.textContent="Restoring Session";
+  if(cashierRestorationMessage)cashierRestorationMessage.textContent="Securely checking your cashier access…";
+  if(cashierRestorationActions)cashierRestorationActions.hidden=true;
+  const skeleton=cashierRestorationScreen?.querySelector(".cashier-restoration-skeleton");
+  if(skeleton)skeleton.hidden=false;
+}
 
 try {
   if (!window.supabase?.createClient) {
@@ -14984,23 +15044,31 @@ try {
 }
 
 /* Restore an existing authenticated session after refresh. */
+async function restoreCashierSession(){
+  if(cashierRestorationInProgress)return;
+  cashierRestorationInProgress=true;
+  resetCashierRestoration();
+  try{
+    if(!cashierAuthClient)throw new Error("Cashier authentication is unavailable. Check your connection and try again.");
+    const {data,error}=await cashierAuthClient.auth.getSession();
+    if(error)throw error;
+    if(data.session){
+      window.EDMEL_ACCESS_TOKEN=data.session.access_token;
+      await showCashierPOS();
+      hideCashierRestoration();
+    }else{
+      hideCashierRestoration();
+      showCashierLogin();
+    }
+  }catch(error){
+    console.error("Unable to restore cashier session:",error);
+    showCashierRestorationError(error.message||"Unable to verify your session. Check your connection and try again.");
+  }finally{cashierRestorationInProgress=false;}
+}
+if(cashierRestorationRetry)cashierRestorationRetry.addEventListener("click",restoreCashierSession);
+if(cashierRestorationSignIn)cashierRestorationSignIn.addEventListener("click",()=>{hideCashierRestoration();showCashierLogin();});
 if (cashierAuthClient) {
-  cashierAuthClient.auth.getSession()
-    .then(async ({ data, error }) => {
-      if (error) throw error;
-      if (data.session) {
-        window.EDMEL_ACCESS_TOKEN = data.session.access_token;
-        await showCashierPOS();
-      } else {
-        showCashierLogin();
-      }
-    })
-    .catch((error) => {
-      console.error("Unable to restore cashier session:", error);
-      showCashierLogin(
-        "Unable to restore your session. Please sign in again."
-      );
-    });
+  void restoreCashierSession();
 
   /* Return to login if the session is signed out. */
   cashierAuthClient.auth.onAuthStateChange((event) => {
