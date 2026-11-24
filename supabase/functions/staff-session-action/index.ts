@@ -192,10 +192,10 @@ Deno.serve(async (req: Request) => {
         const username = String(linkedActor.cashier_username || "").trim();
         if (!username) return json({ error: "Cashier username is unavailable. Please sign in again." }, 403);
 
-        const { data: verifiedData, error: verifyError } = await admin.rpc("edmel_verify_staff_login_credentials", {
-          p_restaurant_slug: restaurantSlugResult.data.slug,
+        const { data: verifiedData, error: verifyError } = await admin.rpc("edmel_verify_staff_login_credentials_global", {
           p_username: username,
           p_pin: pin,
+          p_expected_position: "cashier",
         });
         if (verifyError) {
           console.error("Cashier PIN unlock verification failed:", verifyError.message);
