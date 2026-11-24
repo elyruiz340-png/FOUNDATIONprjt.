@@ -370,7 +370,7 @@ main{width:min(1180px,calc(100% - 36px));margin:28px auto 60px}.welcome{display:
    const open=$("managerBranch_"+day+"_open")?.value==="true";
    const openTime=$("managerBranch_"+day+"_start")?.value||"";
    const closeTime=$("managerBranch_"+day+"_end")?.value||"";
-   if(!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(openTime)||!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(closeTime))throw new Error("Enter valid opening and closing times for "+label+".");
+   if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(openTime)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(closeTime))throw new Error("Enter valid opening and closing times for "+label+".");
    hours[day]={is_open:open,open_time:openTime,close_time:closeTime};
   }
   return hours;
