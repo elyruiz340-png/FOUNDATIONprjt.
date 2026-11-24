@@ -2813,22 +2813,24 @@ function renderAdminBranchesPage(){
   const active=branches.filter(b=>b.is_active===true);
   const inactive=branches.filter(b=>b.is_active!==true);
   const defaultBranch=branches.find(b=>b.is_default===true);
-  const selected=branches.find(b=>b.id===ADMIN_BRANCH_SELECTED_ID)||defaultBranch||branches[0]||null;
-  const branchCards=branches.map(b=>{
+  const filter=ADMIN_GLOBAL_BRANCH_FILTER||'all';
+  const filtered=filter==='all'?branches:branches.filter(b=>b.id===filter);
+  const selected=filter==='all'?null:(branches.find(b=>b.id===filter)||null);
+  const canManageBranches=CURRENT_AUTH_ROLE==='owner';
+  const branchCards=filtered.map(b=>{
     const assigned=adminBranchAssignedStaff(b.id);
-    const activeStaff=assigned.filter(u=>u.is_active===true);
+    const activeStaff=assigned.filter(u=>u.is_active===true&&u.assignment?.is_active!==false);
     const managers=activeStaff.filter(u=>String(u.position||'').toLowerCase()==='manager');
-    const isSelected=selected&&selected.id===b.id;
-    return '<button type="button" class="card kp" data-a="branch-select" data-id="'+esc(b.id)+'" aria-pressed="'+(isSelected?'true':'false')+'" style="text-align:left;width:100%;cursor:pointer;border-color:'+(isSelected?'var(--ac)':'var(--bd)')+';background:'+(isSelected?'var(--gh)':'var(--s)')+'">'+
+    return '<button type="button" class="card kp" data-a="branch-filter-select" data-id="'+esc(b.id)+'" style="text-align:left;width:100%;cursor:pointer">'+
       '<div class="row"><b>'+esc(b.name)+'</b><span class="bd '+(b.is_active?'ok':'wn')+'">'+(b.is_active?'Active':'Inactive')+'</span></div>'+
       '<div class="mu">'+esc(b.code)+' · '+(b.is_default?'Default branch':'Additional branch')+'</div>'+
-      '<div class="big">'+activeStaff.length+'</div><div class="mu">Active staff · '+managers.length+' Manager(s)</div></button>';
+      '<div class="mu" style="margin-top:6px">'+activeStaff.length+' active staff · '+managers.length+' Manager(s)</div></button>';
   }).join('');
   let detail='';
   if(selected){
     const assigned=adminBranchAssignedStaff(selected.id);
-    const activeAssigned=assigned.filter(u=>u.is_active===true);
-    const inactiveAssigned=assigned.filter(u=>u.is_active!==true||u.assignment.is_active!==true);
+    const activeAssigned=assigned.filter(u=>u.is_active===true&&u.assignment?.is_active!==false);
+    const inactiveAssigned=assigned.filter(u=>u.is_active!==true||u.assignment?.is_active!==true);
     const staffRows=assigned.map(u=>{
       const name=u.display_name||u.full_name||'Unnamed staff';
       const position=u.position||u.role||'Staff';
@@ -2836,23 +2838,19 @@ function renderAdminBranchesPage(){
     }).join('');
     detail='<div class="card" style="margin-top:14px"><div class="row"><div><div class="mu">Selected branch</div><h3 style="margin:3px 0">'+esc(selected.name)+'</h3></div><span class="bd '+(selected.is_active?'ok':'wn')+'">'+(selected.is_active?'Active':'Inactive')+'</span></div>'+
       '<div class="g g2"><div><div class="mu">Branch code</div><b>'+esc(selected.code)+'</b></div><div><div class="mu">Default branch</div><b>'+(selected.is_default?'Yes':'No')+'</b></div><div><div class="mu">Timezone</div><b>'+esc(selected.timezone||'Not set')+'</b></div><div><div class="mu">Address</div><b>'+esc(selected.address||'Not provided')+'</b></div><div><div class="mu">Active assigned staff</div><b>'+activeAssigned.length+'</b></div><div><div class="mu">Inactive staff accounts / assignments</div><b>'+inactiveAssigned.length+'</b></div></div>'+
-      '<h3 style="margin-top:14px">Staff assignments</h3><div class="tw"><table><thead><tr><th>Staff member</th><th>Position</th><th>Account status</th><th>Branch assignment</th></tr></thead><tbody>'+(staffRows||'<tr><td colspan="4"><div class="empty">No staff assignments found for this branch.</div></td></tr>')+'</tbody></table></div></div>';
+      (canManageBranches&&selected.is_active?'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-a="branch-edit" data-id="'+esc(selected.id)+'">Edit Branch</button></div><details style="margin-top:12px"><summary style="cursor:pointer;font-weight:750;padding:10px 0">Branch Settings</summary><p class="note">Review the effective configuration, create a branch override, or reset it to Main Branch inheritance.</p><div class="branch-setting-actions">'+ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<button class="btn" type="button" data-a="branch-settings-edit" data-id="'+esc(selected.id)+'" data-group="'+esc(key)+'">'+esc(label)+'</button>').join('')+'</div></details>':'')+
+      '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:750;padding:10px 0">Staff Assignments ('+assigned.length+')</summary><div class="tw"><table><thead><tr><th>Staff member</th><th>Position</th><th>Account status</th><th>Branch assignment</th></tr></thead><tbody>'+(staffRows||'<tr><td colspan="4"><div class="empty">No staff assignments found for this branch.</div></td></tr>')+'</tbody></table></div></details></div>';
   }else{
-    detail='<div class="card" style="margin-top:14px"><div class="empty">No branch records are available for this restaurant.</div></div>';
-  }
-  const canManageBranches=CURRENT_AUTH_ROLE==='owner';
-  if(selected&&canManageBranches&&selected.is_active){
-    const settingButtons=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<button class="btn" type="button" data-a="branch-settings-edit" data-id="'+esc(selected.id)+'" data-group="'+esc(key)+'">'+esc(label)+'</button>').join('');
-    detail=detail.replace('<h3 style="margin-top:14px">Staff assignments</h3>',
-      '<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-a="branch-edit" data-id="'+esc(selected.id)+'">Edit Branch</button></div><h3 style="margin-top:14px">Branch Settings</h3><p class="note">Open a settings group to review its effective configuration, create a branch override, or reset it to Main Branch inheritance.</p><div class="branch-setting-actions">'+settingButtons+'</div><h3 style="margin-top:18px">Staff assignments</h3>');
+    detail='<div class="card" style="margin-top:14px"><div class="empty">'+(filter==='all'?'Select a branch above to view its details and available actions.':'No branch is available for this selection.')+'</div></div>';
   }
   const deactivateButton=canManageBranches&&selected&&selected.is_active&&!selected.is_default&&active.length>1
     ? '<button class="btn" data-a="branch-deactivate" data-id="'+esc(selected.id)+'">Deactivate Branch</button>' : '';
-  return renderAdminBranchGovernance()+'<div class="tb"><div><div class="ttl">Multi-Branch Management</div><div class="note" style="margin:3px 0 0">Live branch records and staff assignments for this restaurant.</div></div><span class="sp"></span>'+(canManageBranches?'<button class="btn pri" data-a="addbr">Add Branch</button>':'')+deactivateButton+'<button class="btn" data-a="branch-refresh">Refresh data</button></div>'+
+  const filterOptions='<option value="all" '+(filter==='all'?'selected':'')+'>All Branches</option>'+branches.map(b=>'<option value="'+esc(b.id)+'" '+(filter===b.id?'selected':'')+'>'+esc(b.name)+(b.is_active?'':' (Inactive)')+'</option>').join('');
+  const governance='<details class="card" style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:800;padding:4px 0">Advanced Branch Governance</summary><div style="margin-top:14px">'+renderAdminBranchGovernance()+'</div></details>';
+  return governance+'<div class="tb"><div><div class="ttl">Multi-Branch Management</div><div class="note" style="margin:3px 0 0">Manage branch visibility, configuration and staff assignments.</div></div><span class="sp"></span>'+(canManageBranches?'<button class="btn pri" data-a="addbr">Add Branch</button>':'')+deactivateButton+'<button class="btn" data-a="branch-refresh">Refresh data</button></div>'+
     '<div class="g k"><div class="card"><div class="mu">Total branches</div><div class="big">'+branches.length+'</div></div><div class="card"><div class="mu">Active branches</div><div class="big">'+active.length+'</div></div><div class="card"><div class="mu">Inactive branches</div><div class="big">'+inactive.length+'</div></div><div class="card"><div class="mu">Default branch</div><div class="big" style="font-size:19px">'+esc(defaultBranch?defaultBranch.name:'Not set')+'</div></div></div>'+
-    '<div class="card"><div class="row"><div><h3 style="margin:0">Branch directory</h3><p class="note" style="margin:3px 0 0">Select a branch to review its details and staff assignments.</p></div><span class="mu">'+branches.length+' record(s)</span></div>'+
-    (branches.length?'<div class="g g2" style="margin:12px 0 0">'+branchCards+'</div>':'<div class="empty">No branches have been created for this restaurant.</div>')+'</div>'+detail+
-    '';
+    '<div class="card"><div class="row" style="align-items:center;flex-wrap:wrap"><div><h3 style="margin:0">Branch Directory</h3><p class="note" style="margin:3px 0 0">Choose All Branches or select one branch to manage.</p></div><span class="sp"></span><label for="adminBranchFilter" class="mu">Branch Filter</label><select id="adminBranchFilter" style="min-width:190px;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)">'+filterOptions+'</select></div>'+
+    (filtered.length?'<div class="g g2" style="margin:12px 0 0">'+branchCards+'</div>':'<div class="empty">No branches match this filter.</div>')+'</div>'+detail;
 }
 async function loadAdminBranches(){
   if(ADMIN_BRANCH_LOADING)return;
@@ -2993,8 +2991,10 @@ async function openBranchEditModal(branch){
   }catch(error){closeL();toast(error?.message||'Unable to load branch configuration.',1);}
 }
 
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='adminBranchFilter'){ADMIN_GLOBAL_BRANCH_FILTER=e.target.value||'all';ADMIN_BRANCH_SELECTED_ID=ADMIN_GLOBAL_BRANCH_FILTER==='all'?'':ADMIN_GLOBAL_BRANCH_FILTER;render();}});
 const A={
-'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';render()},
+'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';ADMIN_GLOBAL_BRANCH_FILTER=ADMIN_BRANCH_SELECTED_ID||'all';render()},
+'branch-filter-select':t=>{ADMIN_GLOBAL_BRANCH_FILTER=t.dataset.id||'all';ADMIN_BRANCH_SELECTED_ID=ADMIN_GLOBAL_BRANCH_FILTER;render()},
 'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
 'branch-governance-refresh':async()=>{await loadAdminBranchGovernance();if(S.page==='branches')render();},
 'branch-policy-save':async t=>{
