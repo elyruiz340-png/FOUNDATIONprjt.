@@ -493,7 +493,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   $("managerBranchModesEditor").innerHTML=managerBranchModesMarkup();
   $("managerBranchModalTitle").textContent="Request New Branch";
   $("managerBranchModalDescription").textContent=mode==="approval_required"
-   ?"Submit this branch configuration for Owner/Admin approval. The branch will not be created until it is approved."
+   ?"Submit this branch configuration for Owner review. It will remain unavailable until setup is complete and the Owner activates it."
    :"Create a fully configured branch under the Owner/Admin policy.";
   $("managerBranchSubmitButton").textContent="Submit Branch Request";
   $("managerBranchTimezone").value="";
@@ -508,8 +508,8 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const canCreate=managerCanCreateBranch();
   const descriptions={
    not_allowed:"The Owner/Admin has disabled Manager branch creation. You can still view your assigned branches.",
-   approval_required:"You can submit a branch request. An Owner/Admin must approve it before the branch is created.",
-   allowed:"You can create a fully configured branch directly. Your new branch access will be limited to Branch View and Branch Create."
+   approval_required:"You can submit a branch request. An Owner must approve it, review setup readiness, and activate the branch before it becomes operational.",
+   allowed:"Manager branch requests still require Owner review and final activation."
   };
   $("managerBranchPolicyTitle").textContent=mode==="approval_required"?"Owner Approval Required":"Branch Creation Disabled";
   $("managerBranchPolicyDescription").textContent=descriptions[mode]||descriptions.not_allowed;
