@@ -2513,6 +2513,12 @@ let ADMIN_BRANCH_POLICY={manager_creation_mode:'not_allowed'};
 let ADMIN_BRANCH_REQUESTS=[];
 let ADMIN_BRANCH_GOVERNANCE_ERROR='';
 let ADMIN_BRANCH_GOVERNANCE_LOADING=false;
+let ADMIN_BRANCH_DRAFTS=[];
+let ADMIN_BRANCH_DRAFTS_LOADING=false;
+let ADMIN_BRANCH_DRAFTS_ERROR='';
+let ADMIN_BRANCH_READINESS={};
+let ADMIN_BRANCH_READINESS_LOADING=false;
+let ADMIN_BRANCH_WORKSPACE_DRAFT_ID='';
 
 function adminBranchAssignedStaff(branchId){
   const activeAssignments=ADMIN_BRANCH_ASSIGNMENTS.filter(a=>a.branch_id===branchId&&a.is_active!==false);
@@ -2802,6 +2808,90 @@ function renderAdminBranchGovernance(){
     '<section class="card" style="margin-bottom:14px"><div class="row"><div><div class="mu">Branch Management</div><h3 style="margin:3px 0 4px">Manager Branch Requests</h3><p class="note" style="margin:0">Owner approval creates the configured branch and gives the requesting Manager branch-only access. Other operational permissions remain unchanged.</p></div><button class="btn" data-a="branch-governance-refresh">Refresh</button></div><div class="tw" style="margin-top:12px"><table><thead><tr><th>Requested Branch</th><th>Status</th><th>Submitted</th><th>Requested By</th><th>Review</th></tr></thead><tbody>'+(ADMIN_BRANCH_GOVERNANCE_LOADING?'<tr><td colspan="5"><div class="empty">Loading branch requests…</div></td></tr>':requestRows||'<tr><td colspan="5"><div class="empty">No branch creation requests.</div></td></tr>')+'</tbody></table></div></section>';
 }
 
+async function loadAdminBranchDrafts(){
+  if(CURRENT_AUTH_ROLE!=='owner'||!CURRENT_RESTAURANT_ID){ADMIN_BRANCH_DRAFTS=[];return;}
+  ADMIN_BRANCH_DRAFTS_LOADING=true;
+  try{
+    const {data,error}=await sb.rpc('edmel_list_branch_drafts',{p_restaurant_id:CURRENT_RESTAURANT_ID});
+    if(error)throw error;
+    if(data?.success!==true)throw new Error('Branch drafts could not be confirmed by the database.');
+    ADMIN_BRANCH_DRAFTS=Array.isArray(data.drafts)?data.drafts:[];
+    ADMIN_BRANCH_DRAFTS_ERROR='';
+  }catch(error){
+    ADMIN_BRANCH_DRAFTS_ERROR=error?.message||String(error);
+  }finally{ADMIN_BRANCH_DRAFTS_LOADING=false;}
+}
+async function loadAdminBranchReadiness(branchId){
+  if(!branchId||CURRENT_AUTH_ROLE!=='owner'||!CURRENT_RESTAURANT_ID)return;
+  ADMIN_BRANCH_READINESS_LOADING=true;
+  try{
+    const {data,error}=await sb.rpc('edmel_get_branch_setup_readiness',{
+      p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branchId
+    });
+    if(error)throw error;
+    if(data?.success!==true)throw new Error('Branch setup readiness could not be confirmed.');
+    ADMIN_BRANCH_READINESS[branchId]=data;
+  }catch(error){
+    ADMIN_BRANCH_READINESS[branchId]={success:false,error:error?.message||String(error),items:[]};
+  }finally{
+    ADMIN_BRANCH_READINESS_LOADING=false;
+    if(S.page==='branches')render();
+  }
+}
+function adminBranchReadinessMarkup(branchId){
+  const data=ADMIN_BRANCH_READINESS[branchId];
+  if(ADMIN_BRANCH_READINESS_LOADING&&!data)return '<div class="card" style="margin-top:12px;padding:12px"><b>Branch Setup Readiness</b><p class="note">Checking branch configuration…</p></div>';
+  if(!data||data.success!==true)return '<div class="card" style="margin-top:12px;padding:12px"><div class="row"><b>Branch Setup Readiness</b><button class="btn" data-a="branch-readiness-refresh" data-id="'+esc(branchId)+'">Retry</button></div><p class="note er">'+esc(data?.error||'Readiness has not been loaded yet.')+'</p></div>';
+  const items=Array.isArray(data.items)?data.items:[];
+  const counts={Configured:0,Inherited:0,Skipped:0,'Needs Attention':0};
+  items.forEach(item=>{if(Object.prototype.hasOwnProperty.call(counts,item.status))counts[item.status]++;});
+  const rows=items.map(item=>{
+    const status=item.status||'Needs Attention';
+    const tone=status==='Configured'?'ok':status==='Needs Attention'?'wn':'';
+    const action=item.can_skip
+      ?'<button class="btn" data-a="branch-setup-skip" data-id="'+esc(branchId)+'" data-key="'+esc(item.key)+'" data-skipped="'+(status==='Skipped'?'true':'false')+'">'+(status==='Skipped'?'Mark as Required':'Mark as Skipped')+'</button>'
+      :'';
+    return '<div class="row" style="align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)"><div style="min-width:0;flex:1"><div class="row" style="gap:8px;flex-wrap:wrap"><b>'+esc(item.label||item.key)+'</b><span class="bd '+tone+'">'+esc(status)+'</span></div><div class="note" style="margin-top:3px">'+esc(item.detail||'')+'</div></div>'+action+'</div>';
+  }).join('');
+  return '<div class="card" style="margin-top:12px;padding:12px"><div class="row" style="align-items:center;flex-wrap:wrap"><div><b>Branch Setup Readiness</b><div class="note">Review required setup before using this branch operationally.</div></div><span class="sp"></span><button class="btn" data-a="branch-readiness-refresh" data-id="'+esc(branchId)+'">Refresh</button></div><div class="g g2" style="margin:10px 0"><div class="mu">Configured: <b>'+counts.Configured+'</b></div><div class="mu">Inherited: <b>'+counts.Inherited+'</b></div><div class="mu">Skipped: <b>'+counts.Skipped+'</b></div><div class="mu">Needs Attention: <b>'+counts['Needs Attention']+'</b></div></div>'+rows+'</div>';
+}
+async function saveAdminBranchDraft(button){
+  if(CURRENT_AUTH_ROLE!=='owner')throw new Error('Only the restaurant Owner can save branch drafts.');
+  const draftData={
+    name:$('#branchCreateName')?.value.trim()||'',
+    code:($('#branchCreateCode')?.value.trim()||'').toUpperCase(),
+    timezone:$('#branchCreateTimezone')?.value.trim()||'',
+    address:$('#branchCreateAddress')?.value.trim()||'',
+    settings_modes:readAdminBranchModes(),
+    menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit'
+  };
+  try{draftData.operating_hours=adminReadBranchOperatingHours('branchCreateHours');}catch(_){/* Keep an incomplete schedule out of the draft until it is valid. */}
+  button.disabled=true;
+  const originalText=button.textContent;
+  button.textContent='Saving Draft…';
+  try{
+    const {data,error}=await sb.rpc('edmel_save_branch_draft',{
+      p_restaurant_id:CURRENT_RESTAURANT_ID,
+      p_draft_id:ADMIN_BRANCH_WORKSPACE_DRAFT_ID||null,
+      p_draft_data:draftData
+    });
+    if(error)throw error;
+    if(data?.success!==true||!data?.draft_id)throw new Error('The branch draft was not confirmed by the database.');
+    ADMIN_BRANCH_WORKSPACE_DRAFT_ID=data.draft_id;
+    await loadAdminBranchDrafts();
+    toast('Branch draft saved. It has not created an active branch.');
+    button.textContent='Draft Saved';
+  }catch(error){
+    toast(error?.message||'Unable to save branch draft.',1);
+    button.textContent=originalText;
+  }finally{button.disabled=false;}
+}
+function openAdminBranchDraft(draft){
+  if(!draft||!draft.draft_data)return;
+  const data=draft.draft_data;
+  openBranchWorkspace('create',data,data.settings_modes||{},draft.id);
+}
+
 function renderAdminBranchesPage(){
   if(ADMIN_BRANCH_LOADING&&!ADMIN_BRANCH_LOADED){
     return '<div class="card"><div class="mu">Multi-Branch Management</div><h3>Loading branch information…</h3><p class="note">Reading branch records and staff assignments from the current restaurant.</p></div>';
@@ -2838,6 +2928,7 @@ function renderAdminBranchesPage(){
     }).join('');
     detail='<div class="card" style="margin-top:14px"><div class="row"><div><div class="mu">Selected branch</div><h3 style="margin:3px 0">'+esc(selected.name)+'</h3></div><span class="bd '+(selected.is_active?'ok':'wn')+'">'+(selected.is_active?'Active':'Inactive')+'</span></div>'+
       '<div class="g g2"><div><div class="mu">Branch code</div><b>'+esc(selected.code)+'</b></div><div><div class="mu">Default branch</div><b>'+(selected.is_default?'Yes':'No')+'</b></div><div><div class="mu">Timezone</div><b>'+esc(selected.timezone||'Not set')+'</b></div><div><div class="mu">Address</div><b>'+esc(selected.address||'Not provided')+'</b></div><div><div class="mu">Active assigned staff</div><b>'+activeAssigned.length+'</b></div><div><div class="mu">Inactive staff accounts / assignments</div><b>'+inactiveAssigned.length+'</b></div></div>'+
+      (canManageBranches?adminBranchReadinessMarkup(selected.id):'')+
       (canManageBranches&&selected.is_active?'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-a="branch-edit" data-id="'+esc(selected.id)+'">Edit Branch</button></div><details style="margin-top:12px"><summary style="cursor:pointer;font-weight:750;padding:10px 0">Branch Settings</summary><p class="note">Review the effective configuration, create a branch override, or reset it to Main Branch inheritance.</p><div class="branch-setting-actions">'+ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>'<button class="btn" type="button" data-a="branch-settings-edit" data-id="'+esc(selected.id)+'" data-group="'+esc(key)+'">'+esc(label)+'</button>').join('')+'</div></details>':'')+
       '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:750;padding:10px 0">Staff Assignments ('+assigned.length+')</summary><div class="tw"><table><thead><tr><th>Staff member</th><th>Position</th><th>Account status</th><th>Branch assignment</th></tr></thead><tbody>'+(staffRows||'<tr><td colspan="4"><div class="empty">No staff assignments found for this branch.</div></td></tr>')+'</tbody></table></div></details></div>';
   }else{
@@ -2847,7 +2938,8 @@ function renderAdminBranchesPage(){
     ? '<button class="btn" data-a="branch-deactivate" data-id="'+esc(selected.id)+'">Deactivate Branch</button>' : '';
   const filterOptions='<option value="all" '+(filter==='all'?'selected':'')+'>All Branches</option>'+branches.map(b=>'<option value="'+esc(b.id)+'" '+(filter===b.id?'selected':'')+'>'+esc(b.name)+(b.is_active?'':' (Inactive)')+'</option>').join('');
   const governance='<details class="card" style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:800;padding:4px 0">Advanced Branch Governance</summary><div style="margin-top:14px">'+renderAdminBranchGovernance()+'</div></details>';
-  return governance+'<div class="tb"><div><div class="ttl">Multi-Branch Management</div><div class="note" style="margin:3px 0 0">Manage branch visibility, configuration and staff assignments.</div></div><span class="sp"></span>'+(canManageBranches?'<button class="btn pri" data-a="addbr">Add Branch</button>':'')+deactivateButton+'<button class="btn" data-a="branch-refresh">Refresh data</button></div>'+
+  const draftSection=canManageBranches?'<div class="card" style="margin-bottom:14px"><div class="row"><div><h3 style="margin:0">Branch Drafts</h3><p class="note" style="margin:3px 0 0">Saved drafts are private to the Owner and do not create active branches.</p></div><span class="sp"></span><button class="btn" data-a="branch-drafts-refresh">Refresh Drafts</button></div>'+(ADMIN_BRANCH_DRAFTS_LOADING?'<div class="empty">Loading saved drafts…</div>':ADMIN_BRANCH_DRAFTS_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_DRAFTS_ERROR)+'</div>':ADMIN_BRANCH_DRAFTS.length?'<div class="g g2" style="margin-top:10px">'+ADMIN_BRANCH_DRAFTS.map(d=>'<div class="card" style="padding:12px;margin:0"><div class="row"><b>'+esc(d.draft_data?.name||'Untitled Branch')+'</b><span class="bd wn">Draft</span></div><div class="note">'+esc(d.draft_data?.code||'No branch code yet')+' · Updated '+esc(d.updated_at?new Date(d.updated_at).toLocaleString():'—')+'</div><div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" data-a="branch-draft-delete" data-id="'+esc(d.id)+'">Delete</button><button class="btn pri" data-a="branch-draft-resume" data-id="'+esc(d.id)+'">Resume</button></div></div>').join('')+'</div>':'<div class="empty" style="margin-top:10px">No saved branch drafts.</div>')+'</div>':'';
+  return governance+draftSection+'<div class="tb"><div><div class="ttl">Multi-Branch Management</div><div class="note" style="margin:3px 0 0">Manage branch visibility, configuration and staff assignments.</div></div><span class="sp"></span>'+(canManageBranches?'<button class="btn pri" data-a="addbr">Add Branch</button>':'')+deactivateButton+'<button class="btn" data-a="branch-refresh">Refresh data</button></div>'+
     '<div class="g k"><div class="card"><div class="mu">Total branches</div><div class="big">'+branches.length+'</div></div><div class="card"><div class="mu">Active branches</div><div class="big">'+active.length+'</div></div><div class="card"><div class="mu">Inactive branches</div><div class="big">'+inactive.length+'</div></div><div class="card"><div class="mu">Default branch</div><div class="big" style="font-size:19px">'+esc(defaultBranch?defaultBranch.name:'Not set')+'</div></div></div>'+
     '<div class="card"><div class="row" style="align-items:center;flex-wrap:wrap"><div><h3 style="margin:0">Branch Directory</h3><p class="note" style="margin:3px 0 0">Choose All Branches or select one branch to manage.</p></div><span class="sp"></span><label for="adminBranchFilter" class="mu">Branch Filter</label><select id="adminBranchFilter" style="min-width:190px;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)">'+filterOptions+'</select></div>'+
     (filtered.length?'<div class="g g2" style="margin:12px 0 0">'+branchCards+'</div>':'<div class="empty">No branches match this filter.</div>')+'</div>'+detail;
@@ -2876,7 +2968,8 @@ async function loadAdminBranches(){
     const activeBranchIds=ADMIN_BRANCH_ROWS.filter(b=>b.is_active===true).map(b=>b.id);
     if(ADMIN_GLOBAL_BRANCH_FILTER!=='all'&&!activeBranchIds.includes(ADMIN_GLOBAL_BRANCH_FILTER))ADMIN_GLOBAL_BRANCH_FILTER='all';
     ADMIN_BRANCH_LOADED=true;
-    await loadAdminBranchGovernance();
+    await Promise.all([loadAdminBranchGovernance(),loadAdminBranchDrafts()]);
+    if(ADMIN_BRANCH_SELECTED_ID)await loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);
     fillBr();
   }catch(error){
     ADMIN_BRANCH_ERROR=error?.message||String(error);
@@ -2918,15 +3011,16 @@ function renderAdminBranchCreateReview(){
     '<div class="branch-review-grid"><div class="branch-review-item"><small>Branch Name</small><b>'+esc(name)+'</b></div><div class="branch-review-item"><small>Branch Code</small><b>'+esc(code)+'</b></div><div class="branch-review-item"><small>Timezone</small><b>'+esc(timezone)+'</b></div><div class="branch-review-item"><small>Address</small><b>'+esc(address)+'</b></div><div class="branch-review-item"><small>Operating Hours</small><b>'+esc(hours)+'</b></div><div class="branch-review-item"><small>Menu Catalog</small><b>'+esc(menuLabel)+'</b></div></div>';
   panel.innerHTML=summary+'<h4 style="margin:14px 0 6px">Business & Operations Modes</h4><div class="branch-review-grid">'+labels+'</div><div class="msg ai" style="max-width:none;margin-top:12px">'+(editing?'Only the selected branch profile, operating hours and configuration modes are updated. Historical transactions, staff assignments, tables, QR tokens and stock balances remain unchanged.':'Inventory definitions are provisioned with zero opening quantities. Existing stock balances, transactions, staff assignments, tables, QR tokens and printer registrations are not copied.')+'</div>';
 }
-function openBranchWorkspace(mode,branch,modes){
+function openBranchWorkspace(mode,branch,modes,draftId=''){
   const editing=mode==='edit';
   ADMIN_BRANCH_WORKSPACE_MODE=editing?'edit':'create';ADMIN_BRANCH_WORKSPACE_BRANCH=editing?branch:null;
+  ADMIN_BRANCH_WORKSPACE_DRAFT_ID=editing?'':(draftId||'');
   ADMIN_BRANCH_EDIT_CURRENT_MODES=editing?{...(modes||{})}:{};ADMIN_BRANCH_CREATE_STEP=0;
   const seed=(ADMIN_BRANCH_ROWS.find(b=>b.is_default===true)||{}).operating_hours||{};
-  const hours=editing?(branch?.operating_hours||{}):seed,initialModes=editing?(modes||{}):{};
+  const hours=editing?(branch?.operating_hours||{}):(branch?.operating_hours||seed),initialModes=modes||{};
   const title=editing?'Edit Branch':'Add Branch';
   const intro=editing?'Update this branch using the same configuration workspace used when creating a branch. Existing transactions and operational records are preserved.':'Create a branch with its own identity and choose how its menu, inventory definitions and business settings relate to Main Branch.';
-  const menuMode=editing?(branch?.menu_catalog_mode||'inherit'):'inherit',menuDisabled=editing&&branch?.is_default===true;
+  const menuMode=branch?.menu_catalog_mode||'inherit',menuDisabled=editing&&branch?.is_default===true;
   L.innerHTML='<div class="bk" data-a="close"></div><section class="md staff-focus-panel" role="dialog" aria-modal="true" aria-label="Branch configuration workspace" style="width:min(820px,94vw);max-height:90vh">'+
     '<div class="staff-focus-kicker">Multi-Branch Management · Branch Configuration</div>'+
     '<div class="row"><h3 class="staff-focus-title">'+title+'</h3><button class="ib staff-focus-close" data-a="close" aria-label="Close">×</button></div>'+
@@ -2937,7 +3031,7 @@ function openBranchWorkspace(mode,branch,modes){
     '<div id="branchCreateStep2" class="branch-wizard-panel" hidden><h4>Business Operations</h4><p class="note">Set this branch schedule, then choose how its business profile, tax and service charge settings relate to Main Branch.</p>'+adminBranchOperatingHoursEditor(hours,'branchCreateHours')+adminBranchModeControls(initialModes,ADMIN_BRANCH_SETTING_GROUPS.slice(0,3))+'</div>'+
     '<div id="branchCreateStep3" class="branch-wizard-panel" hidden><h4>Promotions & Payments</h4><p class="note">Choose how discounts, vouchers, payment methods and receipt settings will be inherited or maintained by this branch.</p>'+adminBranchModeControls(initialModes,ADMIN_BRANCH_SETTING_GROUPS.slice(3))+'</div>'+
     '<div id="branchCreateStep4" class="branch-wizard-panel" hidden><h4>Review & Save</h4><div id="branchCreateReview"></div></div>'+
-    '<div class="branch-wizard-nav"><button class="btn" data-a="branch-create-back" hidden>Back</button><div class="sp"></div><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-create-next">Continue</button><button class="btn pri" data-a="branch-create-submit" hidden>'+(editing?'Save Changes':'Create Branch')+'</button></div></section>';
+    '<div class="branch-wizard-nav"><button class="btn" data-a="branch-create-back" hidden>Back</button><div class="sp"></div>'+(editing?'':'<button class="btn" data-a="branch-draft-save">'+(ADMIN_BRANCH_WORKSPACE_DRAFT_ID?'Update Draft':'Save Draft')+'</button>')+'<button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="branch-create-next">Continue</button><button class="btn pri" data-a="branch-create-submit" hidden>'+(editing?'Save Changes':'Create Branch')+'</button></div></section>';
   setAdminBranchCreateStep(0);
 }
 function openBranchCreateModal(){openBranchWorkspace('create',null,{});}
@@ -2993,9 +3087,38 @@ async function openBranchEditModal(branch){
 
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='adminBranchFilter'){ADMIN_GLOBAL_BRANCH_FILTER=e.target.value||'all';ADMIN_BRANCH_SELECTED_ID=ADMIN_GLOBAL_BRANCH_FILTER==='all'?'':ADMIN_GLOBAL_BRANCH_FILTER;render();}});
 const A={
-'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';ADMIN_GLOBAL_BRANCH_FILTER=ADMIN_BRANCH_SELECTED_ID||'all';render()},
-'branch-filter-select':t=>{ADMIN_GLOBAL_BRANCH_FILTER=t.dataset.id||'all';ADMIN_BRANCH_SELECTED_ID=ADMIN_GLOBAL_BRANCH_FILTER;render()},
+'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';ADMIN_GLOBAL_BRANCH_FILTER=ADMIN_BRANCH_SELECTED_ID||'all';render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
+'branch-filter-select':t=>{ADMIN_GLOBAL_BRANCH_FILTER=t.dataset.id||'all';ADMIN_BRANCH_SELECTED_ID=ADMIN_GLOBAL_BRANCH_FILTER;render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
 'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
+'branch-drafts-refresh':async()=>{await loadAdminBranchDrafts();if(S.page==='branches')render();},
+'branch-readiness-refresh':async t=>{await loadAdminBranchReadiness(t.dataset.id||ADMIN_BRANCH_SELECTED_ID);},
+'branch-draft-save':async t=>{await saveAdminBranchDraft(t);},
+'branch-draft-resume':t=>{const draft=ADMIN_BRANCH_DRAFTS.find(x=>x.id===(t.dataset.id||''));if(draft)openAdminBranchDraft(draft);},
+'branch-draft-delete':async t=>{
+  if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can delete branch drafts.',1);return;}
+  const id=t.dataset.id||'';if(!id)return;
+  const draft=ADMIN_BRANCH_DRAFTS.find(x=>x.id===id);
+  if(!confirm('Delete the saved draft '+(draft?.draft_data?.name||'for this branch')+'? This does not affect existing branches.'))return;
+  t.disabled=true;
+  try{
+    const {data,error}=await sb.rpc('edmel_delete_branch_draft',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_draft_id:id});
+    if(error)throw error;if(data?.success!==true)throw new Error('The draft deletion was not confirmed.');
+    await loadAdminBranchDrafts();render();toast('Branch draft deleted.');
+  }catch(error){toast(error?.message||'Unable to delete branch draft.',1);t.disabled=false;}
+},
+'branch-setup-skip':async t=>{
+  if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can update setup readiness.',1);return;}
+  const branchId=t.dataset.id||ADMIN_BRANCH_SELECTED_ID,key=t.dataset.key||'',wasSkipped=t.dataset.skipped==='true';
+  t.disabled=true;
+  try{
+    const {data,error}=await sb.rpc('edmel_set_branch_setup_skip',{
+      p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:branchId,p_setup_key:key,
+      p_skipped:!wasSkipped,p_reason:!wasSkipped?'Not required for this branch.':null
+    });
+    if(error)throw error;if(data?.success!==true)throw new Error('The setup status change was not confirmed.');
+    await loadAdminBranchReadiness(branchId);toast(wasSkipped?'Setup marked as required.':'Setup marked as skipped.');
+  }catch(error){toast(error?.message||'Unable to update setup readiness.',1);t.disabled=false;}
+},
 'branch-governance-refresh':async()=>{await loadAdminBranchGovernance();if(S.page==='branches')render();},
 'branch-policy-save':async t=>{
   const mode=$('#branchManagerCreationPolicy')?.value||'';
@@ -3064,7 +3187,13 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
      if(data?.success!==true||!savedId||(editing&&data?.branch?.id!==id))throw new Error(data?.error||(editing?'Branch update':'Branch creation')+' was not confirmed by the database.');
      ADMIN_BRANCH_SELECTED_ID=savedId;ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
      if(!ADMIN_BRANCH_ROWS.some(row=>row.id===savedId))throw new Error('The save may have succeeded, but the refreshed branch list could not confirm it. Use Refresh data before retrying.');
-     ADMIN_BRANCH_WORKSPACE_MODE='create';ADMIN_BRANCH_WORKSPACE_BRANCH=null;closeL();toast(editing?'Branch updated successfully.':'Branch added successfully.');
+     let draftCleanupWarning='';
+     if(!editing&&ADMIN_BRANCH_WORKSPACE_DRAFT_ID){
+       const {data:cleanupData,error:cleanupError}=await sb.rpc('edmel_delete_branch_draft',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_draft_id:ADMIN_BRANCH_WORKSPACE_DRAFT_ID});
+       if(cleanupError||cleanupData?.success!==true)draftCleanupWarning=' The branch was created, but its saved draft remains in Branch Drafts and can be deleted there.';
+       else{ADMIN_BRANCH_WORKSPACE_DRAFT_ID='';await loadAdminBranchDrafts();}
+     }
+     ADMIN_BRANCH_WORKSPACE_MODE='create';ADMIN_BRANCH_WORKSPACE_BRANCH=null;closeL();toast((editing?'Branch updated successfully.':'Branch added successfully.')+draftCleanupWarning,draftCleanupWarning?1:0);
    }catch(error){toast(error?.message||(editing?'Unable to update branch.':'Unable to add branch.'),1);t.disabled=false;t.textContent=editing?'Save Changes':'Create Branch';}
  },
  'branch-edit':t=>{
