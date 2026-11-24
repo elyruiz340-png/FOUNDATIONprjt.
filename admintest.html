@@ -2848,7 +2848,7 @@ function adminBranchReadinessMarkup(branchId){
   const rows=items.map(item=>{
     const status=item.status||'Needs Attention';
     const tone=status==='Configured'?'ok':status==='Needs Attention'?'wn':'';
-    const action=item.can_skip
+    const action=item.can_skip&&status!=='Configured'
       ?'<button class="btn" data-a="branch-setup-skip" data-id="'+esc(branchId)+'" data-key="'+esc(item.key)+'" data-skipped="'+(status==='Skipped'?'true':'false')+'">'+(status==='Skipped'?'Mark as Required':'Mark as Skipped')+'</button>'
       :'';
     return '<div class="row" style="align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)"><div style="min-width:0;flex:1"><div class="row" style="gap:8px;flex-wrap:wrap"><b>'+esc(item.label||item.key)+'</b><span class="bd '+tone+'">'+esc(status)+'</span></div><div class="note" style="margin-top:3px">'+esc(item.detail||'')+'</div></div>'+action+'</div>';
@@ -3085,7 +3085,7 @@ async function openBranchEditModal(branch){
   }catch(error){closeL();toast(error?.message||'Unable to load branch configuration.',1);}
 }
 
-document.addEventListener('change',e=>{if(e.target&&e.target.id==='adminBranchFilter'){ADMIN_GLOBAL_BRANCH_FILTER=e.target.value||'all';ADMIN_BRANCH_SELECTED_ID=ADMIN_GLOBAL_BRANCH_FILTER==='all'?'':ADMIN_GLOBAL_BRANCH_FILTER;render();}});
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='adminBranchFilter'){ADMIN_GLOBAL_BRANCH_FILTER=e.target.value||'all';ADMIN_BRANCH_SELECTED_ID=ADMIN_GLOBAL_BRANCH_FILTER==='all'?'':ADMIN_GLOBAL_BRANCH_FILTER;render();if(ADMIN_BRANCH_SELECTED_ID)loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);}});
 const A={
 'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';ADMIN_GLOBAL_BRANCH_FILTER=ADMIN_BRANCH_SELECTED_ID||'all';render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
 'branch-filter-select':t=>{ADMIN_GLOBAL_BRANCH_FILTER=t.dataset.id||'all';ADMIN_BRANCH_SELECTED_ID=ADMIN_GLOBAL_BRANCH_FILTER;render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
