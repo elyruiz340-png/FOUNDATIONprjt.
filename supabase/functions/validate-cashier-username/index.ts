@@ -100,10 +100,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Unable to validate username" }, 500);
     }
 
-    return json({
-      valid: Array.isArray(activeBranches) && activeBranches.length > 0,
-      restaurant_slug: restaurant.slug,
-    });
+    return json({ valid: Array.isArray(activeBranches) && activeBranches.length > 0 });
   } catch (error) {
     console.error("Username validation failed:", error);
     return json({ error: "Unable to validate username" }, 500);
