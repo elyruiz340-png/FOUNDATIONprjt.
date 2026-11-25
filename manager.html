@@ -253,6 +253,15 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
      <div class="row"><button class="secondary" id="managerSettlementCancel" type="button">Cancel</button><button class="primary" id="managerSettlementSubmit" type="submit">Confirm Payment</button></div>
     </form>
    </div>
+   <div class="manager-expense-modal" id="managerVoidRequestModal" hidden>
+    <form class="manager-expense-dialog" id="managerVoidRequestForm">
+     <h2>Request Order Void</h2>
+     <p class="note">This submits a request for independent Manager review. The order will not be voided until another authorized Manager approves it.</p>
+     <div class="field"><label for="managerVoidRequestReason">Void reason</label><textarea id="managerVoidRequestReason" rows="3" maxlength="500" required placeholder="Enter at least 3 characters"></textarea></div>
+     <p class="message" id="managerVoidRequestMessage" role="status"></p>
+     <div class="row"><button class="secondary" id="managerVoidRequestCancel" type="button">Cancel</button><button class="danger" id="managerVoidRequestSubmit" type="submit">Submit Request</button></div>
+    </form>
+   </div>
    <div class="manager-expense-modal" id="managerVoidReviewModal" hidden>
     <form class="manager-expense-dialog" id="managerVoidReviewForm">
      <h2 id="managerVoidReviewTitle">Review Void Request</h2>
@@ -572,6 +581,45 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
  $("managerReportingRefresh")?.addEventListener("click",()=>loadManagerReporting(currentManagerPage).catch(error=>showManagerReportingError(error.message||"Unable to refresh reporting.")));
 
+ function openManagerVoidRequest(orderId){
+  if(!moduleAccess("orders","delete")){notify("Orders Delete permission is not enabled for this branch.",true);return;}
+  const order=managerOrders.find(item=>item.id===orderId);
+  if(!order||!["preparing","ready"].includes(managerOrderStatus(order).toLowerCase())||["paid","successful","succeeded","verified","refunded"].includes(managerPaymentStatus(order).toLowerCase())||order.settled_at){
+   notify("This order is no longer eligible for a void request.",true);return;
+  }
+  if(managerVoidRequests.some(request=>request.order_id===orderId)){notify("A pending void request already exists for this order.",true);return;}
+  managerVoidRequestOrderId=orderId;
+  $("managerVoidRequestReason").value="";
+  $("managerVoidRequestMessage").textContent="";
+  $("managerVoidRequestModal").hidden=false;
+ }
+ function closeManagerVoidRequest(){
+  $("managerVoidRequestModal").hidden=true;
+  managerVoidRequestOrderId=null;
+  $("managerVoidRequestForm").reset();
+  $("managerVoidRequestMessage").textContent="";
+ }
+ $("managerVoidRequestCancel")?.addEventListener("click",closeManagerVoidRequest);
+ $("managerVoidRequestForm")?.addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!managerVoidRequestOrderId||!moduleAccess("orders","delete"))return;
+  const reason=String($("managerVoidRequestReason").value||"").trim();
+  if(reason.length<3||reason.length>500){$("managerVoidRequestMessage").textContent="Enter a reason between 3 and 500 characters.";return;}
+  if(!sessionId||!activeBranch){$("managerVoidRequestMessage").textContent="Your active branch session is unavailable. Please sign in again.";return;}
+  const button=$("managerVoidRequestSubmit");button.disabled=true;
+  try{
+   const {data,error}=await sb.rpc("edmel_manager_request_order_void",{
+    p_order_id:managerVoidRequestOrderId,p_session_id:sessionId,p_reason:reason
+   });
+   if(error)throw error;
+   if(!data?.success||data.approval_required!==true)throw new Error("The void request could not be submitted.");
+   closeManagerVoidRequest();
+   notify("Void request submitted for independent Manager review.");
+   await loadManagerOrders();
+  }catch(error){
+   $("managerVoidRequestMessage").textContent=error.message||"Unable to submit the void request.";
+  }finally{button.disabled=false;}
+ });
  function renderManagerVoidRequests(){
   const rows=$("managerVoidRequestsRows");if(!rows)return;
   const canApprove=moduleAccess("orders","approve");
@@ -656,7 +704,11 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    const status=managerOrderStatus(order).toLowerCase();
    const payment=managerPaymentStatus(order).toLowerCase();
    const canSettle=moduleAccess("transactions","approve")&&["served","completed"].includes(status)&&["pending","unpaid"].includes(payment)&&!order.settled_at;
-   const action=canSettle?'<button class="primary" type="button" data-manager-settle-order="'+esc(order.id)+'">Confirm Payment</button>':'<span class="note">—</span>';
+   const canRequestVoid=moduleAccess("orders","delete")&&["preparing","ready"].includes(status)&&!["paid","successful","succeeded","verified","refunded"].includes(payment)&&!order.settled_at&&!managerVoidRequests.some(request=>request.order_id===order.id);
+   const actions=[];
+   if(canSettle)actions.push('<button class="primary" type="button" data-manager-settle-order="'+esc(order.id)+'">Confirm Payment</button>');
+   if(canRequestVoid)actions.push('<button class="danger" type="button" data-manager-request-void="'+esc(order.id)+'">Request Void</button>');
+   const action=actions.length?'<div class="staff-actions">'+actions.join("")+'</div>':'<span class="note">—</span>';
    return '<tr><td><div class="order-number">#'+esc(order.order_number??"—")+'</div><div class="order-meta">'+esc(order.order_type||"—")+'</div></td><td>'+esc(managerOrderDate(order.created_at))+'</td><td><strong>'+esc(customer)+'</strong><div class="order-meta">'+esc(table)+'</div></td><td><div class="order-item-summary">'+esc(managerOrderItemsText(order.id))+'</div></td><td><span class="status">'+esc(managerOrderStatus(order))+'</span></td><td><span class="status">'+esc(managerPaymentStatus(order))+'</span></td><td><strong>'+esc(managerOrderTotal(order.total))+'</strong></td><td>'+action+'</td></tr>';
   }).join(""):'<tr><td colspan="8" class="empty">No orders match the selected filters.</td></tr>';
   $("managerOrdersInfo").textContent="Branch: "+(activeBranch?.name||"Assigned branch")+". Showing "+filtered.length+" of "+managerOrders.length+" loaded orders (latest 200).";
@@ -698,6 +750,8 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   }finally{if(requestId===managerOrdersRequest)managerOrdersLoading=false;}
  }
  $("managerOrdersRows")?.addEventListener("click",event=>{
+  const requestButton=event.target.closest("[data-manager-request-void]");
+  if(requestButton){openManagerVoidRequest(requestButton.dataset.managerRequestVoid);return;}
   const button=event.target.closest("[data-manager-settle-order]");if(!button)return;
   if(!moduleAccess("transactions","approve")){notify("Transactions Approve permission is not enabled for this branch.",true);return;}
   managerSettlementOrderId=button.dataset.managerSettleOrder;
@@ -889,7 +943,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
 
  let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true, managerAuthUserId=null, managerExpenseRows=[], managerExpenseCategories=[], managerExpenseRequests=[], managerExpenseNotifications=[], managerEmergencyRequests=[], managerEmergencyNotifications=[], managerExpenseCurrency="USD", managerExpenseLoading=false;
  let managerOrders=[],managerOrderItemsByOrder={},managerOrdersLoading=false,managerOrdersRequest=0;
- let managerVoidRequests=[],managerVoidReviewTarget=null;
+ let managerVoidRequests=[],managerVoidReviewTarget=null,managerVoidRequestOrderId=null;
  let managerSettlementOrderId=null;
  let pendingApprovalActions=[], approvalBatches=[];
  let managerBranchPolicy={manager_creation_mode:"not_allowed"},managerBranchRequests=[],managerBranchLoading=false,managerBranchError="";
