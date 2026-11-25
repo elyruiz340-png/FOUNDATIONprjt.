@@ -6893,6 +6893,7 @@ background:
      POS SIDEBAR
 ====================== -->
 <aside class="pos-sidebar">
+  <div class="pos-sidebar-logo" aria-label="Restaurant logo"></div>
   <!-- PRIMARY NAVIGATION FLOATING SURFACE -->
   <div class="pos-sidebar-primary">
 
@@ -7043,8 +7044,7 @@ background:
       <div class="pos-topbar">
         <div class="pos-topbar-heading">
           <div class="pos-topbar-title-block">
-            <div class="pos-brand" aria-label="Restaurant name and logo">
-              <img data-restaurant-logo alt="Restaurant logo" loading="eager" aria-hidden="true">
+            <div class="pos-brand" aria-label="Restaurant name">
               EDMEL BISTRO CAFE
             </div>
           </div>
@@ -15745,6 +15745,7 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
     return window.EDMEL_TENANT_CONTEXT?.restaurant_id || "";
   }
   const NAME_SELECTORS = ['.cashier-login-brand', '.pos-brand', '.success-receipt-header'];
+  const LOGO_SELECTORS = ['.cashier-login-brand', '.pos-sidebar-logo', '.success-receipt-header'];
   const LOGO_MODE = 'cashier';
   function setName(el, name) {
     if (!el || !name) return;
@@ -15820,7 +15821,7 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
     }
     if (profile.logo_url) {
       if (LOGO_MODE === 'dispatcher') setDispatcherLogo(profile.logo_url);
-      else document.querySelectorAll(NAME_SELECTORS.join(',')).forEach(el => setInlineLogo(el, profile.logo_url));
+      else document.querySelectorAll(LOGO_SELECTORS.join(',')).forEach(el => setInlineLogo(el, profile.logo_url));
     }
     profile = window.HALINA_CONFIG.normalizeProfile(profile);
     window.HALINA_RESTAURANT_PROFILE = profile;
@@ -16183,29 +16184,33 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   white-space: normal;
   overflow-wrap: anywhere;
 }
-.pos-topbar .pos-brand img[data-restaurant-logo] {
+.pos-sidebar-logo {
   position: absolute;
-  top: 50%;
-  left: -80px;
-  right: auto;
-  z-index: 61;
-  display: block;
-  width: 48px !important;
-  height: 48px !important;
-  min-width: 48px;
-  margin: 0 !important;
-  padding: 3px;
-  object-fit: contain;
+  top: 12px;
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 2px;
+  overflow: hidden;
   border: 1px solid #dbe5d7;
   border-radius: 12px;
   background: #fffdf8;
   box-shadow: 0 3px 9px rgba(37, 66, 45, .09);
-  transform: translateY(-50%);
+  transform: translateX(-50%);
 }
-.pos-topbar .pos-brand img[data-restaurant-logo]:not([src]),
-.pos-topbar .pos-brand img[data-restaurant-logo][src=""] {
-  visibility: hidden;
+.pos-sidebar-logo img[data-restaurant-logo] {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  margin: 0 !important;
+  object-fit: contain;
+  border-radius: 8px;
 }
+.pos-sidebar-logo:empty { visibility: hidden; }
 .pos-topbar .pos-search-wrap {
   width: 100%;
   align-self: stretch;
@@ -16338,10 +16343,7 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   .pos-topbar { gap: 10px; }
   .pos-topbar-heading { gap: 9px; }
   .pos-topbar .pos-brand { font-size: 15px; letter-spacing: .045em; }
-  .pos-topbar .pos-brand img[data-restaurant-logo] {
-    left: -60px;
-    width: 42px !important; height: 42px !important; min-width: 42px;
-  }
+  .pos-sidebar-logo { width: 42px; height: 42px; top: 10px; }
   .cashier-session-widget { gap: 6px; padding: 4px 7px; }
   .cashier-session-avatar { width: 30px; height: 30px; flex-basis: 30px; }
   .cashier-session-copy { max-width: 82px; }
