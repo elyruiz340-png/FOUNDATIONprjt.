@@ -7044,6 +7044,7 @@ background:
         <div class="pos-topbar-heading">
           <div class="pos-topbar-title-block">
             <div class="pos-brand" aria-label="Restaurant name and logo">
+              <img data-restaurant-logo alt="Restaurant logo" loading="eager" aria-hidden="true">
               EDMEL BISTRO CAFE
             </div>
           </div>
@@ -16161,7 +16162,7 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   min-width: 0;
   flex: 1 1 auto;
   position: relative;
-  z-index: 20;
+  z-index: 60;
   overflow: visible;
 }
 .pos-topbar .pos-brand {
@@ -16185,8 +16186,10 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
 .pos-topbar .pos-brand img[data-restaurant-logo] {
   position: absolute;
   top: 50%;
-  right: calc(100% + 28px);
-  z-index: 30;
+  left: -80px;
+  right: auto;
+  z-index: 61;
+  display: block;
   width: 48px !important;
   height: 48px !important;
   min-width: 48px;
@@ -16198,6 +16201,10 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   background: #fffdf8;
   box-shadow: 0 3px 9px rgba(37, 66, 45, .09);
   transform: translateY(-50%);
+}
+.pos-topbar .pos-brand img[data-restaurant-logo]:not([src]),
+.pos-topbar .pos-brand img[data-restaurant-logo][src=""] {
+  visibility: hidden;
 }
 .pos-topbar .pos-search-wrap {
   width: 100%;
@@ -16332,7 +16339,8 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   .pos-topbar-heading { gap: 9px; }
   .pos-topbar .pos-brand { font-size: 15px; letter-spacing: .045em; }
   .pos-topbar .pos-brand img[data-restaurant-logo] {
-    width: 42px !important; height: 42px !important; min-width: 42px; margin-right: 9px !important;
+    left: -60px;
+    width: 42px !important; height: 42px !important; min-width: 42px;
   }
   .cashier-session-widget { gap: 6px; padding: 4px 7px; }
   .cashier-session-avatar { width: 30px; height: 30px; flex-basis: 30px; }
