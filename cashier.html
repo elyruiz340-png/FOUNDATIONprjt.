@@ -11948,25 +11948,7 @@ async function printSavedOrderReceipt(order) {
     (payment ? "<div class='rule'></div>" + payment : "") +
     (config.footer ? "<div class='foot'>" + safe(config.footer) + "</div>" : "") +
     "
-<div id="cashierLogoutConfirmModal" class="cashier-confirm-backdrop" hidden aria-hidden="true">
-  <section class="cashier-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="cashierLogoutConfirmTitle" aria-describedby="cashierLogoutConfirmDescription">
-    <button type="button" class="cashier-confirm-close" id="cashierLogoutConfirmClose" aria-label="Cancel logout">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-    </button>
-    <div class="cashier-confirm-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/></svg>
-    </div>
-    <p class="cashier-confirm-eyebrow">CASHIER SESSION</p>
-    <h2 id="cashierLogoutConfirmTitle">End Cashier Shift?</h2>
-    <p id="cashierLogoutConfirmDescription">Are you sure you want to log out? Your cashier session will end when you confirm.</p>
-    <div class="cashier-confirm-actions">
-      <button type="button" class="cashier-confirm-cancel" id="cashierLogoutConfirmCancel">Cancel</button>
-      <button type="button" class="cashier-confirm-submit" id="cashierLogoutConfirmSubmit">End Shift</button>
-    </div>
-  </section>
-</div>
-
-<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};<\/script></body></html>";
+    "<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};<\/script></body></html>";
 
   if (config.connection && config.connection !== "browser") {
     console.warn("Configured printer connection requires a local print bridge; using browser printing for this receipt.", {
@@ -16788,6 +16770,25 @@ body.cashier-confirm-open { overflow: hidden; }
   .cashier-confirm-actions button { transition: none; }
 }
 </style>
+
+<div id="cashierLogoutConfirmModal" class="cashier-confirm-backdrop" hidden aria-hidden="true">
+  <section class="cashier-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="cashierLogoutConfirmTitle" aria-describedby="cashierLogoutConfirmDescription">
+    <button type="button" class="cashier-confirm-close" id="cashierLogoutConfirmClose" aria-label="Cancel logout">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="cashier-confirm-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/></svg>
+    </div>
+    <p class="cashier-confirm-eyebrow">CASHIER SESSION</p>
+    <h2 id="cashierLogoutConfirmTitle">End Cashier Shift?</h2>
+    <p id="cashierLogoutConfirmDescription">Are you sure you want to log out? Your cashier session will end when you confirm.</p>
+    <div class="cashier-confirm-actions">
+      <button type="button" class="cashier-confirm-cancel" id="cashierLogoutConfirmCancel">Cancel</button>
+      <button type="button" class="cashier-confirm-submit" id="cashierLogoutConfirmSubmit">End Shift</button>
+    </div>
+  </section>
+</div>
+
 
 </body>
 </html>
