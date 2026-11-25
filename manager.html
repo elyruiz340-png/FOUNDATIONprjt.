@@ -1103,7 +1103,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const preferred=sessionStorage.getItem("edmel_manager_branch");
   activeBranch=branches.find(b=>b.id===preferred)||branches.find(b=>b.is_default)||branches[0];
   ownPermissions=managerAccess.find(a=>a.branch_id===activeBranch.id)?.permissions||{};
-  $("approvalRequestPanel").hidden=ownPermissions.approval_request_access!==true;
+  $("approvalRequestPanel").hidden=!(moduleAccess("staff","manage")&&ownPermissions.approval_request_access===true);
   $("managerName").textContent=managerLink.display_name||managerLink.full_name||"Manager";
   $("branchSelect").innerHTML=branches.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join("");
   $("branchSelect").value=activeBranch.id;
@@ -1114,7 +1114,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
 
  function queueApprovalAction(action,label){
-  if(ownPermissions.approval_request_access!==true)throw new Error("Approval Request Access has not been enabled for your account in this branch. Contact the Owner or Admin.");
+  if(!moduleAccess("staff","manage")||ownPermissions.approval_request_access!==true)throw new Error("Staff management and Approval Request Access must both be enabled for this branch. Contact the Owner or Admin.");
   if(!activeBranch)throw new Error("Select an active branch first.");
   if(pendingApprovalActions.length>=50)throw new Error("A batch can contain up to 50 actions.");
   const key=action.type+":"+action.staff_id;
@@ -1561,7 +1561,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  $("branchSelect").addEventListener("change",async()=>{
   const next=branches.find(b=>b.id===$("branchSelect").value);if(!next)return;
   activeBranch=next;ownPermissions=managerAccess.find(a=>a.branch_id===next.id)?.permissions||{};
-  $("approvalRequestPanel").hidden=ownPermissions.approval_request_access!==true;
+  $("approvalRequestPanel").hidden=!(moduleAccess("staff","manage")&&ownPermissions.approval_request_access===true);
   if(ownPermissions.approval_request_access!==true){pendingApprovalActions=[];renderApprovalQueue();}
   sessionStorage.setItem("edmel_manager_branch",next.id);
   managerOrdersRequest++;managerOrdersLoading=false;managerOrders=[];managerOrderItemsByOrder={};managerVoidRequests=[];renderManagerVoidRequests();
