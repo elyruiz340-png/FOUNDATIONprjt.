@@ -16178,6 +16178,11 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   white-space:normal;
   overflow-wrap:anywhere;
 }
+.pos-topbar-title-block{overflow:visible}
+.pos-topbar .pos-brand{
+  margin-left:-72px;
+  overflow:visible;
+}
 .pos-topbar .pos-brand img[data-restaurant-logo] {
   width:48px!important;
   height:48px!important;
@@ -16189,7 +16194,7 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   border-radius:12px;
   background:#fffdf8;
   box-shadow:0 3px 9px rgba(37,66,45,.09);
-  transform:translateX(-72px);
+  transform:none!important;
 }
 .pos-topbar .pos-search-wrap {
   width:100%;
@@ -16319,7 +16324,7 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   .pos-topbar .pos-brand{font-size:18px}
   .pos-topbar .pos-brand img[data-restaurant-logo] {
     width:44px!important;height:44px!important;min-width:44px;
-    margin-right:10px!important;transform:translateX(-64px)
+    margin-right:10px!important;transform:none!important
   }
   .pos-cart{position:relative;top:auto;height:auto;min-height:560px}
 }
@@ -16329,7 +16334,7 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   .pos-topbar .pos-brand{font-size:15px;letter-spacing:.04em}
   .pos-topbar .pos-brand img[data-restaurant-logo] {
     width:40px!important;height:40px!important;min-width:40px;
-    margin-right:8px!important;transform:translateX(-64px)
+    margin-right:8px!important;transform:none!important
   }
   .cashier-session-widget{padding:4px 7px;gap:6px}
   .cashier-session-avatar{width:30px;height:30px;flex-basis:30px}
@@ -16345,7 +16350,7 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
 <style id="edmel-cashier-sidebar-approved-refinement">
 /* Compact, inset cashier sidebar with a distinct active navigation state. */
 #posSection .pos-layout{grid-template-columns:72px minmax(0,1fr)}
-.pos-sidebar{width:72px!important;padding:10px 4px!important;align-items:center}
+.pos-sidebar{width:72px!important;padding:10px 4px!important;align-items:center;background:#f6f1e8!important;box-shadow:3px 0 12px rgba(35,55,43,.08)}
 .pos-sidebar-primary,.pos-sidebar-utility{width:60px;gap:9px;padding:7px 3px;transform:translateX(4px)}
 .pos-sidebar-utility{gap:7px;padding:7px 3px}
 .pos-sidebar-primary{margin-top:clamp(88px,16vh,140px)}
