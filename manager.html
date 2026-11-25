@@ -237,13 +237,22 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
      <select id="managerOrdersStatus" aria-label="Filter by order status"><option value="">All order statuses</option></select>
      <select id="managerOrdersPayment" aria-label="Filter by payment status"><option value="">All payment statuses</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option><option value="pending">Pending</option><option value="refunded">Refunded</option></select>
     </div>
-    <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Order</th><th>Placed</th><th>Customer / Table</th><th>Items</th><th>Order Status</th><th>Payment</th><th>Total</th></tr></thead><tbody id="managerOrdersRows"><tr><td colspan="7" class="empty">Loading orders…</td></tr></tbody></table></div></div>
+    <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Order</th><th>Placed</th><th>Customer / Table</th><th>Items</th><th>Order Status</th><th>Payment</th><th>Total</th><th>Action</th></tr></thead><tbody id="managerOrdersRows"><tr><td colspan="8" class="empty">Loading orders…</td></tr></tbody></table></div></div>
    </section>
    <section class="panel">
     <div class="panel-head"><div><h2>Pending Void Requests</h2><p>Requests from this branch that require Manager review.</p></div><span class="status" id="managerVoidRequestCount">0 pending</span></div>
     <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Order</th><th>Requested By</th><th>Order Status</th><th>Request Reason</th><th>Requested At</th><th>Action</th></tr></thead><tbody id="managerVoidRequestsRows"><tr><td colspan="6" class="empty">Loading pending requests…</td></tr></tbody></table></div></div>
    </section>
-   <div class="permission-note">Order changes, void reviews, settlements and refunds are controlled by the permissions granted by the Owner or Admin. Paid or settled orders require a separate refund/correction workflow.</div>
+   <div class="permission-note">Payment confirmation is a manual action. Confirm only after receiving and verifying payment. Online provider verification and refunds remain separate workflows.</div>
+   <div class="manager-expense-modal" id="managerSettlementModal" hidden>
+    <form class="manager-expense-dialog" id="managerSettlementForm">
+     <h2>Confirm Order Payment</h2>
+     <p class="note">This records a manual payment confirmation and marks the order as paid. Confirm only after verifying that payment was received.</p>
+     <div class="field"><label for="managerSettlementNote">Confirmation note</label><textarea id="managerSettlementNote" rows="3" maxlength="500" required placeholder="Describe how payment was received or verified"></textarea></div>
+     <p class="message" id="managerSettlementMessage" role="status"></p>
+     <div class="row"><button class="secondary" id="managerSettlementCancel" type="button">Cancel</button><button class="primary" id="managerSettlementSubmit" type="submit">Confirm Payment</button></div>
+    </form>
+   </div>
    <div class="manager-expense-modal" id="managerVoidReviewModal" hidden>
     <form class="manager-expense-dialog" id="managerVoidReviewForm">
      <h2 id="managerVoidReviewTitle">Review Void Request</h2>
@@ -644,8 +653,12 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   rows.innerHTML=filtered.length?filtered.map(order=>{
    const customer=order.customer_name||"Walk-in";
    const table=order.table_number?"Table "+order.table_number:(order.order_type||"—");
-   return '<tr><td><div class="order-number">#'+esc(order.order_number??"—")+'</div><div class="order-meta">'+esc(order.order_type||"—")+'</div></td><td>'+esc(managerOrderDate(order.created_at))+'</td><td><strong>'+esc(customer)+'</strong><div class="order-meta">'+esc(table)+'</div></td><td><div class="order-item-summary">'+esc(managerOrderItemsText(order.id))+'</div></td><td><span class="status">'+esc(managerOrderStatus(order))+'</span></td><td><span class="status">'+esc(managerPaymentStatus(order))+'</span></td><td><strong>'+esc(managerOrderTotal(order.total))+'</strong></td></tr>';
-  }).join(""):'<tr><td colspan="7" class="empty">No orders match the selected filters.</td></tr>';
+   const status=managerOrderStatus(order).toLowerCase();
+   const payment=managerPaymentStatus(order).toLowerCase();
+   const canSettle=moduleAccess("transactions","approve")&&["served","completed"].includes(status)&&["pending","unpaid"].includes(payment)&&!order.settled_at;
+   const action=canSettle?'<button class="primary" type="button" data-manager-settle-order="'+esc(order.id)+'">Confirm Payment</button>':'<span class="note">—</span>';
+   return '<tr><td><div class="order-number">#'+esc(order.order_number??"—")+'</div><div class="order-meta">'+esc(order.order_type||"—")+'</div></td><td>'+esc(managerOrderDate(order.created_at))+'</td><td><strong>'+esc(customer)+'</strong><div class="order-meta">'+esc(table)+'</div></td><td><div class="order-item-summary">'+esc(managerOrderItemsText(order.id))+'</div></td><td><span class="status">'+esc(managerOrderStatus(order))+'</span></td><td><span class="status">'+esc(managerPaymentStatus(order))+'</span></td><td><strong>'+esc(managerOrderTotal(order.total))+'</strong></td><td>'+action+'</td></tr>';
+  }).join(""):'<tr><td colspan="8" class="empty">No orders match the selected filters.</td></tr>';
   $("managerOrdersInfo").textContent="Branch: "+(activeBranch?.name||"Assigned branch")+". Showing "+filtered.length+" of "+managerOrders.length+" loaded orders (latest 200).";
   renderManagerVoidRequests();
  }
@@ -684,6 +697,39 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    renderManagerOrders();
   }finally{if(requestId===managerOrdersRequest)managerOrdersLoading=false;}
  }
+ $("managerOrdersRows")?.addEventListener("click",event=>{
+  const button=event.target.closest("[data-manager-settle-order]");if(!button)return;
+  if(!moduleAccess("transactions","approve")){notify("Transactions Approve permission is not enabled for this branch.",true);return;}
+  managerSettlementOrderId=button.dataset.managerSettleOrder;
+  $("managerSettlementNote").value="";
+  $("managerSettlementMessage").textContent="";
+  $("managerSettlementModal").hidden=false;
+ });
+ function closeManagerSettlementModal(){
+  $("managerSettlementModal").hidden=true;managerSettlementOrderId=null;
+  $("managerSettlementForm").reset();$("managerSettlementMessage").textContent="";
+ }
+ $("managerSettlementCancel")?.addEventListener("click",closeManagerSettlementModal);
+ $("managerSettlementForm")?.addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!managerSettlementOrderId||!moduleAccess("transactions","approve"))return;
+  const note=String($("managerSettlementNote").value||"").trim();
+  if(note.length<3||note.length>500){$("managerSettlementMessage").textContent="Enter a confirmation note between 3 and 500 characters.";return;}
+  if(!sessionId||!activeBranch){$("managerSettlementMessage").textContent="Your active branch session is unavailable. Please sign in again.";return;}
+  const button=$("managerSettlementSubmit");button.disabled=true;
+  try{
+   const {data,error}=await sb.rpc("edmel_manager_settle_order",{
+    p_order_id:managerSettlementOrderId,p_session_id:sessionId,p_confirmation_note:note
+   });
+   if(error)throw error;
+   if(!data?.success)throw new Error("Payment could not be confirmed.");
+   closeManagerSettlementModal();
+   notify("Payment confirmed and recorded.");
+   await loadManagerOrders();
+  }catch(error){
+   $("managerSettlementMessage").textContent=error.message||"Unable to confirm payment.";
+  }finally{button.disabled=false;}
+ });
  $("managerOrdersRefreshButton")?.addEventListener("click",()=>loadManagerOrders().catch(error=>showManagerOrdersError(error.message||"Unable to refresh orders.")));
  $("managerOrdersSearch")?.addEventListener("input",renderManagerOrders);
  $("managerOrdersStatus")?.addEventListener("change",renderManagerOrders);
@@ -844,6 +890,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true, managerAuthUserId=null, managerExpenseRows=[], managerExpenseCategories=[], managerExpenseRequests=[], managerExpenseNotifications=[], managerEmergencyRequests=[], managerEmergencyNotifications=[], managerExpenseCurrency="USD", managerExpenseLoading=false;
  let managerOrders=[],managerOrderItemsByOrder={},managerOrdersLoading=false,managerOrdersRequest=0;
  let managerVoidRequests=[],managerVoidReviewTarget=null;
+ let managerSettlementOrderId=null;
  let pendingApprovalActions=[], approvalBatches=[];
  let managerBranchPolicy={manager_creation_mode:"not_allowed"},managerBranchRequests=[],managerBranchLoading=false,managerBranchError="";
 
