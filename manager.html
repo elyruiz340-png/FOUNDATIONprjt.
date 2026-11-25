@@ -463,6 +463,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
     const grant=p.modules[module];
     return !!grant&&typeof grant==="object"&&!Array.isArray(grant)&&(grant.manage===true||grant[action]===true);
    }
+   if((module==="payments"||module==="transactions")&&Object.prototype.hasOwnProperty.call(p.modules,"orders"))return false;
   }
   const legacyMap={orders:"orders",transactions:"orders",payments:"orders",inventory:"stocks",staff:"staff_management",
    tables:"tables",dispatcher:"dispatcher",settings:"settings",menu:"settings",discounts:"settings",vouchers:"settings",
