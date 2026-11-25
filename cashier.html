@@ -14228,20 +14228,28 @@ function ensureCashierLockOverlay() {
     const style = document.createElement("style");
     style.id = "cashierLockOverlayStyles";
     style.textContent = `
-      #cashierLockOverlay{position:fixed;inset:0;z-index:1000000;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 50% 18%,rgba(74,112,79,.22),transparent 42%),rgba(12,22,16,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+      #cashierLockOverlay{position:fixed;inset:0;z-index:1000000;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 50% 18%,rgba(74,112,79,.12),transparent 44%),#f1f3ef;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
       #cashierLockOverlay[hidden]{display:none!important}
-      .cashier-lock-card{width:min(410px,100%);padding:34px 30px 28px;border:1px solid rgba(255,255,255,.22);border-radius:25px;background:linear-gradient(155deg,rgba(255,255,255,.97),rgba(244,248,241,.96));box-shadow:0 28px 90px rgba(0,0,0,.34);text-align:center;color:#203729}
+      .cashier-lock-card{width:min(430px,100%);padding:36px 32px 30px;border:1px solid rgba(255,255,255,.9);border-radius:26px;background:linear-gradient(155deg,#fff,#f7f9f5);box-shadow:0 22px 65px rgba(30,49,35,.14);text-align:center;color:#203729}
       .cashier-lock-icon{width:54px;height:54px;margin:0 auto 17px;border-radius:18px;display:grid;place-items:center;background:#e8f1e7;color:#28623c}
       .cashier-lock-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
       .cashier-lock-card h2{margin:0;font-size:23px;font-weight:800;letter-spacing:-.035em}
-      .cashier-lock-card p{margin:9px 0 22px;color:#6b7b6e;font-size:13px;line-height:1.55}
-      .cashier-lock-pin{width:100%;height:54px;padding:0 16px;border:1px solid #d5e1d4;border-radius:13px;background:#fff;color:#1d3424;text-align:center;font-size:22px;font-weight:800;letter-spacing:.42em;outline:none}
-      .cashier-lock-pin:focus{border-color:#4c9360;box-shadow:0 0 0 4px rgba(64,139,82,.13)}
-      .cashier-lock-submit{width:100%;height:48px;margin-top:13px;border:0;border-radius:12px;background:linear-gradient(180deg,#32834d,#21683b);color:#fff;font-size:14px;font-weight:800;box-shadow:0 6px 16px rgba(36,111,61,.2);cursor:pointer}
+      .cashier-lock-name{margin:13px 0 4px;color:#236b40;font-size:25px;font-weight:800;letter-spacing:-.035em;overflow-wrap:anywhere}
+      .cashier-lock-role{margin:0 0 25px;color:#7a897d;font-size:10px;font-weight:800;letter-spacing:.13em}
+      .cashier-lock-pin-wrap{position:relative;width:100%;margin:0 auto 17px}
+      .cashier-lock-pin-slots{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+      .cashier-lock-pin-slot{height:54px;display:grid;place-items:center;border:1px solid #b8cfbb;border-radius:12px;background:#fff;transition:border-color .16s,box-shadow .16s}
+      .cashier-lock-pin-slot::after{content:"";width:9px;height:9px;border-radius:50%;background:#236b40;opacity:0;transform:scale(.7);transition:opacity .12s,transform .12s}
+      .cashier-lock-pin-slot.filled::after{opacity:1;transform:scale(1)}
+      .cashier-lock-pin-wrap:focus-within .cashier-lock-pin-slot{border-color:#9bbba0}
+      .cashier-lock-pin-wrap:focus-within .cashier-lock-pin-slot.active{border-color:#398451;box-shadow:0 0 0 3px rgba(57,132,81,.12)}
+      .cashier-lock-pin{position:absolute;inset:0;width:100%;height:54px;margin:0;padding:0;border:0;opacity:0;cursor:text;outline:none}
+      .cashier-lock-submit{width:100%;height:49px;margin-top:2px;border:0;border-radius:12px;background:linear-gradient(180deg,#32834d,#21683b);color:#fff;font-size:14px;font-weight:800;box-shadow:0 6px 16px rgba(36,111,61,.16);cursor:pointer;transition:transform .15s,box-shadow .15s}
+      .cashier-lock-submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 9px 20px rgba(36,111,61,.2)}
       .cashier-lock-submit:disabled{opacity:.6;cursor:wait}
-      .cashier-lock-message{min-height:19px;margin:13px 0 0!important;color:#a34b3d!important;font-size:12px!important}
+      .cashier-lock-message{min-height:19px;margin:12px 0 0!important;color:#a34b3d!important;font-size:12px!important}
       .cashier-lock-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-      @media(max-width:480px){.cashier-lock-card{padding:28px 21px 23px;border-radius:21px}}
+      @media(max-width:480px){.cashier-lock-card{padding:30px 22px 25px;border-radius:22px}.cashier-lock-pin-slots{gap:6px}.cashier-lock-pin-slot{height:50px}}
     `;
     document.head.appendChild(style);
   }
@@ -14258,9 +14266,15 @@ function ensureCashierLockOverlay() {
         <svg viewBox="0 0 24 24"><rect x="4.5" y="10" width="15" height="11" rx="2.2"></rect><path d="M8 10V7a4 4 0 1 1 8 0v3"></path><path d="M12 14v3"></path></svg>
       </div>
       <h2 id="cashierLockTitle">Cashier Screen Locked</h2>
-      <p>Your session was locked after 30 minutes of inactivity. Enter your six-digit PIN to continue.</p>
+      <div id="cashierLockDisplayName" class="cashier-lock-name">Cashier</div>
+      <div class="cashier-lock-role">SIGNED-IN CASHIER</div>
       <label for="cashierUnlockPin" class="cashier-lock-sr-only">Six-digit cashier PIN</label>
-      <input id="cashierUnlockPin" class="cashier-lock-pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" aria-label="Enter your six-digit cashier PIN" required>
+      <div class="cashier-lock-pin-wrap">
+        <div id="cashierUnlockPinSlots" class="cashier-lock-pin-slots" aria-hidden="true">
+          <span class="cashier-lock-pin-slot"></span><span class="cashier-lock-pin-slot"></span><span class="cashier-lock-pin-slot"></span><span class="cashier-lock-pin-slot"></span><span class="cashier-lock-pin-slot"></span><span class="cashier-lock-pin-slot"></span>
+        </div>
+        <input id="cashierUnlockPin" class="cashier-lock-pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" aria-label="Enter your six-digit PIN" required>
+      </div>
       <button id="cashierUnlockButton" class="cashier-lock-submit" type="submit">Unlock Screen</button>
       <p id="cashierLockMessage" class="cashier-lock-message" role="status" aria-live="polite"></p>
     </form>
@@ -14268,9 +14282,24 @@ function ensureCashierLockOverlay() {
   document.body.appendChild(overlay);
 
   const pinInput = document.getElementById("cashierUnlockPin");
+  const pinSlots = Array.from(document.querySelectorAll("#cashierUnlockPinSlots .cashier-lock-pin-slot"));
+  function renderCashierPinSlots() {
+    const value = pinInput.value || "";
+    pinSlots.forEach((slot, index) => {
+      slot.classList.toggle("filled", index < value.length);
+      slot.classList.toggle("active", index === Math.min(value.length, 5));
+    });
+  }
   pinInput.addEventListener("input", () => {
     pinInput.value = pinInput.value.replace(/\D/g, "").slice(0, 6);
+    renderCashierPinSlots();
   });
+  pinInput.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") pinInput.blur();
+  });
+  renderCashierPinSlots();
+  const savedDisplayName = String(window.edmelCashierDisplayName || "Cashier").trim() || "Cashier";
+  document.getElementById("cashierLockDisplayName").textContent = savedDisplayName;
   document.getElementById("cashierLockForm").addEventListener("submit", unlockCashierScreen);
   return overlay;
 }
@@ -15966,15 +15995,19 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   }
 
   function applyIdentity(profile) {
+    const displayName = String(profile.displayName || "Cashier").trim() || "Cashier";
+    window.edmelCashierDisplayName = displayName;
     getWidgets().forEach(function(widget) {
       widget.hidden = false;
       const nameNode = widget.querySelector("[data-cashier-display-name]");
       const roleNode = widget.querySelector("[data-cashier-role]");
       const avatarNode = widget.querySelector("[data-cashier-avatar]");
-      if (nameNode) nameNode.textContent = profile.displayName;
+      if (nameNode) nameNode.textContent = displayName;
       if (roleNode) roleNode.textContent = profile.role;
-      setAvatar(avatarNode, profile.displayName, profile.photoUrl);
+      setAvatar(avatarNode, displayName, profile.photoUrl);
     });
+    const lockName = document.getElementById("cashierLockDisplayName");
+    if (lockName) lockName.textContent = displayName;
   }
 
   function hideIdentity() {
