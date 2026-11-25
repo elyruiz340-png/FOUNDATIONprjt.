@@ -15034,8 +15034,8 @@ function stopCashierFanAnimation() {
 function setCashierLoginLoading(isLoading) {
   if (cashierLoginButton) {
     cashierLoginButton.disabled = isLoading;
-    cashierLoginButton.textContent =
-      isLoading ? "Verifying..." : "Sign In";
+    cashierLoginButton.hidden = isLoading;
+    cashierLoginButton.textContent = "Sign In";
   }
 
   if (cashierContinueButton) {
