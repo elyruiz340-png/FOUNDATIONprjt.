@@ -129,6 +129,14 @@ td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
 .permissions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 18px}
 .permission{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);font-size:12px;font-weight:500}.permission input{accent-color:var(--accent)}
+.action-permission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 18px}
+.action-module-card{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);min-width:0}
+.action-module-card h3{margin:0 0 9px;font-size:13px;font-weight:650}
+.action-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.action-checks label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.action-checks input{accent-color:var(--accent)}
+.action-checks input:disabled{opacity:.55}
+@media(max-width:700px){.action-permission-grid{grid-template-columns:1fr}}
 #staffModal.open .modal,#permissionModal.open .modal,.manager-expense-modal:not([hidden]) .manager-expense-dialog,.manager-branch-modal:not([hidden]) .manager-expense-dialog,.appearance-menu:not([hidden]){animation:pop .24s var(--ease) both}
 
 /* branches */
@@ -413,14 +421,8 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   <div class="modal-body">
    <div class="hint">Changes apply only to the selected branch. Existing access to other branches and account credentials remain unchanged.</div>
    <strong style="font-size:12px">Branch Permissions</strong>
-   <div class="permissions">
-    <label class="permission"><input type="checkbox" id="editPermOrders"> Orders</label>
-    <label class="permission"><input type="checkbox" id="editPermVoid"> Void Orders</label>
-    <label class="permission"><input type="checkbox" id="editPermTables"> Tables</label>
-    <label class="permission"><input type="checkbox" id="editPermStocks"> Stocks</label>
-    <label class="permission" id="editDispatcherPermissionWrap"><input type="checkbox" id="editPermDispatcher"> Dispatcher</label>
-    <label class="permission"><input type="checkbox" id="editPermSettings"> Settings</label>
-   </div>
+   <p class="note">Select individual actions for each module. Your own branch permissions limit what you can request. All changes remain pending until Owner/Admin approval.</p>
+   <div id="actionPermissionEditor" class="action-permission-grid"></div>
    <div class="message" id="permissionFormMessage" role="alert"></div>
   </div>
   <div class="modal-actions"><button class="secondary" type="button" id="cancelPermissionModal">Cancel</button><button class="primary" id="savePermissionButton" type="submit">Save Permissions</button></div>
@@ -437,6 +439,15 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  const $ = id => document.getElementById(id);
  const esc = value => String(value ?? "").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
  const permissionLabels = {orders:"Orders",void:"Void",tables:"Tables",stocks:"Stocks",dispatcher:"Dispatcher",settings:"Settings"};
+ const actionPermissionModules = [
+  ["overview","Overview"],["sales","Sales & Analytics"],["settings","Business Settings"],["orders","Orders"],
+  ["expenses","Expenses"],["staff","Staff & Permissions"],["audit","Audit Logs"],["branches","Branches"],
+  ["health","System Health"],["ai","AI Assistant"],["inventory","Inventory"],["tables","Tables"],
+  ["dispatcher","Dispatcher"],["payments","Payments"],["menu","Menu"],["discounts","Discounts"],
+  ["vouchers","Vouchers"],["tax","Tax"],["service_charge","Service Charge"],["receipts","Receipts"],
+  ["printers","Printers"],["transactions","Transactions"]
+ ];
+ const permissionActions = ["view","create","edit","delete","approve","manage"];
  const ic=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
  const managerModules = [
   ["overview","Overview",ic('<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>')],["sales","Sales & Analytics",ic('<path d="M5 20V10M12 20V4M19 20v-7"/>')],["settings","Business Settings",ic('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>')],
@@ -444,6 +455,20 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   ["audit","Audit Logs",ic('<path d="M5 6h14M5 12h14M5 18h9"/>')],["branches","Multi-Branch Management",ic('<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 8.5v7M8.5 6C14 6 18 7 18 9.5"/>')],["health","System Health & Integrations",ic('<path d="M3 12h4l2.5-6 4 12 2.5-6H21"/>')],["ai","EDY — AI Assistant",ic('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 16.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>')]
  ];
  let currentManagerPage="";
+ function permissionAllows(permissions,module,action="view"){
+  const p=permissions||{};
+  if(p.modules&&typeof p.modules==="object"){
+   const grant=p.modules[module];
+   return !!grant&&typeof grant==="object"&&(grant.manage===true||grant[action]===true);
+  }
+  const legacyMap={orders:"orders",transactions:"orders",payments:"orders",inventory:"stocks",staff:"staff_management",
+   tables:"tables",dispatcher:"dispatcher",settings:"settings",menu:"settings",discounts:"settings",vouchers:"settings",
+   tax:"settings",service_charge:"settings",receipts:"settings",printers:"settings"};
+  const legacyKey=legacyMap[module]||module;
+  if(module==="orders"&&action==="void")return p.void===true||p.orders===true;
+  return p[legacyKey]===true;
+ }
+ function managerCanGrant(module,action){return permissionAllows(ownPermissions,module,action);}
  function moduleAccess(key, action="view"){
   const p=ownPermissions||{};
   const allows=(grant,requestedAction)=>{
@@ -451,7 +476,6 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    if(grant.manage===true)return true;
    return grant[requestedAction]===true;
   };
-  if(key==="staff"&&p.staff_management===true)return true;
   if(p.modules&&typeof p.modules==="object"){
    if(key==="orders"){
     return allows(p.modules.orders,action)||allows(p.modules.transactions,action);
@@ -500,7 +524,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    const active=button.dataset.managerPage===key;button.classList.toggle("active",active);
    if(active)button.setAttribute("aria-current","page");else button.removeAttribute("aria-current");
   });
-  const realStaffWorkspace=key==="staff"&&ownPermissions?.staff_management===true;
+  const realStaffWorkspace=key==="staff"&&moduleAccess("staff","view");
   const realExpensesWorkspace=key==="expenses"&&moduleAccess("expenses","view");
   const realBranchesWorkspace=key==="branches"&&moduleAccess("branches","view");
   const realOrdersWorkspace=key==="orders"&&moduleAccess("orders","view");
@@ -1089,7 +1113,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   showApp();
   renderManagerNavigation();
   await startPresence(activeBranch.id);
-  if(ownPermissions.staff_management===true)await loadBranchData();
+  if(moduleAccess("staff","view"))await loadBranchData();
  }
 
  function queueApprovalAction(action,label){
@@ -1154,14 +1178,23 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  $("refreshApprovalsButton").addEventListener("click",loadApprovalInbox);
 
  function permissionChips(permissions){
-  if(permissions?.modules&&typeof permissions.modules==="object")return '<span class="chip">Action-level permissions</span>';
-  return Object.keys(permissionLabels).filter(key=>permissions?.[key]===true).map(key=>'<span class="chip">'+permissionLabels[key]+'</span>').join("")||'<span class="note">No permissions</span>';
- }
+   if(permissions?.modules&&typeof permissions.modules==="object"){
+    const grants=[];
+    for(const [module,actions] of Object.entries(permissions.modules)){
+     if(!actions||typeof actions!=="object")continue;
+     const enabled=permissionActions.filter(action=>actions.manage===true||actions[action]===true);
+     if(enabled.length)grants.push(module+": "+enabled.join(", "));
+    }
+    return grants.length?grants.map(label=>'<span class="chip">'+esc(label)+'</span>').join(""):'<span class="note">No permissions</span>';
+   }
+   return Object.keys(permissionLabels).filter(key=>permissions?.[key]===true).map(key=>'<span class="chip">'+permissionLabels[key]+'</span>').join("")||'<span class="note">No permissions</span>';
+  }
  function staffIsOnline(staffId){
   const row=sessionRows.find(s=>s.restaurant_user_id===staffId&&!s.logout_at&&Date.now()-new Date(s.last_seen_at).getTime()<120000);
   return !!row;
  }
  async function loadBranchData(){
+   if(!moduleAccess("staff","view")||!activeBranch)return;
   notify("Loading branch staff...");
   const [{data:users,error:userError},{data:access,error:accessError},{data:sessions,error:sessionError}] = await Promise.all([
    sb.from("restaurant_users").select("id,user_id,restaurant_id,role,cashier_username,full_name,display_name,position,permissions,created_at,is_active,deactivated_at").eq("restaurant_id",RESTAURANT_ID).order("created_at",{ascending:true}),
@@ -1181,7 +1214,9 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const online=staffRows.filter(u=>u.is_active&&u.branchAccess.is_active&&staffIsOnline(u.id)).length;
   $("statStaff").textContent=staffRows.filter(u=>u.branchAccess.is_active&&u.is_active).length;
   $("statOnline").textContent=online;
-  $("statPermissions").textContent=Object.keys(permissionLabels).filter(k=>ownPermissions[k]===true).length;
+  $("statPermissions").textContent=ownPermissions.modules&&typeof ownPermissions.modules==="object"
+    ?Object.values(ownPermissions.modules).reduce((sum,grant)=>sum+(grant&&typeof grant==="object"?permissionActions.filter(action=>grant.manage===true||grant[action]===true).length:0),0)
+    :Object.keys(permissionLabels).filter(k=>ownPermissions[k]===true).length;
   notify(sessionError?"Staff loaded. Session history could not be refreshed.":"");
  }
 
@@ -1373,7 +1408,8 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
 
  function renderStaff(){
-  if(!staffRows.length){$("staffRows").innerHTML='<tr><td colspan="6" class="empty">No subordinate staff are assigned to this branch.</td></tr>';return;}
+   if(!staffRows.length){$("staffRows").innerHTML='<tr><td colspan="6" class="empty">No subordinate staff are assigned to this branch.</td></tr>';return;}
+   const canRequest=moduleAccess("staff","manage")&&ownPermissions.approval_request_access===true;
   $("staffRows").innerHTML=staffRows.map(u=>{
    const name=u.display_name||u.full_name||u.cashier_username||"Staff";
    const removed=!u.branchAccess.is_active;
@@ -1384,7 +1420,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
     '<td><span class="status '+(removed?"removed":"")+'">'+state+'</span></td>'+
     '<td><span class="status '+(online?"online":"")+'">'+(online?"Online":"Offline")+'</span></td>'+
     '<td><div class="chips">'+permissionChips(u.branchAccess.permissions)+'</div></td>'+
-    '<td>'+(removed||!u.is_active?'<span class="note">No action</span>':(u.branchAccess.permissions?.modules?'<span class="note">Owner/Admin manages action-level permissions</span>':'<div class="staff-actions"><button class="secondary" data-edit-permissions="'+esc(u.id)+'">Edit Permissions</button><button class="danger" data-remove="'+esc(u.id)+'">Remove Access</button></div>'))+'</td></tr>';
+    '<td>'+(removed||!u.is_active||!canRequest?'<span class="note">'+(canRequest?"No action":"View only — permission requests are not enabled")+'</span>':'<div class="staff-actions"><button class="secondary" data-edit-permissions="'+esc(u.id)+'">Request Permission Changes</button><button class="danger" data-remove="'+esc(u.id)+'">Request Access Removal</button></div>')+'</td></tr>';
   }).join("");
   $("staffRows").querySelectorAll("[data-remove]").forEach(button=>button.addEventListener("click",()=>removeBranchAccess(button.dataset.remove,button)));
   $("staffRows").querySelectorAll("[data-edit-permissions]").forEach(button=>button.addEventListener("click",()=>openPermissionModal(button.dataset.editPermissions)));
@@ -1443,54 +1479,75 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  });
 
  let editingStaffId=null;
- const editPermissionInputs={orders:"editPermOrders",void:"editPermVoid",tables:"editPermTables",stocks:"editPermStocks",dispatcher:"editPermDispatcher",settings:"editPermSettings"};
- function closePermissionModal(){$("permissionModal").classList.remove("open");editingStaffId=null;}
- function openPermissionModal(id){
-  const staff=staffRows.find(u=>u.id===id);
-  if(!staff||!staff.branchAccess?.is_active||!staff.is_active)return;
-  const current=staff.branchAccess.permissions||{};
-  if(current.modules&&typeof current.modules==="object"){
-   notify("This account uses action-level permissions. Ask the Owner/Admin to manage those permissions.",true);
-   return;
+  let editingStaffPermissions={};
+  function currentPermissionValue(permissions,module,action){
+   if(permissions?.modules&&typeof permissions.modules==="object"){
+    const grant=permissions.modules[module];
+    return !!grant&&typeof grant==="object"&&(grant.manage===true||grant[action]===true);
+   }
+   return permissionAllows(permissions,module,action);
   }
-  editingStaffId=id;
-  $("permissionFormMessage").textContent="";
-  for(const [key,inputId] of Object.entries(editPermissionInputs)){
-   const input=$(inputId);
-   input.checked=current[key]===true;
-   input.disabled=ownPermissions[key]!==true&&current[key]!==true;
-   input.onchange=()=>{
-    if(input.checked&&ownPermissions[key]!==true&&current[key]!==true){
+  function renderActionPermissionEditor(current){
+   const host=$("actionPermissionEditor");
+   host.innerHTML=actionPermissionModules.map(([module,label])=>{
+    const checks=permissionActions.map(action=>{
+     const checked=currentPermissionValue(current,module,action);
+     const protectedAction=module==="staff"&&action==="approve";
+     const canGrant=managerCanGrant(module,action)&&!protectedAction;
+     const disabled=!canGrant&&!checked;
+     const locked=protectedAction?' title="Owner/Admin approval authority cannot be delegated"':(!canGrant?' title="Not included in your own branch permissions"':'');
+     return '<label><input type="checkbox" data-module="'+esc(module)+'" data-action="'+esc(action)+'" '+(checked?"checked ":"")+(disabled?"disabled":"")+locked+'> '+esc(action[0].toUpperCase()+action.slice(1))+'</label>';
+    }).join("");
+    return '<section class="action-module-card"><h3>'+esc(label)+'</h3><div class="action-checks">'+checks+'</div></section>';
+   }).join("");
+   host.querySelectorAll("input[data-module]").forEach(input=>input.addEventListener("change",()=>{
+    if(input.checked&&!managerCanGrant(input.dataset.module,input.dataset.action)){
      input.checked=false;
      $("permissionFormMessage").textContent="You cannot grant permissions beyond your own branch access.";
-    }else{
-     $("permissionFormMessage").textContent="";
-    }
-   };
+    }else $("permissionFormMessage").textContent="";
+   }));
   }
-  $("editDispatcherPermissionWrap").classList.toggle("hidden",ownPermissions.dispatcher!==true&&current.dispatcher!==true);
-  $("permissionModal").classList.add("open");
-  $("editPermOrders").focus();
- }
- $("closePermissionModal").addEventListener("click",closePermissionModal);
- $("cancelPermissionModal").addEventListener("click",closePermissionModal);
- $("permissionModal").addEventListener("click",event=>{if(event.target===$("permissionModal"))closePermissionModal();});
- $("permissionForm").addEventListener("submit",async event=>{
-  event.preventDefault();
-  const staff=staffRows.find(u=>u.id===editingStaffId);
-  if(!staff||!activeBranch){$("permissionFormMessage").textContent="The selected staff member is no longer available.";return;}
-  const permissions={};
-  for(const [key,inputId] of Object.entries(editPermissionInputs))permissions[key]=$(inputId).checked;
-  $("savePermissionButton").disabled=true;
-  $("permissionFormMessage").textContent="Adding this change to the approval batch...";
-  try{
-   queueApprovalAction({type:"edit_staff_permissions",staff_id:staff.id,permissions},
-     "Edit permissions for "+(staff.display_name||staff.full_name||staff.cashier_username||"staff member"));
-   closePermissionModal();
-   notify("Permission change added to the approval queue. Submit the batch when ready.");
-  }catch(error){$("permissionFormMessage").textContent=error.message||"Unable to queue this change.";}
-  finally{$("savePermissionButton").disabled=false;}
- });
+  function closePermissionModal(){$("permissionModal").classList.remove("open");editingStaffId=null;editingStaffPermissions={};}
+  function openPermissionModal(id){
+   const staff=staffRows.find(u=>u.id===id);
+   if(!staff||!staff.branchAccess?.is_active||!staff.is_active)return;
+   if(!moduleAccess("staff","manage")||ownPermissions.approval_request_access!==true){
+    notify("Staff permission request access is not enabled for this branch.",true);return;
+   }
+   editingStaffId=id;
+   editingStaffPermissions=staff.branchAccess.permissions||{};
+   $("permissionFormMessage").textContent="";
+   renderActionPermissionEditor(editingStaffPermissions);
+   $("permissionModal").classList.add("open");
+   $("actionPermissionEditor").querySelector("input:not(:disabled)")?.focus();
+  }
+  $("closePermissionModal").addEventListener("click",closePermissionModal);
+  $("cancelPermissionModal").addEventListener("click",closePermissionModal);
+  $("permissionModal").addEventListener("click",event=>{if(event.target===$("permissionModal"))closePermissionModal();});
+  $("permissionForm").addEventListener("submit",async event=>{
+   event.preventDefault();
+   const staff=staffRows.find(u=>u.id===editingStaffId);
+   if(!staff||!activeBranch){$("permissionFormMessage").textContent="The selected staff member is no longer available.";return;}
+   const modules={};
+   for(const [module] of actionPermissionModules){
+    const grant={};
+    for(const action of permissionActions){
+     const input=$("actionPermissionEditor").querySelector('input[data-module="'+module+'"][data-action="'+action+'"]');
+     grant[action]=input?input.checked:currentPermissionValue(editingStaffPermissions,module,action);
+    }
+    if(Object.values(grant).some(Boolean))modules[module]=grant;
+   }
+   const permissions={modules};
+   $("savePermissionButton").disabled=true;
+   $("permissionFormMessage").textContent="Adding this change to the approval batch...";
+   try{
+    queueApprovalAction({type:"edit_staff_permissions",staff_id:staff.id,permissions},
+     "Request permission changes for "+(staff.display_name||staff.full_name||staff.cashier_username||"staff member"));
+    closePermissionModal();
+    notify("Permission change added to the approval queue. Submit the batch when ready.");
+   }catch(error){$("permissionFormMessage").textContent=error.message||"Unable to queue this change.";}
+   finally{$("savePermissionButton").disabled=false;}
+  });
 
  async function removeBranchAccess(id,button){
   const staff=staffRows.find(u=>u.id===id);if(!staff)return;
@@ -1520,7 +1577,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   if(ownPermissions.approval_request_access!==true){pendingApprovalActions=[];renderApprovalQueue();}
   sessionStorage.setItem("edmel_manager_branch",next.id);
   managerOrdersRequest++;managerOrdersLoading=false;managerOrders=[];managerOrderItemsByOrder={};managerVoidRequests=[];renderManagerVoidRequests();
-  managerReportingRequest++;managerReportingData=null;await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
+  managerReportingRequest++;managerReportingData=null;await endPresence();await startPresence(next.id);if(moduleAccess("staff","view"))await loadBranchData();else{staffRows=[];sessionRows=[];renderStaff();renderSessions();}renderManagerNavigation();
  });
  $("managerBranchDirectoryFilter")?.addEventListener("change",()=>renderManagerBranchWorkspace());
  $("managerBranchRefreshButton")?.addEventListener("click",()=>loadManagerBranchWorkspace().catch(error=>showManagerBranchWorkspaceError(error.message||"Unable to refresh branches.")));
