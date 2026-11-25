@@ -16570,44 +16570,45 @@ body.pos-other-view .page-section,body.pos-other-view #message{margin-left:64px}
 
 
 <style id="edmel-cashier-sidebar-approved-refinement">
-/* Sidebar active state: the icon stays above its own active surface. */
+/* Compact, inset cashier sidebar with a distinct active navigation state. */
 #posSection .pos-layout{grid-template-columns:72px minmax(0,1fr)}
 .pos-sidebar{width:72px!important;padding:10px 4px!important;align-items:center}
-.pos-sidebar-primary,.pos-sidebar-utility{width:64px;gap:10px;padding:8px 4px}
-.pos-sidebar-utility{gap:8px;padding:8px 4px}
+.pos-sidebar-primary,.pos-sidebar-utility{width:60px;gap:9px;padding:7px 3px;transform:translateX(4px)}
+.pos-sidebar-utility{gap:7px;padding:7px 3px}
 .pos-sidebar-primary{margin-top:clamp(88px,16vh,140px)}
-.pos-sidebar-primary .pos-sidebar-btn{width:44px;min-width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:14px}
-.pos-sidebar-utility .pos-sidebar-btn{width:48px;min-width:48px;height:48px;min-height:48px;flex:0 0 48px;border-radius:15px}
-.pos-sidebar-btn svg{width:28px;height:28px;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
-.pos-sidebar-primary .pos-sidebar-btn svg{width:25px;height:25px}
+.pos-sidebar-primary .pos-sidebar-btn{width:42px;min-width:42px;height:42px;min-height:42px;flex:0 0 42px;border-radius:14px}
+.pos-sidebar-utility .pos-sidebar-btn{width:46px;min-width:46px;height:46px;min-height:46px;flex:0 0 46px;border-radius:14px}
+.pos-sidebar-btn svg{width:25px;height:25px;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
+.pos-sidebar-primary .pos-sidebar-btn svg{width:23px;height:23px}
 .pos-sidebar-btn.active{
   color:#244b32!important;
-  background:linear-gradient(145deg,#dcebdc,#c9e1ce)!important;
-  box-shadow:0 4px 11px rgba(63,105,73,.13),inset 0 1px 0 rgba(255,255,255,.82);
+  background:linear-gradient(145deg,#e2f0d9,#c6e5c2)!important;
+  box-shadow:0 4px 11px rgba(63,105,73,.15),inset 0 1px 0 rgba(255,255,255,.9);
 }
-.pos-sidebar-btn.active svg{position:relative;z-index:1;stroke:#174b31;stroke-width:2.15;filter:drop-shadow(0 1px 0 rgba(174,218,151,.85)) drop-shadow(0 2px 2px rgba(34,79,47,.22));transform:scale(1.04)}
+.pos-sidebar-btn.active svg{position:relative;z-index:1;stroke:#174b31;stroke-width:2.05;filter:drop-shadow(0 1px 0 rgba(174,218,151,.9)) drop-shadow(0 2px 2px rgba(34,79,47,.2));transform:scale(1.03)}
 .pos-sidebar-btn:hover{background:rgba(220,235,220,.58)}
-.pos-sidebar-btn.active:hover{background:linear-gradient(145deg,#dcebdc,#c9e1ce)!important}
-.pos-sidebar-logout{width:48px}
-.cashier-logout-sidebar-btn{width:48px;min-width:48px;height:48px;min-height:48px;flex:0 0 48px;border-radius:15px}
-.cashier-logout-sidebar-btn svg{width:28px;height:28px;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
+.pos-sidebar-btn.active:hover{background:linear-gradient(145deg,#e2f0d9,#c6e5c2)!important}
+.pos-sidebar-logout{width:46px}
+.cashier-logout-sidebar-btn{width:46px;min-width:46px;height:46px;min-height:46px;flex:0 0 46px;border-radius:14px}
+.cashier-logout-sidebar-btn svg{width:25px;height:25px;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
 body.pos-other-view .page-section,body.pos-other-view #message{margin-left:72px}
 @media(max-width:850px){body.pos-other-view .page-section,body.pos-other-view #message{margin-left:72px}}
 @media(max-width:600px){
   #posSection .pos-layout{grid-template-columns:64px minmax(0,1fr)}
   .pos-sidebar{width:64px!important;padding-left:2px!important;padding-right:2px!important}
-  .pos-sidebar-primary,.pos-sidebar-utility{width:58px;gap:8px;padding:7px 3px}
+  .pos-sidebar-primary,.pos-sidebar-utility{width:56px;gap:7px;padding:6px 3px;transform:translateX(3px)}
   .pos-sidebar-primary{margin-top:clamp(48px,10vh,84px)}
-  .pos-sidebar-primary .pos-sidebar-btn{width:42px;min-width:42px;height:42px;min-height:42px;flex-basis:42px}
-  .pos-sidebar-primary .pos-sidebar-btn svg{width:24px;height:24px}
-  .pos-sidebar-utility .pos-sidebar-btn svg,.cashier-logout-sidebar-btn svg{width:26px;height:26px}
-  .pos-sidebar-logout,.cashier-logout-sidebar-btn{width:46px;min-width:46px;height:46px;min-height:46px;flex-basis:46px}
+  .pos-sidebar-primary .pos-sidebar-btn{width:40px;min-width:40px;height:40px;min-height:40px;flex-basis:40px}
+  .pos-sidebar-primary .pos-sidebar-btn svg{width:22px;height:22px}
+  .pos-sidebar-utility .pos-sidebar-btn{width:44px;min-width:44px;height:44px;min-height:44px;flex-basis:44px}
+  .pos-sidebar-utility .pos-sidebar-btn svg,.cashier-logout-sidebar-btn svg{width:24px;height:24px}
+  .pos-sidebar-logout,.cashier-logout-sidebar-btn{width:44px;min-width:44px;height:44px;min-height:44px;flex-basis:44px}
   body.pos-other-view .page-section,body.pos-other-view #message{margin-left:64px}
 }
 @media(max-height:560px){
   .pos-sidebar-primary{margin-top:24px}
   .pos-sidebar-primary,.pos-sidebar-utility{gap:4px;padding-top:4px;padding-bottom:4px}
-  .pos-sidebar-btn,.cashier-logout-sidebar-btn{height:42px;min-height:42px;flex-basis:42px}
+  .pos-sidebar-btn,.cashier-logout-sidebar-btn{height:40px;min-height:40px;flex-basis:40px}
 }
 @media(prefers-reduced-motion:reduce){.pos-sidebar-btn{transition:none!important}}
 </style>
