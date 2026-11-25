@@ -662,12 +662,12 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   $("managerOrdersInfo").textContent="Branch: "+(activeBranch?.name||"Assigned branch")+". Showing "+filtered.length+" of "+managerOrders.length+" loaded orders (latest 200).";
   renderManagerVoidRequests();
  }
- function showManagerOrdersError(message){const rows=$("managerOrdersRows");if(rows)rows.innerHTML='<tr><td colspan="7" class="empty">'+esc(message)+'</td></tr>';const info=$("managerOrdersInfo");if(info)info.textContent=message;}
+ function showManagerOrdersError(message){const rows=$("managerOrdersRows");if(rows)rows.innerHTML='<tr><td colspan="8" class="empty">'+esc(message)+'</td></tr>';const info=$("managerOrdersInfo");if(info)info.textContent=message;}
  async function loadManagerOrders(){
   if(!activeBranch)return;
   if(!moduleAccess("orders","view"))throw new Error("Orders View permission is not enabled for this branch.");
   const requestId=++managerOrdersRequest,requestedBranchId=activeBranch.id;
-  managerOrdersLoading=true;$("managerOrdersRows").innerHTML='<tr><td colspan="7" class="empty">Loading branch orders…</td></tr>';
+  managerOrdersLoading=true;$("managerOrdersRows").innerHTML='<tr><td colspan="8" class="empty">Loading branch orders…</td></tr>';
   try{
    const {data:orders,error}=await sb.from("orders").select("id,order_number,customer_name,table_number,order_type,order_status,status,payment_status,payment_method,subtotal,tax,tip,service_charge,discount_amount,total,created_at,settled_at").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",requestedBranchId).order("created_at",{ascending:false}).limit(200);
    if(error)throw error;
