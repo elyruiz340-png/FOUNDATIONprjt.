@@ -4538,11 +4538,12 @@ const MANAGER_PERMISSION_PROFILES={
   'Inventory Manager':{overview:['view'],inventory:['view','create','edit','delete'],menu:['view'],orders:['view'],sales:['view'],ai:['view']},
   'Sales & Reporting Manager':{overview:['view'],sales:['view'],orders:['view'],expenses:['view'],payments:['view'],audit:['view'],ai:['view']}
 };
-function managerPermissionsEditor(manager){
+function managerPermissionsEditor(manager,options={}){
+  const createMode=options.createMode===true;
   if(!document.getElementById('manager-permissions-toggle-css')){const style=document.createElement('style');style.id='manager-permissions-toggle-css';style.textContent='#managerPermissionMatrix input[data-module-toggle]{appearance:none;-webkit-appearance:none;width:42px;height:24px;border-radius:999px;border:1px solid var(--line);background:var(--line);position:relative;cursor:pointer;transition:background .18s,border-color .18s;flex:0 0 auto}#managerPermissionMatrix input[data-module-toggle]::before{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px #0003;transition:transform .18s}#managerPermissionMatrix input[data-module-toggle]:checked{background:#27966C;border-color:#27966C}#managerPermissionMatrix input[data-module-toggle]:checked::before{transform:translateX(18px)}#managerPermissionMatrix input[data-module-toggle]:focus-visible{outline:3px solid #27966C55;outline-offset:2px}#managerPermissionMatrix input[data-module]{width:17px;height:17px;accent-color:#27966C;flex:0 0 auto}';document.head.appendChild(style);}
 
-  if(!manager||String(manager.position||'').trim().toLowerCase()!=='manager'){toast('Manager account could not be verified');return;}
-  const managerName=manager.display_name||manager.full_name||manager.cashier_username||'Manager';
+  if(!manager||(!createMode&&String(manager.position||'').trim().toLowerCase()!=='manager')){toast('Manager account could not be verified');return;}
+  const managerName=manager.display_name||manager.full_name||manager.cashier_username||'New Manager';
   L.innerHTML='<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="managerPermTitle" style="max-width:1080px;width:min(1080px,96vw);max-height:90vh;overflow:auto">'+
     '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><div class="mu" style="font-size:12px;letter-spacing:.08em;text-transform:uppercase">Admin · Staff & Permissions</div><h3 id="managerPermTitle" style="font-size:21px;margin:4px 0">Manager Permissions</h3><p class="note">Configure branch-specific access for <strong>'+esc(managerName)+'</strong>.</p></div><button class="btn" type="button" data-a="close" aria-label="Close">Close</button></div>'+
     '<div class="g g2"><section class="card"><h3>Manager Account</h3><div class="row"><span class="mu">Name</span><strong>'+esc(managerName)+'</strong></div><div class="row"><span class="mu">Username</span><strong>'+esc(manager.cashier_username||'—')+'</strong></div><div class="row"><span class="mu">Role</span><strong>Manager</strong></div><p class="note" style="margin-top:10px">Recommended profiles are starting templates. Applying a profile changes only the current draft until saved.</p></section>'+
@@ -4750,6 +4751,12 @@ function managerPermissionsEditor(manager){
       });
       return {branch_id:branchId,permissions};
     });
+    if(createMode){
+      if(typeof options.onDraftSave!=='function'){status.textContent='Manager draft could not be returned to Add Staff.';return;}
+      options.onDraftSave(assignments);
+      closeL();
+      return;
+    }
     save.disabled=true;save.textContent='Saving…';status.textContent='Saving branch-scoped Manager permissions securely…';
     try{
       const {data:sessionData,error:sessionError}=await sb.auth.getSession(),accessToken=sessionData?.session?.access_token;
@@ -4779,17 +4786,25 @@ function managerPermissionsEditor(manager){
   };
   (async()=>{
     try{
-      const [{data:branchData,error:branchError},{data:accessData,error:accessError}]=await Promise.all([
-        sb.from('restaurant_branches').select('id,name,code,is_default').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('is_active',true).order('name'),
-        sb.from('staff_branch_access').select('branch_id,permissions,is_active').eq('restaurant_user_id',manager.id)
-      ]);
-      if(branchError)throw branchError;if(accessError)throw accessError;
-      branches=branchData||[];accessRows=(accessData||[]).filter(x=>x.is_active!==false);
-      accessRows.forEach(row=>{selectedBranches.add(row.branch_id);drafts[row.branch_id]=normalize(row.permissions);});
+      const {data:branchData,error:branchError}=await sb.from('restaurant_branches').select('id,name,code,is_default').eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('is_active',true).order('name');
+      if(branchError)throw branchError;
+      branches=branchData||[];
+      if(createMode){
+        const allowed=new Set(branches.map(branch=>branch.id));
+        (Array.isArray(options.branchIds)?options.branchIds:[]).filter(id=>allowed.has(id)).forEach(id=>{selectedBranches.add(id);drafts[id]={modules:{}};});
+        if(!selectedBranches.size)throw new Error('Select at least one active branch before configuring Manager permissions.');
+      }else{
+        const {data:accessData,error:accessError}=await sb.from('staff_branch_access').select('branch_id,permissions,is_active').eq('restaurant_user_id',manager.id);
+        if(accessError)throw accessError;
+        accessRows=(accessData||[]).filter(x=>x.is_active!==false);
+        accessRows.forEach(row=>{selectedBranches.add(row.branch_id);drafts[row.branch_id]=normalize(row.permissions);});
+      }
       selectedScopeBranches=new Set(selectedBranches);
       if(selectedBranches.size){sharedDraft=clone(drafts[Array.from(selectedBranches)[0]]||{modules:{}});}
       renderBranches();save.disabled=false;
-      status.textContent=accessRows.length+' active branch assignment(s) loaded. Choose the permission scope, review the preview and save.';
+      status.textContent=createMode
+        ? selectedBranches.size+' branch(es) selected. Configure permissions, then return to Add Staff to create the account.'
+        : accessRows.length+' active branch assignment(s) loaded. Choose the permission scope, review the preview and save.';
     }catch(error){branchList.innerHTML='<p class="er">Unable to load branch assignments: '+esc(error.message||String(error))+'</p>';matrix.innerHTML='<p class="mu">Permission editor could not load its data.</p>';status.textContent='Read failed. No changes were saved.';}
   })();
 }
@@ -5201,14 +5216,8 @@ async function staffAddForm(){
       <div class="fl" id="staffMultiBranchWrap" hidden><label>Assigned Branches *</label><div style="border:1px solid var(--bd);border-radius:12px;padding:10px;max-height:180px;overflow:auto">${multiOptions}</div><p class="note">Managers can be assigned to multiple active branches. The same initial permission set will apply to each selected branch.</p></div>
       <div class="fl"><label for="staffPin">Initial Staff PIN *</label><input id="staffPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter six-digit PIN"></div>
       <div class="fl"><label for="staffPinConfirm">Confirm Staff PIN *</label><input id="staffPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter six-digit PIN"></div>
-      <div class="fl"><label>Permissions</label>
-        <label class="row" for="staffPermOrders"><span>Orders</span><input id="staffPermOrders" type="checkbox" checked></label>
-        <label class="row" for="staffPermVoid"><span>Void Orders</span><input id="staffPermVoid" type="checkbox"></label>
-        <label class="row" for="staffPermTables"><span>Tables</span><input id="staffPermTables" type="checkbox" checked></label>
-        <label class="row" for="staffPermStocks"><span>Stocks</span><input id="staffPermStocks" type="checkbox" checked></label>
-        <label class="row" for="staffPermDispatcher"><span>Dispatcher</span><input id="staffPermDispatcher" type="checkbox"></label>
-        <label class="row" for="staffPermSettings"><span>Settings</span><input id="staffPermSettings" type="checkbox"></label>
-      </div>
+      <div class="fl" id="staffRolePermissionWrap"><label>Position Permissions</label><div id="staffRolePermissionOptions" class="g" style="gap:8px"></div></div>
+      <div class="fl" id="managerPermissionDraftWrap" hidden><label>Manager Access</label><button id="staffManagerPermissionsButton" class="btn" type="button">Manage Permissions</button><p id="staffManagerPermissionStatus" class="note">Configure module and branch permissions before creating this Manager.</p></div>
       <p class="mu">PIN values are sent only to the secure account-creation endpoint and are never logged or stored as plain text.</p>
       <p id="staffFormMsg" class="note" role="status" aria-live="polite"></p>
       <div class="tb"><button id="staffCreateBtn" class="btn pri" type="submit">Create Staff Account</button><button class="btn" type="button" data-a="close">Cancel</button></div>
@@ -5216,11 +5225,49 @@ async function staffAddForm(){
   </div>`;
   const form=L.querySelector('#staffAddForm'),submitBtn=L.querySelector('#staffCreateBtn'),message=L.querySelector('#staffFormMsg');
   const positionInput=L.querySelector('#staffPosition');
+  let managerAssignments=null;
+  const rolePermissionConfig={
+    'Cashier':[{key:'orders',label:'Orders',checked:true},{key:'void',label:'Void Orders',checked:false},{key:'tables',label:'Tables',checked:true},{key:'stocks',label:'Stocks',checked:true},{key:'settings',label:'Settings',checked:false}],
+    'Kitchen Staff':[{key:'orders',label:'Kitchen Orders',checked:true}],
+    'Dispatcher':[{key:'dispatcher',label:'Dispatcher',checked:true},{key:'orders',label:'Order Handoff',checked:true}]
+  };
+  if(!document.getElementById('staff-role-toggle-css')){
+    const style=document.createElement('style');style.id='staff-role-toggle-css';
+    style.textContent='.staff-perm-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}.staff-switch{appearance:none;-webkit-appearance:none;width:44px;height:25px;border-radius:999px;border:1px solid var(--bd);background:#aeb5b1;position:relative;cursor:pointer;transition:background .18s,border-color .18s;flex:0 0 auto}.staff-switch:before{content:"";position:absolute;width:19px;height:19px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px #0003;transition:transform .18s}.staff-switch:checked{background:#27966C;border-color:#27966C}.staff-switch:checked:before{transform:translateX(19px)}.staff-switch:focus-visible{outline:3px solid #27966C55;outline-offset:2px}';
+    document.head.appendChild(style);
+  }
+  const renderRolePermissions=()=>{
+    const isManager=positionInput.value==='Manager';
+    L.querySelector('#staffRolePermissionWrap').hidden=isManager;
+    L.querySelector('#managerPermissionDraftWrap').hidden=!isManager;
+    if(isManager){
+      L.querySelector('#staffRolePermissionOptions').innerHTML='';
+      return;
+    }
+    const defs=rolePermissionConfig[positionInput.value]||[];
+    L.querySelector('#staffRolePermissionOptions').innerHTML=defs.map(def=>'<label class="staff-perm-row"><span>'+esc(def.label)+'</span><input class="staff-switch" type="checkbox" data-staff-permission="'+def.key+'" '+(def.checked?'checked':'')+' aria-label="'+esc(def.label)+'"></label>').join('');
+  };
+  const selectedManagerBranches=()=>[...L.querySelectorAll('[data-staff-branch]:checked')].map(input=>input.dataset.staffBranch);
+  L.querySelector('#staffManagerPermissionsButton').addEventListener('click',()=>{
+    const branchIds=selectedManagerBranches();
+    if(!branchIds.length){toast('Select at least one Manager branch first',1);return;}
+    managerPermissionsEditor({position:'Manager',full_name:L.querySelector('#staffFullName').value.trim(),display_name:L.querySelector('#staffDisplayName').value.trim(),cashier_username:L.querySelector('#staffUsername').value.trim()},{
+      createMode:true,branchIds,
+      onDraftSave:assignments=>{
+        managerAssignments=assignments;
+        const savedIds=new Set(assignments.map(item=>item.branch_id));
+        L.querySelectorAll('[data-staff-branch]').forEach(input=>{input.checked=savedIds.has(input.dataset.staffBranch);});
+        L.querySelector('#staffManagerPermissionStatus').textContent='Permissions configured for '+assignments.length+' branch(es). You can reopen Manage Permissions to revise them.';
+      }
+    });
+  });
   const syncBranchControls=()=>{
     const isManager=positionInput.value==='Manager';
     L.querySelector('#staffSingleBranchWrap').hidden=isManager;
     L.querySelector('#staffMultiBranchWrap').hidden=!isManager;
     L.querySelector('#staffBranchSelect').required=!isManager;
+    if(!isManager)managerAssignments=null;
+    renderRolePermissions();
   };
   positionInput.addEventListener('change',syncBranchControls);
   syncBranchControls();
@@ -5240,10 +5287,14 @@ async function staffAddForm(){
       : [L.querySelector('#staffBranchSelect').value];
     if(!branchIds.length){message.textContent='Select at least one branch for this Manager.';return;}
     if(position!=='Manager'&&branchIds.length!==1){message.textContent='Select exactly one branch.';return;}
-    const permissions={orders:L.querySelector('#staffPermOrders').checked,void:L.querySelector('#staffPermVoid').checked,tables:L.querySelector('#staffPermTables').checked,stocks:L.querySelector('#staffPermStocks').checked,dispatcher:L.querySelector('#staffPermDispatcher').checked,settings:L.querySelector('#staffPermSettings').checked};
+    const permissions=position==='Manager'?{}:Object.fromEntries([...L.querySelectorAll('[data-staff-permission]')].map(input=>[input.dataset.staffPermission,input.checked]));
+    if(position==='Manager'&&(!managerAssignments||managerAssignments.length!==branchIds.length||branchIds.some(id=>!managerAssignments.some(item=>item.branch_id===id)))){
+      message.textContent='Open Manage Permissions and configure access for every selected branch before creating this Manager.';
+      return;
+    }
     submitBtn.disabled=true;message.textContent='Creating staff account securely…';
     try{
-      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:CURRENT_RESTAURANT_ID,branch_ids:branchIds,full_name:fullName,display_name:displayName,position,username,permissions,pin}});
+      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:CURRENT_RESTAURANT_ID,branch_ids:branchIds,full_name:fullName,display_name:displayName,position,username,permissions,manager_assignments:position==='Manager'?managerAssignments:undefined,pin}});
       if(error){let errorMessage=error.message||'Unable to create staff account.';if(error.context&&typeof error.context.json==='function'){try{const detail=await error.context.json();if(detail&&detail.error)errorMessage=detail.error;}catch(_){}}throw new Error(errorMessage);}
       if(!data||data.success!==true)throw new Error(data?.error||'Staff account creation was not confirmed.');
       L.querySelector('#staffPin').value='';L.querySelector('#staffPinConfirm').value='';
