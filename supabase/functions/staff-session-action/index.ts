@@ -352,12 +352,44 @@ Deno.serve(async (req: Request) => {
         return json({ success: true, branch_id: session.branch_id, inactivity_timeout_minutes: isDispatcherSession ? null : 30, activity_recorded: body.activity === true });
       }
 
-      const now = new Date().toISOString();
-      const { error } = await admin.from("staff_sessions").update({
-        logout_at: now, last_seen_at: now, end_reason: "logout",
-      }).eq("id", sessionId).is("logout_at", null);
-      if (error) return json({ error: "Unable to record logout" }, 500);
-      return json({ success: true });
+      if (action === "end") {
+        if (session.logout_at) {
+          return json({ success: true, already_ended: true, logout_at: session.logout_at });
+        }
+
+        const now = new Date().toISOString();
+        const { data: endedSession, error: endError } = await admin.from("staff_sessions").update({
+          logout_at: now,
+          last_seen_at: now,
+          end_reason: "logout",
+        }).eq("id", sessionId).eq("user_id", actorId).is("logout_at", null)
+          .select("id,logout_at").maybeSingle();
+
+        if (endError) {
+          console.error("Staff session logout update failed:", endError.message);
+          return json({ error: "Unable to record logout. The session remains active." }, 500);
+        }
+
+        if (endedSession) {
+          return json({ success: true, already_ended: false, logout_at: endedSession.logout_at });
+        }
+
+        // Handle a concurrent/retried logout without falsely reporting success.
+        const { data: verifiedSession, error: verifyEndError } = await admin.from("staff_sessions")
+          .select("id,logout_at").eq("id", sessionId).eq("user_id", actorId).maybeSingle();
+
+        if (verifyEndError) {
+          console.error("Staff session logout verification failed:", verifyEndError.message);
+          return json({ error: "Unable to verify whether logout completed. Please retry." }, 500);
+        }
+        if (verifiedSession?.logout_at) {
+          return json({ success: true, already_ended: true, logout_at: verifiedSession.logout_at });
+        }
+
+        return json({ error: "Logout was not confirmed. The cashier session remains active." }, 409);
+      }
+
+      return json({ error: "Unsupported staff session action." }, 400);
     }
 
     if (action === "remove_branch_access") {
