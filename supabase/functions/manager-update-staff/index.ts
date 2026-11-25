@@ -13,7 +13,7 @@ const allowedModules = new Set([
   "inventory", "tables", "dispatcher", "payments", "menu", "discounts", "vouchers", "tax",
   "service_charge", "receipts", "printers", "transactions",
 ]);
-const allowedActions = new Set(["view", "create", "edit", "delete", "approve", "manage"]);
+const allowedActions = new Set(["view", "create", "edit", "delete", "approve", "manage", "void"]);
 const allowedTopLevelKeys = new Set([...legacyPermissionKeys, "staff_management", "modules"]);
 
 function isBooleanRecord(value: unknown): value is Record<string, boolean> {
@@ -40,6 +40,7 @@ function validatePermissions(value: unknown): value is Record<string, unknown> {
       if (!allowedModules.has(moduleName) || !isBooleanRecord(actionValue)) return false;
       for (const [actionName, enabled] of Object.entries(actionValue)) {
         if (!allowedActions.has(actionName) || typeof enabled !== "boolean") return false;
+        if (actionName === "void" && moduleName !== "orders") return false;
       }
     }
     return Object.keys(modules).length > 0;
