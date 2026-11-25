@@ -11947,7 +11947,26 @@ async function printSavedOrderReceipt(order) {
       "</table>" : "") +
     (payment ? "<div class='rule'></div>" + payment : "") +
     (config.footer ? "<div class='foot'>" + safe(config.footer) + "</div>" : "") +
-    "<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};<\/script></body></html>";
+    "
+<div id="cashierLogoutConfirmModal" class="cashier-confirm-backdrop" hidden aria-hidden="true">
+  <section class="cashier-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="cashierLogoutConfirmTitle" aria-describedby="cashierLogoutConfirmDescription">
+    <button type="button" class="cashier-confirm-close" id="cashierLogoutConfirmClose" aria-label="Cancel logout">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="cashier-confirm-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/></svg>
+    </div>
+    <p class="cashier-confirm-eyebrow">CASHIER SESSION</p>
+    <h2 id="cashierLogoutConfirmTitle">End Cashier Shift?</h2>
+    <p id="cashierLogoutConfirmDescription">Are you sure you want to log out? Your cashier session will end when you confirm.</p>
+    <div class="cashier-confirm-actions">
+      <button type="button" class="cashier-confirm-cancel" id="cashierLogoutConfirmCancel">Cancel</button>
+      <button type="button" class="cashier-confirm-submit" id="cashierLogoutConfirmSubmit">End Shift</button>
+    </div>
+  </section>
+</div>
+
+<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};<\/script></body></html>";
 
   if (config.connection && config.connection !== "browser") {
     console.warn("Configured printer connection requires a local print bridge; using browser printing for this receipt.", {
@@ -15188,14 +15207,55 @@ if (cashierAuthClient) {
    CASHIER LOGOUT / END SHIFT
 ========================= */
 
+function showCashierLogoutConfirmation() {
+  const modal = document.getElementById("cashierLogoutConfirmModal");
+  const cancelButton = document.getElementById("cashierLogoutConfirmCancel");
+  const closeButton = document.getElementById("cashierLogoutConfirmClose");
+  const confirmButton = document.getElementById("cashierLogoutConfirmSubmit");
+  if (!modal || !cancelButton || !closeButton || !confirmButton) {
+    return Promise.resolve(false);
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (confirmed) => {
+      if (settled) return;
+      settled = true;
+      modal.hidden = true;
+      modal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("cashier-confirm-open");
+      cancelButton.removeEventListener("click", onCancel);
+      closeButton.removeEventListener("click", onCancel);
+      confirmButton.removeEventListener("click", onConfirm);
+      document.removeEventListener("keydown", onKeyDown);
+      resolve(confirmed);
+    };
+    const onCancel = () => finish(false);
+    const onConfirm = () => finish(true);
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        finish(false);
+      }
+    };
+
+    cancelButton.addEventListener("click", onCancel);
+    closeButton.addEventListener("click", onCancel);
+    confirmButton.addEventListener("click", onConfirm);
+    document.addEventListener("keydown", onKeyDown);
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("cashier-confirm-open");
+    window.requestAnimationFrame(() => cancelButton.focus());
+  });
+}
+
 const cashierLogoutButton =
   document.getElementById("cashierLogoutButton");
 
 if (cashierLogoutButton) {
   cashierLogoutButton.addEventListener("click", async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to log out and end your cashier shift?"
-    );
+    const confirmed = await showCashierLogoutConfirmation();
 
     if (!confirmed) return;
 
@@ -16643,6 +16703,89 @@ body.pos-other-view .pos-sidebar {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
+}
+</style>
+
+
+<style id="edmel-cashier-centered-logout-modal">
+body.cashier-confirm-open { overflow: hidden; }
+.cashier-confirm-backdrop[hidden] { display: none !important; }
+.cashier-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(24, 31, 26, .42);
+  -webkit-backdrop-filter: blur(9px) saturate(.82);
+  backdrop-filter: blur(9px) saturate(.82);
+  opacity: 0;
+  animation: cashierConfirmBackdropIn .2s ease forwards;
+}
+.cashier-confirm-panel {
+  position: relative;
+  width: min(100%, 420px);
+  padding: 34px 32px 28px;
+  border: 1px solid rgba(255,255,255,.78);
+  border-radius: 22px;
+  background: #fffdf8;
+  box-shadow: 0 24px 70px rgba(25, 38, 29, .24), 0 3px 12px rgba(25,38,29,.08);
+  color: #263b2f;
+  text-align: center;
+  transform: translateY(12px) scale(.97);
+  animation: cashierConfirmPanelIn .24s cubic-bezier(.2,.8,.2,1) forwards;
+}
+.cashier-confirm-close {
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #68756b;
+  cursor: pointer;
+}
+.cashier-confirm-close:hover { background: #f1eee6; color: #294c38; }
+.cashier-confirm-close svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.cashier-confirm-icon {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 17px;
+  border-radius: 19px;
+  background: #f2eadc;
+  color: #76553a;
+}
+.cashier-confirm-icon svg { width: 29px; height: 29px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.cashier-confirm-eyebrow { margin: 0 0 7px; color: #8a765f; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.cashier-confirm-panel h2 { margin: 0 0 10px; color: #263b2f; font-size: 23px; line-height: 1.25; font-weight: 780; letter-spacing: -.025em; }
+.cashier-confirm-panel p#cashierLogoutConfirmDescription { max-width: 320px; margin: 0 auto; color: #69736c; font-size: 13px; line-height: 1.65; }
+.cashier-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 27px; }
+.cashier-confirm-actions button { min-height: 45px; padding: 10px 16px; border-radius: 12px; font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; transition: transform .16s ease, background .16s ease, box-shadow .16s ease; }
+.cashier-confirm-actions button:active { transform: scale(.98); }
+.cashier-confirm-cancel { border: 1px solid #dcded7; background: #fff; color: #405247; }
+.cashier-confirm-cancel:hover { background: #f5f3ed; }
+.cashier-confirm-submit { border: 1px solid #315343; background: #315343; color: #fff; box-shadow: 0 4px 10px rgba(49,83,67,.16); }
+.cashier-confirm-submit:hover { background: #274737; }
+.cashier-confirm-actions button:focus-visible,.cashier-confirm-close:focus-visible { outline: 3px solid rgba(117,159,111,.45); outline-offset: 2px; }
+@keyframes cashierConfirmBackdropIn { to { opacity: 1; } }
+@keyframes cashierConfirmPanelIn { to { opacity: 1; transform: translateY(0) scale(1); } }
+@media(max-width:520px) {
+  .cashier-confirm-backdrop { padding: 16px; }
+  .cashier-confirm-panel { padding: 31px 22px 23px; border-radius: 19px; }
+  .cashier-confirm-panel h2 { font-size: 21px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .cashier-confirm-backdrop,.cashier-confirm-panel { animation: none; opacity: 1; transform: none; }
+  .cashier-confirm-actions button { transition: none; }
 }
 </style>
 
