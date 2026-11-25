@@ -239,7 +239,20 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
     </div>
     <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Order</th><th>Placed</th><th>Customer / Table</th><th>Items</th><th>Order Status</th><th>Payment</th><th>Total</th></tr></thead><tbody id="managerOrdersRows"><tr><td colspan="7" class="empty">Loading orders…</td></tr></tbody></table></div></div>
    </section>
-   <div class="permission-note">This workspace is read-only. Order changes, voids, settlements and refunds remain in their authorized operational workflows.</div>
+   <section class="panel">
+    <div class="panel-head"><div><h2>Pending Void Requests</h2><p>Requests from this branch that require Manager review.</p></div><span class="status" id="managerVoidRequestCount">0 pending</span></div>
+    <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Order</th><th>Requested By</th><th>Order Status</th><th>Request Reason</th><th>Requested At</th><th>Action</th></tr></thead><tbody id="managerVoidRequestsRows"><tr><td colspan="6" class="empty">Loading pending requests…</td></tr></tbody></table></div></div>
+   </section>
+   <div class="permission-note">Order changes, void reviews, settlements and refunds are controlled by the permissions granted by the Owner or Admin. Paid or settled orders require a separate refund/correction workflow.</div>
+   <div class="manager-expense-modal" id="managerVoidReviewModal" hidden>
+    <form class="manager-expense-dialog" id="managerVoidReviewForm">
+     <h2 id="managerVoidReviewTitle">Review Void Request</h2>
+     <p id="managerVoidReviewDescription" class="note">Enter a reason for this decision. This action will be recorded in the audit log.</p>
+     <div class="field"><label for="managerVoidReviewReason">Review reason</label><textarea id="managerVoidReviewReason" rows="3" maxlength="500" required placeholder="Enter at least 3 characters"></textarea></div>
+     <p class="message" id="managerVoidReviewMessage" role="status"></p>
+     <div class="row"><button class="secondary" id="managerVoidReviewCancel" type="button">Cancel</button><button class="primary" id="managerVoidReviewSubmit" type="submit">Confirm</button></div>
+    </form>
+   </div>
   </div>
   <div id="staffWorkspace" class="ws">
   <div class="welcome">
@@ -550,6 +563,65 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
  $("managerReportingRefresh")?.addEventListener("click",()=>loadManagerReporting(currentManagerPage).catch(error=>showManagerReportingError(error.message||"Unable to refresh reporting.")));
 
+ function renderManagerVoidRequests(){
+  const rows=$("managerVoidRequestsRows");if(!rows)return;
+  const canApprove=moduleAccess("orders","approve");
+  $("managerVoidRequestCount").textContent=managerVoidRequests.length+" pending";
+  rows.innerHTML=managerVoidRequests.length?managerVoidRequests.map(request=>{
+   const order=managerOrders.find(item=>item.id===request.order_id);
+   const orderLabel=order?"#"+String(order.order_number):"Order";
+   const action=canApprove
+    ?'<button class="secondary" type="button" data-manager-void-action="approve" data-request-id="'+esc(request.id)+'">Review</button>'
+    :'<span class="note">Approval not permitted</span>';
+   return '<tr><td><strong>'+esc(orderLabel)+'</strong></td><td>'+esc(request.requested_by_name||"Staff")+'</td><td>'+esc(request.requested_order_status||"—")+'</td><td><div class="order-item-summary">'+esc(request.reason||"—")+'</div></td><td>'+esc(managerOrderDate(request.created_at))+'</td><td>'+action+'</td></tr>';
+  }).join(""):'<tr><td colspan="6" class="empty">No pending void requests for this branch.</td></tr>';
+ }
+ function openManagerVoidReview(requestId){
+  if(!moduleAccess("orders","approve")){notify("Orders Approve permission is not enabled for this branch.",true);return;}
+  const request=managerVoidRequests.find(item=>item.id===requestId);if(!request)return;
+  managerVoidReviewTarget={requestId:request.id,orderId:request.order_id,action:"approve"};
+  $("managerVoidReviewTitle").textContent="Review Void Request";
+  $("managerVoidReviewDescription").textContent="Choose whether to approve or reject this request, then enter a reason. Your decision will be recorded in the audit log.";
+  $("managerVoidReviewReason").value="";
+  $("managerVoidReviewMessage").textContent="";
+  $("managerVoidReviewSubmit").textContent="Approve Void";
+  $("managerVoidReviewSubmit").dataset.action="approve";
+  $("managerVoidReviewModal").hidden=false;
+ }
+ function closeManagerVoidReview(){
+  $("managerVoidReviewModal").hidden=true;managerVoidReviewTarget=null;
+  $("managerVoidReviewForm").reset();$("managerVoidReviewMessage").textContent="";
+ }
+ $("managerVoidRequestsRows")?.addEventListener("click",event=>{
+  const button=event.target.closest("[data-manager-void-action]");if(!button)return;
+  openManagerVoidReview(button.dataset.requestId);
+ });
+ $("managerVoidReviewCancel")?.addEventListener("click",closeManagerVoidReview);
+ $("managerVoidReviewForm")?.addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!managerVoidReviewTarget||!moduleAccess("orders","approve"))return;
+  const reason=String($("managerVoidReviewReason").value||"").trim();
+  if(reason.length<3||reason.length>500){$("managerVoidReviewMessage").textContent="Enter a reason between 3 and 500 characters.";return;}
+  if(!sessionId||!activeBranch){$("managerVoidReviewMessage").textContent="Your active branch session is unavailable. Please sign in again.";return;}
+  const action=$("managerVoidReviewSubmit").dataset.action||"approve";
+  const button=$("managerVoidReviewSubmit");button.disabled=true;
+  try{
+   const {data,error}=await sb.rpc("edmel_manager_review_order_void",{
+    p_order_id:managerVoidReviewTarget.orderId,
+    p_session_id:sessionId,
+    p_void_request_id:managerVoidReviewTarget.requestId,
+    p_action:action,
+    p_reason:reason
+   });
+   if(error)throw error;
+   if(!data?.success)throw new Error("The void request could not be reviewed.");
+   closeManagerVoidReview();
+   notify(action==="approve"?"Void request approved and order voided.":"Void request rejected.");
+   await loadManagerOrders();
+  }catch(error){
+   $("managerVoidReviewMessage").textContent=error.message||"Unable to review this void request.";
+  }finally{button.disabled=false;}
+ });
  function managerOrderStatus(order){return String(order.order_status||order.status||"Unknown").trim()||"Unknown";}
  function managerPaymentStatus(order){return String(order.payment_status||"Unknown").trim()||"Unknown";}
  function managerOrderTotal(value){const n=Number(value);return Number.isFinite(n)?n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"—";}
@@ -574,6 +646,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    return '<tr><td><div class="order-number">#'+esc(order.order_number??"—")+'</div><div class="order-meta">'+esc(order.order_type||"—")+'</div></td><td>'+esc(managerOrderDate(order.created_at))+'</td><td><strong>'+esc(customer)+'</strong><div class="order-meta">'+esc(table)+'</div></td><td><div class="order-item-summary">'+esc(managerOrderItemsText(order.id))+'</div></td><td><span class="status">'+esc(managerOrderStatus(order))+'</span></td><td><span class="status">'+esc(managerPaymentStatus(order))+'</span></td><td><strong>'+esc(managerOrderTotal(order.total))+'</strong></td></tr>';
   }).join(""):'<tr><td colspan="7" class="empty">No orders match the selected filters.</td></tr>';
   $("managerOrdersInfo").textContent="Branch: "+(activeBranch?.name||"Assigned branch")+". Showing "+filtered.length+" of "+managerOrders.length+" loaded orders (latest 200).";
+  renderManagerVoidRequests();
  }
  function showManagerOrdersError(message){const rows=$("managerOrdersRows");if(rows)rows.innerHTML='<tr><td colspan="7" class="empty">'+esc(message)+'</td></tr>';const info=$("managerOrdersInfo");if(info)info.textContent=message;}
  async function loadManagerOrders(){
@@ -593,7 +666,13 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
     if(requestId!==managerOrdersRequest||activeBranch?.id!==requestedBranchId)return;
     for(const item of items||[]){if(!loadedItemsByOrder[item.order_id])loadedItemsByOrder[item.order_id]=[];loadedItemsByOrder[item.order_id].push(item);}
    }
-   managerOrders=loadedOrders;managerOrderItemsByOrder=loadedItemsByOrder;
+   const {data:voidRequests,error:voidError}=await sb.from("order_void_requests")
+    .select("id,order_id,reason,request_status,requested_by_name,requested_order_status,created_at")
+    .eq("restaurant_id",RESTAURANT_ID).eq("branch_id",requestedBranchId).eq("request_status","pending")
+    .order("created_at",{ascending:false}).limit(100);
+   if(voidError)throw voidError;
+   if(requestId!==managerOrdersRequest||activeBranch?.id!==requestedBranchId)return;
+   managerOrders=loadedOrders;managerOrderItemsByOrder=loadedItemsByOrder;managerVoidRequests=voidRequests||[];
    const statuses=[...new Set(managerOrders.map(managerOrderStatus).filter(s=>s&&s!=="Unknown"))].sort();
    const statusSelect=$("managerOrdersStatus"),previous=statusSelect.value;
    statusSelect.innerHTML='<option value="">All order statuses</option>'+statuses.map(value=>'<option value="'+esc(value)+'">'+esc(value)+'</option>').join("");
@@ -763,6 +842,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
 
  let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true, managerAuthUserId=null, managerExpenseRows=[], managerExpenseCategories=[], managerExpenseRequests=[], managerExpenseNotifications=[], managerEmergencyRequests=[], managerEmergencyNotifications=[], managerExpenseCurrency="USD", managerExpenseLoading=false;
  let managerOrders=[],managerOrderItemsByOrder={},managerOrdersLoading=false,managerOrdersRequest=0;
+ let managerVoidRequests=[],managerVoidReviewTarget=null;
  let pendingApprovalActions=[], approvalBatches=[];
  let managerBranchPolicy={manager_creation_mode:"not_allowed"},managerBranchRequests=[],managerBranchLoading=false,managerBranchError="";
 
@@ -1337,7 +1417,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   $("approvalRequestPanel").hidden=ownPermissions.approval_request_access!==true;
   if(ownPermissions.approval_request_access!==true){pendingApprovalActions=[];renderApprovalQueue();}
   sessionStorage.setItem("edmel_manager_branch",next.id);
-  managerOrdersRequest++;managerOrdersLoading=false;managerOrders=[];managerOrderItemsByOrder={};
+  managerOrdersRequest++;managerOrdersLoading=false;managerOrders=[];managerOrderItemsByOrder={};managerVoidRequests=[];renderManagerVoidRequests();
   managerReportingRequest++;managerReportingData=null;await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
  });
  $("managerBranchDirectoryFilter")?.addEventListener("change",()=>renderManagerBranchWorkspace());
