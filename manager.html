@@ -208,6 +208,21 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    <p id="moduleDescription">This module is available according to the permissions assigned by the Owner or Admin.</p>
    <div class="permission-note" id="modulePermissionNote">Access is restricted to your assigned branch. Operational data and actions will be enabled only after their branch-scoped integrations are verified.</div>
   </section>
+  <div id="managerReportingWorkspace" class="ws" hidden>
+   <div class="welcome"><div><h1 id="managerReportingTitle">Overview</h1><p id="managerReportingDescription">Verified settled sales for your active assigned branch.</p></div><button class="secondary" id="managerReportingRefresh" type="button">Refresh</button></div>
+   <div class="stats">
+    <div class="stat"><span>Sales Today</span><strong id="managerReportSalesToday">—</strong></div>
+    <div class="stat"><span>Paid Orders Today</span><strong id="managerReportPaidOrders">—</strong></div>
+    <div class="stat"><span>Average Paid Order</span><strong id="managerReportAverage">—</strong></div>
+    <div class="stat"><span>Settled Orders · 7 Days</span><strong id="managerReportOrders7d">—</strong></div>
+   </div>
+   <section class="panel">
+    <div class="panel-head"><div><h2>Daily Sales</h2><p id="managerReportingPeriod">Last 7 days, based on branch timezone and settled paid orders.</p></div></div>
+    <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Paid Orders</th><th>Sales</th></tr></thead><tbody id="managerReportingDaily"><tr><td colspan="3" class="empty">Loading verified reporting data…</td></tr></tbody></table></div></div>
+   </section>
+   <div class="permission-note">Only settled and paid orders are included in sales totals. Voided, cancelled and refunded orders are excluded. Figures are limited to the selected assigned branch.</div>
+   <p class="message" id="managerReportingMessage" role="status"></p>
+  </div>
   <div id="ordersWorkspace" class="ws" hidden>
    <div class="welcome"><div><h1>Orders & Transactions</h1><p>Read-only order history for the active assigned branch.</p></div><button class="secondary" id="managerOrdersRefreshButton" type="button">Refresh</button></div>
    <div class="stats">
@@ -458,11 +473,13 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const realExpensesWorkspace=key==="expenses"&&moduleAccess("expenses","view");
   const realBranchesWorkspace=key==="branches"&&moduleAccess("branches","view");
   const realOrdersWorkspace=key==="orders"&&moduleAccess("orders","view");
+  const realReportingWorkspace=(key==="overview"||key==="sales")&&moduleAccess(key,"view");
   $("staffWorkspace").hidden=!realStaffWorkspace;
   $("expensesWorkspace").hidden=!realExpensesWorkspace;
   $("branchesWorkspace").hidden=!realBranchesWorkspace;
   $("ordersWorkspace").hidden=!realOrdersWorkspace;
-  $("modulePlaceholder").hidden=realStaffWorkspace||realExpensesWorkspace||realBranchesWorkspace||realOrdersWorkspace;
+  $("managerReportingWorkspace").hidden=!realReportingWorkspace;
+  $("modulePlaceholder").hidden=realStaffWorkspace||realExpensesWorkspace||realBranchesWorkspace||realOrdersWorkspace||realReportingWorkspace;
   if(realStaffWorkspace){
    $("moduleTitle").textContent="Staff & Permissions";
    return;
@@ -479,6 +496,12 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    loadManagerOrders().catch(error=>showManagerOrdersError(error.message||"Unable to load orders."));
    return;
   }
+  if(realReportingWorkspace){
+   $("managerReportingTitle").textContent=key==="sales"?"Sales & Analytics":"Overview";
+   $("managerReportingDescription").textContent=key==="sales"?"Daily settled sales and order performance for the active assigned branch.":"A live summary of settled sales and paid orders for the active assigned branch.";
+   loadManagerReporting(key).catch(error=>showManagerReportingError(error.message||"Unable to load reporting data."));
+   return;
+  }
   $("moduleTitle").textContent=item[1];
   $("moduleDescription").textContent=key==="staff"
    ?"Staff module visibility is granted, but the existing staff-management workflow requires the dedicated branch staff-management permission. Ask the Owner or Admin to enable it."
@@ -487,6 +510,45 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
 
 
+
+ 
+ let managerReportingRequest=0,managerReportingData=null;
+ function managerReportMoney(value,currency){
+  const amount=Number(value);
+  if(!Number.isFinite(amount))return "—";
+  try{return new Intl.NumberFormat("en-US",{style:"currency",currency:currency||"USD",maximumFractionDigits:2}).format(amount);}
+  catch(_){return (currency||"")+" "+amount.toFixed(2);}
+ }
+ function showManagerReportingError(message){
+  $("managerReportingMessage").textContent=message;
+  $("managerReportingDaily").innerHTML='<tr><td colspan="3" class="empty">'+esc(message)+'</td></tr>';
+ }
+ async function loadManagerReporting(moduleKey=currentManagerPage){
+  if(!activeBranch||!["overview","sales"].includes(moduleKey)||!moduleAccess(moduleKey,"view"))return;
+  const requestId=++managerReportingRequest,branchId=activeBranch.id;
+  $("managerReportingMessage").textContent="Loading branch reporting…";
+  $("managerReportingDaily").innerHTML='<tr><td colspan="3" class="empty">Loading verified reporting data…</td></tr>';
+  const {data,error}=await sb.rpc("edmel_get_manager_sales_summary",{
+   p_restaurant_id:RESTAURANT_ID,p_branch_id:branchId,p_module:moduleKey
+  });
+  if(error)throw error;
+  if(requestId!==managerReportingRequest||activeBranch?.id!==branchId||currentManagerPage!==moduleKey)return;
+  if(!data||data.branch_id!==branchId)throw new Error("The reporting response did not match the selected branch.");
+  managerReportingData=data;
+  $("managerReportSalesToday").textContent=managerReportMoney(data.sales_today,data.currency);
+  $("managerReportPaidOrders").textContent=String(data.paid_orders_today??0);
+  $("managerReportAverage").textContent=managerReportMoney(data.average_paid_order_today,data.currency);
+  $("managerReportOrders7d").textContent=String(data.settled_orders_7d??0);
+  const daily=Array.isArray(data.daily)?data.daily:[];
+  $("managerReportingDaily").innerHTML=daily.length?daily.map(row=>{
+   const day=new Date(String(row.day)+"T12:00:00");
+   const label=Number.isNaN(day.getTime())?String(row.day):day.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+   return '<tr><td>'+esc(label)+'</td><td>'+esc(row.paid_orders??0)+'</td><td><strong>'+esc(managerReportMoney(row.sales,data.currency))+'</strong></td></tr>';
+  }).join(""):'<tr><td colspan="3" class="empty">No settled sales in this period.</td></tr>';
+  $("managerReportingPeriod").textContent="Last 7 days · "+esc(data.timezone||"Branch timezone")+" · "+esc(data.period_start)+" to "+esc(data.period_end);
+  $("managerReportingMessage").textContent="Reporting data refreshed for "+(activeBranch.name||"the selected branch")+".";
+ }
+ $("managerReportingRefresh")?.addEventListener("click",()=>loadManagerReporting(currentManagerPage).catch(error=>showManagerReportingError(error.message||"Unable to refresh reporting.")));
 
  function managerOrderStatus(order){return String(order.order_status||order.status||"Unknown").trim()||"Unknown";}
  function managerPaymentStatus(order){return String(order.payment_status||"Unknown").trim()||"Unknown";}
@@ -1276,7 +1338,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   if(ownPermissions.approval_request_access!==true){pendingApprovalActions=[];renderApprovalQueue();}
   sessionStorage.setItem("edmel_manager_branch",next.id);
   managerOrdersRequest++;managerOrdersLoading=false;managerOrders=[];managerOrderItemsByOrder={};
-  await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
+  managerReportingRequest++;managerReportingData=null;await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
  });
  $("managerBranchDirectoryFilter")?.addEventListener("change",()=>renderManagerBranchWorkspace());
  $("managerBranchRefreshButton")?.addEventListener("click",()=>loadManagerBranchWorkspace().catch(error=>showManagerBranchWorkspaceError(error.message||"Unable to refresh branches.")));
