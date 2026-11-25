@@ -571,21 +571,22 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    const order=managerOrders.find(item=>item.id===request.order_id);
    const orderLabel=order?"#"+String(order.order_number):"Order";
    const action=canApprove
-    ?'<button class="secondary" type="button" data-manager-void-action="approve" data-request-id="'+esc(request.id)+'">Review</button>'
+    ?'<div class="staff-actions"><button class="primary" type="button" data-manager-void-action="approve" data-request-id="'+esc(request.id)+'">Approve</button><button class="danger" type="button" data-manager-void-action="reject" data-request-id="'+esc(request.id)+'">Reject</button></div>'
     :'<span class="note">Approval not permitted</span>';
    return '<tr><td><strong>'+esc(orderLabel)+'</strong></td><td>'+esc(request.requested_by_name||"Staff")+'</td><td>'+esc(request.requested_order_status||"—")+'</td><td><div class="order-item-summary">'+esc(request.reason||"—")+'</div></td><td>'+esc(managerOrderDate(request.created_at))+'</td><td>'+action+'</td></tr>';
   }).join(""):'<tr><td colspan="6" class="empty">No pending void requests for this branch.</td></tr>';
  }
- function openManagerVoidReview(requestId){
+ function openManagerVoidReview(requestId,action){
   if(!moduleAccess("orders","approve")){notify("Orders Approve permission is not enabled for this branch.",true);return;}
+  if(!["approve","reject"].includes(action))return;
   const request=managerVoidRequests.find(item=>item.id===requestId);if(!request)return;
-  managerVoidReviewTarget={requestId:request.id,orderId:request.order_id,action:"approve"};
-  $("managerVoidReviewTitle").textContent="Review Void Request";
-  $("managerVoidReviewDescription").textContent="Choose whether to approve or reject this request, then enter a reason. Your decision will be recorded in the audit log.";
+  managerVoidReviewTarget={requestId:request.id,orderId:request.order_id,action};
+  $("managerVoidReviewTitle").textContent=action==="approve"?"Approve Void Request":"Reject Void Request";
+  $("managerVoidReviewDescription").textContent=(action==="approve"?"Approving will void the order. ":"Rejecting will keep the order active. ")+"Enter a reason for this decision. It will be recorded in the audit log.";
   $("managerVoidReviewReason").value="";
   $("managerVoidReviewMessage").textContent="";
-  $("managerVoidReviewSubmit").textContent="Approve Void";
-  $("managerVoidReviewSubmit").dataset.action="approve";
+  $("managerVoidReviewSubmit").textContent=action==="approve"?"Confirm Approval":"Confirm Rejection";
+  $("managerVoidReviewSubmit").dataset.action=action;
   $("managerVoidReviewModal").hidden=false;
  }
  function closeManagerVoidReview(){
@@ -594,7 +595,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
  $("managerVoidRequestsRows")?.addEventListener("click",event=>{
   const button=event.target.closest("[data-manager-void-action]");if(!button)return;
-  openManagerVoidReview(button.dataset.requestId);
+  openManagerVoidReview(button.dataset.requestId,button.dataset.managerVoidAction);
  });
  $("managerVoidReviewCancel")?.addEventListener("click",closeManagerVoidReview);
  $("managerVoidReviewForm")?.addEventListener("submit",async event=>{
