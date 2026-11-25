@@ -5277,13 +5277,17 @@ async function staffAddForm(){
   L.querySelector('#staffManagerPermissionsButton').addEventListener('click',()=>{
     const branchIds=selectedManagerBranches();
     if(!branchIds.length){toast('Select at least one Manager branch first',1);return;}
+    const staffBranchInputs=[...L.querySelectorAll('[data-staff-branch]')];
+    const managerPermissionStatus=L.querySelector('#staffManagerPermissionStatus');
     managerPermissionsEditor({position:'Manager',full_name:L.querySelector('#staffFullName').value.trim(),display_name:L.querySelector('#staffDisplayName').value.trim(),cashier_username:L.querySelector('#staffUsername').value.trim()},{
       createMode:true,branchIds,
       onDraftSave:assignments=>{
         managerAssignments=assignments;
         const savedIds=new Set(assignments.map(item=>item.branch_id));
-        L.querySelectorAll('[data-staff-branch]').forEach(input=>{input.checked=savedIds.has(input.dataset.staffBranch);});
-        L.querySelector('#staffManagerPermissionStatus').textContent='Permissions configured for '+assignments.length+' branch(es). You can reopen Manage Permissions to revise them.';
+        staffBranchInputs.forEach(input=>{input.checked=savedIds.has(input.dataset.staffBranch);});
+        if(managerPermissionStatus){
+          managerPermissionStatus.textContent='Permissions configured for '+assignments.length+' branch(es). You can reopen Manage Permissions to revise them.';
+        }
       }
     });
   });
