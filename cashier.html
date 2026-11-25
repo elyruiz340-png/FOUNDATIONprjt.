@@ -6816,6 +6816,27 @@ background:
   </div>
 </div>
 
+<style id="edmel-cashier-login-clean-layout">
+/* Login copy and spacing refinement only. Existing card border and glass styling remain untouched. */
+.cashier-login-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+#cashierLoginSubtitle { margin-bottom: 20px !important; }
+#cashierUsernameStep #cashierUsername { margin-top: 0 !important; }
+#cashierUsernameStep #cashierContinueButton { margin-top: 17px !important; }
+.cashier-verification-box { height: 42px !important; margin-top: 9px !important; }
+.cashier-verification-caption { margin-top: 0 !important; }
+.cashier-login-footer { margin-top: 19px !important; padding-top: 13px !important; }
+</style>
+
 <!-- =========================
      CASHIER LOGIN SCREEN
 ========================= -->
@@ -6823,11 +6844,11 @@ background:
   <div class="cashier-login-card">
     <div class="cashier-login-brand">HALINA BISTRO CAFE</div>
     <h1 id="cashierLoginTitle">Welcome Back</h1>
-    <p id="cashierLoginSubtitle">Enter your cashier username to continue</p>
+    <p id="cashierLoginSubtitle">Enter your cashier username</p>
     <form id="cashierLoginForm" novalidate>
       <div id="cashierUsernameStep">
-        <label for="cashierUsername">Cashier Username</label>
-        <input id="cashierUsername" name="username" type="text" autocomplete="username" required>
+        <label class="cashier-login-visually-hidden" for="cashierUsername">Cashier Username</label>
+        <input id="cashierUsername" name="username" type="text" autocomplete="username" placeholder="Cashier Username" aria-label="Cashier Username" required>
         <button id="cashierContinueButton" type="button">Continue</button>
       </div>
      <div id="cashierPinStep" hidden>
@@ -6866,10 +6887,10 @@ background:
   </div>
 </div>
       <div class="cashier-verification-box" aria-hidden="true"><div class="cashier-verification-cube"></div></div>
-      <p class="cashier-verification-caption">Secure cashier verification</p>
+      <p class="cashier-verification-caption">Secure verification</p>
       <p id="cashierLoginMessage" role="alert" aria-live="polite"></p>
     </form>
-    <p class="cashier-login-footer">Authorized cashier access only</p>
+    <p class="cashier-login-footer">Authorized Access Only</p>
   </div>
 </div>
 
@@ -14037,7 +14058,7 @@ function cashierShowUsernameStep() {
 
   cashierLoginTitle.textContent = "Welcome Back";
   cashierLoginSubtitle.textContent =
-    "Enter your cashier username to continue";
+    "Enter your cashier username";
 
   cashierLoginScreen.classList.remove("cashier-verifying");
   cashierLoginMessage.textContent = "";
