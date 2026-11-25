@@ -71,6 +71,10 @@ Deno.serve(async (req: Request) => {
           locked: true,
         }, 423);
       }
+      return json({
+        error: "This cashier account already has an active session. Return to its assigned screen or wait for the session to expire.",
+        active_session: true,
+      }, 409);
     }
 
     const { data: userResult, error: userError } =
