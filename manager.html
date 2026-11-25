@@ -457,9 +457,12 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  let currentManagerPage="";
  function permissionAllows(permissions,module,action="view"){
   const p=permissions||{};
-  if(p.modules&&typeof p.modules==="object"){
-   const grant=p.modules[module];
-   return !!grant&&typeof grant==="object"&&(grant.manage===true||grant[action]===true);
+  if(Object.prototype.hasOwnProperty.call(p,"modules")){
+   if(!p.modules||typeof p.modules!=="object"||Array.isArray(p.modules))return false;
+   if(Object.prototype.hasOwnProperty.call(p.modules,module)){
+    const grant=p.modules[module];
+    return !!grant&&typeof grant==="object"&&!Array.isArray(grant)&&(grant.manage===true||grant[action]===true);
+   }
   }
   const legacyMap={orders:"orders",transactions:"orders",payments:"orders",inventory:"stocks",staff:"staff_management",
    tables:"tables",dispatcher:"dispatcher",settings:"settings",menu:"settings",discounts:"settings",vouchers:"settings",
@@ -470,32 +473,18 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
  function managerCanGrant(module,action){return permissionAllows(ownPermissions,module,action);}
  function moduleAccess(key, action="view"){
-  const p=ownPermissions||{};
-  const allows=(grant,requestedAction)=>{
-   if(!grant||typeof grant!=="object")return false;
-   if(grant.manage===true)return true;
-   return grant[requestedAction]===true;
-  };
-  if(p.modules&&typeof p.modules==="object"){
-   if(key==="orders"){
-    return allows(p.modules.orders,action)||allows(p.modules.transactions,action);
-   }
-   if(key==="settings"){
-    const businessModules=["settings","inventory","tables","dispatcher","payments","menu","discounts","vouchers","tax","service_charge","receipts","printers","transactions"];
-    return businessModules.some(name=>allows(p.modules[name],action));
-   }
-   return allows(p.modules[key],action);
+  if(key==="orders"&&ownPermissions?.modules&&typeof ownPermissions.modules==="object"){
+   const modules=ownPermissions.modules;
+   const hasOrders=Object.prototype.hasOwnProperty.call(modules,"orders");
+   const hasTransactions=Object.prototype.hasOwnProperty.call(modules,"transactions");
+   if(hasOrders||hasTransactions)return (hasOrders&&permissionAllows(ownPermissions,"orders",action))||(hasTransactions&&permissionAllows(ownPermissions,"transactions",action));
   }
-  const legacy={
-   overview:[],sales:[],orders:["orders"],tables:["tables"],inventory:["stocks"],dispatcher:["dispatcher"],
-   expenses:[],staff:["staff_management"],audit:[],branches:[],health:[],ai:[],
-   settings:["settings","tables","stocks","dispatcher"],menu:["settings"],discounts:["settings"],vouchers:["settings"],
-   tax:["settings"],service_charge:["settings"],receipts:["settings"],printers:["settings"],
-   payments:["settings"],transactions:["orders"]
-  };
-  if(key==="orders")return p.orders===true;
-  if(key==="branches")return false;
-  return (legacy[key]||[]).some(k=>p[k]===true);
+  if(key==="orders")return permissionAllows(ownPermissions,"orders",action);
+  if(key==="settings"){
+   const businessModules=["settings","inventory","tables","dispatcher","payments","menu","discounts","vouchers","tax","service_charge","receipts","printers","transactions"];
+   return businessModules.some(name=>permissionAllows(ownPermissions,name,action));
+  }
+  return permissionAllows(ownPermissions,key,action);
  }
  function hasAnyManagerPermission(){
   if(ownPermissions?.modules&&typeof ownPermissions.modules==="object")return Object.values(ownPermissions.modules).some(v=>v&&typeof v==="object"&&Object.values(v).some(x=>x===true));
@@ -1178,15 +1167,12 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  $("refreshApprovalsButton").addEventListener("click",loadApprovalInbox);
 
  function permissionChips(permissions){
-   if(permissions?.modules&&typeof permissions.modules==="object"){
-    const grants=[];
-    for(const [module,actions] of Object.entries(permissions.modules)){
-     if(!actions||typeof actions!=="object")continue;
-     const enabled=permissionActions.filter(action=>actions.manage===true||actions[action]===true);
-     if(enabled.length)grants.push(module+": "+enabled.join(", "));
-    }
-    return grants.length?grants.map(label=>'<span class="chip">'+esc(label)+'</span>').join(""):'<span class="note">No permissions</span>';
+   const grants=[];
+   for(const [module,label] of actionPermissionModules){
+    const enabled=permissionActions.filter(action=>permissionAllows(permissions,module,action));
+    if(enabled.length)grants.push(label+": "+enabled.join(", "));
    }
+   if(grants.length)return grants.map(label=>'<span class="chip">'+esc(label)+'</span>').join("");
    return Object.keys(permissionLabels).filter(key=>permissions?.[key]===true).map(key=>'<span class="chip">'+permissionLabels[key]+'</span>').join("")||'<span class="note">No permissions</span>';
   }
  function staffIsOnline(staffId){
@@ -1214,9 +1200,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const online=staffRows.filter(u=>u.is_active&&u.branchAccess.is_active&&staffIsOnline(u.id)).length;
   $("statStaff").textContent=staffRows.filter(u=>u.branchAccess.is_active&&u.is_active).length;
   $("statOnline").textContent=online;
-  $("statPermissions").textContent=ownPermissions.modules&&typeof ownPermissions.modules==="object"
-    ?Object.values(ownPermissions.modules).reduce((sum,grant)=>sum+(grant&&typeof grant==="object"?permissionActions.filter(action=>grant.manage===true||grant[action]===true).length:0),0)
-    :Object.keys(permissionLabels).filter(k=>ownPermissions[k]===true).length;
+  $("statPermissions").textContent=actionPermissionModules.reduce((sum,[module])=>sum+permissionActions.filter(action=>permissionAllows(ownPermissions,module,action)).length,0);
   notify(sessionError?"Staff loaded. Session history could not be refreshed.":"");
  }
 
@@ -1481,10 +1465,6 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  let editingStaffId=null;
   let editingStaffPermissions={};
   function currentPermissionValue(permissions,module,action){
-   if(permissions?.modules&&typeof permissions.modules==="object"){
-    const grant=permissions.modules[module];
-    return !!grant&&typeof grant==="object"&&(grant.manage===true||grant[action]===true);
-   }
    return permissionAllows(permissions,module,action);
   }
   function renderActionPermissionEditor(current){
@@ -1535,7 +1515,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
      const input=$("actionPermissionEditor").querySelector('input[data-module="'+module+'"][data-action="'+action+'"]');
      grant[action]=input?input.checked:currentPermissionValue(editingStaffPermissions,module,action);
     }
-    if(Object.values(grant).some(Boolean))modules[module]=grant;
+    modules[module]=grant;
    }
    const permissions={modules};
    $("savePermissionButton").disabled=true;
