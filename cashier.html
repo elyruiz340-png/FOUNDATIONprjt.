@@ -16632,5 +16632,19 @@ body.pos-other-view .page-section,body.pos-other-view #message{margin-left:72px}
 @media(prefers-reduced-motion:reduce){.pos-sidebar-btn{transition:none!important}}
 </style>
 
+
+<style id="edmel-transparent-sidebar-rail">
+/* Keep the outer sidebar rail visually continuous with the page canvas.
+   Floating navigation groups retain their existing independent surfaces. */
+body.pos-other-view {
+  background: #f7f3ec !important;
+}
+body.pos-other-view .pos-sidebar {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+</style>
+
 </body>
 </html>
