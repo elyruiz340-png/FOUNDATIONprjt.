@@ -122,6 +122,20 @@ input,select{background:var(--s);border:1px solid var(--bd);border-radius:10px;p
 .pn{top:62px;right:16px;width:min(380px,94vw);max-height:70vh;padding:14px;border-radius:16px;animation:up .2s}
 .pn.s{left:50%;right:auto;transform:translateX(-50%);width:min(560px,94vw)}
 .fl{display:grid;gap:4px;margin-bottom:10px}.fl input,.fl select{width:100%}
+/* Add Staff modal: explicit hidden handling is required because .fl sets display:grid. */
+.md.staff-add-panel{top:50%;left:50%;transform:translate(-50%,-50%);width:min(640px,calc(100vw - 28px));max-height:min(88vh,820px);padding:22px;border-radius:20px;overflow-y:auto;overscroll-behavior:contain}
+.md.staff-add-panel .staff-add-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
+.md.staff-add-panel .staff-add-full{grid-column:1/-1}
+.md.staff-add-panel .fl[hidden]{display:none!important}
+.md.staff-add-panel .staff-perm-row{min-height:48px;padding:10px 14px;background:var(--s);border-color:var(--bd)}
+.md.staff-add-panel .staff-perm-row>span{font-size:14px;font-weight:550;line-height:1.35}
+.md.staff-add-panel .staff-switch{appearance:none!important;-webkit-appearance:none!important;display:block;box-sizing:border-box;width:44px!important;min-width:44px;max-width:44px;height:25px!important;min-height:25px;margin:0!important;padding:0!important;border-radius:999px;border:1px solid #7b8580;background:#7b8580;accent-color:transparent;position:relative;cursor:pointer;transition:background .18s,border-color .18s;flex:0 0 44px;box-shadow:none!important}
+.md.staff-add-panel .staff-switch::before{content:"";position:absolute;width:19px;height:19px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px #0003;transition:transform .18s}
+.md.staff-add-panel .staff-switch:checked{background:#27966C!important;border-color:#27966C!important}
+.md.staff-add-panel .staff-switch:checked::before{transform:translateX(19px)}
+.md.staff-add-panel .staff-switch:focus-visible{outline:3px solid #27966C55;outline-offset:3px}
+.md.staff-add-panel .tb{position:sticky;bottom:-22px;margin:14px -22px -22px;padding:12px 22px 16px;background:var(--gf);border-top:1px solid var(--bd);z-index:2}
+@media(max-width:620px){.md.staff-add-panel{width:calc(100vw - 16px);max-height:92vh;padding:16px}.md.staff-add-panel .staff-add-grid{grid-template-columns:1fr}.md.staff-add-panel .staff-add-full{grid-column:auto}.md.staff-add-panel .tb{bottom:-16px;margin:12px -16px -16px;padding:10px 16px 14px}}
 /* Ensure the new-category fields stay hidden unless the special option is selected. */
 #miNewCatWrap[hidden]{display:none!important}
 #toast{position:fixed;right:18px;bottom:18px;z-index:60;display:grid;gap:8px}
@@ -5216,7 +5230,7 @@ async function staffAddForm(){
     : (activeBranches.find(branch=>branch.is_default===true)||activeBranches[0]).id;
   const singleOptions=activeBranches.map(branch=>'<option value="'+esc(branch.id)+'"'+(branch.id===preferredBranch?' selected':'')+'>'+esc(branch.name)+' · '+esc(branch.code||'')+'</option>').join('');
   const multiOptions=activeBranches.map(branch=>'<label class="row" style="justify-content:flex-start;gap:10px;padding:7px 0"><input type="checkbox" data-staff-branch="'+esc(branch.id)+'" '+(branch.id===preferredBranch?'checked':'')+'><span><strong>'+esc(branch.name)+'</strong><span class="mu" style="display:block;font-size:12px">'+esc(branch.code||'Branch')+'</span></span></label>').join('');
-  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md" role="dialog" aria-modal="true" aria-labelledby="staffFormTitle">
+  L.innerHTML=`<div class="bk" data-a="close"></div><div class="md staff-add-panel" role="dialog" aria-modal="true" aria-labelledby="staffFormTitle">
     <h3 id="staffFormTitle">Add Staff Member</h3><p class="note">Create a staff account with an initial six-digit PIN. No personal email is required.</p>
     <form id="staffAddForm" autocomplete="off">
       <div class="fl"><label for="staffFullName">Full Name *</label><input id="staffFullName" required maxlength="100" placeholder="Enter full name"></div>
@@ -5245,7 +5259,7 @@ async function staffAddForm(){
   };
   if(!document.getElementById('staff-role-toggle-css')){
     const style=document.createElement('style');style.id='staff-role-toggle-css';
-    style.textContent='.staff-perm-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}.staff-switch{appearance:none;-webkit-appearance:none;width:44px;height:25px;border-radius:999px;border:1px solid var(--bd);background:#aeb5b1;position:relative;cursor:pointer;transition:background .18s,border-color .18s;flex:0 0 auto}.staff-switch:before{content:"";position:absolute;width:19px;height:19px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px #0003;transition:transform .18s}.staff-switch:checked{background:#27966C;border-color:#27966C}.staff-switch:checked:before{transform:translateX(19px)}.staff-switch:focus-visible{outline:3px solid #27966C55;outline-offset:2px}';
+    style.textContent='.md.staff-add-panel .staff-perm-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 14px;min-height:48px;border:1px solid var(--bd);border-radius:12px;background:var(--s)}.md.staff-add-panel .staff-perm-row>span{font-size:14px;font-weight:550;line-height:1.35}.md.staff-add-panel .staff-switch{appearance:none!important;-webkit-appearance:none!important;display:block;box-sizing:border-box;width:44px!important;min-width:44px;max-width:44px;height:25px!important;min-height:25px;margin:0!important;padding:0!important;border-radius:999px;border:1px solid #7b8580;background:#7b8580;accent-color:transparent;position:relative;cursor:pointer;transition:background .18s,border-color .18s;flex:0 0 44px;box-shadow:none!important}.md.staff-add-panel .staff-switch::before{content:"";position:absolute;width:19px;height:19px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px #0003;transition:transform .18s}.md.staff-add-panel .staff-switch:checked{background:#27966C!important;border-color:#27966C!important}.md.staff-add-panel .staff-switch:checked::before{transform:translateX(19px)}.md.staff-add-panel .staff-switch:focus-visible{outline:3px solid #27966C55;outline-offset:3px}';
     document.head.appendChild(style);
   }
   const renderRolePermissions=()=>{
