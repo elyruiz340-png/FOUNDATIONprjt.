@@ -14551,26 +14551,43 @@ async function loadCashierAssignedBranches() {
 }
 
 async function endStaffPresence() {
-  window.EDMEL_ACCESS_TOKEN = null;
-  window.EDMEL_TENANT_CONTEXT = null;
-  try {
-        localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY);
-        localStorage.removeItem(HALINA_CASHIER_RESTAURANT_STORAGE_KEY);
-      } catch (_) {}
-  clearCashierLockScreen();
-  const branchSwitch = document.getElementById("cashierBranchSwitch");
-  if (branchSwitch) branchSwitch.style.display = "none";
-  stopStaffHeartbeat();
-  if (!halinaStaffSessionId) return;
   const sessionId = halinaStaffSessionId;
+  if (!sessionId) {
+    throw new Error("The active cashier session could not be identified. Please refresh and verify the session before logging out.");
+  }
+
+  stopStaffHeartbeat();
+  clearStaffInactivityTimer();
+
+  try {
+    // Do not clear local session data until the server confirms logout.
+    await callStaffSessionAction("end", sessionId);
+  } catch (error) {
+    console.error("Could not confirm staff logout:", error.message || error);
+
+    // Keep the current session context so the cashier can retry safely.
+    if (halinaStaffSessionId === sessionId && !halinaStaffHeartbeatTimer) {
+      halinaStaffHeartbeatTimer = setInterval(sendStaffHeartbeat, 45000);
+      scheduleStaffInactivityExpiry();
+    }
+
+    throw new Error("Unable to confirm logout with the server. Your cashier session is still active. Please try again.");
+  }
+
   halinaStaffSessionId = null;
   halinaStaffPresenceUserId = null;
   clearStaffInactivityTimer();
+  window.EDMEL_ACCESS_TOKEN = null;
+  window.EDMEL_TENANT_CONTEXT = null;
+
   try {
-    await callStaffSessionAction("end", sessionId);
-  } catch (error) {
-    console.warn("Could not record staff logout:", error.message || error);
-  }
+    localStorage.removeItem(HALINA_CASHIER_SESSION_STORAGE_KEY);
+    localStorage.removeItem(HALINA_CASHIER_RESTAURANT_STORAGE_KEY);
+  } catch (_) {}
+
+  clearCashierLockScreen();
+  const branchSwitch = document.getElementById("cashierBranchSwitch");
+  if (branchSwitch) branchSwitch.style.display = "none";
 }
 
 /* Only genuine user interaction refreshes the inactivity clock. */
