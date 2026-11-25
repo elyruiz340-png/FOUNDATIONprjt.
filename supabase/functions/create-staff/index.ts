@@ -45,6 +45,7 @@ Deno.serve(async (req: Request) => {
     const username = typeof body.username === "string" ? body.username.trim() : "";
     const pin = typeof body.pin === "string" ? body.pin : "";
     const suppliedPermissions = body.permissions;
+    const managerAssignments = body.manager_assignments;
     const rawBranchIds = Array.isArray(body.branch_ids)
       ? body.branch_ids
       : (typeof body.branch_id === "string" ? [body.branch_id] : []);
@@ -55,13 +56,40 @@ Deno.serve(async (req: Request) => {
     if (!["Cashier", "Manager", "Kitchen Staff", "Dispatcher"].includes(position)) return json({ error: "Invalid staff position" }, 400);
     if (username.length < 3 || username.length > 40 || !/^[A-Za-z0-9._-]+$/.test(username)) return json({ error: "Invalid username format" }, 400);
     if (!/^[0-9]{6}$/.test(pin)) return json({ error: "PIN must contain exactly six digits" }, 400);
-    const permissionKeys = ["orders", "tables", "stocks", "dispatcher", "settings", "void"];
-    if (!suppliedPermissions || typeof suppliedPermissions !== "object" || Array.isArray(suppliedPermissions)) return json({ error: "Invalid permissions" }, 400);
-    const suppliedKeys = Object.keys(suppliedPermissions);
-    if (!["orders", "tables", "stocks", "dispatcher", "settings"].every((key) => typeof suppliedPermissions[key] === "boolean") ||
-      suppliedKeys.some((key) => !permissionKeys.includes(key)) ||
-      (Object.prototype.hasOwnProperty.call(suppliedPermissions, "void") && typeof suppliedPermissions.void !== "boolean")) {
-      return json({ error: "Invalid permissions" }, 400);
+    const rolePermissionKeys: Record<string, string[]> = {
+      "Cashier": ["orders", "void", "tables", "stocks", "settings"],
+      "Kitchen Staff": ["orders"],
+      "Dispatcher": ["dispatcher", "orders"],
+    };
+    if (position === "Manager") {
+      if (suppliedPermissions !== undefined && suppliedPermissions !== null &&
+          (typeof suppliedPermissions !== "object" || Array.isArray(suppliedPermissions) || Object.keys(suppliedPermissions).length !== 0)) {
+        return json({ error: "Manager permissions must be configured per branch in the Manager Permissions editor" }, 400);
+      }
+      if (!Array.isArray(managerAssignments) || managerAssignments.length < 1 || managerAssignments.length > 20) {
+        return json({ error: "Configure Manager permissions for every assigned branch" }, 400);
+      }
+      const assignmentIds = managerAssignments.map((item: any) => item?.branch_id);
+      if (assignmentIds.some((id: unknown) => typeof id !== "string") ||
+          new Set(assignmentIds).size !== assignmentIds.length) {
+        return json({ error: "Invalid Manager branch permission assignments" }, 400);
+      }
+    } else {
+      if (!suppliedPermissions || typeof suppliedPermissions !== "object" || Array.isArray(suppliedPermissions)) {
+        return json({ error: "Invalid permissions" }, 400);
+      }
+      const allowed = rolePermissionKeys[position] || [];
+      const suppliedKeys = Object.keys(suppliedPermissions);
+      if (suppliedKeys.some((key) => !allowed.includes(key)) ||
+          suppliedKeys.some((key) => typeof suppliedPermissions[key] !== "boolean")) {
+        return json({ error: "One or more permissions are not available for this position" }, 400);
+      }
+      for (const key of allowed) {
+        if (Object.prototype.hasOwnProperty.call(suppliedPermissions, key) &&
+            typeof suppliedPermissions[key] !== "boolean") {
+          return json({ error: "Invalid permissions" }, 400);
+        }
+      }
     }
 
     if (branchIds.length < 1 || branchIds.length > 20 ||
@@ -71,6 +99,12 @@ Deno.serve(async (req: Request) => {
     }
     if (position !== "Manager" && branchIds.length !== 1) {
       return json({ error: "Cashier, Kitchen Staff, and Dispatcher must be assigned to exactly one branch" }, 400);
+    }
+    if (position === "Manager") {
+      const assignmentIds = managerAssignments.map((item: any) => item.branch_id);
+      if (assignmentIds.length !== branchIds.length || branchIds.some((id: string) => !assignmentIds.includes(id))) {
+        return json({ error: "Manager permissions must match every selected branch exactly" }, 400);
+      }
     }
     const { data: branches, error: branchLookupError } = await admin
       .from("restaurant_branches").select("id,restaurant_id,is_active")
@@ -107,13 +141,22 @@ Deno.serve(async (req: Request) => {
     }
     createdAuthUserId = created.user.id;
 
-    const { data: staffLinkId, error: profileError } = await admin.rpc("edmel_create_staff_profile_with_branches", {
+    const managerRpcArgs = {
+      p_actor_user_id: actor.id, p_staff_user_id: created.user.id,
+      p_restaurant_id: restaurantId, p_full_name: fullName,
+      p_display_name: displayName || null, p_username: username,
+      p_pin: pin, p_assignments: managerAssignments,
+    };
+    const staffRpcArgs = {
       p_actor_user_id: actor.id, p_staff_user_id: created.user.id,
       p_restaurant_id: restaurantId, p_branch_ids: branchIds,
       p_full_name: fullName, p_display_name: displayName || null,
       p_position: position, p_username: username,
       p_permissions: suppliedPermissions, p_pin: pin,
-    });
+    };
+    const { data: staffLinkId, error: profileError } = position === "Manager"
+      ? await admin.rpc("edmel_create_staff_profile_with_branch_permissions", managerRpcArgs)
+      : await admin.rpc("edmel_create_staff_profile_with_branches", staffRpcArgs);
 
     if (profileError || !staffLinkId) {
       await admin.auth.admin.deleteUser(created.user.id);
