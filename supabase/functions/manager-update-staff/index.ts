@@ -93,24 +93,10 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Invalid staff permissions" }, 400);
     }
 
-    const { data, error } = await admin.rpc("edmel_manager_update_staff_branch_permissions", {
-      p_actor_user_id: actor.id,
-      p_restaurant_id: restaurantId,
-      p_branch_id: branchId,
-      p_target_restaurant_user_id: targetId,
-      p_permissions: permissions,
-    });
+    return json({
+      error: "Manager permission changes must be submitted through an Admin approval batch.",
+    }, 409);
 
-    if (error) {
-      if (error.code === "42501") return json({ error: error.message || "You are not allowed to update these staff permissions." }, 403);
-      if (error.code === "22023") return json({ error: error.message || "The submitted staff permissions are invalid." }, 400);
-      if (error.code === "P0002") return json({ error: error.message || "The staff member is not assigned to this branch." }, 404);
-      console.error("manager-update-staff: permission update failed", error.code || "unknown");
-      return json({ error: "Unable to update staff permissions. The branch access was not changed." }, 500);
-    }
-
-    if (!data?.success) return json({ error: "Staff permission update was not confirmed." }, 500);
-    return json(data);
   } catch (_error) {
     console.error("manager-update-staff: request failed");
     return json({ error: "Unable to update staff permissions." }, 500);
