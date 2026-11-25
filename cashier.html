@@ -16160,9 +16160,12 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   align-items: center;
   min-width: 0;
   flex: 1 1 auto;
-  transform: translateX(-56px);
+  position: relative;
+  z-index: 20;
+  overflow: visible;
 }
 .pos-topbar .pos-brand {
+  position: relative;
   display: flex !important;
   align-items: center;
   justify-content: flex-start;
@@ -16180,16 +16183,21 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   overflow-wrap: anywhere;
 }
 .pos-topbar .pos-brand img[data-restaurant-logo] {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 28px);
+  z-index: 30;
   width: 48px !important;
   height: 48px !important;
   min-width: 48px;
-  margin: 0 13px 0 0 !important;
+  margin: 0 !important;
   padding: 3px;
   object-fit: contain;
   border: 1px solid #dbe5d7;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fffdf8;
   box-shadow: 0 3px 9px rgba(37, 66, 45, .09);
+  transform: translateY(-50%);
 }
 .pos-topbar .pos-search-wrap {
   width: 100%;
@@ -16314,7 +16322,7 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
 }
 @media (max-width: 760px) {
   .pos-topbar-heading { align-items: center; flex-wrap: wrap; }
-  .pos-topbar-title-block { flex: 1 1 100%; transform: translateX(-48px); }
+  .pos-topbar-title-block { flex: 1 1 100%; }
   .cashier-session-widget { max-width: 100%; }
   .pos-topbar .pos-brand { font-size: 18px; }
   .pos-cart { position: relative; top: auto; height: auto; min-height: 560px; }
@@ -16323,7 +16331,6 @@ window.EDMEL_REFRESH_CASHIER_BRANCH_DATA = async function() {
   .pos-topbar { gap: 10px; }
   .pos-topbar-heading { gap: 9px; }
   .pos-topbar .pos-brand { font-size: 15px; letter-spacing: .045em; }
-  .pos-topbar-title-block { transform: translateX(-42px); }
   .pos-topbar .pos-brand img[data-restaurant-logo] {
     width: 42px !important; height: 42px !important; min-width: 42px; margin-right: 9px !important;
   }
