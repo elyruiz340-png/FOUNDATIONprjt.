@@ -6349,6 +6349,11 @@ background:
     letter-spacing: 7px;
   }
 
+  /* Ensure the Sign In button is truly removed from layout during PIN verification. */
+  #cashierLoginButton[hidden] {
+    display: none !important;
+  }
+
   #cashierContinueButton,
   #cashierLoginButton {
     display: flex;
