@@ -520,19 +520,23 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
  function showManagerOrdersError(message){const rows=$("managerOrdersRows");if(rows)rows.innerHTML='<tr><td colspan="7" class="empty">'+esc(message)+'</td></tr>';const info=$("managerOrdersInfo");if(info)info.textContent=message;}
  async function loadManagerOrders(){
-  if(managerOrdersLoading||!activeBranch)return;
+  if(!activeBranch)return;
   if(!moduleAccess("orders","view"))throw new Error("Orders View permission is not enabled for this branch.");
+  const requestId=++managerOrdersRequest,requestedBranchId=activeBranch.id;
   managerOrdersLoading=true;$("managerOrdersRows").innerHTML='<tr><td colspan="7" class="empty">Loading branch orders…</td></tr>';
   try{
-   const {data:orders,error}=await sb.from("orders").select("id,order_number,customer_name,table_number,order_type,order_status,status,payment_status,payment_method,subtotal,tax,tip,service_charge,discount_amount,total,created_at,settled_at").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",activeBranch.id).order("created_at",{ascending:false}).limit(200);
+   const {data:orders,error}=await sb.from("orders").select("id,order_number,customer_name,table_number,order_type,order_status,status,payment_status,payment_method,subtotal,tax,tip,service_charge,discount_amount,total,created_at,settled_at").eq("restaurant_id",RESTAURANT_ID).eq("branch_id",requestedBranchId).order("created_at",{ascending:false}).limit(200);
    if(error)throw error;
-   managerOrders=orders||[];managerOrderItemsByOrder={};
-   if(managerOrders.length){
-    const ids=managerOrders.map(order=>order.id);
+   if(requestId!==managerOrdersRequest||activeBranch?.id!==requestedBranchId)return;
+   const loadedOrders=orders||[],loadedItemsByOrder={};
+   if(loadedOrders.length){
+    const ids=loadedOrders.map(order=>order.id);
     const {data:items,error:itemError}=await sb.from("order_items").select("order_id,item_name,quantity,unit_price,subtotal").in("order_id",ids);
     if(itemError)throw itemError;
-    for(const item of items||[]){if(!managerOrderItemsByOrder[item.order_id])managerOrderItemsByOrder[item.order_id]=[];managerOrderItemsByOrder[item.order_id].push(item);}
+    if(requestId!==managerOrdersRequest||activeBranch?.id!==requestedBranchId)return;
+    for(const item of items||[]){if(!loadedItemsByOrder[item.order_id])loadedItemsByOrder[item.order_id]=[];loadedItemsByOrder[item.order_id].push(item);}
    }
+   managerOrders=loadedOrders;managerOrderItemsByOrder=loadedItemsByOrder;
    const statuses=[...new Set(managerOrders.map(managerOrderStatus).filter(s=>s&&s!=="Unknown"))].sort();
    const statusSelect=$("managerOrdersStatus"),previous=statusSelect.value;
    statusSelect.innerHTML='<option value="">All order statuses</option>'+statuses.map(value=>'<option value="'+esc(value)+'">'+esc(value)+'</option>').join("");
@@ -541,7 +545,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    $("managerOrdersPaidCount").textContent=String(managerOrders.filter(o=>managerPaymentStatus(o).toLowerCase()==="paid").length);
    $("managerOrdersUnpaidCount").textContent=String(managerOrders.filter(o=>["unpaid","pending"].includes(managerPaymentStatus(o).toLowerCase())).length);
    renderManagerOrders();
-  }finally{managerOrdersLoading=false;}
+  }finally{if(requestId===managerOrdersRequest)managerOrdersLoading=false;}
  }
  $("managerOrdersRefreshButton")?.addEventListener("click",()=>loadManagerOrders().catch(error=>showManagerOrdersError(error.message||"Unable to refresh orders.")));
  $("managerOrdersSearch")?.addEventListener("input",renderManagerOrders);
@@ -701,7 +705,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
 
  let managerLink=null, managerAccess=[], branches=[], activeBranch=null, ownPermissions={}, staffRows=[], sessionRows=[], sessionId=null, heartbeat=null, activitySinceHeartbeat=true, managerAuthUserId=null, managerExpenseRows=[], managerExpenseCategories=[], managerExpenseRequests=[], managerExpenseNotifications=[], managerEmergencyRequests=[], managerEmergencyNotifications=[], managerExpenseCurrency="USD", managerExpenseLoading=false;
- let managerOrders=[],managerOrderItemsByOrder={},managerOrdersLoading=false;
+ let managerOrders=[],managerOrderItemsByOrder={},managerOrdersLoading=false,managerOrdersRequest=0;
  let pendingApprovalActions=[], approvalBatches=[];
  let managerBranchPolicy={manager_creation_mode:"not_allowed"},managerBranchRequests=[],managerBranchLoading=false,managerBranchError="";
 
@@ -1264,6 +1268,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  $("restaurantSelect").addEventListener("change",async()=>{
   const id=$("restaurantSelect").value;
   if(!id||id===RESTAURANT_ID)return;
+  managerOrdersRequest++;managerOrdersLoading=false;managerOrders=[];managerOrderItemsByOrder={};
   await endPresence();
   sessionStorage.setItem("edmel_manager_restaurant",id);
   sessionStorage.removeItem("edmel_manager_branch");
@@ -1275,7 +1280,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   $("approvalRequestPanel").hidden=ownPermissions.approval_request_access!==true;
   if(ownPermissions.approval_request_access!==true){pendingApprovalActions=[];renderApprovalQueue();}
   sessionStorage.setItem("edmel_manager_branch",next.id);
-  managerOrders=[];managerOrderItemsByOrder={};
+  managerOrdersRequest++;managerOrdersLoading=false;managerOrders=[];managerOrderItemsByOrder={};
   await endPresence();await startPresence(next.id);if(ownPermissions.staff_management===true)await loadBranchData();renderManagerNavigation();
  });
  $("managerBranchDirectoryFilter")?.addEventListener("change",()=>renderManagerBranchWorkspace());
