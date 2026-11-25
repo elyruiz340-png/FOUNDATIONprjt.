@@ -11947,7 +11947,6 @@ async function printSavedOrderReceipt(order) {
       "</table>" : "") +
     (payment ? "<div class='rule'></div>" + payment : "") +
     (config.footer ? "<div class='foot'>" + safe(config.footer) + "</div>" : "") +
-    "
     "<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};<\/script></body></html>";
 
   if (config.connection && config.connection !== "browser") {
