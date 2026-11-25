@@ -4847,7 +4847,6 @@ function staffPage(){
     const active=u.is_active!==false;
     const online=active&&!!staffLatestSession(u);
     const status=active?(online?'<span class="bd">● Online</span>':'<span class="bd">● Offline</span>'):'<span class="bd er">Deactivated</span>';
-    const isManagerPosition=String(u.position||'').trim().toLowerCase()==='manager';
     const actions=String(u.role||'').toLowerCase()==='staff'?'<button class="btn staff-view-btn" type="button" data-a="staffdetails" data-id="'+esc(u.id)+'">View Details</button>':'<span class="mu">—</span>';
     return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),esc(staffBranchLabel(u.id)),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
   });
