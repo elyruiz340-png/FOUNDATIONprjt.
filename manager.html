@@ -448,6 +448,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   ["printers","Printers"],["transactions","Transactions"]
  ];
  const permissionActions = ["view","create","edit","delete","approve","manage"];
+ const permissionActionsForModule = module=>module==="orders"?[...permissionActions,"void"]:permissionActions;
  const ic=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
  const managerModules = [
   ["overview","Overview",ic('<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>')],["sales","Sales & Analytics",ic('<path d="M5 20V10M12 20V4M19 20v-7"/>')],["settings","Business Settings",ic('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>')],
@@ -461,7 +462,13 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    if(!p.modules||typeof p.modules!=="object"||Array.isArray(p.modules))return false;
    if(Object.prototype.hasOwnProperty.call(p.modules,module)){
     const grant=p.modules[module];
-    return !!grant&&typeof grant==="object"&&!Array.isArray(grant)&&(grant.manage===true||grant[action]===true);
+    if(!grant||typeof grant!=="object"||Array.isArray(grant))return false;
+    if(module==="orders"&&action==="void"){
+     if(grant.manage===true)return true;
+     if(Object.prototype.hasOwnProperty.call(grant,"void"))return grant.void===true;
+    }else{
+     return grant.manage===true||grant[action]===true;
+    }
    }
    if((module==="payments"||module==="transactions")&&Object.prototype.hasOwnProperty.call(p.modules,"orders"))return false;
   }
@@ -1170,7 +1177,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  function permissionChips(permissions){
    const grants=[];
    for(const [module,label] of actionPermissionModules){
-    const enabled=permissionActions.filter(action=>permissionAllows(permissions,module,action));
+    const enabled=permissionActionsForModule(module).filter(action=>permissionAllows(permissions,module,action));
     if(enabled.length)grants.push(label+": "+enabled.join(", "));
    }
    if(grants.length)return grants.map(label=>'<span class="chip">'+esc(label)+'</span>').join("");
@@ -1201,7 +1208,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const online=staffRows.filter(u=>u.is_active&&u.branchAccess.is_active&&staffIsOnline(u.id)).length;
   $("statStaff").textContent=staffRows.filter(u=>u.branchAccess.is_active&&u.is_active).length;
   $("statOnline").textContent=online;
-  $("statPermissions").textContent=actionPermissionModules.reduce((sum,[module])=>sum+permissionActions.filter(action=>permissionAllows(ownPermissions,module,action)).length,0);
+  $("statPermissions").textContent=actionPermissionModules.reduce((sum,[module])=>sum+permissionActionsForModule(module).filter(action=>permissionAllows(ownPermissions,module,action)).length,0);
   notify(sessionError?"Staff loaded. Session history could not be refreshed.":"");
  }
 
@@ -1471,7 +1478,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   function renderActionPermissionEditor(current){
    const host=$("actionPermissionEditor");
    host.innerHTML=actionPermissionModules.map(([module,label])=>{
-    const checks=permissionActions.map(action=>{
+    const checks=permissionActionsForModule(module).map(action=>{
      const checked=currentPermissionValue(current,module,action);
      const protectedAction=module==="staff"&&action==="approve";
      const canGrant=managerCanGrant(module,action)&&!protectedAction;
@@ -1512,7 +1519,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    const modules={};
    for(const [module] of actionPermissionModules){
     const grant={};
-    for(const action of permissionActions){
+    for(const action of permissionActionsForModule(module)){
      const input=$("actionPermissionEditor").querySelector('input[data-module="'+module+'"][data-action="'+action+'"]');
      grant[action]=input?input.checked:currentPermissionValue(editingStaffPermissions,module,action);
     }
