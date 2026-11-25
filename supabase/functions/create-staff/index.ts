@@ -45,7 +45,10 @@ Deno.serve(async (req: Request) => {
     const username = typeof body.username === "string" ? body.username.trim() : "";
     const pin = typeof body.pin === "string" ? body.pin : "";
     const suppliedPermissions = body.permissions;
-    let branchId = typeof body.branch_id === "string" ? body.branch_id : "";
+    const rawBranchIds = Array.isArray(body.branch_ids)
+      ? body.branch_ids
+      : (typeof body.branch_id === "string" ? [body.branch_id] : []);
+    const branchIds = rawBranchIds.filter((id: unknown): id is string => typeof id === "string");
 
     if (!restaurantId || !/^[0-9a-f-]{36}$/i.test(restaurantId)) return json({ error: "Invalid restaurant" }, 400);
     if (!fullName || fullName.length > 100 || displayName.length > 60) return json({ error: "Check the required name fields" }, 400);
@@ -61,19 +64,21 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Invalid permissions" }, 400);
     }
 
-    if (branchId && !/^[0-9a-f-]{36}$/i.test(branchId)) return json({ error: "Invalid branch" }, 400);
-    if (!branchId) {
-      const { data: mainBranch, error: branchError } = await admin
-        .from("restaurant_branches").select("id").eq("restaurant_id", restaurantId)
-        .eq("is_default", true).eq("is_active", true).maybeSingle();
-      if (branchError || !mainBranch) return json({ error: "Main Branch is not configured" }, 409);
-      branchId = mainBranch.id;
+    if (branchIds.length < 1 || branchIds.length > 20 ||
+        branchIds.some((id: string) => !/^[0-9a-f-]{36}$/i.test(id)) ||
+        new Set(branchIds).size !== branchIds.length) {
+      return json({ error: "Select one to twenty unique active branches" }, 400);
     }
-
-    const { data: branch, error: branchLookupError } = await admin
+    if (position !== "Manager" && branchIds.length !== 1) {
+      return json({ error: "Cashier, Kitchen Staff, and Dispatcher must be assigned to exactly one branch" }, 400);
+    }
+    const { data: branches, error: branchLookupError } = await admin
       .from("restaurant_branches").select("id,restaurant_id,is_active")
-      .eq("id", branchId).eq("restaurant_id", restaurantId).maybeSingle();
-    if (branchLookupError || !branch || !branch.is_active) return json({ error: "Branch not found or inactive" }, 404);
+      .eq("restaurant_id", restaurantId).in("id", branchIds).eq("is_active", true);
+    if (branchLookupError) return json({ error: "Unable to verify selected branches" }, 500);
+    if (!branches || branches.length !== branchIds.length) {
+      return json({ error: "One or more selected branches are missing or inactive" }, 404);
+    }
 
     const { data: actorLinks, error: actorLinkError } = await admin
       .from("restaurant_users")
@@ -85,22 +90,8 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Unable to verify permissions" }, 500);
     }
     const ownerAdmin = (actorLinks || []).some((link: any) => ["owner", "admin"].includes(String(link.role).toLowerCase()));
-    const managerLink = (actorLinks || []).find((link: any) =>
-      String(link.role).toLowerCase() === "staff" && String(link.position || "").toLowerCase() === "manager");
-
     if (!ownerAdmin) {
-      if (!managerLink || position === "Manager") return json({ error: "Manager access cannot create or promote another Manager" }, 403);
-      const { data: branchAccess, error: accessError } = await admin
-        .from("staff_branch_access").select("permissions,is_active")
-        .eq("restaurant_user_id", managerLink.id).eq("branch_id", branchId)
-        .eq("restaurant_id", restaurantId).eq("is_active", true).maybeSingle();
-      if (accessError) return json({ error: "Unable to verify branch permissions" }, 500);
-      if (!branchAccess?.permissions?.staff_management) return json({ error: "Staff management access is not enabled for this branch" }, 403);
-      for (const key of Object.keys(suppliedPermissions)) {
-        if (suppliedPermissions[key] === true && branchAccess.permissions[key] !== true) {
-          return json({ error: "You cannot assign permissions beyond your own branch access" }, 403);
-        }
-      }
+      return json({ error: "Manager staff creation is paused until the secure post-approval PIN setup is available. Ask the Owner/Admin to create the account." }, 409);
     }
 
     const internalEmail = `staff-${crypto.randomUUID()}@staff.halina.invalid`;
@@ -116,9 +107,9 @@ Deno.serve(async (req: Request) => {
     }
     createdAuthUserId = created.user.id;
 
-    const { data: staffLinkId, error: profileError } = await admin.rpc("edmel_create_staff_profile_with_pin", {
+    const { data: staffLinkId, error: profileError } = await admin.rpc("edmel_create_staff_profile_with_branches", {
       p_actor_user_id: actor.id, p_staff_user_id: created.user.id,
-      p_restaurant_id: restaurantId, p_branch_id: branchId,
+      p_restaurant_id: restaurantId, p_branch_ids: branchIds,
       p_full_name: fullName, p_display_name: displayName || null,
       p_position: position, p_username: username,
       p_permissions: suppliedPermissions, p_pin: pin,
@@ -134,30 +125,11 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Unable to finish staff creation; no staff account was kept" }, 500);
     }
 
-    let auditLogged = true;
-    if (!ownerAdmin) {
-      const actorName = managerLink?.display_name || managerLink?.full_name || managerLink?.cashier_username || "Manager";
-      const { error: auditError } = await admin.from("audit_logs").insert({
-        restaurant_id: restaurantId,
-        actor_user_id: actor.id,
-        actor_name: actorName,
-        actor_role: "manager",
-        action_category: "Staff & Security",
-        action: "Created staff account",
-        record_type: "staff_account",
-        record_id: staffLinkId,
-        result: "success",
-        details: { branch_id: branchId, staff_name: fullName, username, position, permissions: suppliedPermissions },
-      });
-      if (auditError) {
-        auditLogged = false;
-        console.error("create-staff: Manager staff creation audit insert failed", auditError.message);
-      }
-    }
+    const auditLogged = true;
 
     createdAuthUserId = null;
     return json({
-      success: true, staff_id: staffLinkId, username, branch_id: branchId, audit_logged: auditLogged,
+      success: true, staff_id: staffLinkId, username, branch_id: branchIds[0], branch_ids: branchIds, audit_logged: auditLogged,
       message: "Staff account created. Set up login through the staff login screen.",
     }, 201);
   } catch (_error) {
