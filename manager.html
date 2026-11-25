@@ -548,8 +548,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  $("managerOrdersPayment")?.addEventListener("change",renderManagerOrders);
 
  function managerCanCreateBranch(){
-  return moduleAccess("branches","create")&&
-   (managerBranchPolicy?.manager_creation_mode==="approval_required");
+  return moduleAccess("branches","create");
  }
  function managerBranchHoursMarkup(){
   const days=[["monday","Monday",true],["tuesday","Tuesday",true],["wednesday","Wednesday",true],["thursday","Thursday",true],["friday","Friday",true],["saturday","Saturday",false],["sunday","Sunday",false]];
