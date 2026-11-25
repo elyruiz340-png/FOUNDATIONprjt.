@@ -400,36 +400,31 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  let currentManagerPage="";
  function moduleAccess(key, action="view"){
   const p=ownPermissions||{};
+  const allows=(grant,requestedAction)=>{
+   if(!grant||typeof grant!=="object")return false;
+   if(grant.manage===true)return true;
+   return grant[requestedAction]===true;
+  };
   if(key==="staff"&&p.staff_management===true)return true;
-  if(key==="branches"){
-   const grant=p.modules?.branches;
-   return !!(grant&&typeof grant==="object"&&(grant[action]===true||grant.manage===true));
-  }
   if(p.modules&&typeof p.modules==="object"){
    if(key==="orders"){
-    const orderGrant=p.modules.orders,transactionGrant=p.modules.transactions;
-    return [orderGrant,transactionGrant].some(grant=>grant&&typeof grant==="object"&&(grant[action]===true||grant.manage===true));
+    return allows(p.modules.orders,action)||allows(p.modules.transactions,action);
    }
-   const grant=p.modules[key];
-   if(grant&&typeof grant==="object"&&(grant[action]===true||grant.manage===true))return true;
    if(key==="settings"){
     const businessModules=["settings","inventory","tables","dispatcher","payments","menu","discounts","vouchers","tax","service_charge","receipts","printers","transactions"];
-    return businessModules.some(name=>{const item=p.modules[name];return !!(item&&typeof item==="object"&&(item.view===true||item.manage===true));});
+    return businessModules.some(name=>allows(p.modules[name],action));
    }
-   return false;
+   return allows(p.modules[key],action);
   }
   const legacy={
-   orders:["orders"],tables:["tables"],inventory:["stocks"],dispatcher:["dispatcher"],
+   overview:[],sales:[],orders:["orders"],tables:["tables"],inventory:["stocks"],dispatcher:["dispatcher"],
+   expenses:[],staff:["staff_management"],audit:[],branches:[],health:[],ai:[],
    settings:["settings","tables","stocks","dispatcher"],menu:["settings"],discounts:["settings"],vouchers:["settings"],
    tax:["settings"],service_charge:["settings"],receipts:["settings"],printers:["settings"],
    payments:["settings"],transactions:["orders"]
   };
-  if(key==="staff")return p.staff_management===true;
   if(key==="orders")return p.orders===true;
-  if(key==="settings"&&p.modules&&typeof p.modules==="object"){
-   const businessModules=["settings","inventory","tables","dispatcher","payments","menu","discounts","vouchers","tax","service_charge","receipts","printers","transactions"];
-   return businessModules.some(name=>{const grant=p.modules[name];return !!(grant&&typeof grant==="object"&&(grant.view===true||grant.manage===true));});
-  }
+  if(key==="branches")return false;
   return (legacy[key]||[]).some(k=>p[k]===true);
  }
  function hasAnyManagerPermission(){
@@ -553,7 +548,8 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  $("managerOrdersPayment")?.addEventListener("change",renderManagerOrders);
 
  function managerCanCreateBranch(){
-  return (managerAccess||[]).some(access=>access.is_active===true&&access.permissions?.modules?.branches?.create===true);
+  return moduleAccess("branches","create")&&
+   (managerBranchPolicy?.manager_creation_mode==="approval_required");
  }
  function managerBranchHoursMarkup(){
   const days=[["monday","Monday",true],["tuesday","Tuesday",true],["wednesday","Wednesday",true],["thursday","Thursday",true],["friday","Friday",true],["saturday","Saturday",false],["sunday","Sunday",false]];
