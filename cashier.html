@@ -6447,46 +6447,6 @@ background:
     font-size: 14px;
   }
 
-  .cashier-verification-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 55px;
-    margin-top: 13px;
-  }
-
-  .cashier-verification-cube {
-    width: 23px;
-    height: 23px;
-    border: 3px solid rgba(216, 181, 109, 0.2);
-    border-top-color: #e5c783;
-    border-right-color: #e5c783;
-    border-radius: 5px;
-    transform: rotate(0deg);
-  }
-
-  #cashierLoginScreen.cashier-verifying
-    .cashier-verification-cube {
-    animation: cashierCubeRotate 0.9s linear infinite;
-  }
-
-  @keyframes cashierCubeRotate {
-    from {
-      transform: rotate(0deg);
-    }
-
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .cashier-verification-caption {
-    margin: 0;
-    color: #a9a193;
-    font-size: 11px;
-    text-align: center;
-  }
-
   #cashierLoginMessage {
     min-height: 18px;
     margin: 12px 0 0;
@@ -6534,10 +6494,6 @@ background:
 
   @media (prefers-reduced-motion: reduce) {
     .cashier-login-card,
-    .cashier-verification-cube {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-    }
   }
    /* =========================
    HALINA LIQUID GLASS — INTERACTION LAYER
@@ -6686,7 +6642,11 @@ background:
 
 .cashier-pin-boxes.is-verifying {
   display: block;
-  height: 176px;
+  height: 76px !important;
+  min-height: 76px !important;
+  max-height: 76px !important;
+  flex: 0 0 76px;
+  overflow: visible;
 }
 
 .cashier-pin-boxes.is-verifying .cashier-pin-box {
@@ -6782,7 +6742,11 @@ background:
   }
 
   .cashier-pin-boxes.is-verifying {
-    height: 160px;
+    height: 76px !important;
+    min-height: 76px !important;
+    max-height: 76px !important;
+    flex: 0 0 76px;
+    overflow: visible;
   }
 
   .cashier-pin-boxes.is-verifying .cashier-pin-box {
@@ -6832,8 +6796,6 @@ background:
 #cashierLoginSubtitle { margin-bottom: 20px !important; }
 #cashierUsernameStep #cashierUsername { margin-top: 0 !important; }
 #cashierUsernameStep #cashierContinueButton { margin-top: 17px !important; }
-.cashier-verification-box { height: 42px !important; margin-top: 9px !important; }
-.cashier-verification-caption { margin-top: 0 !important; }
 .cashier-login-footer { margin-top: 19px !important; padding-top: 13px !important; }
 </style>
 
@@ -6886,8 +6848,6 @@ background:
     <button id="cashierLoginButton" type="submit">Sign In</button>
   </div>
 </div>
-      <div class="cashier-verification-box" aria-hidden="true"><div class="cashier-verification-cube"></div></div>
-      <p class="cashier-verification-caption">Secure verification</p>
       <p id="cashierLoginMessage" role="alert" aria-live="polite"></p>
     </form>
     <p class="cashier-login-footer">Authorized Access Only</p>
@@ -15080,13 +15040,6 @@ function setCashierLoginLoading(isLoading) {
 
   if (cashierContinueButton) {
     cashierContinueButton.disabled = isLoading;
-  }
-
-  if (cashierLoginScreen) {
-    cashierLoginScreen.classList.toggle(
-      "cashier-verifying",
-      isLoading
-    );
   }
 
   const pinBoxes =
