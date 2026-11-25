@@ -124,6 +124,30 @@ Deno.serve(async (req: Request) => {
           return json({ error: "No active branch access is assigned to this staff account in the selected restaurant" }, 403);
         }
 
+        const { data: existingSession, error: existingSessionError } = await admin.from("staff_sessions")
+          .select("id,last_activity_at,login_at")
+          .eq("restaurant_user_id", selectedLink.id)
+          .eq("user_id", actorId)
+          .is("logout_at", null)
+          .order("login_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (existingSessionError) {
+          console.error("Unable to check active staff session:", existingSessionError.message);
+          return json({ error: "Unable to verify the current staff session." }, 500);
+        }
+        if (existingSession) {
+          const lastActivityAt = new Date(existingSession.last_activity_at || existingSession.login_at || 0).getTime();
+          const isLocked = !Number.isFinite(lastActivityAt) || Date.now() - lastActivityAt >= INACTIVITY_TIMEOUT_MS;
+          return json({
+            error: isLocked
+              ? "This cashier screen is locked. Return to the existing session and enter the current cashier PIN to unlock it."
+              : "This cashier account already has an active session. Return to its assigned screen.",
+            active_session: true,
+            locked: isLocked,
+          }, isLocked ? 423 : 409);
+        }
+
         const now = new Date().toISOString();
         const { data: session, error } = await admin.from("staff_sessions").insert({
           restaurant_id: selectedLink.restaurant_id,
@@ -135,6 +159,12 @@ Deno.serve(async (req: Request) => {
           last_activity_at: now,
         }).select("id,login_at,restaurant_id,restaurant_user_id,branch_id").single();
         if (error) {
+          if (error.code === "23505") {
+            return json({
+              error: "This cashier account already has an active session. Return to its assigned screen.",
+              active_session: true,
+            }, 409);
+          }
           console.error("Session start failed", error.message);
           return json({ error: "Unable to record login" }, 500);
         }
@@ -278,7 +308,7 @@ Deno.serve(async (req: Request) => {
             return json({ success: false, locked: true, error: "Cashier screen is locked. Enter your PIN to continue." }, 423);
           }
           const now = new Date().toISOString();
-          await admin.from("staff_sessions").update({ logout_at: now, last_seen_at: now, end_reason: "inactivity_timeout" })
+          await admin.from("staff_sessions").update({ logout_at: now, last_seen_at: now, end_reason: "session_expired" })
             .eq("id", sessionId).eq("user_id", actorId).is("logout_at", null);
           return json({ success: false, expired: true, error: "Session expired after 30 minutes of inactivity." }, 401);
         }
@@ -338,7 +368,7 @@ Deno.serve(async (req: Request) => {
               inactivity_timeout_minutes: 30, activity_recorded: false });
           }
           const { error } = await admin.from("staff_sessions").update({
-            logout_at: now, last_seen_at: now, end_reason: "inactivity_timeout",
+            logout_at: now, last_seen_at: now, end_reason: "session_expired",
           }).eq("id", sessionId).is("logout_at", null);
           if (error) return json({ error: "Unable to close inactive session" }, 500);
           return json({ success: false, expired: true, error: "Session expired after 30 minutes of inactivity." }, 401);
