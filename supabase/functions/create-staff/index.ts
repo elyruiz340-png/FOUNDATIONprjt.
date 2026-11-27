@@ -132,6 +132,20 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Active Owner/Admin access is required to create staff accounts." }, 403);
     }
 
+    if (position === "Manager" && managerEmail) {
+      const usernamePattern = username.replace(/_/g, "\\_");
+      const { data: usernameMatches, error: usernameLookupError } = await admin
+        .from("restaurant_users")
+        .select("id")
+        .ilike("cashier_username", usernamePattern)
+        .limit(1);
+      if (usernameLookupError) {
+        console.error("create-staff: Manager username availability check failed");
+        return json({ error: "Unable to verify Manager username availability" }, 500);
+      }
+      if (usernameMatches?.length) return json({ error: "That username is already in use" }, 409);
+    }
+
     let created: any;
     if (position === "Manager" && managerEmail) {
       let redirectUrl: URL;
