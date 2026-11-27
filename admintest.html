@@ -4948,7 +4948,7 @@ A.staffdetailsInvite=async(button)=>{
   button.disabled=true;button.textContent='Sending…';
   let sent=false;
   try{
-    const {data,error}=await sb.functions.invoke('manager-invitation-resend',{body:{restaurant_id:CURRENT_RESTAURANT_ID,staff_id:staff.id,redirect_to:new URL('manager.html',window.location.href).toString()}});
+    const {data,error}=await sb.functions.invoke('manager-invitation-resend',{body:{restaurant_id:CURRENT_RESTAURANT_ID,staff_id:staff.id,redirect_to:(()=>{const url=new URL('manager.html',window.location.href);url.searchParams.set('restaurant_id',CURRENT_RESTAURANT_ID);return url.toString();})()}});
     if(error){let message=error.message||'Unable to send the Manager setup email.';if(error.context&&typeof error.context.json==='function'){try{const detail=await error.context.json();if(detail?.error)message=detail.error;}catch(_){}}throw new Error(message);}
     if(!data?.success)throw new Error(data?.error||'Manager invitation renewal was not confirmed.');
     sent=true;
@@ -5388,7 +5388,7 @@ async function staffAddForm(){
     }
     submitBtn.disabled=true;message.textContent='Creating staff account securely…';
     try{
-      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:CURRENT_RESTAURANT_ID,branch_ids:branchIds,full_name:fullName,display_name:displayName,position,username,permissions,manager_assignments:isManager?managerAssignments:undefined,manager_email:isManager?managerEmail:undefined,manager_redirect_to:isManager?new URL('manager.html',window.location.href).toString():undefined,pin:isManager?undefined:pin}});
+      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:CURRENT_RESTAURANT_ID,branch_ids:branchIds,full_name:fullName,display_name:displayName,position,username,permissions,manager_assignments:isManager?managerAssignments:undefined,manager_email:isManager?managerEmail:undefined,manager_redirect_to:isManager?(()=>{const url=new URL('manager.html',window.location.href);url.searchParams.set('restaurant_id',CURRENT_RESTAURANT_ID);return url.toString();})():undefined,pin:isManager?undefined:pin}});
       if(error){let errorMessage=error.message||'Unable to create staff account.';if(error.context&&typeof error.context.json==='function'){try{const detail=await error.context.json();if(detail&&detail.error)errorMessage=detail.error;}catch(_){}}throw new Error(errorMessage);}
       if(!data||data.success!==true)throw new Error(data?.error||'Staff account creation was not confirmed.');
       pinInput.value='';pinConfirmInput.value='';managerEmailInput.value='';
