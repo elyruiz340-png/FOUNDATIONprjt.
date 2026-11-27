@@ -31,7 +31,7 @@ Deno.serve(async(req:Request)=>{
    }
    return json({regions:all.filter(r=>keyOf(r.name).includes(q)).slice(0,80)})
   }
-  if(action==="timezones"){const zones=getTimeZones({countryCode:cc}).map((z:any)=>({name:z.name,mainCities:z.mainCities||[],alternativeName:z.alternativeName||""}));return json({timezones:zones})}
+  if(action==="timezones"){const zones=getTimeZones().filter((z:any)=>z.countryCode===cc).map((z:any)=>({name:z.name,mainCities:z.mainCities||[],alternativeName:z.alternativeName||""}));return json({timezones:zones})}
   if(action==="cities"){const id=Number(body?.region_id);if(!Number.isSafeInteger(id)||id<=0)return json({error:"A valid region selection is required."},400);const p=await load("cities:"+cc+":"+id,"/cities/"+cc+"/"+id+".json");return json({settlements:p?.settlements||[],release:p?.release||null})}
   const q=String(body?.query||"").trim(),normalized=keyOf(q);if(normalized.length<2||normalized.length>40)return json({places:[]});
   let best:any=null;for(let depth=1;depth<=normalized.length;depth++){const prefix=normalized.slice(0,depth),p=await load("ac:"+cc+":"+prefix,"/ac/"+cc+"/"+prefix+".json");if(!p)break;best=p;if(p.complete===true)break}
