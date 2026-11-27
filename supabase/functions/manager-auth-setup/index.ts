@@ -44,6 +44,8 @@ Deno.serve(async (req: Request) => {
     } catch {
       return json({ error: "Invalid request body" }, 400);
     }
+    const restaurantId = typeof body.restaurant_id === "string" ? body.restaurant_id : "";
+    if (!/^[0-9a-f-]{36}$/i.test(restaurantId)) return json({ error: "Invalid Manager restaurant." }, 400);
     const password = typeof body.password === "string" ? body.password : "";
     if (password.length < 12 || password.length > 128) {
       return json({ error: "Use a password between 12 and 128 characters." }, 400);
@@ -54,6 +56,7 @@ Deno.serve(async (req: Request) => {
       .from("restaurant_users")
       .select("id,user_id,restaurant_id,role,position,is_active,manager_auth_method,manager_email,manager_auth_setup_status,manager_invitation_expires_at")
       .eq("user_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .eq("role", "staff")
       .eq("position", "Manager")
       .eq("is_active", true)
@@ -92,6 +95,7 @@ Deno.serve(async (req: Request) => {
       })
       .eq("id", profile.id)
       .eq("user_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .eq("is_active", true)
       .eq("manager_auth_setup_status", "pending")
       .eq("manager_email", verifiedEmail)
