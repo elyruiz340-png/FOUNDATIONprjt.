@@ -87,6 +87,23 @@ input,select{background:var(--s);border:1px solid var(--bd);border-radius:10px;p
 .dr,.md,.pn{position:fixed;z-index:41;background:var(--bg2);border:1px solid var(--bd);box-shadow:var(--sh);overflow:auto}
 .dr{top:0;right:0;bottom:0;width:min(430px,100%);padding:18px;animation:si .25s}
 .md{left:50%;top:12vh;transform:translateX(-50%);width:min(440px,92vw);max-height:80vh;padding:18px;border-radius:16px;animation:fi .2s}
+/* Branch request review — wide, centered glass panel with blurred dashboard backdrop. */
+.bk.branch-request-backdrop{background:rgba(3,9,16,.48);-webkit-backdrop-filter:blur(14px) saturate(72%);backdrop-filter:blur(14px) saturate(72%)}
+.md.branch-request-panel{top:50%;left:50%;transform:translate(-50%,-50%);width:min(980px,calc(100vw - 48px));max-height:min(88vh,900px);padding:26px;border-radius:22px;overflow-y:auto;background:var(--gf)!important;border:1px solid var(--ge)!important;box-shadow:0 30px 100px rgba(0,0,0,.52),inset 0 1px 0 var(--hl)!important}
+.branch-request-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding-bottom:16px;border-bottom:1px solid var(--bd);margin-bottom:18px}
+.branch-request-panel-head h2{font-size:22px;line-height:1.2;margin:0 0 5px}
+.branch-request-panel-head p{font-size:12px;margin:0;color:var(--mu)}
+.branch-request-panel-section{margin:18px 0 0}
+.branch-request-panel-section h4{font-size:13px;margin:0 0 10px;color:var(--ac)}
+.branch-request-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.branch-request-field{min-width:0;padding:11px 13px;border:1px solid var(--bd);border-radius:12px;background:var(--s)}
+.branch-request-field span{display:block;color:var(--mu);font-size:11px;margin-bottom:5px}
+.branch-request-field strong{display:block;font-size:13px;font-weight:650;overflow-wrap:anywhere;white-space:pre-line}
+.branch-request-panel-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px;margin-top:22px;padding-top:16px;border-top:1px solid var(--bd)}
+.branch-request-panel-actions .btn{min-width:140px}
+@media(max-width:760px){.md.branch-request-panel{width:calc(100vw - 20px);max-height:92vh;padding:17px;border-radius:17px}.branch-request-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.branch-request-panel-head h2{font-size:19px}}
+@media(max-width:460px){.branch-request-fields{grid-template-columns:1fr}.branch-request-panel-actions{justify-content:stretch}.branch-request-panel-actions .btn{flex:1;min-width:0}}
+
 /* Compact Staff Directory and centered staff details panel. */
 .staff-directory-card{padding:8px 10px}
 .staff-directory-card .tw{overflow-x:auto}
@@ -2844,19 +2861,22 @@ function openAdminBranchRequest(requestId){
   const data=request.request_data&&typeof request.request_data==='object'?request.request_data:{};
   const regional=data.regional_profile&&typeof data.regional_profile==='object'?data.regional_profile:{};
   const hours=adminBranchOperatingHoursSummary(data.operating_hours||{});
-  const field=(label,value)=>'<div style="padding:8px 0;border-bottom:1px solid var(--bd)"><div class="mu">'+esc(label)+'</div><b style="overflow-wrap:anywhere">'+esc(value===null||value===undefined||value===''?'Not provided':String(value))+'</b></div>';
+  const field=(label,value,wide=false)=>'<div class="branch-request-field'+(wide?' branch-request-field-wide':'')+'"><span>'+esc(label)+'</span><strong>'+esc(value===null||value===undefined||value===''?'Not provided':String(value))+'</strong></div>';
+  const section=(title,fields)=>'<section class="branch-request-panel-section"><h4>'+title+'</h4><div class="branch-request-fields">'+fields+'</div></section>';
   const settingRows=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>field(label,(data.settings_modes||{})[key]||'inherit')).join('');
   const actions=request.status==='pending'&&CURRENT_AUTH_ROLE==='owner'
-    ?'<div class="tb" style="margin-top:14px"><button class="btn pri" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="approved">Approve for Setup</button><button class="btn" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="rejected">Decline Request</button></div>'
-    :'';
-  drawer('Branch Request Details',
-    '<div class="row" style="justify-content:space-between"><span class="bd '+(request.status==='pending'?'wn':request.status==='approved'?'ok':'')+'">'+esc(request.status||'Unknown')+'</span><span class="mu">'+esc(request.created_at?new Date(request.created_at).toLocaleString():'')+'</span></div>'+
-    '<h4>Branch Profile</h4>'+field('Branch Name',data.name)+field('Branch Code',data.code)+field('Street Address',data.address)+field('Country',regional.country_code||data.country_code)+field('State / Province',regional.state_province||data.state_province)+field('City',regional.city||data.city)+field('District',regional.district||data.district)+field('Postal Code',regional.postal_code||data.postal_code)+
-    '<h4>Contact Information</h4>'+field('Contact Number',regional.contact_number||data.contact_number)+field('Email',regional.email||data.email)+field('Website',regional.website||data.website)+
-    '<h4>Regional Settings</h4>'+field('Timezone',data.timezone)+field('Locale',regional.locale||data.locale)+field('Date Format',regional.date_format||data.date_format)+field('Time Format',regional.time_format||data.time_format)+field('Number Format',regional.number_format||data.number_format)+
-    '<h4>Operations</h4>'+field('Operating Hours',hours)+field('Menu Catalog',data.menu_catalog_mode||'override')+
-    '<h4>Business Settings Modes</h4>'+settingRows+
-    (request.decision_reason?field('Review Reason',request.decision_reason):'')+actions);
+    ?'<div class="branch-request-panel-actions"><button class="btn" data-a="close">Close</button><button class="btn" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="rejected">Decline Request</button><button class="btn pri" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="approved">Approve for Setup</button></div>'
+    :'<div class="branch-request-panel-actions"><button class="btn" data-a="close">Close</button></div>';
+  const content=
+    '<div class="branch-request-panel-head"><div><div class="row" style="gap:8px;margin-bottom:8px"><span class="bd '+(request.status==='pending'?'wn':request.status==='approved'?'ok':'')+'">'+esc(request.status||'Unknown')+'</span><span class="mu">Submitted '+esc(request.created_at?new Date(request.created_at).toLocaleString():'')+'</span></div><h2>Branch Request Details</h2><p>Review the submitted branch information before making a decision.</p></div><button class="ib" data-a="close" aria-label="Close request details">'+I('x')+'</button></div>'+
+    section('Branch Profile',field('Branch Name',data.name)+field('Branch Code',data.code)+field('Street Address',data.address,true)+field('Country',regional.country_code||data.country_code)+field('State / Province',regional.state_province||data.state_province)+field('City',regional.city||data.city)+field('District',regional.district||data.district)+field('Postal Code',regional.postal_code||data.postal_code))+
+    section('Contact Information',field('Contact Number',regional.contact_number||data.contact_number)+field('Email',regional.email||data.email)+field('Website',regional.website||data.website))+
+    section('Regional Settings',field('Timezone',data.timezone)+field('Locale',regional.locale||data.locale)+field('Date Format',regional.date_format||data.date_format)+field('Time Format',regional.time_format||data.time_format)+field('Number Format',regional.number_format||data.number_format))+
+    section('Operations',field('Operating Hours',hours,true)+field('Menu Catalog',data.menu_catalog_mode||'override'))+
+    section('Business Settings Modes',settingRows)+
+    (request.decision_reason?section('Review Reason',field('Reason',request.decision_reason,true)):'')+actions;
+  L.innerHTML='<div class="bk branch-request-backdrop" data-a="close"></div><section class="md branch-request-panel" role="dialog" aria-modal="true" aria-label="Branch Request Details">'+content+'</section>';
+  L.querySelector('.branch-request-panel [aria-label="Close request details"]')?.focus();
 }
 function renderAdminBranchGovernance(){
   const canManage=String(CURRENT_AUTH_ROLE||'').toLowerCase()==='owner';
@@ -2868,7 +2888,7 @@ function renderAdminBranchGovernance(){
     const created=request.created_at?new Date(request.created_at).toLocaleString():'—';
     const decision=request.decision_reason?'<div class="note" style="margin-top:4px">Review note: '+esc(request.decision_reason)+'</div>':'';
     const settingsSummary=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>label+': '+(data.settings_modes?.[key]||'inherit')).map(esc).join(' · ');
-    const configDetails='<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--ac)">Review branch configuration</summary><div class="note" style="margin-top:6px">Address: '+esc(data.address||'Not provided')+'<br>Country / Region: '+esc([data.regional_profile?.country_code,data.regional_profile?.state_province,data.regional_profile?.city,data.regional_profile?.district].filter(Boolean).join(' · ')||'Not provided')+'<br>Postal Code: '+esc(data.regional_profile?.postal_code||'Not provided')+' · Contact: '+esc(data.regional_profile?.contact_number||'Not provided')+'<br>Email: '+esc(data.regional_profile?.email||'Not provided')+' · Website: '+esc(data.regional_profile?.website||'Not provided')+'<br>Locale / Formats: '+esc([data.regional_profile?.locale,data.regional_profile?.date_format,data.regional_profile?.time_format,data.regional_profile?.number_format].filter(Boolean).join(' · ')||'Default')+'<br>Timezone: '+esc(data.timezone||'Not set')+'<br>Operating Hours: '+esc(adminBranchOperatingHoursSummary(data.operating_hours||{}))+'<br>Menu Catalog: '+esc(data.menu_catalog_mode||'override')+'<br>Settings: '+settingsSummary+'</div></details>';
+    const configDetails='<div style="margin-top:7px"><button type="button" class="btn" style="padding:5px 10px;font-size:12px" data-a="branch-request-open" data-id="'+esc(request.id)+'">View full request details</button></div>';
     const actions=pending&&canManage
       ?'<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn pri" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="approved">Approve for Setup</button><button class="btn" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="rejected">Reject</button></div>'
       :'—';
