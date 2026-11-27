@@ -2541,14 +2541,14 @@ async function bell(){
   const pendingRequests=ADMIN_BRANCH_REQUESTS.filter(request=>request.status==='pending');
   const requestItems=pendingRequests.map(request=>'<div class="row" tabindex="0" role="button" style="cursor:pointer;align-items:flex-start" data-a="branch-request-open" data-id="'+esc(request.id)+'"><span><b>New Branch Request</b><br>'+esc(request.request_data?.name||'Unnamed branch')+' · '+esc(request.request_data?.code||'')+'<br><span class="mu">'+esc(request.created_at?new Date(request.created_at).toLocaleString():'Recently submitted')+'</span></span><span class="bd wn">Pending</span></div>').join('');
   const sampleItems=NT.slice(0,4).map((n,i)=>'<div class="row" tabindex="0" data-a="nt" data-i="'+i+'"><span>'+(n.r?'':'● ')+esc(n.ty)+'<br><span class="mu">'+esc(n.m)+'</span></span></div>').join('');
-  L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b><span class="sp"></span><button class="btn" data-a="branch-governance-refresh">Refresh</button></div>'+
+  L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b><span class="sp"></span><button class="btn" data-a="branch-notifications-refresh">Refresh</button></div>'+
     (ADMIN_BRANCH_GOVERNANCE_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_GOVERNANCE_ERROR)+'</div>':'')+
     (pendingRequests.length?'<div class="note" style="margin:8px 0">Branch requests awaiting your review</div>'+requestItems:'')+
     (sampleItems?'<div class="note" style="margin:12px 0 6px">Other notifications</div>'+sampleItems:'')+
     (!pendingRequests.length&&!sampleItems?empty('You’re all caught up.'):'')+
     '<div class="row" style="margin-top:8px"><button class="btn" data-a="readall">Mark all read</button><button class="btn" data-a="clrn">Clear sample notifications</button></div></div>';
 }
-const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
+const dotU=()=>{$('#dot').style.display=(NT.some(n=>!n.r)||(CURRENT_AUTH_ROLE==='owner'&&ADMIN_BRANCH_REQUESTS.some(request=>request.status==='pending')))?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
 let navIndicatorFrame=0;
@@ -3117,6 +3117,7 @@ async function openBranchEditModal(branch){
 
 const A={
 'branch-request-open':t=>openAdminBranchRequest(t.dataset.id||''),
+'branch-notifications-refresh':async()=>{await loadAdminBranchGovernance();bell();dotU();},
 'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';ADMIN_GLOBAL_BRANCH_FILTER=ADMIN_BRANCH_SELECTED_ID||'all';render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
 'branch-filter-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
 'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
@@ -3178,6 +3179,7 @@ const A={
     if(data?.success!==true||data.status!==decision)throw new Error('The branch request review was not confirmed.');
     await loadAdminBranchGovernance();const governancePanel=$('#branchGovernanceWorkspace');if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance();
     if(decision==='approved'){ADMIN_BRANCH_LOADED=false;await loadAdminBranches();}
+    closeL();dotU();
     toast(decision==='approved'?'Branch request approved. Complete setup, then activate the branch.':'Branch request rejected.');
   }catch(error){toast(error?.message||'Unable to review this branch request.',1);t.disabled=false;t.textContent=decision==='approved'?'Approve for Setup':'Reject';}
 },
