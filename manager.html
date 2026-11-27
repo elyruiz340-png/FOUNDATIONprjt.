@@ -999,7 +999,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const code=$("managerBranchCode").value.trim().toUpperCase();
   const timezone=$("managerBranchTimezone").value.trim();
   const address=$("managerBranchAddress").value.trim()||null;
-  const countryCode=$("managerBranchCountry").value.trim().toUpperCase();
+  const countryCode=window.EDMELGlobalLocations?.countryCodeFor("managerBranchCountry")||$("managerBranchCountry").value.trim().toUpperCase();
   if(countryCode&&!/^[A-Z]{2}$/.test(countryCode))throw new Error("Country must be a two-letter ISO code, such as PH.");
   if(!name||name.length>80)throw new Error("Branch name must contain 1 to 80 characters.");
   if(!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code))throw new Error("Branch code must contain 2 to 20 letters, numbers, hyphens or underscores.");
@@ -1746,5 +1746,6 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  });
 })();
 </script>
+<script src="./edmel-global-location.js" defer></script>
 </body>
 </html>
