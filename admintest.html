@@ -2959,7 +2959,7 @@ async function loadAdminBranches(){
     const restaurantId=CURRENT_RESTAURANT_ID;
     if(!restaurantId)throw new Error('Restaurant account could not be identified.');
     const [branchResult,assignmentResult,staffResult]=await Promise.all([
-      sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,operating_hours,is_default,is_active,lifecycle_status,menu_catalog_mode,menu_source_branch_id,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
+      sb.from('restaurant_branches').select('id,restaurant_id,name,code,timezone,address,country_code,state_province,city,district,postal_code,contact_number,email,website,locale,date_format,time_format,number_format,operating_hours,is_default,is_active,lifecycle_status,menu_catalog_mode,menu_source_branch_id,created_at,updated_at').eq('restaurant_id',restaurantId).order('is_default',{ascending:false}).order('name'),
       sb.from('staff_branch_access').select('restaurant_user_id,restaurant_id,branch_id,is_active,created_at').eq('restaurant_id',restaurantId),
       sb.from('restaurant_users').select('id,restaurant_id,display_name,full_name,position,role,is_active').eq('restaurant_id',restaurantId)
     ]);
@@ -3181,8 +3181,10 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
    t.disabled=true;t.textContent=editing?'Saving…':'Creating…';
    try{
      const operatingHours=adminReadBranchOperatingHours('branchCreateHours');
-     const payload=editing?{p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_branch_id:id,p_name:name,p_code:code,p_address:address,p_timezone:timezone,p_operating_hours:operatingHours,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit'}:{p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_name:name,p_code:code,p_address:address,p_timezone:timezone,p_operating_hours:operatingHours,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit'};
-     const {data,error}=await sb.rpc(editing?'edmel_update_restaurant_branch_configured_with_hours':'edmel_create_restaurant_branch_configured_with_hours',payload);
+     const regionalProfile={country_code:$('#branchCreateCountry')?.value.trim().toUpperCase()||null,state_province:$('#branchCreateState')?.value.trim()||null,city:$('#branchCreateCity')?.value.trim()||null,district:$('#branchCreateDistrict')?.value.trim()||null,postal_code:$('#branchCreatePostal')?.value.trim()||null,contact_number:$('#branchCreateContact')?.value.trim()||null,email:$('#branchCreateEmail')?.value.trim()||null,website:$('#branchCreateWebsite')?.value.trim()||null,locale:$('#branchCreateLocale')?.value.trim()||null,date_format:$('#branchCreateDateFormat')?.value.trim()||null,time_format:$('#branchCreateTimeFormat')?.value||null,number_format:$('#branchCreateNumberFormat')?.value.trim()||null};
+     if(regionalProfile.country_code&&!/^[A-Z]{2}$/.test(regionalProfile.country_code))throw new Error('Country must be a two-letter ISO code, such as PH.');
+     const payload=editing?{p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_branch_id:id,p_name:name,p_code:code,p_address:address,p_timezone:timezone,p_operating_hours:operatingHours,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit',p_regional_profile:regionalProfile}:{p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_name:name,p_code:code,p_address:address,p_timezone:timezone,p_operating_hours:operatingHours,p_settings_modes:readAdminBranchModes(),p_menu_catalog_mode:$('#branchCreateMenuMode')?.value||'inherit',p_regional_profile:regionalProfile};
+     const {data,error}=await sb.rpc(editing?'edmel_update_restaurant_branch_regional_configured_with_hours':'edmel_create_restaurant_branch_regional_configured_with_hours',payload);
      if(error)throw error;const savedId=editing?id:data?.branch?.id;
      if(data?.success!==true||!savedId||(editing&&data?.branch?.id!==id))throw new Error(data?.error||(editing?'Branch update':'Branch creation')+' was not confirmed by the database.');
      ADMIN_BRANCH_SELECTED_ID=savedId;ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
