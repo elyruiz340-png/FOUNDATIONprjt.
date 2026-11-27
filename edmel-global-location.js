@@ -60,7 +60,7 @@
     const value = String(input?.value || '').trim();
     if (!value) return '';
     const found = rows.find(c => key(c.name) === key(value) || String(c.code).toUpperCase() === value.toUpperCase());
-    return found ? String(found.code).toUpperCase() : value.toUpperCase();
+    return found ? String(found.code).toUpperCase() : '';
   }
   function setCountryCode(input, rows) {
     if (!input || !input.value) return;
@@ -155,6 +155,12 @@
       const input = document.getElementById(inputId);
       const rows = countryCache.rows || [];
       return countryCode(input, rows);
+    },
+    hasValidCountry(inputId) {
+      const input = document.getElementById(inputId);
+      if (!input?.value.trim()) return true;
+      const rows = countryCache.rows || [];
+      return rows.some(c => key(c.name) === key(input.value) || String(c.code).toUpperCase() === input.value.trim().toUpperCase());
     },
     countryNameFor(code) {
       const row = (countryCache.rows || []).find(c => c.code === String(code).toUpperCase());
