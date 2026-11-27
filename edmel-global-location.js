@@ -1,181 +1,44 @@
-/* EDMEL shared global branch location controls. Uses PlaceDB CC0 data through the authenticated cache Edge Function. */
-(function () {
-  'use strict';
-  const ids = {
-    country: ['branchCreateCountry', 'managerBranchCountry'],
-    region: ['branchCreateState', 'managerBranchState'],
-    city: ['branchCreateCity', 'managerBranchCity'],
-    timezone: ['branchCreateTimezone', 'managerBranchTimezone'],
-    locale: ['branchCreateLocale', 'managerBranchLocale'],
-    date: ['branchCreateDateFormat', 'managerBranchDateFormat'],
-    time: ['branchCreateTimeFormat', 'managerBranchTimeFormat'],
-    number: ['branchCreateNumberFormat', 'managerBranchNumberFormat']
-  };
-  const countryCache = { rows: null, promise: null };
-  const regionCache = new Map();
-  const mounted = new WeakSet();
-  const key = s => String(s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z0-9]/g, '');
-  const byId = list => list.map(id => document.getElementById(id)).find(Boolean) || null;
-  function client() { try { return sb; } catch (_) { return null; } }
-  async function invoke(body) {
-    const c = client();
-    if (!c?.functions?.invoke) throw new Error('Your session is not ready for global location search. Please refresh and sign in again.');
-    const { data, error } = await c.functions.invoke('edmel-global-location-cache', { body });
-    if (error) throw new Error(error.message || 'Global location lookup failed.');
-    if (data?.error) throw new Error(data.error);
-    return data;
-  }
-  function datalist(input, suffix) {
-    const id = input.id + '_' + suffix + '_options';
-    let list = document.getElementById(id);
-    if (!list) { list = document.createElement('datalist'); list.id = id; input.insertAdjacentElement('afterend', list); }
-    input.setAttribute('list', id);
-    return list;
-  }
-  function fill(list, rows, value, label) {
-    list.replaceChildren();
-    for (const row of rows) {
-      const option = document.createElement('option');
-      option.value = value(row);
-      if (label) option.label = label(row);
-      list.append(option);
-    }
-  }
-  async function countries() {
-    if (countryCache.rows) return countryCache.rows;
-    if (!countryCache.promise) countryCache.promise = invoke({ action: 'countries' }).then(data => {
-      countryCache.rows = Array.isArray(data.countries) ? data.countries : [];
-      return countryCache.rows;
-    }).finally(() => { countryCache.promise = null; });
-    return countryCache.promise;
-  }
-  async function regions(code) {
-    if (regionCache.has(code)) return regionCache.get(code);
-    const rows = await invoke({ action: 'regions', country_code: code });
-    const values = Array.isArray(rows.regions) ? rows.regions.filter(r => r && r.name && !r.unassigned) : [];
-    regionCache.set(code, values);
-    return values;
-  }
-  function countryCode(input, rows) {
-    const value = String(input?.value || '').trim();
-    if (!value) return '';
-    const found = rows.find(c => key(c.name) === key(value) || String(c.code).toUpperCase() === value.toUpperCase());
-    return found ? String(found.code).toUpperCase() : '';
-  }
-  function setCountryCode(input, rows) {
-    if (!input || !input.value) return;
-    const found = rows.find(c => String(c.code).toUpperCase() === input.value.trim().toUpperCase());
-    if (found) input.value = found.name;
-  }
-  function mount() {
-    const country = byId(ids.country), region = byId(ids.region), city = byId(ids.city);
-    if (!country || !region || !city || mounted.has(country)) return;
-    mounted.add(country);
-    const countryList = datalist(country, 'global_country');
-    const regionList = datalist(region, 'global_region');
-    const cityList = datalist(city, 'global_city');
-    const timezone = byId(ids.timezone), locale = byId(ids.locale), date = byId(ids.date), time = byId(ids.time), number = byId(ids.number);
-    if (timezone) datalist(timezone, 'global_timezone');
-    if (locale) datalist(locale, 'global_locale');
-    if (date) datalist(date, 'global_date');
-    if (number) datalist(number, 'global_number');
-    if (timezone && typeof Intl.supportedValuesOf === 'function') fill(timezone.list, Intl.supportedValuesOf('timeZone'), x => x);
-    if (locale) fill(locale.list, ['en-US','en-GB','en-PH','en-CA','en-AU','ja-JP','zh-CN','zh-TW','ko-KR','fr-FR','fr-CA','de-DE','es-ES','es-MX','pt-BR','pt-PT','it-IT','ar-SA','hi-IN','id-ID','th-TH','vi-VN'], x => x);
-    if (date) fill(date.list, ['MM/DD/YYYY','DD/MM/YYYY','YYYY-MM-DD','DD.MM.YYYY','YYYY/MM/DD'], x => x);
-    if (number) fill(number.list, ['1,234.56','1.234,56','1 234,56','1’234.56','1234.56'], x => x);
-    if (time && time.tagName === 'SELECT' && ![...time.options].some(o => o.value === '24h')) {
-      time.add(new Option('12-hour', '12h')); time.add(new Option('24-hour', '24h'));
-    }
-    let activeCode = '';
-    let activeRegionId = null;
-    let searchTimer = 0;
-    countries().then(rows => {
-      fill(countryList, rows, c => c.name, c => c.code);
-      setCountryCode(country, rows);
-      const current = countryCode(country, rows);
-      if (current) loadRegions(current, false);
-    }).catch(err => console.warn('[EDMEL locations] Country list unavailable:', err.message));
-    async function loadRegions(code, reset) {
-      if (reset) { region.value = ''; city.value = ''; }
-      activeCode = code;
-      fill(regionList, [], x => x);
-      fill(cityList, [], x => x);
-      if (!code || !/^[A-Z]{2}$/.test(code)) return;
-      try {
-        const rows = await regions(code);
-        if (activeCode !== code) return;
-        fill(regionList, rows, r => r.name, r => r.iso_3166_2 || '');
-        const selectedRegion = rows.find(r => key(r.name) === key(region.value));
-        activeRegionId = selectedRegion?.id ?? null;
-      } catch (err) { console.warn('[EDMEL locations] Region list unavailable:', err.message); }
-    }
-    country.addEventListener('change', async () => {
-      const rows = await countries();
-      const code = countryCode(country, rows);
-      if (!rows.some(c => String(c.code).toUpperCase() === code)) {
-        country.setCustomValidity('Choose a country from the global list or enter its ISO alpha-2 code.');
-      } else {
-        country.setCustomValidity('');
-        country.value = rows.find(c => c.code === code).name;
-      }
-      if (timezone) timezone.value = '';
-      if (locale) {
-        const selected = rows.find(c => c.code === code);
-        if (selected?.official_language) locale.value = selected.official_language + '-' + code;
-      }
-      await loadRegions(code, true);
-    });
-    region.addEventListener('change', async () => {
-      city.value = ''; fill(cityList, [], x => x);
-      const code = activeCode || countryCode(country, countryCache.rows || []);
-      try { const rows = await regions(code); activeRegionId = rows.find(r => key(r.name) === key(region.value))?.id ?? null; }
-      catch (_) { activeRegionId = null; }
-    });
-    city.addEventListener('input', () => {
-      clearTimeout(searchTimer);
-      const query = city.value.trim(), code = activeCode || countryCode(country, countryCache.rows || []);
-      fill(cityList, [], x => x);
-      if (query.length < 2 || !/^[A-Z]{2}$/.test(code)) return;
-      searchTimer = setTimeout(async () => {
-        try {
-          const result = await invoke({ action: 'search', country_code: code, query });
-          if (activeCode !== code || city.value.trim() !== query) return;
-          const candidates = (result.places || []).filter(p => p && p.name && p.type === 'settlement');
-          const hasRegionMetadata = candidates.some(p => p.admin1_id != null || p.region_id != null || p.admin1 != null);
-          const inSelectedRegion = activeRegionId == null || !hasRegionMetadata ? candidates : candidates.filter(p => Number(p.admin1_id ?? p.region_id ?? p.admin1) === Number(activeRegionId));
-          const places = inSelectedRegion.slice(0, 100);
-          fill(cityList, places, p => p.name, p => p.population ? Number(p.population).toLocaleString() + ' population' : '');
-          const exact = places.find(p => key(p.name) === key(query));
-          if (exact?.timezone_id && timezone && !timezone.value) timezone.value = exact.timezone_id;
-        } catch (err) { console.warn('[EDMEL locations] City suggestions unavailable:', err.message); }
-      }, 280);
-    });
-  }
-  function mountAll() {
-    for (const pair of [ids.country]) for (const id of pair) {
-      const input = document.getElementById(id);
-      if (input) mount();
-    }
-  }
-  const observer = new MutationObserver(mountAll);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountAll);
-  else mountAll();
-  window.EDMELGlobalLocations = {
-    countryCodeFor(inputId) {
-      const input = document.getElementById(inputId);
-      const rows = countryCache.rows || [];
-      return countryCode(input, rows);
-    },
-    hasValidCountry(inputId) {
-      const input = document.getElementById(inputId);
-      if (!input?.value.trim()) return true;
-      const rows = countryCache.rows || [];
-      return rows.some(c => key(c.name) === key(input.value) || String(c.code).toUpperCase() === input.value.trim().toUpperCase());
-    },
-    countryNameFor(code) {
-      const row = (countryCache.rows || []).find(c => c.code === String(code).toUpperCase());
-      return row?.name || String(code || '');
-    }
-  };
+(function(){
+'use strict';
+const IDS={country:['branchCreateCountry','managerBranchCountry'],region:['branchCreateState','managerBranchState'],city:['branchCreateCity','managerBranchCity'],timezone:['branchCreateTimezone','managerBranchTimezone'],locale:['branchCreateLocale','managerBranchLocale'],date:['branchCreateDateFormat','managerBranchDateFormat'],number:['branchCreateNumberFormat','managerBranchNumberFormat']};
+const cache={countries:null,regions:new Map(),cities:new Map(),zones:new Map()},mounted=new WeakSet();
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[^a-z0-9]/g,'');
+const get=ids=>ids.map(id=>document.getElementById(id)).find(Boolean)||null;
+async function api(body){const c=(()=>{try{return sb}catch(_){return null}})();if(!c?.functions?.invoke)throw Error('Session unavailable. Refresh and sign in again.');const {data,error}=await c.functions.invoke('edmel-global-location-cache',{body});if(error)throw Error(error.message);if(data?.error)throw Error(data.error);return data||{}}
+async function countries(){if(!cache.countries)cache.countries=(await api({action:'countries'})).countries||[];return cache.countries}
+async function regions(code){if(!cache.regions.has(code))cache.regions.set(code,(await api({action:'regions',country_code:code})).regions||[]);return cache.regions.get(code)}
+async function zones(code){if(!cache.zones.has(code))cache.zones.set(code,(await api({action:'timezones',country_code:code})).timezones||[]);return cache.zones.get(code)}
+function countryBy(v,rows){return rows.find(x=>norm(x.name)===norm(v)||x.code===String(v||'').trim().toUpperCase())}
+function make(input){
+ let wrap=input.parentElement;if(!wrap?.classList.contains('edmel-loc')){wrap=document.createElement('div');wrap.className='edmel-loc';input.parentNode.insertBefore(wrap,input);wrap.append(input)}
+ const pop=document.createElement('div');pop.className='edmel-loc-pop';pop.setAttribute('role','listbox');wrap.append(pop);
+ const show=()=>{wrap.classList.add('open');input.setAttribute('aria-expanded','true')},hide=()=>{wrap.classList.remove('open');input.setAttribute('aria-expanded','false')};
+ const render=(rows,pick,empty='No matches. Custom entry is allowed.')=>{pop.replaceChildren();if(!rows.length){const x=document.createElement('div');x.className='edmel-loc-empty';x.textContent=empty;pop.append(x);return}rows.slice(0,70).forEach(r=>{const b=document.createElement('button');b.type='button';b.className='edmel-loc-item';const s=document.createElement('span');s.textContent=r.label;b.append(s);if(r.meta){const sm=document.createElement('small');sm.textContent=r.meta;b.append(sm)}b.addEventListener('mousedown',e=>e.preventDefault());b.addEventListener('click',()=>{pick(r);hide();input.dispatchEvent(new Event('change',{bubbles:true}))});pop.append(b)})};
+ input.setAttribute('autocomplete','off');input.setAttribute('aria-expanded','false');input.addEventListener('focus',show);input.addEventListener('keydown',e=>{if(e.key==='Escape')hide()});document.addEventListener('click',e=>{if(!wrap.contains(e.target))hide()});
+ return{render,show,hide};
+}
+const css='.edmel-loc{position:relative;width:100%;min-width:0}.edmel-loc-pop{display:none;position:absolute;z-index:1500;top:calc(100% + 4px);left:0;right:0;max-height:220px;overflow:auto;padding:5px;border:1px solid var(--line-strong,var(--bd,#888));border-radius:9px;background:var(--surface,#242424);color:var(--text,inherit);box-shadow:0 12px 28px rgba(0,0,0,.24)}.edmel-loc.open .edmel-loc-pop{display:block}.edmel-loc-item{width:100%;min-height:34px;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 9px;border:0;border-radius:6px;background:transparent;color:inherit;text-align:left;font:inherit;font-size:12px;cursor:pointer}.edmel-loc-item:hover{background:var(--surface2,rgba(128,128,128,.18))}.edmel-loc-item small,.edmel-loc-empty{font-size:10px;color:var(--muted,#999)}.edmel-loc-empty{padding:10px}';
+if(!document.getElementById('edmel-loc-css')){const s=document.createElement('style');s.id='edmel-loc-css';s.textContent=css;document.head.append(s)}
+function mount(){
+ const country=get(IDS.country),state=get(IDS.region),city=get(IDS.city);if(!country||!state||!city||mounted.has(country))return;mounted.add(country);
+ const c=make(country),r=make(state),ci=make(city),tz=get(IDS.timezone),t=tz?make(tz):null,locale=get(IDS.locale),date=get(IDS.date),num=get(IDS.number);
+ let countriesList=[],selectedCountry=null,selectedRegion=null,cityList=[],zoneList=[];
+ const countryName=code=>countriesList.find(x=>x.code===code)?.name||code;
+ async function setCountry(row,reset=true){selectedCountry=row;country.value=row.name;country.setCustomValidity('');if(reset){state.value='';city.value='';selectedRegion=null;cityList=[];if(tz)tz.value=''}try{const [rs,zs]=await Promise.all([regions(row.code),zones(row.code)]);r.render(rs.map(x=>({label:x.name,meta:x.iso_3166_2||'',data:x})),x=>setRegion(x.data),'No subdivision data. Custom entry is allowed.');zoneList=zs;if(t) t.render(zs.map(x=>({label:x.name,meta:x.mainCity||'',data:x})),x=>tz.value=x.data.name,'No timezones listed. Enter an IANA timezone.');if(tz&&!tz.value&&zs.length)tz.value=zs[0].name;}catch(e){console.warn('[EDMEL location]',e.message)}}
+ async function setRegion(row){selectedRegion=row;state.value=row.name;city.value='';try{const k=selectedCountry.code+':'+row.id;if(!cache.cities.has(k))cache.cities.set(k,(await api({action:'cities',country_code:selectedCountry.code,region_id:row.id})).settlements||[]);cityList=cache.cities.get(k);ci.render(cityList.map(x=>({label:x.name,meta:x.population?Number(x.population).toLocaleString()+' population':'',data:x})),x=>{city.value=x.data.name;const z=zoneList.find(y=>norm(y.mainCity)===norm(x.data.name));if(z&&tz)tz.value=z.name},'No city list. Custom entry is allowed.')}catch(e){console.warn('[EDMEL cities]',e.message)}}
+ async function init(){try{countriesList=await countries();c.render(countriesList.map(x=>({label:x.name,meta:x.code,data:x})),x=>setCountry(x.data),'No country match.');const old=countryBy(country.value,countriesList);if(old){await setCountry(old,false);const rs=await regions(old.code);const oldRegion=rs.find(x=>norm(x.name)===norm(state.value));if(oldRegion)await setRegion(oldRegion)}}catch(e){console.warn('[EDMEL countries]',e.message)}}
+ country.addEventListener('input',()=>{const q=norm(country.value);c.show();c.render(countriesList.filter(x=>norm(x.name).includes(q)).map(x=>({label:x.name,meta:x.code,data:x})),x=>setCountry(x.data),'No country match.')});
+ country.addEventListener('change',()=>{const x=countryBy(country.value,countriesList);if(x)setCountry(x,true)});
+ state.addEventListener('input',async()=>{const q=norm(state.value);r.show();if(!q)return;try{let rows;if(selectedCountry)rows=await regions(selectedCountry.code);else rows=(await api({action:'region_search',query:state.value})).regions||[];const hits=rows.filter(x=>norm(x.name).includes(q));r.render(hits.map(x=>({label:x.name,meta:selectedCountry?(x.iso_3166_2||''):(x.country_code+' · '+countryName(x.country_code)),data:x})),async x=>{if(!selectedCountry){const co=countriesList.find(y=>y.code===x.data.country_code);if(co)await setCountry(co,false)}await setRegion(x.data)},'No matching region. Custom entry is allowed.')}catch(e){console.warn('[EDMEL regions]',e.message)}});
+ city.addEventListener('input',()=>{const q=norm(city.value);ci.show();ci.render(cityList.filter(x=>norm(x.name).includes(q)).map(x=>({label:x.name,meta:x.population?Number(x.population).toLocaleString()+' population':'',data:x})),x=>{city.value=x.data.name;const z=zoneList.find(y=>norm(y.mainCity)===norm(x.data.name));if(z&&tz)tz.value=z.name},'No city match. Custom entry is allowed.')});
+ if(tz)tz.addEventListener('input',()=>{const q=norm(tz.value);t.show();t.render(zoneList.filter(x=>norm(x.name).includes(q)||norm(x.mainCity).includes(q)).map(x=>({label:x.name,meta:x.mainCity,data:x})),x=>tz.value=x.data.name,'No timezone match for selected country.')});
+ const addChoices=(el,vals)=>{if(!el)return;const d=make(el);d.render(vals.map(x=>({label:x})),x=>el.value=x.label);el.addEventListener('input',()=>{const q=norm(el.value);d.show();d.render(vals.filter(x=>norm(x).includes(q)).map(x=>({label:x})),x=>el.value=x.label)})};
+ addChoices(locale,['en-US','en-GB','en-PH','en-CA','en-AU','ja-JP','zh-CN','zh-TW','ko-KR','fr-FR','fr-CA','de-DE','es-ES','es-MX','pt-BR','pt-PT','it-IT','ar-SA','hi-IN','id-ID','th-TH','vi-VN']);
+ addChoices(date,['MM/DD/YYYY','DD/MM/YYYY','YYYY-MM-DD','DD.MM.YYYY','YYYY/MM/DD']);
+ addChoices(num,['1,234.56','1.234,56','1 234,56','1’234.56','1234.56']);
+ init();
+}
+function mountAll(){if(IDS.country.some(id=>document.getElementById(id)))mount()}
+new MutationObserver(mountAll).observe(document.documentElement,{childList:true,subtree:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountAll);else mountAll();
+window.EDMELGlobalLocations={countryCodeFor(id){return countryBy(document.getElementById(id)?.value,cache.countries||[])?.code||''},hasValidCountry(id){const v=document.getElementById(id)?.value||'';return !v.trim()||!!countryBy(v,cache.countries||[])},countryNameFor(code){return countryName(String(code||'').toUpperCase())}};
 })();
