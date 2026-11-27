@@ -46,6 +46,7 @@ td .primary,td .secondary,td .danger{height:32px;padding:0 12px}
 #loginView{min-height:100vh;display:grid;place-items:center;padding:24px}
 .login-card{width:min(400px,100%);padding:36px 32px;border:1px solid var(--line);border-radius:24px;background:var(--surface);box-shadow:var(--shadow)}
 .login-card .primary{height:44px}
+.login-methods{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;margin:18px 0;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}.login-methods button{height:34px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-weight:600}.login-methods button.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 .brand-mark{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:18px}
 
 /* shell */
@@ -191,11 +192,32 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   <div class="brand-mark">E</div>
   <h1>Manager Sign In</h1>
   <p class="sub">Access your assigned branch and manage your team.</p>
-  <div class="field"><label for="username">Username</label><input id="username" autocomplete="username" maxlength="80" required></div>
-  <div class="field"><label for="pin">6-Digit PIN</label><input id="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="current-password" required></div>
+  <div class="login-methods" role="group" aria-label="Sign-in method">
+   <button type="button" id="pinModeButton" class="active" aria-pressed="true">PIN</button>
+   <button type="button" id="passwordModeButton" aria-pressed="false">Password</button>
+  </div>
+  <div id="pinLoginFields">
+   <div class="field"><label for="username">Username</label><input id="username" autocomplete="username" maxlength="80" required></div>
+   <div class="field"><label for="pin">6-Digit PIN</label><input id="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="current-password" required></div>
+  </div>
+  <div id="passwordLoginFields" hidden>
+   <div class="field"><label for="managerEmailLogin">Email</label><input id="managerEmailLogin" type="email" maxlength="254" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+   <div class="field"><label for="managerPasswordLogin">Password</label><input id="managerPasswordLogin" type="password" autocomplete="current-password"></div>
+  </div>
   <button class="primary" id="loginButton" type="submit" style="width:100%">Sign In</button>
   <div class="message" id="loginMessage" role="alert"></div>
-  <p class="note">Manager access is limited to assigned branches and permissions.</p>
+  <p class="note">Manager access is limited to assigned branches and permissions. Existing PIN accounts can continue using PIN sign-in.</p>
+ </form>
+</section>
+<section id="passwordSetupView" class="hidden" style="min-height:100vh;place-items:center;padding:24px">
+ <form class="login-card" id="passwordSetupForm">
+  <div class="brand-mark">E</div>
+  <h1>Create Your Manager Password</h1>
+  <p class="sub">Your email has been verified. Set a password to activate your Manager account.</p>
+  <div class="field"><label for="managerNewPassword">New Password</label><input id="managerNewPassword" type="password" minlength="12" autocomplete="new-password" required></div>
+  <div class="field"><label for="managerConfirmPassword">Confirm Password</label><input id="managerConfirmPassword" type="password" minlength="12" autocomplete="new-password" required></div>
+  <button class="primary" id="passwordSetupButton" type="submit" style="width:100%">Set Password</button>
+  <div class="message" id="passwordSetupMessage" role="alert"></div>
  </form>
 </section>
 
@@ -435,7 +457,8 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  const SUPABASE_KEY = "sb_publishable_PM2N85UZqFZqc-2XQ04IPg_ulOxQkt4";
  let RESTAURANT_ID = "";
  let RESTAURANT_SLUG = "";
- const sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{storageKey:"edmel-manager-auth",persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+ let loginMode = "pin";
+ const sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{storageKey:"edmel-manager-auth",persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const $ = id => document.getElementById(id);
  const esc = value => String(value ?? "").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
  const permissionLabels = {orders:"Orders",void:"Void",tables:"Tables",stocks:"Stocks",dispatcher:"Dispatcher",settings:"Settings"};
@@ -1030,8 +1053,9 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  });
  document.querySelectorAll(".stat strong").forEach(el=>countObserver.observe(el,{childList:true,characterData:true,subtree:true}));
 
- function showLogin(message=""){ $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden"); $("loginMessage").textContent=message; }
- function showApp(){ loadAppearance(); $("loginView").classList.add("hidden"); $("appView").classList.remove("hidden"); }
+ function showLogin(message=""){ $("passwordSetupView").classList.add("hidden"); $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden"); $("loginMessage").textContent=message; }
+ function showPasswordSetup(message=""){ $("loginView").classList.add("hidden"); $("appView").classList.add("hidden"); $("passwordSetupView").classList.remove("hidden"); $("passwordSetupView").style.display="grid"; $("passwordSetupMessage").textContent=message; }
+ function showApp(){ loadAppearance(); $("loginView").classList.add("hidden"); $("passwordSetupView").classList.add("hidden"); $("appView").classList.remove("hidden"); }
  function notify(message,isError=false){ $("staffMessage").textContent=message; $("staffMessage").style.color=isError?"var(--red)":"var(--muted)"; }
  async function callSession(action,id=null,branchId=null,activity=false){
   const {data,error}=await sb.functions.invoke("staff-session-action",{body:{action,...(id?{session_id:id}:{}),...(branchId?{branch_id:branchId}:{}),...(action==="start"&&RESTAURANT_SLUG?{restaurant_slug:RESTAURANT_SLUG}:{}),...(action==="heartbeat"?{activity:activity===true}:{})}});
@@ -1079,11 +1103,20 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   sessionStorage.setItem("edmel_manager_restaurant",RESTAURANT_ID);
 
   const {data:links,error:linkError}=await sb.from("restaurant_users")
-    .select("id,user_id,restaurant_id,role,position,full_name,display_name,cashier_username,is_active")
+    .select("id,user_id,restaurant_id,role,position,full_name,display_name,cashier_username,is_active,manager_auth_method,manager_email,manager_email_verified_at,manager_auth_setup_status,manager_can_change_password")
     .eq("user_id",userData.user.id).eq("restaurant_id",RESTAURANT_ID).eq("role","staff").eq("is_active",true);
   if(linkError)throw linkError;
   managerLink=(links||[]).find(row=>String(row.position||"").toLowerCase()==="manager");
   if(!managerLink)throw new Error("This account does not have Manager access in the selected restaurant.");
+  const managerAuthMethod=String(managerLink.manager_auth_method||"pin").toLowerCase();
+  if(managerAuthMethod==="password"){
+   const signedInEmail=String(userData.user.email||"").trim().toLowerCase();
+   const assignedEmail=String(managerLink.manager_email||"").trim().toLowerCase();
+   if(!signedInEmail||signedInEmail!==assignedEmail)throw new Error("This sign-in email does not match the assigned Manager account.");
+   if(!userData.user.email_confirmed_at||!managerLink.manager_email_verified_at||managerLink.manager_auth_setup_status!=="active"){
+    showPasswordSetup();return;
+   }
+  }
 
   const {data:access,error:accessError}=await sb.from("staff_branch_access")
     .select("branch_id,restaurant_id,permissions,is_active")
@@ -1579,18 +1612,58 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  $("managerEmergencyAddButton")?.addEventListener("click",()=>openManagerEmergencyForm());
  $("refreshButton").addEventListener("click",()=>loadBranchData().catch(error=>notify(error.message,true)));
  $("logoutButton").addEventListener("click",async()=>{await endPresence();await sb.auth.signOut({scope:"local"});showLogin("You have signed out.");});
+ function setLoginMode(mode){
+  loginMode=mode==="password"?"password":"pin";
+  $("pinLoginFields").hidden=loginMode!=="pin";
+  $("passwordLoginFields").hidden=loginMode!=="password";
+  $("pinModeButton").classList.toggle("active",loginMode==="pin");
+  $("passwordModeButton").classList.toggle("active",loginMode==="password");
+  $("pinModeButton").setAttribute("aria-pressed",String(loginMode==="pin"));
+  $("passwordModeButton").setAttribute("aria-pressed",String(loginMode==="password"));
+  $("loginMessage").textContent="";
+ }
+ $("pinModeButton").addEventListener("click",()=>setLoginMode("pin"));
+ $("passwordModeButton").addEventListener("click",()=>setLoginMode("password"));
+ $("passwordSetupForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const password=$("managerNewPassword").value,confirmPassword=$("managerConfirmPassword").value,button=$("passwordSetupButton");
+  if(password.length<12){$("passwordSetupMessage").textContent="Use a password with at least 12 characters.";return;}
+  if(password!==confirmPassword){$("passwordSetupMessage").textContent="The passwords do not match.";return;}
+  button.disabled=true;button.textContent="Saving...";
+  $("passwordSetupMessage").textContent="";
+  try{
+   const {error:updateError}=await sb.auth.updateUser({password});
+   if(updateError)throw updateError;
+   const {data,error}=await sb.functions.invoke("manager-auth-setup",{body:{}});
+   if(error)throw new Error(data?.error||error.message||"Unable to complete Manager setup.");
+   if(!data?.success)throw new Error(data?.error||"Manager setup was not confirmed.");
+   $("managerNewPassword").value="";$("managerConfirmPassword").value="";
+   await bootstrap();
+  }catch(error){$("passwordSetupMessage").textContent=error.message||"Unable to complete Manager setup.";}
+  finally{button.disabled=false;button.textContent="Set Password";}
+ });
  $("loginForm").addEventListener("submit",async event=>{
-  event.preventDefault();const username=$("username").value.trim(),pin=$("pin").value,button=$("loginButton");
-  if(!username||!/^[0-9]{6}$/.test(pin)){showLogin("Enter your username and six-digit PIN.");return;}
+  event.preventDefault();const button=$("loginButton");
   button.disabled=true;button.textContent="Verifying...";$("loginMessage").textContent="";
   try{
-   const response=await fetch(SUPABASE_URL+"/functions/v1/cashier-login",{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({username,pin,expected_position:"manager"})});
-   const result=await response.json().catch(()=>({}));
-   if(!response.ok||!result.token_hash)throw new Error(result.error||"Invalid username or PIN.");
-   const {data,error}=await sb.auth.verifyOtp({token_hash:result.token_hash,type:"magiclink"});
-   if(error||!data?.session)throw new Error(error?.message||"Authentication could not be completed.");
-   $("pin").value="";
-   await bootstrap();
+   if(loginMode==="password"){
+    const email=$("managerEmailLogin").value.trim().toLowerCase(),password=$("managerPasswordLogin").value;
+    if(!email||!password)throw new Error("Enter your Manager email and password.");
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error||!data?.session)throw new Error(error?.message||"Invalid email or password.");
+    $("managerPasswordLogin").value="";
+    await bootstrap();
+   }else{
+    const username=$("username").value.trim(),pin=$("pin").value;
+    if(!username||!/^[0-9]{6}$/.test(pin))throw new Error("Enter your username and six-digit PIN.");
+    const response=await fetch(SUPABASE_URL+"/functions/v1/cashier-login",{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({username,pin,expected_position:"manager"})});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||!result.token_hash)throw new Error(result.error||"Invalid username or PIN.");
+    const {data,error}=await sb.auth.verifyOtp({token_hash:result.token_hash,type:"magiclink"});
+    if(error||!data?.session)throw new Error(error?.message||"Authentication could not be completed.");
+    $("pin").value="";
+    await bootstrap();
+   }
   }catch(error){await sb.auth.signOut({scope:"local"});showLogin(error.message||"Unable to sign in.");}
   finally{button.disabled=false;button.textContent="Sign In";}
  });
