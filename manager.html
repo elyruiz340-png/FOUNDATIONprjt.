@@ -980,8 +980,6 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   if(!managerCanCreateBranch())throw new Error("Branch Create permission has not been granted for your Manager account.");
   const mode=managerBranchPolicy?.manager_creation_mode||"not_allowed";
   if(mode==="not_allowed")throw new Error("The Owner/Admin has disabled Manager branch creation.");
-  $("managerBranchHoursEditor").innerHTML=managerBranchHoursMarkup();
-  $("managerBranchModesEditor").innerHTML=managerBranchModesMarkup();
   $("managerBranchCreateForm").reset();
   $("managerBranchHoursEditor").innerHTML=managerBranchHoursMarkup();
   $("managerBranchModesEditor").innerHTML=managerBranchModesMarkup();
