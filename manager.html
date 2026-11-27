@@ -1641,7 +1641,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   button.disabled=true;button.textContent="Saving...";
   $("passwordSetupMessage").textContent="";
   try{
-   const {data,error}=await sb.functions.invoke("manager-auth-setup",{body:{password}});
+   const {data,error}=await sb.functions.invoke("manager-auth-setup",{body:{password,restaurant_id:RESTAURANT_ID}});
    if(error)throw new Error(data?.error||error.message||"Unable to complete Manager setup.");
    if(!data?.success)throw new Error(data?.error||"Manager setup was not confirmed.");
    $("managerNewPassword").value="";$("managerConfirmPassword").value="";
