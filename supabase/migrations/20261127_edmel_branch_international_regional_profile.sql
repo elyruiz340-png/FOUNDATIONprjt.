@@ -294,3 +294,57 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.edmel_review_branch_creation_request(uuid,text,text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.edmel_review_branch_creation_request(uuid,text,text) TO authenticated,service_role;
+
+
+
+CREATE OR REPLACE FUNCTION private.edmel_validate_branch_request_regional_profile()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_key text;
+  v_value text;
+  v_max_length integer;
+  v_profile jsonb;
+BEGIN
+  v_profile:=coalesce(NEW.request_data->'regional_profile','{}'::jsonb);
+  IF jsonb_typeof(v_profile)<>'object' OR pg_column_size(v_profile)>12000 THEN
+    RAISE EXCEPTION 'Invalid branch regional profile' USING ERRCODE='22023';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM jsonb_object_keys(v_profile) AS k(key)
+    WHERE k.key<>ALL(ARRAY['country_code','state_province','city','district','postal_code','contact_number','email','website','locale','date_format','time_format','number_format'])
+  ) THEN
+    RAISE EXCEPTION 'Unsupported branch regional profile field' USING ERRCODE='22023';
+  END IF;
+  FOR v_key,v_value IN SELECT key,nullif(btrim(value#>>'{}'),'') FROM jsonb_each(v_profile) LOOP
+    v_max_length:=CASE v_key
+      WHEN 'country_code' THEN 2 WHEN 'state_province' THEN 120 WHEN 'city' THEN 120
+      WHEN 'district' THEN 120 WHEN 'postal_code' THEN 24 WHEN 'contact_number' THEN 40
+      WHEN 'email' THEN 254 WHEN 'website' THEN 500 WHEN 'locale' THEN 35
+      WHEN 'date_format' THEN 40 WHEN 'time_format' THEN 20 WHEN 'number_format' THEN 40
+      ELSE 0 END;
+    IF v_value IS NOT NULL AND length(v_value)>v_max_length THEN
+      RAISE EXCEPTION 'Branch regional profile field is too long: %',v_key USING ERRCODE='22023';
+    END IF;
+  END LOOP;
+  IF nullif(btrim(v_profile->>'country_code'),'') IS NOT NULL AND upper(btrim(v_profile->>'country_code')) !~ '^[A-Z]{2}$' THEN
+    RAISE EXCEPTION 'Country must use a two-letter ISO code' USING ERRCODE='22023';
+  END IF;
+  IF nullif(btrim(v_profile->>'email'),'') IS NOT NULL AND btrim(v_profile->>'email') !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' THEN
+    RAISE EXCEPTION 'Enter a valid email address' USING ERRCODE='22023';
+  END IF;
+  IF nullif(btrim(v_profile->>'website'),'') IS NOT NULL AND btrim(v_profile->>'website') !~* '^https?://' THEN
+    RAISE EXCEPTION 'Website must begin with http:// or https://' USING ERRCODE='22023';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS edmel_validate_branch_request_regional_profile ON private.restaurant_branch_creation_requests;
+CREATE TRIGGER edmel_validate_branch_request_regional_profile
+BEFORE INSERT OR UPDATE OF request_data ON private.restaurant_branch_creation_requests
+FOR EACH ROW EXECUTE FUNCTION private.edmel_validate_branch_request_regional_profile();
+
+REVOKE ALL ON FUNCTION private.edmel_validate_branch_request_regional_profile() FROM PUBLIC,anon,authenticated;
