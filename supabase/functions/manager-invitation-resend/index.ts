@@ -146,12 +146,22 @@ Deno.serve(async (req: Request) => {
       });
       emailError = result.error;
     } else {
-      const result = await admin.auth.resend({
-        type: "signup",
-        email,
-        options: { emailRedirectTo: redirectUrl.toString() },
+      const inviteResult = await admin.auth.admin.inviteUserByEmail(email, {
+        redirectTo: redirectUrl.toString(),
+        data: { account_type: "edmel_staff", staff_position: "Manager" },
       });
-      emailError = result.error;
+      if (!inviteResult.error) {
+        emailError = null;
+      } else {
+        // Existing unconfirmed Auth users cannot always be invited again through
+        // /invite; resend their signup confirmation without creating a new user.
+        const resendResult = await admin.auth.resend({
+          type: "signup",
+          email,
+          options: { emailRedirectTo: redirectUrl.toString() },
+        });
+        emailError = resendResult.error;
+      }
     }
 
     if (emailError) {
