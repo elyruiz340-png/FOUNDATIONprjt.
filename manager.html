@@ -163,6 +163,19 @@ td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .manager-branch-hour strong{font-size:12px;font-weight:600}
 .manager-branch-hour input,.manager-branch-hour select,.manager-branch-mode select{min-width:0;width:100%;border:1px solid var(--line-strong);border-radius:8px;padding:8px;background:var(--surface);color:var(--text)}
 .manager-branch-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.manager-branch-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:8px 0 18px}
+.manager-branch-steps button{min-width:0;padding:9px 5px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700}
+.manager-branch-steps button span{display:block;margin-top:3px;font-size:10px;font-weight:600}
+.manager-branch-steps button.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface));color:var(--accent)}
+.manager-branch-step-panel h3{margin:4px 0 14px;font-size:15px;font-weight:650}
+.manager-branch-step-actions{justify-content:flex-end;flex-wrap:wrap}
+.manager-branch-review{display:grid;gap:10px;margin:14px 0}
+.manager-branch-review-group{padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+.manager-branch-review-group h4{margin:0 0 8px;font-size:12px}
+.manager-branch-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 14px}
+.manager-branch-review-item{min-width:0;font-size:11px;overflow-wrap:anywhere}
+.manager-branch-review-item span{display:block;color:var(--muted);font-size:10px}
+@media(max-width:560px){.manager-branch-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.manager-branch-review-grid{grid-template-columns:1fr}}
 .manager-branch-mode{display:grid;gap:5px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}.manager-branch-mode label{font-size:11px;font-weight:600}
 
 /* appearance menu */
@@ -413,33 +426,64 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
     <div class="panel-body"><div class="table-wrap"><table><thead><tr><th>Branch</th><th>Status</th><th>Submitted</th><th>Review Note</th></tr></thead><tbody id="managerBranchRequestRows"><tr><td colspan="4" class="empty">Loading requests…</td></tr></tbody></table></div></div>
    </details>
    <div class="manager-branch-modal" id="managerBranchCreateModal" hidden>
-    <form class="manager-expense-dialog manager-branch-dialog" id="managerBranchCreateForm">
+    <form class="manager-expense-dialog manager-branch-dialog" id="managerBranchCreateForm" novalidate>
      <div class="row" style="justify-content:space-between;align-items:center"><h2 id="managerBranchModalTitle">Create Branch</h2><button class="secondary" id="managerBranchCloseButton" type="button">Close</button></div>
      <p class="note" id="managerBranchModalDescription">Enter the branch information and operating configuration.</p>
-     <div class="form-grid">
-      <div class="field"><label for="managerBranchName">Branch Name *</label><input id="managerBranchName" maxlength="80" required placeholder="e.g. Downtown Branch"></div>
-      <div class="field"><label for="managerBranchCode">Branch Code *</label><input id="managerBranchCode" maxlength="20" required placeholder="e.g. DOWNTOWN"></div>
-      <div class="field"><label for="managerBranchTimezone">IANA Timezone *</label><input id="managerBranchTimezone" maxlength="80" required placeholder="e.g. Asia/Manila"></div>
-      <div class="field"><label for="managerBranchAddress">Complete Address</label><input id="managerBranchAddress" maxlength="240" placeholder="Street, building, unit, etc."></div>
-      <div class="field"><label for="managerBranchCountry">Country (ISO Code)</label><input id="managerBranchCountry" maxlength="80" placeholder="e.g. PH"></div>
-      <div class="field"><label for="managerBranchState">State / Province / Region</label><input id="managerBranchState" maxlength="120"></div>
-      <div class="field"><label for="managerBranchCity">City / Municipality</label><input id="managerBranchCity" maxlength="120"></div>
-      <div class="field"><label for="managerBranchDistrict">District / Area</label><input id="managerBranchDistrict" maxlength="120"></div>
-      <div class="field"><label for="managerBranchPostal">Postal Code</label><input id="managerBranchPostal" maxlength="24"></div>
-      <div class="field"><label for="managerBranchContact">Contact Number</label><input id="managerBranchContact" maxlength="40"></div>
-      <div class="field"><label for="managerBranchEmail">Email</label><input id="managerBranchEmail" type="email" maxlength="254"></div>
-      <div class="field"><label for="managerBranchWebsite">Website</label><input id="managerBranchWebsite" type="url" maxlength="500" placeholder="https://"></div>
-      <div class="field"><label for="managerBranchLocale">Locale / Language</label><input id="managerBranchLocale" maxlength="35" placeholder="e.g. en-PH"></div>
-      <div class="field"><label for="managerBranchDateFormat">Date Format</label><input id="managerBranchDateFormat" maxlength="40" placeholder="e.g. DD/MM/YYYY"></div>
-      <div class="field"><label for="managerBranchTimeFormat">Time Format</label><select id="managerBranchTimeFormat"><option value="">Default</option><option value="12h">12-hour</option><option value="24h">24-hour</option></select></div>
-      <div class="field"><label for="managerBranchNumberFormat">Number Format</label><input id="managerBranchNumberFormat" maxlength="40" placeholder="e.g. 1,234.56"></div>
-     </div>
-     <div class="field"><label>Branch Operating Hours *</label><div class="manager-branch-hours" id="managerBranchHoursEditor"></div></div>
-     <div class="field"><label>Business & Operations Settings Modes</label><div class="manager-branch-mode-grid" id="managerBranchModesEditor"></div></div>
-     <div class="field"><label for="managerBranchMenuMode">Menu Catalog</label><select id="managerBranchMenuMode"><option value="inherit">Inherit Main Branch Menu</option><option value="override" selected>Copy — Editable Branch Catalog</option><option value="independent">Independent — Standalone Snapshot</option></select></div>
-     <div class="hint">A newly created branch receives Branch View and Branch Create permissions only. Owner/Admin must separately grant operational permissions. Existing stock balances, transactions, tables, QR tokens and printer registrations are not copied.</div>
+     <nav class="manager-branch-steps" aria-label="Branch request steps">
+      <button type="button" class="active" data-manager-branch-step="0" aria-current="step">01 <span>Branch Profile</span></button>
+      <button type="button" data-manager-branch-step="1">02 <span>Operating Hours</span></button>
+      <button type="button" data-manager-branch-step="2">03 <span>Menu & Inventory</span></button>
+      <button type="button" data-manager-branch-step="3">04 <span>Business Settings</span></button>
+      <button type="button" data-manager-branch-step="4">05 <span>Review</span></button>
+     </nav>
+     <section class="manager-branch-step-panel" data-manager-branch-panel="0">
+      <h3>Branch Profile</h3>
+      <div class="form-grid">
+       <div class="field"><label for="managerBranchName">Branch Name *</label><input id="managerBranchName" maxlength="80" required placeholder="e.g. Downtown Branch"></div>
+       <div class="field"><label for="managerBranchCode">Branch Code *</label><input id="managerBranchCode" maxlength="20" required placeholder="e.g. DOWNTOWN"></div>
+       <div class="field"><label for="managerBranchTimezone">IANA Timezone *</label><input id="managerBranchTimezone" maxlength="80" required placeholder="e.g. Asia/Manila"></div>
+       <div class="field"><label for="managerBranchAddress">Complete Address</label><input id="managerBranchAddress" maxlength="240" placeholder="Street, building, unit, etc."></div>
+       <div class="field"><label for="managerBranchCountry">Country (ISO Code)</label><input id="managerBranchCountry" maxlength="80" placeholder="e.g. Philippines"></div>
+       <div class="field"><label for="managerBranchState">State / Province / Region</label><input id="managerBranchState" maxlength="120"></div>
+       <div class="field"><label for="managerBranchCity">City / Municipality</label><input id="managerBranchCity" maxlength="120"></div>
+       <div class="field"><label for="managerBranchDistrict">District / Area</label><input id="managerBranchDistrict" maxlength="120"></div>
+       <div class="field"><label for="managerBranchPostal">Postal Code</label><input id="managerBranchPostal" maxlength="24"></div>
+       <div class="field"><label for="managerBranchContact">Contact Number</label><input id="managerBranchContact" maxlength="40"></div>
+       <div class="field"><label for="managerBranchEmail">Email</label><input id="managerBranchEmail" type="email" maxlength="254"></div>
+       <div class="field"><label for="managerBranchWebsite">Website</label><input id="managerBranchWebsite" type="url" maxlength="500" placeholder="https://"></div>
+       <div class="field"><label for="managerBranchLocale">Locale / Language</label><input id="managerBranchLocale" maxlength="35" placeholder="e.g. en-PH"></div>
+       <div class="field"><label for="managerBranchDateFormat">Date Format</label><input id="managerBranchDateFormat" maxlength="40" placeholder="e.g. DD/MM/YYYY"></div>
+       <div class="field"><label for="managerBranchTimeFormat">Time Format</label><select id="managerBranchTimeFormat"><option value="">Default</option><option value="12h">12-hour</option><option value="24h">24-hour</option></select></div>
+       <div class="field"><label for="managerBranchNumberFormat">Number Format</label><input id="managerBranchNumberFormat" maxlength="40" placeholder="e.g. 1,234.56"></div>
+      </div>
+     </section>
+     <section class="manager-branch-step-panel" data-manager-branch-panel="1" hidden>
+      <h3>Operating Hours</h3>
+      <div class="field"><label>Branch Operating Hours *</label><div class="manager-branch-hours" id="managerBranchHoursEditor"></div></div>
+     </section>
+     <section class="manager-branch-step-panel" data-manager-branch-panel="2" hidden>
+      <h3>Menu & Inventory</h3>
+      <div class="field"><label for="managerBranchMenuMode">Menu Catalog</label><select id="managerBranchMenuMode"><option value="inherit">Inherit Main Branch Menu</option><option value="override" selected>Copy — Editable Branch Catalog</option><option value="independent">Independent — Standalone Snapshot</option></select></div>
+      <div class="hint">Existing stock balances and inventory transactions are not copied to a new branch. Inventory access must be granted separately by the Owner/Admin.</div>
+     </section>
+     <section class="manager-branch-step-panel" data-manager-branch-panel="3" hidden>
+      <h3>Business Settings</h3>
+      <div class="field"><label>Business & Operations Settings Modes</label><div class="manager-branch-mode-grid" id="managerBranchModesEditor"></div></div>
+      <div class="hint">Choose whether each supported setting is inherited, overridden, or independently configured for this branch.</div>
+     </section>
+     <section class="manager-branch-step-panel" data-manager-branch-panel="4" hidden>
+      <h3>Review Branch Request</h3>
+      <p class="note">Review the details below before submitting. Submission creates a request only; the branch is not operational until Owner approval and activation.</p>
+      <div id="managerBranchReview" class="manager-branch-review" aria-live="polite"></div>
+      <div class="hint">A newly created branch receives Branch View and Branch Create permissions only. Owner/Admin must separately grant operational permissions. Tables, QR tokens and printer registrations are not copied.</div>
+     </section>
      <div class="message" id="managerBranchFormMessage" role="alert"></div>
-     <div class="row"><button class="secondary" id="managerBranchCancelButton" type="button">Cancel</button><button class="primary" id="managerBranchSubmitButton" type="submit">Submit</button></div>
+     <div class="row manager-branch-step-actions">
+      <button class="secondary" id="managerBranchCancelButton" type="button">Cancel</button>
+      <button class="secondary" id="managerBranchBackButton" type="button" hidden>Back</button>
+      <button class="primary" id="managerBranchNextButton" type="button">Next</button>
+      <button class="primary" id="managerBranchSubmitButton" type="submit" hidden>Submit Branch Request</button>
+     </div>
     </form>
    </div>
   </div>
@@ -884,6 +928,38 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const groups=[["business_profile","Business Profile"],["tax","Tax Settings"],["service_charge","Service Charge"],["discounts_vouchers","Discounts & Vouchers"],["payment_methods","Payment Methods"],["receipt_settings","Receipt Settings"]];
   return groups.map(([key,label])=>'<div class="manager-branch-mode"><label for="managerBranchMode_'+key+'">'+label+'</label><select id="managerBranchMode_'+key+'"><option value="inherit">Inherit</option><option value="override">Override</option><option value="independent">Independent</option></select></div>').join("");
  }
+ let managerBranchStep=0;
+ const managerBranchStepNames=["Branch Profile","Operating Hours","Menu & Inventory","Business Settings","Review"];
+ function managerBranchReviewValue(id){return $(id)?.value?.trim()||"—";}
+ function renderManagerBranchReview(){
+  const fields=[["Branch Name","managerBranchName"],["Branch Code","managerBranchCode"],["Timezone","managerBranchTimezone"],["Complete Address","managerBranchAddress"],["Country","managerBranchCountry"],["State / Province / Region","managerBranchState"],["City / Municipality","managerBranchCity"],["District / Area","managerBranchDistrict"],["Postal Code","managerBranchPostal"],["Contact Number","managerBranchContact"],["Email","managerBranchEmail"],["Website","managerBranchWebsite"],["Locale / Language","managerBranchLocale"],["Date Format","managerBranchDateFormat"],["Time Format","managerBranchTimeFormat"],["Number Format","managerBranchNumberFormat"]];
+  const group=(title,items)=>'<section class="manager-branch-review-group"><h4>'+title+'</h4><div class="manager-branch-review-grid">'+items.map(([label,value])=>'<div class="manager-branch-review-item"><span>'+label+'</span>'+esc(value)+'</div>').join("")+'</div></section>';
+  const profile=fields.map(([label,id])=>[label,managerBranchReviewValue(id)]);
+  const hours=[["Monday","monday"],["Tuesday","tuesday"],["Wednesday","wednesday"],["Thursday","thursday"],["Friday","friday"],["Saturday","saturday"],["Sunday","sunday"]].map(([label,key])=>[label,$("managerBranch_"+key+"_open")?.value==="true"?$("managerBranch_"+key+"_start").value+"–"+$("managerBranch_"+key+"_end").value:"Closed"]);
+  const modes=[["business_profile","Business Profile"],["tax","Tax Settings"],["service_charge","Service Charge"],["discounts_vouchers","Discounts & Vouchers"],["payment_methods","Payment Methods"],["receipt_settings","Receipt Settings"]].map(([key,label])=>[label,$("managerBranchMode_"+key)?.value||"inherit"]);
+  $("managerBranchReview").innerHTML=group("01 · Branch Profile",profile)+group("02 · Operating Hours",hours)+group("03 · Menu & Inventory",[["Menu Catalog",$("managerBranchMenuMode").selectedOptions[0].text],["Inventory Setup","New branch inventory balances are not copied"]])+group("04 · Business Settings",modes);
+ }
+ function setManagerBranchStep(step){
+  managerBranchStep=Math.max(0,Math.min(4,step));
+  document.querySelectorAll("[data-manager-branch-panel]").forEach(panel=>panel.hidden=Number(panel.dataset.managerBranchPanel)!==managerBranchStep);
+  document.querySelectorAll("[data-manager-branch-step]").forEach(button=>{const active=Number(button.dataset.managerBranchStep)===managerBranchStep;button.classList.toggle("active",active);if(active)button.setAttribute("aria-current","step");else button.removeAttribute("aria-current");});
+  $("managerBranchBackButton").hidden=managerBranchStep===0;
+  $("managerBranchNextButton").hidden=managerBranchStep===4;
+  $("managerBranchSubmitButton").hidden=managerBranchStep!==4;
+  if(managerBranchStep===4)renderManagerBranchReview();
+  $("managerBranchFormMessage").textContent="";
+ }
+ function validateManagerBranchStep(step){
+  if(step===0){
+   for(const id of ["managerBranchName","managerBranchCode","managerBranchTimezone","managerBranchEmail","managerBranchWebsite"]){const field=$(id);if(!field.checkValidity()){field.reportValidity();return false;}}
+   const code=$("managerBranchCode").value.trim().toUpperCase();
+   if(!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code)){ $("managerBranchCode").setCustomValidity("Use 2–20 letters, numbers, hyphens or underscores.");$("managerBranchCode").reportValidity();$("managerBranchCode").setCustomValidity("");return false;}
+   try{new Intl.DateTimeFormat("en-US",{timeZone:$("managerBranchTimezone").value.trim()});}catch(_){$("managerBranchTimezone").setCustomValidity("Enter a valid IANA timezone.");$("managerBranchTimezone").reportValidity();$("managerBranchTimezone").setCustomValidity("");return false;}
+   if($("managerBranchCountry").value.trim()&&!window.EDMELGlobalLocations?.hasValidCountry("managerBranchCountry")){ $("managerBranchCountry").focus();$("managerBranchFormMessage").textContent="Choose a country from the global country list.";return false;}
+  }
+  if(step===1){try{managerReadBranchOperatingHours();}catch(error){$("managerBranchFormMessage").textContent=error.message;return false;}}
+  return true;
+ }
  function managerReadBranchOperatingHours(){
   const hours={};
   for(const [day,label] of [["monday","Monday"],["tuesday","Tuesday"],["wednesday","Wednesday"],["thursday","Thursday"],["friday","Friday"],["saturday","Saturday"],["sunday","Sunday"]]){
@@ -906,6 +982,10 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   if(mode==="not_allowed")throw new Error("The Owner/Admin has disabled Manager branch creation.");
   $("managerBranchHoursEditor").innerHTML=managerBranchHoursMarkup();
   $("managerBranchModesEditor").innerHTML=managerBranchModesMarkup();
+  $("managerBranchCreateForm").reset();
+  $("managerBranchHoursEditor").innerHTML=managerBranchHoursMarkup();
+  $("managerBranchModesEditor").innerHTML=managerBranchModesMarkup();
+  setManagerBranchStep(0);
   $("managerBranchModalTitle").textContent="Request New Branch";
   $("managerBranchModalDescription").textContent=mode==="approval_required"
    ?"Submit this branch configuration for Owner review. It will remain unavailable until setup is complete and the Owner activates it."
@@ -1658,6 +1738,9 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  $("managerBranchCancelButton")?.addEventListener("click",closeManagerBranchModal);
  $("managerBranchCreateModal")?.addEventListener("click",event=>{if(event.target===$("managerBranchCreateModal"))closeManagerBranchModal();});
  $("managerBranchCreateForm")?.addEventListener("submit",event=>submitManagerBranchCreation(event).catch(error=>{$("managerBranchFormMessage").textContent=error.message||"Unable to submit branch details.";}));
+ $("managerBranchNextButton")?.addEventListener("click",()=>{if(validateManagerBranchStep(managerBranchStep))setManagerBranchStep(managerBranchStep+1);});
+ $("managerBranchBackButton")?.addEventListener("click",()=>setManagerBranchStep(managerBranchStep-1));
+ document.querySelectorAll("[data-manager-branch-step]").forEach(button=>button.addEventListener("click",()=>{const target=Number(button.dataset.managerBranchStep);if(target<=managerBranchStep)setManagerBranchStep(target);else{let step=managerBranchStep;while(step<target&&validateManagerBranchStep(step))step++;setManagerBranchStep(step);}}));
  $("managerExpenseRefreshButton")?.addEventListener("click",()=>loadManagerExpenses().catch(error=>showManagerExpenseError(error.message||"Unable to refresh expenses.")));
  $("managerExpenseAddButton")?.addEventListener("click",()=>openManagerExpenseForm());
  $("managerEmergencyAddButton")?.addEventListener("click",()=>openManagerEmergencyForm());
