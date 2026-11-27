@@ -137,15 +137,70 @@ Deno.serve(async (req: Request) => {
           return json({ error: "Unable to verify the current staff session." }, 500);
         }
         if (existingSession) {
-          const lastActivityAt = new Date(existingSession.last_activity_at || existingSession.login_at || 0).getTime();
-          const isLocked = !Number.isFinite(lastActivityAt) || Date.now() - lastActivityAt >= INACTIVITY_TIMEOUT_MS;
-          return json({
-            error: isLocked
-              ? "This cashier screen is locked. Return to the existing session and enter the current cashier PIN to unlock it."
-              : "This cashier account already has an active session. Return to its assigned screen.",
-            active_session: true,
-            locked: isLocked,
-          }, isLocked ? 423 : 409);
+          const isManagerSession =
+            String(selectedLink.role || "").trim().toLowerCase() === "staff" &&
+            String(selectedLink.position || "").trim().toLowerCase() === "manager";
+          const lastActivityValue = existingSession.last_activity_at || existingSession.login_at;
+          const lastActivityAt = new Date(lastActivityValue || 0).getTime();
+          const isInactive = !Number.isFinite(lastActivityAt) ||
+            Date.now() - lastActivityAt >= INACTIVITY_TIMEOUT_MS;
+
+          // Managers do not use the Cashier PIN-unlock flow. Recover only an
+          // inactive Manager session, using a conditional update so a concurrent
+          // heartbeat or recovery cannot be silently overwritten.
+          if (isManagerSession && isInactive) {
+            const now = new Date().toISOString();
+            let recoveryQuery = admin.from("staff_sessions").update({
+              logout_at: now,
+              last_seen_at: now,
+              end_reason: "session_expired",
+            }).eq("id", existingSession.id)
+              .eq("user_id", actorId)
+              .is("logout_at", null);
+
+            if (existingSession.last_activity_at) {
+              recoveryQuery = recoveryQuery.eq("last_activity_at", existingSession.last_activity_at);
+            } else {
+              recoveryQuery = recoveryQuery.is("last_activity_at", null)
+                .eq("login_at", existingSession.login_at);
+            }
+
+            const { data: recoveredSession, error: recoveryError } = await recoveryQuery
+              .select("id").maybeSingle();
+
+            if (recoveryError) {
+              console.error("Inactive Manager session recovery failed:", recoveryError.message);
+              return json({ error: "Unable to safely recover the inactive Manager session. Please retry." }, 500);
+            }
+
+            if (recoveredSession) {
+              // The stale row is now closed. Continue to create a fresh session below.
+            } else {
+              // Another request may have refreshed or closed the session. Do not
+              // take it over; require the Manager to retry against the current state.
+              return json({
+                error: "The Manager session changed while recovery was in progress. Please retry sign-in.",
+                active_session: true,
+                locked: false,
+              }, 409);
+            }
+          } else {
+            const isCashierSession =
+              String(selectedLink.position || "").trim().toLowerCase() === "cashier" ||
+              String(selectedLink.role || "").trim().toLowerCase() === "cashier" ||
+              (String(selectedLink.role || "").trim().toLowerCase() === "staff" &&
+                String(selectedLink.position || "").trim() === "");
+            const locked = isCashierSession && isInactive;
+            return json({
+              error: locked
+                ? "This cashier screen is locked. Return to the existing session and enter the current cashier PIN to unlock it."
+                : isManagerSession
+                  ? "This Manager account already has an active session. Return to its assigned screen."
+                  : "This staff account already has an active session. Return to its assigned screen.",
+              active_session: true,
+              locked,
+            }, locked ? 423 : 409);
+          }
         }
 
         const now = new Date().toISOString();
