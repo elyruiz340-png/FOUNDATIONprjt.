@@ -87,6 +87,7 @@
       time.add(new Option('12-hour', '12h')); time.add(new Option('24-hour', '24h'));
     }
     let activeCode = '';
+    let activeRegionId = null;
     let searchTimer = 0;
     countries().then(rows => {
       fill(countryList, rows, c => c.name, c => c.code);
@@ -104,6 +105,8 @@
         const rows = await regions(code);
         if (activeCode !== code) return;
         fill(regionList, rows, r => r.name, r => r.iso_3166_2 || '');
+        const selectedRegion = rows.find(r => key(r.name) === key(region.value));
+        activeRegionId = selectedRegion?.id ?? null;
       } catch (err) { console.warn('[EDMEL locations] Region list unavailable:', err.message); }
     }
     country.addEventListener('change', async () => {
@@ -122,7 +125,12 @@
       }
       await loadRegions(code, true);
     });
-    region.addEventListener('change', () => { city.value = ''; fill(cityList, [], x => x); });
+    region.addEventListener('change', async () => {
+      city.value = ''; fill(cityList, [], x => x);
+      const code = activeCode || countryCode(country, countryCache.rows || []);
+      try { const rows = await regions(code); activeRegionId = rows.find(r => key(r.name) === key(region.value))?.id ?? null; }
+      catch (_) { activeRegionId = null; }
+    });
     city.addEventListener('input', () => {
       clearTimeout(searchTimer);
       const query = city.value.trim(), code = activeCode || countryCode(country, countryCache.rows || []);
@@ -132,7 +140,9 @@
         try {
           const result = await invoke({ action: 'search', country_code: code, query });
           if (activeCode !== code || city.value.trim() !== query) return;
-          const places = (result.places || []).filter(p => p && p.name && p.type === 'settlement').slice(0, 100);
+          const candidates = (result.places || []).filter(p => p && p.name && p.type === 'settlement');
+          const inSelectedRegion = activeRegionId == null ? candidates : candidates.filter(p => Number(p.admin1_id ?? p.region_id ?? p.admin1) === Number(activeRegionId));
+          const places = (inSelectedRegion.length ? inSelectedRegion : candidates).slice(0, 100);
           fill(cityList, places, p => p.name, p => p.population ? Number(p.population).toLocaleString() + ' population' : '');
           const exact = places.find(p => key(p.name) === key(query));
           if (exact?.timezone_id && timezone && !timezone.value) timezone.value = exact.timezone_id;
