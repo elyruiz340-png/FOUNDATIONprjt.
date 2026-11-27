@@ -5329,7 +5329,7 @@ async function staffAddForm(){
     const pin=pinInput.value;
     const confirmPin=pinConfirmInput.value;
     if(isManager){
-      if(!managerEmail||managerEmail.length>254||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(managerEmail)){
+      if(!managerEmail||managerEmail.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(managerEmail)){
         message.textContent='Enter a valid Manager email address.';managerEmailInput.focus();return;
       }
     }else if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
