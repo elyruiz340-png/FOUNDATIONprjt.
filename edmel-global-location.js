@@ -4,7 +4,7 @@ const IDS={country:['branchCreateCountry','managerBranchCountry'],region:['branc
 const cache={countries:null,regions:new Map(),cities:new Map(),zones:new Map()},mounted=new WeakSet();
 const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[^a-z0-9]/g,'');
 const get=ids=>ids.map(id=>document.getElementById(id)).find(Boolean)||null;
-async function api(body){const c=(()=>{try{return sb}catch(_){return null}})();if(!c?.functions?.invoke)throw Error('Session unavailable. Refresh and sign in again.');const {data,error}=await c.functions.invoke('edmel-global-location-cache',{body});if(error)throw Error(error.message);if(data?.error)throw Error(data.error);return data||{}}
+async function api(body){const invoke=window.EDMELInvokeLocationCache;if(typeof invoke!=='function')throw Error('Location service is not connected to the authenticated Supabase client. Refresh and sign in again.');const {data,error}=await invoke(body);if(error)throw Error(error.message);if(data?.error)throw Error(error.message);if(data?.error)throw Error(data.error);return data||{}}
 async function countries(){if(!cache.countries)cache.countries=(await api({action:'countries'})).countries||[];return cache.countries}
 async function regions(code){if(!cache.regions.has(code))cache.regions.set(code,(await api({action:'regions',country_code:code})).regions||[]);return cache.regions.get(code)}
 async function zones(code){if(!cache.zones.has(code))cache.zones.set(code,(await api({action:'timezones',country_code:code})).timezones||[]);return cache.zones.get(code)}
