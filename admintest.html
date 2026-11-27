@@ -4466,7 +4466,7 @@ function auditDetail(id){
 async function loadStaffData(){
   const {data,error}=await sb
     .from('restaurant_users')
-    .select('id,user_id,restaurant_id,role,cashier_username,full_name,display_name,position,permissions,created_at,is_active,deactivated_at')
+    .select('id,user_id,restaurant_id,role,cashier_username,full_name,display_name,position,permissions,created_at,is_active,deactivated_at,manager_auth_method,manager_email,manager_email_verified_at,manager_auth_setup_status,manager_invitation_expires_at')
     .eq('restaurant_id',CURRENT_RESTAURANT_ID)
     .order('created_at',{ascending:true});
   if(error)throw error;
@@ -4514,6 +4514,22 @@ function staffDuration(start,end){
 }
 function staffLatestSession(u){
   return STAFF_SESSIONS.find(s=>s.restaurant_user_id===u.id && !s.logout_at && Date.now()-new Date(s.last_seen_at).getTime()<120000);
+}
+function managerInvitationStatus(staff){
+  if(String(staff.position||'').trim().toLowerCase()!=='manager'||String(staff.manager_auth_method||'').toLowerCase()!=='password')return '—';
+  const state=String(staff.manager_auth_setup_status||'').toLowerCase();
+  if(state==='active')return 'Active';
+  if(state==='failed')return 'Failed';
+  if(state==='pending'){
+    const expiry=staff.manager_invitation_expires_at?Date.parse(staff.manager_invitation_expires_at):NaN;
+    return Number.isFinite(expiry)&&expiry>Date.now()?'Pending':'Expired';
+  }
+  return state?state.replace(/_/g,' ').replace(/\\b\\w/g,char=>char.toUpperCase()):'Not Set';
+}
+function managerInvitationExpiry(staff){
+  if(!staff.manager_invitation_expires_at)return '—';
+  const date=new Date(staff.manager_invitation_expires_at);
+  return Number.isNaN(date.getTime())?'—':date.toLocaleString('en-PH');
 }
 
 const MANAGER_PERMISSION_MODULES=[
@@ -4889,11 +4905,11 @@ function staffPage(){
     const online=active&&!!staffLatestSession(u);
     const status=active?(online?'<span class="bd">● Online</span>':'<span class="bd">● Offline</span>'):'<span class="bd er">Deactivated</span>';
     const actions=String(u.role||'').toLowerCase()==='staff'?'<button class="btn staff-view-btn" type="button" data-a="staffdetails" data-id="'+esc(u.id)+'">View Details</button>':'<span class="mu">—</span>';
-    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),esc(staffBranchLabel(u.id)),status,esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
+    return {c:[esc(accountLabel),esc(u.position||'—'),esc(u.cashier_username||'—'),esc(u.role||'Unassigned'),esc(staffBranchLabel(u.id)),status,esc(managerInvitationStatus(u)),esc(permissionLabel),u.created_at?esc(new Date(u.created_at).toLocaleDateString('en-PH')):'—',actions]};
   });
   return '<section class="card staff-approval-card" style="margin-bottom:12px"><div class="tb" style="justify-content:space-between;margin-bottom:8px"><div><h3 style="margin:0">Manager Approval Center</h3><p class="mu" style="margin:4px 0 0">Review complete request batches submitted by Managers. Each batch is approved or rejected as one unit.</p></div><button class="btn" data-a="approvalrefresh">Refresh Requests</button></div><div id="managerApprovalInbox"><p class="mu">Loading approval requests…</p></div></section><div class="tb staff-directory-toolbar"><span class="mu">'+STAFF_ROWS.length+' linked account(s) · HALINA BISTRO CAFE</span><button class="btn pri" data-a="addstaff">+ Add Staff</button><button class="btn" data-a="staffhistory">Login History</button><button class="btn" data-a="staffrefresh">Refresh</button></div>'+
   (staffLoadError?'<div class="card"><span class="bd er">● Could not load staff</span><p>'+esc(staffLoadError)+'</p></div>':
-    STAFF_ROWS.length?'<div class="card staff-directory-card">'+tbl(['Staff Name','Position','Username','Role','Branch','Status','Permissions','Date Added','Actions'],rows)+(staffBranchLoadError?'<p class="note" style="margin:8px 0 0">Branch assignments could not be loaded. Branch values are shown as Unavailable until the next successful refresh.</p>':'')+'</div>':
+    STAFF_ROWS.length?'<div class="card staff-directory-card">'+tbl(['Staff Name','Position','Username','Role','Branch','Status','Manager Setup','Permissions','Date Added','Actions'],rows)+(staffBranchLoadError?'<p class="note" style="margin:8px 0 0">Branch assignments could not be loaded. Branch values are shown as Unavailable until the next successful refresh.</p>':'')+'</div>':
     '<div class="card"><h3>No staff records returned</h3><p class="mu">No staff records were returned for this restaurant.</p></div>')+
   (staffHistoryError?'<div class="card" style="margin-top:12px"><p class="mu">Login history unavailable: '+esc(staffHistoryError)+'</p></div>':'')+
   '<div class="card" style="margin-top:12px"><h3>Account & Session Security</h3><p>• Five incorrect PIN attempts trigger the existing lockout.</p><p>• Deactivated staff accounts are retained with their session history.</p><p>• Online means an active session heartbeat was received within the last 2 minutes.</p></div>';
@@ -4905,9 +4921,13 @@ function openStaffDetails(staffId){
   const permissions=Object.keys(permissionNames).filter(key=>staff.permissions?.[key]===true).map(key=>permissionNames[key]);
   const active=staff.is_active!==false, status=active?(staffLatestSession(staff)?'Online':'Offline'):'Deactivated';
   const date=staff.created_at?new Date(staff.created_at).toLocaleString('en-PH'):'—';
+  const isPasswordManager=String(staff.position||'').trim().toLowerCase()==='manager'&&String(staff.manager_auth_method||'').toLowerCase()==='password';
+  const invitationStatus=managerInvitationStatus(staff);
+  const canRenewInvitation=isPasswordManager&&active&&['pending','failed'].includes(String(staff.manager_auth_setup_status||'').toLowerCase());
+  const inviteActionLabel=invitationStatus==='Pending'?'Resend Setup Email':'Renew Invitation';
   const detail=(label,value)=>'<div class="staff-detail-item"><span>'+label+'</span><strong>'+esc(value||'—')+'</strong></div>';
   L.innerHTML='<div class="bk staff-details-backdrop" data-a="close"></div><section class="md staff-details-panel" role="dialog" aria-modal="true" aria-labelledby="staffDetailsTitle"><div class="staff-details-head"><div><span class="staff-focus-kicker">Staff & Permissions</span><h2 id="staffDetailsTitle">'+esc(staff.display_name||staff.full_name||staff.cashier_username||'Staff Details')+'</h2><p class="mu">Complete account information and available actions</p></div><button class="staff-focus-close" type="button" data-a="close" aria-label="Close">×</button></div><div class="staff-details-grid">'+
-    detail('Full Name',staff.full_name)+detail('Display Name',staff.display_name)+detail('Username',staff.cashier_username)+detail('Position',staff.position)+detail('Role',staff.role)+detail('Branch',staffBranchLabel(staff.id))+detail('Account Status',status)+detail('Date Added',date)+'<div class="staff-detail-item staff-detail-wide"><span>Permissions</span><strong>'+esc(permissions.join(', ')||'None assigned')+'</strong></div></div><div class="staff-details-actions"><button class="btn" type="button" data-a="staffdetailsEdit" data-id="'+esc(staff.id)+'">Edit Profile</button>'+(String(staff.position||'').trim().toLowerCase()==='manager'?'<button class="btn" type="button" data-a="staffdetailsPermissions" data-id="'+esc(staff.id)+'">Manage Permissions</button>':'')+'<button class="btn" type="button" data-a="staffdetailsPin" data-id="'+esc(staff.id)+'">Reset PIN</button>'+(active?'<button class="btn staff-deactivate-btn" type="button" data-a="staffdetailsDeactivate" data-id="'+esc(staff.id)+'">Deactivate</button>':'<span class="mu">This account is deactivated.</span>')+'</div></section>';
+    detail('Full Name',staff.full_name)+detail('Display Name',staff.display_name)+detail('Username',staff.cashier_username)+detail('Position',staff.position)+detail('Role',staff.role)+detail('Branch',staffBranchLabel(staff.id))+detail('Account Status',status)+detail('Date Added',date)+(isPasswordManager?detail('Manager Email',staff.manager_email)+detail('Manager Setup Status',invitationStatus)+detail('Invitation Expires',managerInvitationExpiry(staff)):'')+'<div class="staff-detail-item staff-detail-wide"><span>Permissions</span><strong>'+esc(permissions.join(', ')||'None assigned')+'</strong></div></div><div class="staff-details-actions"><button class="btn" type="button" data-a="staffdetailsEdit" data-id="'+esc(staff.id)+'">Edit Profile</button>'+(String(staff.position||'').trim().toLowerCase()==='manager'?'<button class="btn" type="button" data-a="staffdetailsPermissions" data-id="'+esc(staff.id)+'">Manage Permissions</button>':'')+(canRenewInvitation?'<button class="btn pri" type="button" data-a="staffdetailsInvite" data-id="'+esc(staff.id)+'">'+inviteActionLabel+'</button>':'')+'<button class="btn" type="button" data-a="staffdetailsPin" data-id="'+esc(staff.id)+'">Reset PIN</button>'+(active?'<button class="btn staff-deactivate-btn" type="button" data-a="staffdetailsDeactivate" data-id="'+esc(staff.id)+'">Deactivate</button>':'<span class="mu">This account is deactivated.</span>')+'</div></section>';
   L.querySelector('.staff-focus-close')?.focus();
 }
 PG.staff=()=>{const html=staffPage();setTimeout(loadManagerApprovalInbox,0);return html;};
@@ -4917,6 +4937,29 @@ A.approvalreject=button=>reviewManagerApproval(button.dataset.id,'reject');
 A.addstaff=()=>staffAddForm();
 A.managerpermissions=(button)=>managerPermissionsEditor(STAFF_ROWS.find(row=>row.id===button.dataset.id));
 A.staffdetails=button=>openStaffDetails(button.dataset.id);
+A.staffdetailsInvite=async(button)=>{
+  const staff=STAFF_ROWS.find(row=>row.id===button.dataset.id);
+  if(!staff||String(staff.role||'').toLowerCase()!=='staff'||String(staff.position||'').trim().toLowerCase()!=='manager'||String(staff.manager_auth_method||'').toLowerCase()!=='password'||staff.is_active===false||!['pending','failed'].includes(String(staff.manager_auth_setup_status||'').toLowerCase())){
+    toast('This Manager account is not eligible for invitation renewal.',1);return;
+  }
+  const email=String(staff.manager_email||'').trim();
+  if(!email){toast('The Manager email address is missing.',1);return;}
+  if(!window.confirm('Send a new Manager setup email to '+email+'?'))return;
+  button.disabled=true;button.textContent='Sending…';
+  let sent=false;
+  try{
+    const {data,error}=await sb.functions.invoke('manager-invitation-resend',{body:{restaurant_id:CURRENT_RESTAURANT_ID,staff_id:staff.id,redirect_to:new URL('manager.html',window.location.href).toString()}});
+    if(error){let message=error.message||'Unable to send the Manager setup email.';if(error.context&&typeof error.context.json==='function'){try{const detail=await error.context.json();if(detail?.error)message=detail.error;}catch(_){}}throw new Error(message);}
+    if(!data?.success)throw new Error(data?.error||'Manager invitation renewal was not confirmed.');
+    sent=true;
+    try{await writeAdminAudit('Staff & Permissions','Resent Manager setup email','manager_invitation',staff.id,{setup_status:staff.manager_auth_setup_status});}
+    catch(auditError){toast('Setup email sent, but audit logging failed: '+(auditError.message||String(auditError)),1);}
+    try{await loadStaffData();closeL();render();toast('Manager setup email sent.');}
+    catch(refreshError){closeL();render();toast('Setup email sent, but the staff list could not refresh.',1);}
+  }catch(error){toast(error.message||'Unable to send the Manager setup email.',1);}
+  finally{if(!sent&&button.isConnected){button.disabled=false;button.textContent=inviteActionLabelForStaff(staff);}}
+};
+function inviteActionLabelForStaff(staff){return managerInvitationStatus(staff)==='Pending'?'Resend Setup Email':'Renew Invitation';}
 A.staffdetailsPermissions=button=>{const manager=STAFF_ROWS.find(row=>row.id===button.dataset.id);if(!manager||String(manager.position||'').trim().toLowerCase()!=='manager'){toast('Manager account could not be verified');return;}closeL();managerPermissionsEditor(manager);};
 A.staffdetailsEdit=button=>{const id=button.dataset.id;closeL();A.staffeditprofile({dataset:{id}});};
 A.staffdetailsPin=button=>{const id=button.dataset.id;closeL();A.staffresetpin({dataset:{id}});};
