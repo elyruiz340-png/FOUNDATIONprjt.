@@ -4524,7 +4524,7 @@ function managerInvitationStatus(staff){
     const expiry=staff.manager_invitation_expires_at?Date.parse(staff.manager_invitation_expires_at):NaN;
     return Number.isFinite(expiry)&&expiry>Date.now()?'Pending':'Expired';
   }
-  return state?state.replace(/_/g,' ').replace(/\\b\\w/g,char=>char.toUpperCase()):'Not Set';
+  return state?state.replace(/_/g,' ').replace(/\b\w/g,char=>char.toUpperCase()):'Not Set';
 }
 function managerInvitationExpiry(staff){
   if(!staff.manager_invitation_expires_at)return '—';
