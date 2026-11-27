@@ -3222,7 +3222,7 @@ const A={
   const reason=$('#branchReviewReason')?.value.trim()||'';
   if(!request||request.status!=='pending'||!['approved','rejected'].includes(decision)){toast('This branch request is no longer pending.',1);closeL();return;}
   if(reason.length<3||reason.length>500){toast('Enter a reason between 3 and 500 characters.',1);$('#branchReviewReason')?.focus();return;}
-  const buttons=$$('.branch-review-actions button',L);buttons.forEach(button=>button.disabled=true);
+  const buttons=Array.from(L.querySelectorAll('.branch-review-actions button'));buttons.forEach(button=>button.disabled=true);
   t.textContent=decision==='approved'?'Approving…':'Declining…';
   try{
     const {data,error}=await sb.rpc('edmel_review_branch_creation_request',{p_request_id:request.id,p_decision:decision,p_reason:reason});
