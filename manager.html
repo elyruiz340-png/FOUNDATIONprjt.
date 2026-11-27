@@ -1074,6 +1074,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  }
  async function submitManagerBranchCreation(event){
   event.preventDefault();
+  if(managerBranchStep!==4)throw new Error("Complete the branch setup steps and review the request before submitting.");
   const button=$("managerBranchSubmitButton");
   const name=$("managerBranchName").value.trim();
   const code=$("managerBranchCode").value.trim().toUpperCase();
