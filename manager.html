@@ -1616,6 +1616,10 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   loginMode=mode==="password"?"password":"pin";
   $("pinLoginFields").hidden=loginMode!=="pin";
   $("passwordLoginFields").hidden=loginMode!=="password";
+  $("username").required=loginMode==="pin";
+  $("pin").required=loginMode==="pin";
+  $("managerEmailLogin").required=loginMode==="password";
+  $("managerPasswordLogin").required=loginMode==="password";
   $("pinModeButton").classList.toggle("active",loginMode==="pin");
   $("passwordModeButton").classList.toggle("active",loginMode==="password");
   $("pinModeButton").setAttribute("aria-pressed",String(loginMode==="pin"));
