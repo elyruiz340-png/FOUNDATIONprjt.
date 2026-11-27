@@ -543,6 +543,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  let RESTAURANT_SLUG = "";
  let loginMode = "pin";
  const sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{storageKey:"edmel-manager-auth",persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  window.EDMELInvokeLocationCache = body => sb.functions.invoke("edmel-global-location-cache",{body});
  const $ = id => document.getElementById(id);
  const esc = value => String(value ?? "").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
  const permissionLabels = {orders:"Orders",void:"Void",tables:"Tables",stocks:"Stocks",dispatcher:"Dispatcher",settings:"Settings"};
