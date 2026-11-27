@@ -1054,7 +1054,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
  document.querySelectorAll(".stat strong").forEach(el=>countObserver.observe(el,{childList:true,characterData:true,subtree:true}));
 
  function showLogin(message=""){ $("passwordSetupView").classList.add("hidden"); $("loginView").classList.remove("hidden"); $("appView").classList.add("hidden"); $("loginMessage").textContent=message; }
- function showPasswordSetup(message=""){ $("loginView").classList.add("hidden"); $("appView").classList.add("hidden"); $("passwordSetupView").classList.remove("hidden"); $("passwordSetupView").style.display="grid"; $("passwordSetupMessage").textContent=message; }
+ function showPasswordSetup(message="",allowSubmit=true){ $("loginView").classList.add("hidden"); $("appView").classList.add("hidden"); $("passwordSetupView").classList.remove("hidden"); $("passwordSetupView").style.display="grid"; $("passwordSetupMessage").textContent=message; $("managerNewPassword").disabled=!allowSubmit; $("managerConfirmPassword").disabled=!allowSubmit; $("passwordSetupButton").hidden=!allowSubmit; }
  function showApp(){ loadAppearance(); $("loginView").classList.add("hidden"); $("passwordSetupView").classList.add("hidden"); $("appView").classList.remove("hidden"); }
  function notify(message,isError=false){ $("staffMessage").textContent=message; $("staffMessage").style.color=isError?"var(--red)":"var(--muted)"; }
  async function callSession(action,id=null,branchId=null,activity=false){
@@ -1103,7 +1103,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   sessionStorage.setItem("edmel_manager_restaurant",RESTAURANT_ID);
 
   const {data:links,error:linkError}=await sb.from("restaurant_users")
-    .select("id,user_id,restaurant_id,role,position,full_name,display_name,cashier_username,is_active,manager_auth_method,manager_email,manager_email_verified_at,manager_auth_setup_status,manager_can_change_password")
+    .select("id,user_id,restaurant_id,role,position,full_name,display_name,cashier_username,is_active,manager_auth_method,manager_email,manager_email_verified_at,manager_auth_setup_status,manager_invitation_expires_at,manager_can_change_password")
     .eq("user_id",userData.user.id).eq("restaurant_id",RESTAURANT_ID).eq("role","staff").eq("is_active",true);
   if(linkError)throw linkError;
   managerLink=(links||[]).find(row=>String(row.position||"").toLowerCase()==="manager");
@@ -1113,8 +1113,13 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    const signedInEmail=String(userData.user.email||"").trim().toLowerCase();
    const assignedEmail=String(managerLink.manager_email||"").trim().toLowerCase();
    if(!signedInEmail||signedInEmail!==assignedEmail)throw new Error("This sign-in email does not match the assigned Manager account.");
-   if(!userData.user.email_confirmed_at||!managerLink.manager_email_verified_at||managerLink.manager_auth_setup_status!=="active"){
-    showPasswordSetup();return;
+   if(managerLink.manager_auth_setup_status!=="active"){
+    const expiry=managerLink.manager_invitation_expires_at?Date.parse(managerLink.manager_invitation_expires_at):NaN;
+    const invitationValid=managerLink.manager_auth_setup_status==="pending"&&Number.isFinite(expiry)&&expiry>Date.now();
+    if(!invitationValid){showPasswordSetup("Your Manager invitation has expired or needs to be renewed. Contact your Owner or Admin to request a new setup email.",false);return;}
+    if(!userData.user.email_confirmed_at||!managerLink.manager_email_verified_at||managerLink.manager_auth_setup_status!=="active"){
+     showPasswordSetup();return;
+    }
    }
   }
 
@@ -1636,9 +1641,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   button.disabled=true;button.textContent="Saving...";
   $("passwordSetupMessage").textContent="";
   try{
-   const {error:updateError}=await sb.auth.updateUser({password});
-   if(updateError)throw updateError;
-   const {data,error}=await sb.functions.invoke("manager-auth-setup",{body:{}});
+   const {data,error}=await sb.functions.invoke("manager-auth-setup",{body:{password}});
    if(error)throw new Error(data?.error||error.message||"Unable to complete Manager setup.");
    if(!data?.success)throw new Error(data?.error||"Manager setup was not confirmed.");
    $("managerNewPassword").value="";$("managerConfirmPassword").value="";
