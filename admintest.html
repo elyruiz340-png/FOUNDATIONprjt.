@@ -2885,6 +2885,25 @@ function openBranchRequestReviewConfirmation(requestId,decision){
     '</section>';
   L.querySelector('#branchReviewReason')?.focus();
 }
+function openBranchLifecycleConfirmation(action,branchId){
+  const branch=ADMIN_BRANCH_ROWS.find(row=>row.id===branchId);
+  if(!branch){toast('Branch could not be found. Refresh the branch list.',1);return;}
+  const activating=action==='activate';
+  if(!['activate','deactivate'].includes(action)){toast('Unsupported branch action.',1);return;}
+  if(activating&&branch.lifecycle_status!=='pending_activation'){toast('This branch is not pending activation.',1);return;}
+  if(!activating&&(!branch.is_active||branch.is_default)){toast('This branch cannot be deactivated.',1);return;}
+  const title=activating?'Activate Branch?':'Deactivate Branch?';
+  const message=activating
+    ?'This branch will become available to assigned users and operational dashboards after activation.'
+    :'Existing records will be preserved. Branches with unfinished or unsettled orders cannot be deactivated.';
+  L.innerHTML='<div class="bk branch-request-backdrop" data-a="close"></div><section class="md branch-request-panel branch-review-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="branchLifecycleTitle">'+
+    '<div class="branch-request-panel-head"><div><span class="bd '+(activating?'ok':'wn')+'">'+(activating?'Activation confirmation':'Deactivation confirmation')+'</span><h2 id="branchLifecycleTitle" style="margin-top:10px">'+title+'</h2><p>Review this branch action before continuing.</p></div><button class="ib" data-a="close" aria-label="Close confirmation">'+I('x')+'</button></div>'+
+    '<p class="branch-review-message">'+esc(message)+'</p>'+
+    '<div class="branch-review-summary"><b>'+esc(branch.name||'Unnamed branch')+'</b><span class="mu">'+esc(branch.code||'Branch code not provided')+' · '+esc(branch.lifecycle_status||'Unknown status')+'</span></div>'+
+    '<div class="branch-review-actions"><button class="btn" data-a="close">Cancel</button><button class="btn '+(activating?'pri':'')+'" data-a="branch-lifecycle-confirm" data-id="'+esc(branch.id)+'" data-action="'+action+'">'+(activating?'Confirm Activation':'Confirm Deactivation')+'</button></div>'+
+    '</section>';
+  L.querySelector('[data-a="branch-lifecycle-confirm"]')?.focus();
+}
 function openAdminBranchRequest(requestId){
   const request=ADMIN_BRANCH_REQUESTS.find(row=>row.id===requestId);
   if(!request){toast('Branch request could not be found. Refresh the request list.',1);return;}
@@ -3330,37 +3349,43 @@ addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can 
     closeL();toast('Branch updated successfully.');
   }catch(e){toast(e.message||'Unable to update branch.',1);t.disabled=false;t.textContent='Save Changes';}
 },
-'branch-activate':async t=>{
+'branch-activate':t=>{
    if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can activate branches.',1);return;}
-   const id=t.dataset.id||ADMIN_BRANCH_SELECTED_ID;
-   const branch=ADMIN_BRANCH_ROWS.find(x=>x.id===id);
-   if(!branch||branch.lifecycle_status!=='pending_activation'){toast('This branch is not pending activation.',1);return;}
-   if(!confirm('Activate '+branch.name+'? The branch will become available to assigned users and operational dashboards.'))return;
-   t.disabled=true;t.textContent='Checking setup…';
-   try{
-     const {data,error}=await sb.rpc('edmel_activate_restaurant_branch',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:id});
-     if(error)throw error;
-     if(data?.success!==true||data?.lifecycle_status!=='active')throw new Error('Branch activation was not confirmed by the database.');
-     ADMIN_BRANCH_SELECTED_ID=id;ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
-     toast('Branch activated successfully.');
-   }catch(error){toast(error?.message||'Unable to activate this branch.',1);t.disabled=false;t.textContent='Activate Branch';}
+   openBranchLifecycleConfirmation('activate',t.dataset.id||ADMIN_BRANCH_SELECTED_ID);
  },
- 'branch-deactivate':async t=>{
+ 'branch-deactivate':t=>{
   if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can deactivate branches.',1);return;}
-  const id=t.dataset.id||ADMIN_BRANCH_SELECTED_ID;
-  const branch=ADMIN_BRANCH_ROWS.find(x=>x.id===id);
-  if(!branch)return;
-  if(!confirm('Deactivate '+branch.name+'? Existing records will be preserved. Branches with unfinished or unsettled orders cannot be deactivated.'))return;
-  t.disabled=true;
+  openBranchLifecycleConfirmation('deactivate',t.dataset.id||ADMIN_BRANCH_SELECTED_ID);
+ },
+ 'branch-lifecycle-confirm':async t=>{
+  const id=t.dataset.id||'';
+  const action=t.dataset.action||'';
+  const branch=ADMIN_BRANCH_ROWS.find(row=>row.id===id);
+  if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can perform this action.',1);closeL();return;}
+  if(!branch||!['activate','deactivate'].includes(action)){toast('Branch action could not be verified.',1);closeL();return;}
+  if(action==='activate'&&branch.lifecycle_status!=='pending_activation'){toast('This branch is no longer pending activation.',1);closeL();return;}
+  if(action==='deactivate'&&(!branch.is_active||branch.is_default)){toast('This branch cannot be deactivated.',1);closeL();return;}
+  const buttons=Array.from(L.querySelectorAll('.branch-review-actions button'));buttons.forEach(button=>button.disabled=true);
+  t.textContent=action==='activate'?'Activating…':'Deactivating…';
   try{
-    const {data,error}=await sb.rpc('edmel_deactivate_restaurant_branch',{
-      p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_branch_id:id
-    });
-    if(error)throw error;
-    ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
-    toast('Branch deactivated. Existing records were preserved.');
-  }catch(e){toast(e.message||'Unable to deactivate branch.',1);t.disabled=false;}
-},
+    if(action==='activate'){
+      const {data,error}=await sb.rpc('edmel_activate_restaurant_branch',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_branch_id:id});
+      if(error)throw error;
+      if(data?.success!==true||data?.lifecycle_status!=='active')throw new Error('Branch activation was not confirmed by the database.');
+      ADMIN_BRANCH_SELECTED_ID=id;ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
+      closeL();toast('Branch activated successfully.');
+    }else{
+      const {data,error}=await sb.rpc('edmel_deactivate_restaurant_branch',{p_restaurant_slug:CURRENT_RESTAURANT_SLUG,p_branch_id:id});
+      if(error)throw error;
+      ADMIN_BRANCH_LOADED=false;await loadAdminBranches();
+      closeL();toast('Branch deactivated. Existing records were preserved.');
+    }
+  }catch(error){
+    toast(error?.message||('Unable to '+action+' branch.'),1);
+    buttons.forEach(button=>button.disabled=false);
+    t.textContent=action==='activate'?'Confirm Activation':'Confirm Deactivation';
+  }
+ },
 go:t=>{closeL();go(t.dataset.p)},close:closeL,search,bell,
 theme:t=>{const T=['light','neodark','dark'],v=t&&t.dataset&&t.dataset.v;const next=T.includes(v)?v:T[(T.indexOf(S.theme)+1)%3];if(v&&next===S.theme)return;const change=()=>{S.theme=next;ss('th',S.theme);applyTheme();if(S.page=='settings')render()};if(window.startThemeReveal&&t&&t.getBoundingClientRect)startThemeReveal(t,change);else change()},
 
