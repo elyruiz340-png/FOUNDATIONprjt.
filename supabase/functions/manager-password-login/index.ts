@@ -66,9 +66,13 @@ Deno.serve(async (req: Request) => {
       .not("manager_email_verified_at", "is", null)
       .not("manager_email", "is", null);
 
-    profileQuery = isEmail
+    // Escape SQL LIKE wildcards so identifiers are matched literally.
+    const likeSafeIdentifier = identifier.replace(/[\\%_]/g, "\\    profileQuery = isEmail
       ? profileQuery.ilike("manager_email", identifier.toLowerCase())
-      : profileQuery.ilike("cashier_username", identifier);
+      : profileQuery.ilike("cashier_username", identifier);");
+    profileQuery = isEmail
+      ? profileQuery.ilike("manager_email", likeSafeIdentifier.toLowerCase())
+      : profileQuery.ilike("cashier_username", likeSafeIdentifier);
 
     const { data: profiles, error: profileError } = await profileQuery.limit(100);
     if (profileError) {
