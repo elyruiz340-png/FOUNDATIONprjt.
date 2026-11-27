@@ -2536,7 +2536,18 @@ drawer(o.id,`<p>${bdg(o.s)} · ${o.t} · ${o.branchName||'Unassigned'}</p>${o.it
 function search(){L.innerHTML=`<div class="bk" data-a="close"></div><div class="pn s" role="dialog" aria-modal="true" aria-label="Search"><input id="q" style="width:100%" placeholder="Search orders, menu, staff, branches, inventory…" aria-label="Search"><div id="res" style="margin-top:10px"></div></div>`;const r=$('#res'),go=()=>{const q=$('#q').value.trim().toLowerCase();if(!q){r.innerHTML='<p class="mu">Type to search demo data. Press Esc to close.</p>';return}
 const hits=[...ORD.filter(o=>o.id.toLowerCase().includes(q)).map(o=>['Order',o.id,'order',o.id]),...MENU.filter(m=>m.n.toLowerCase().includes(q)).map(m=>['Menu',m.n,'go','menu']),...STAFF.filter(s=>s.n.toLowerCase().includes(q)).map(s=>['Staff',s.n,'go','staff'])].slice(0,8);
 r.innerHTML=hits.length?hits.map(h=>`<div class="row" style="cursor:pointer" tabindex="0" data-a="${h[2]=='order'?'order':'go'}" data-i="${h[3]}" data-p="${h[3]}"><span>${h[1]}</span><span class="mu">${h[0]}</span></div>`).join(''):empty('No results. Try an order ID, menu item or staff name.')};$('#q').oninput=go;go();$('#q').focus()}
-function bell(){L.innerHTML=`<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b> <span class="mu">(sample)</span><span><button class="btn" data-a="readall">Mark all read</button> <button class="btn" data-a="clrn">Clear</button></span></div>${NT.slice(0,4).map((n,i)=>`<div class="row" tabindex="0" data-a="nt" data-i="${i}"><span>${n.r?'':'● '}${n.ty}<br><span class="mu">${n.m}</span></span></div>`).join('')||empty('You’re all caught up.')}<button class="btn" style="margin-top:8px" data-a="allnt">View all notifications</button></div>`}
+async function bell(){
+  if(CURRENT_AUTH_ROLE==='owner'&&CURRENT_RESTAURANT_ID&&!ADMIN_BRANCH_GOVERNANCE_LOADING)await loadAdminBranchGovernance();
+  const pendingRequests=ADMIN_BRANCH_REQUESTS.filter(request=>request.status==='pending');
+  const requestItems=pendingRequests.map(request=>'<div class="row" tabindex="0" role="button" style="cursor:pointer;align-items:flex-start" data-a="branch-request-open" data-id="'+esc(request.id)+'"><span><b>New Branch Request</b><br>'+esc(request.request_data?.name||'Unnamed branch')+' · '+esc(request.request_data?.code||'')+'<br><span class="mu">'+esc(request.created_at?new Date(request.created_at).toLocaleString():'Recently submitted')+'</span></span><span class="bd wn">Pending</span></div>').join('');
+  const sampleItems=NT.slice(0,4).map((n,i)=>'<div class="row" tabindex="0" data-a="nt" data-i="'+i+'"><span>'+(n.r?'':'● ')+esc(n.ty)+'<br><span class="mu">'+esc(n.m)+'</span></span></div>').join('');
+  L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b><span class="sp"></span><button class="btn" data-a="branch-governance-refresh">Refresh</button></div>'+
+    (ADMIN_BRANCH_GOVERNANCE_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_GOVERNANCE_ERROR)+'</div>':'')+
+    (pendingRequests.length?'<div class="note" style="margin:8px 0">Branch requests awaiting your review</div>'+requestItems:'')+
+    (sampleItems?'<div class="note" style="margin:12px 0 6px">Other notifications</div>'+sampleItems:'')+
+    (!pendingRequests.length&&!sampleItems?empty('You’re all caught up.'):'')+
+    '<div class="row" style="margin-top:8px"><button class="btn" data-a="readall">Mark all read</button><button class="btn" data-a="clrn">Clear sample notifications</button></div></div>';
+}
 const dotU=()=>{$('#dot').style.display=NT.some(n=>!n.r)?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
@@ -2827,6 +2838,26 @@ async function loadAdminBranchGovernance(){
     ADMIN_BRANCH_GOVERNANCE_LOADING=false;
   }
 }
+function openAdminBranchRequest(requestId){
+  const request=ADMIN_BRANCH_REQUESTS.find(row=>row.id===requestId);
+  if(!request){toast('Branch request could not be found. Refresh the request list.',1);return;}
+  const data=request.request_data&&typeof request.request_data==='object'?request.request_data:{};
+  const regional=data.regional_profile&&typeof data.regional_profile==='object'?data.regional_profile:{};
+  const hours=adminBranchOperatingHoursSummary(data.operating_hours||{});
+  const field=(label,value)=>'<div style="padding:8px 0;border-bottom:1px solid var(--bd)"><div class="mu">'+esc(label)+'</div><b style="overflow-wrap:anywhere">'+esc(value===null||value===undefined||value===''?'Not provided':String(value))+'</b></div>';
+  const settingRows=ADMIN_BRANCH_SETTING_GROUPS.map(([key,label])=>field(label,(data.settings_modes||{})[key]||'inherit')).join('');
+  const actions=request.status==='pending'&&CURRENT_AUTH_ROLE==='owner'
+    ?'<div class="tb" style="margin-top:14px"><button class="btn pri" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="approved">Approve for Setup</button><button class="btn" data-a="branch-request-review" data-id="'+esc(request.id)+'" data-decision="rejected">Decline Request</button></div>'
+    :'';
+  drawer('Branch Request Details',
+    '<div class="row" style="justify-content:space-between"><span class="bd '+(request.status==='pending'?'wn':request.status==='approved'?'ok':'')+'">'+esc(request.status||'Unknown')+'</span><span class="mu">'+esc(request.created_at?new Date(request.created_at).toLocaleString():'')+'</span></div>'+
+    '<h4>Branch Profile</h4>'+field('Branch Name',data.name)+field('Branch Code',data.code)+field('Street Address',data.address)+field('Country',regional.country_code||data.country_code)+field('State / Province',regional.state_province||data.state_province)+field('City',regional.city||data.city)+field('District',regional.district||data.district)+field('Postal Code',regional.postal_code||data.postal_code)+
+    '<h4>Contact Information</h4>'+field('Contact Number',regional.contact_number||data.contact_number)+field('Email',regional.email||data.email)+field('Website',regional.website||data.website)+
+    '<h4>Regional Settings</h4>'+field('Timezone',data.timezone)+field('Locale',regional.locale||data.locale)+field('Date Format',regional.date_format||data.date_format)+field('Time Format',regional.time_format||data.time_format)+field('Number Format',regional.number_format||data.number_format)+
+    '<h4>Operations</h4>'+field('Operating Hours',hours)+field('Menu Catalog',data.menu_catalog_mode||'override')+
+    '<h4>Business Settings Modes</h4>'+settingRows+
+    (request.decision_reason?field('Review Reason',request.decision_reason):'')+actions);
+}
 function renderAdminBranchGovernance(){
   const canManage=String(CURRENT_AUTH_ROLE||'').toLowerCase()==='owner';
   const mode=['approval_required','not_allowed'].includes(ADMIN_BRANCH_POLICY?.manager_creation_mode)
@@ -2949,7 +2980,7 @@ function renderAdminBranchesPage(){
   const deactivateButton=canManageBranches&&selected&&selected.is_active&&!selected.is_default&&active.length>1?'<button class="btn" data-a="branch-deactivate" data-id="'+esc(selected.id)+'">Deactivate Branch</button>':'';
   const showDrafts=canManageBranches&&(ADMIN_BRANCH_DRAFTS_LOADING||!!ADMIN_BRANCH_DRAFTS_ERROR||ADMIN_BRANCH_DRAFTS.length>0);
   const draftSection=showDrafts?'<div class="card" style="margin-bottom:14px"><div class="row"><b>Saved Branch Drafts</b><span class="sp"></span><button class="btn" data-a="branch-drafts-refresh">Refresh</button></div>'+(ADMIN_BRANCH_DRAFTS_LOADING?'<div class="empty">Loading drafts…</div>':ADMIN_BRANCH_DRAFTS_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_DRAFTS_ERROR)+'</div>':'<div class="g g2" style="margin-top:10px">'+ADMIN_BRANCH_DRAFTS.map(d=>'<div class="card" style="padding:12px;margin:0"><div class="row"><b>'+esc(d.draft_data?.name||'Untitled Branch')+'</b><span class="bd wn">Draft</span></div><div class="note">'+esc(d.draft_data?.code||'No branch code')+' · '+esc(d.updated_at?new Date(d.updated_at).toLocaleString():'')+'</div><div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" data-a="branch-draft-delete" data-id="'+esc(d.id)+'">Delete</button><button class="btn pri" data-a="branch-draft-resume" data-id="'+esc(d.id)+'">Resume</button></div></div>').join('')+'</div>')+'</div>':'';
-  return '<div class="tb"><div><div class="ttl">Multi-Branch Management</div><div class="note">Manage branches and staff access.</div></div><span class="sp"></span>'+(canManageBranches?'<button class="btn pri" data-a="addbr">Add Branch</button>':'')+deactivateButton+'<button class="btn" data-a="branch-refresh">Refresh</button></div><div class="g k"><div class="card"><div class="mu">Total Branches</div><div class="big">'+branches.length+'</div></div><div class="card"><div class="mu">Active Branches</div><div class="big">'+active.length+'</div></div><div class="card"><div class="mu">Inactive Branches</div><div class="big">'+inactive.filter(b=>b.lifecycle_status!=='pending_activation').length+'</div></div><div class="card"><div class="mu">Pending Activation</div><div class="big">'+pending.length+'</div></div><div class="card"><div class="mu">Default Branch</div><div class="big" style="font-size:19px">'+esc(defaultBranch?defaultBranch.name:'Not set')+'</div></div></div><div class="card"><div class="row" style="align-items:center"><div><h3 style="margin:0">Branch Directory</h3><p class="note" style="margin:3px 0 0">Select a branch to view its details.</p></div><span class="sp"></span><span class="bd">'+branches.length+' Total</span></div>'+(branches.length?'<div class="g g2" style="margin:12px 0 0">'+branchCards+'</div>':'<div class="empty">No branches have been created.</div>')+'</div>'+detail+draftSection;
+  return '<div class="tb"><div><div class="ttl">Multi-Branch Management</div><div class="note">Manage branches and staff access.</div></div><span class="sp"></span>'+(canManageBranches?'<button class="btn pri" data-a="addbr">Add Branch</button>':'')+deactivateButton+'<button class="btn" data-a="branch-refresh">Refresh</button></div><div class="g k"><div class="card"><div class="mu">Total Branches</div><div class="big">'+branches.length+'</div></div><div class="card"><div class="mu">Active Branches</div><div class="big">'+active.length+'</div></div><div class="card"><div class="mu">Inactive Branches</div><div class="big">'+inactive.filter(b=>b.lifecycle_status!=='pending_activation').length+'</div></div><div class="card"><div class="mu">Pending Activation</div><div class="big">'+pending.length+'</div></div><div class="card"><div class="mu">Default Branch</div><div class="big" style="font-size:19px">'+esc(defaultBranch?defaultBranch.name:'Not set')+'</div></div></div><div class="card"><div class="row" style="align-items:center"><div><h3 style="margin:0">Branch Directory</h3><p class="note" style="margin:3px 0 0">Select a branch to view its details.</p></div><span class="sp"></span><span class="bd">'+branches.length+' Total</span></div>'+(branches.length?'<div class="g g2" style="margin:12px 0 0">'+branchCards+'</div>':'<div class="empty">No branches have been created.</div>')+'</div>'+detail+draftSection+'<section class="card" id="branchGovernanceWorkspace" style="margin-top:14px"><div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Requests</h4><p>Review Manager branch creation requests and creation policy.</p></div></div>'+renderAdminBranchGovernance()+'</section>';
 }
 async function loadAdminBranches(){
   if(ADMIN_BRANCH_LOADING)return;
@@ -3085,6 +3116,7 @@ async function openBranchEditModal(branch){
 }
 
 const A={
+'branch-request-open':t=>openAdminBranchRequest(t.dataset.id||''),
 'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';ADMIN_GLOBAL_BRANCH_FILTER=ADMIN_BRANCH_SELECTED_ID||'all';render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
 'branch-filter-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
 'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
@@ -3118,7 +3150,7 @@ const A={
     await loadAdminBranchReadiness(branchId);toast(wasSkipped?'Setup marked as required.':'Setup marked as skipped.');
   }catch(error){toast(error?.message||'Unable to update setup readiness.',1);t.disabled=false;}
 },
-'branch-governance-refresh':async()=>{await loadAdminBranchGovernance();const panel=$('#branchGovernanceWorkspace');if(panel)panel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance();},
+'branch-governance-refresh':async()=>{await loadAdminBranchGovernance();const panel=$('#branchGovernanceWorkspace');if(panel)panel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Requests</h4><p>Review Manager branch creation requests and creation policy.</p></div></div>'+renderAdminBranchGovernance();},
 'branch-policy-save':async t=>{
   const mode=$('#branchManagerCreationPolicy')?.value||'';
   if(!['allowed','approval_required','not_allowed'].includes(mode)){toast('Choose a valid Manager branch creation policy.',1);return;}
@@ -3127,7 +3159,7 @@ const A={
     const {data,error}=await sb.rpc('edmel_set_branch_creation_policy',{p_restaurant_id:CURRENT_RESTAURANT_ID,p_manager_creation_mode:mode});
     if(error)throw error;
     if(data?.success!==true)throw new Error('The branch creation policy was not confirmed.');
-    ADMIN_BRANCH_POLICY=data;await loadAdminBranchGovernance();const governancePanel=$('#branchGovernanceWorkspace');if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance();toast('Manager branch creation policy saved.');
+    ADMIN_BRANCH_POLICY=data;await loadAdminBranchGovernance();const governancePanel=$('#branchGovernanceWorkspace');if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Requests</h4><p>Review Manager branch creation requests and creation policy.</p></div></div>'+renderAdminBranchGovernance();toast('Manager branch creation policy saved.');
   }catch(error){toast(error?.message||'Unable to save the branch creation policy.',1);t.disabled=false;t.textContent='Save Policy';}
 },
 'branch-request-review':async t=>{
