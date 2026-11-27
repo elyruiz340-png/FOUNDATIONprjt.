@@ -44,6 +44,8 @@ Deno.serve(async (req: Request) => {
     const position = typeof body.position === "string" ? body.position : "";
     const username = typeof body.username === "string" ? body.username.trim() : "";
     const pin = typeof body.pin === "string" ? body.pin : "";
+    const managerEmail = typeof body.manager_email === "string" ? body.manager_email.trim().toLowerCase() : "";
+    const managerRedirectTo = typeof body.manager_redirect_to === "string" ? body.manager_redirect_to.trim() : "";
     const suppliedPermissions = body.permissions;
     const managerAssignments = body.manager_assignments;
     const rawBranchIds = Array.isArray(body.branch_ids)
@@ -55,7 +57,9 @@ Deno.serve(async (req: Request) => {
     if (!fullName || fullName.length > 100 || displayName.length > 60) return json({ error: "Check the required name fields" }, 400);
     if (!["Cashier", "Manager", "Kitchen Staff", "Dispatcher"].includes(position)) return json({ error: "Invalid staff position" }, 400);
     if (username.length < 3 || username.length > 40 || !/^[A-Za-z0-9._-]+$/.test(username)) return json({ error: "Invalid username format" }, 400);
-    if (!/^[0-9]{6}$/.test(pin)) return json({ error: "PIN must contain exactly six digits" }, 400);
+    if (position !== "Manager" && !/^[0-9]{6}$/.test(pin)) return json({ error: "PIN must contain exactly six digits" }, 400);
+    if (position === "Manager" && managerEmail && (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(managerEmail) || managerEmail.length > 254)) return json({ error: "Enter a valid Manager email address" }, 400);
+    if (position === "Manager" && managerEmail && !managerRedirectTo) return json({ error: "Manager invitation redirect is missing. Refresh Admin and try again." }, 400);
     const rolePermissionKeys: Record<string, string[]> = {
       "Cashier": ["orders", "void", "tables", "stocks", "settings"],
       "Kitchen Staff": ["orders"],
@@ -125,23 +129,63 @@ Deno.serve(async (req: Request) => {
     }
     const ownerAdmin = (actorLinks || []).some((link: any) => ["owner", "admin"].includes(String(link.role).toLowerCase()));
     if (!ownerAdmin) {
-      return json({ error: "Manager staff creation is paused until the secure post-approval PIN setup is available. Ask the Owner/Admin to create the account." }, 409);
+      return json({ error: "Active Owner/Admin access is required to create staff accounts." }, 403);
     }
 
-    const internalEmail = `staff-${crypto.randomUUID()}@staff.halina.invalid`;
-    const randomBytes = crypto.getRandomValues(new Uint8Array(24));
-    const randomPassword = Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-    const { data: created, error: createError } = await admin.auth.admin.createUser({
-      email: internalEmail, password: randomPassword, email_confirm: true,
-      user_metadata: { account_type: "edmel_staff" },
-    });
-    if (createError || !created.user) {
-      console.error("create-staff: Auth account creation failed");
-      return json({ error: "Unable to create staff account" }, 500);
+    let created: any;
+    if (position === "Manager" && managerEmail) {
+      let redirectUrl: URL;
+      try {
+        const originHeader = req.headers.get("origin") || "";
+        redirectUrl = new URL(managerRedirectTo);
+        const originUrl = new URL(originHeader);
+        const localDevelopment = originUrl.hostname === "localhost" || originUrl.hostname === "127.0.0.1";
+        if ((!localDevelopment && originUrl.protocol !== "https:") ||
+            redirectUrl.origin !== originUrl.origin ||
+            !redirectUrl.pathname.endsWith("/manager.html") ||
+            redirectUrl.username || redirectUrl.password || redirectUrl.search || redirectUrl.hash) {
+          throw new Error("Invalid invitation redirect");
+        }
+      } catch (_error) {
+        return json({ error: "The Manager invitation URL is invalid. Open Admin from the HTTPS application and try again." }, 400);
+      }
+
+      const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(managerEmail, {
+        redirectTo: redirectUrl.toString(),
+        data: { account_type: "edmel_staff", staff_position: "Manager" },
+      });
+      if (inviteError || !invited?.user) {
+        if (inviteError?.code === "email_exists" || inviteError?.status === 422) {
+          return json({ error: "This email address is already registered in EDMEL Auth. Use an unused email address for this new Manager account." }, 409);
+        }
+        console.error("create-staff: Manager invitation failed", inviteError?.status || "unknown");
+        return json({ error: "Unable to send the Manager invitation. Check Supabase Auth email delivery and the allowed redirect URL." }, 502);
+      }
+      created = invited;
+    } else {
+      const internalEmail = `staff-${crypto.randomUUID()}@staff.halina.invalid`;
+      const randomBytes = crypto.getRandomValues(new Uint8Array(24));
+      const randomPassword = Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+      const { data: staffCreated, error: createError } = await admin.auth.admin.createUser({
+        email: internalEmail, password: randomPassword, email_confirm: true,
+        user_metadata: { account_type: "edmel_staff" },
+      });
+      if (createError || !staffCreated.user) {
+        console.error("create-staff: Auth account creation failed");
+        return json({ error: "Unable to create staff account" }, 500);
+      }
+      created = staffCreated;
     }
     createdAuthUserId = created.user.id;
 
-    const managerRpcArgs = {
+    const managerPasswordRpcArgs = {
+      p_actor_user_id: actor.id, p_staff_user_id: created.user.id,
+      p_restaurant_id: restaurantId, p_full_name: fullName,
+      p_display_name: displayName || null, p_username: username,
+      p_manager_email: managerEmail, p_assignments: managerAssignments,
+      p_can_change_pin: false, p_can_change_password: true,
+    };
+    const managerPinRpcArgs = {
       p_actor_user_id: actor.id, p_staff_user_id: created.user.id,
       p_restaurant_id: restaurantId, p_full_name: fullName,
       p_display_name: displayName || null, p_username: username,
@@ -155,7 +199,9 @@ Deno.serve(async (req: Request) => {
       p_permissions: suppliedPermissions, p_pin: pin,
     };
     const { data: staffLinkId, error: profileError } = position === "Manager"
-      ? await admin.rpc("edmel_create_staff_profile_with_branch_permissions", managerRpcArgs)
+      ? (managerEmail
+        ? await admin.rpc("edmel_create_password_manager_profile_with_branch_permissions", managerPasswordRpcArgs)
+        : await admin.rpc("edmel_create_staff_profile_with_branch_permissions", managerPinRpcArgs))
       : await admin.rpc("edmel_create_staff_profile_with_branches", staffRpcArgs);
 
     if (profileError || !staffLinkId) {
@@ -173,7 +219,9 @@ Deno.serve(async (req: Request) => {
     createdAuthUserId = null;
     return json({
       success: true, staff_id: staffLinkId, username, branch_id: branchIds[0], branch_ids: branchIds, audit_logged: auditLogged,
-      message: "Staff account created. Set up login through the staff login screen.",
+      message: position === "Manager" && managerEmail
+        ? "Manager account created. An invitation email has been sent."
+        : "Staff account created. Set up login through the staff login screen.",
     }, 201);
   } catch (_error) {
     if (createdAuthUserId) {
