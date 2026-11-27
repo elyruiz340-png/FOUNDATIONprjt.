@@ -1086,8 +1086,9 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   );
   if(!managerMemberships.length)throw new Error("This account does not have Manager access.");
 
+  const requestedRestaurantId=new URLSearchParams(window.location.search).get("restaurant_id");
   const preferredRestaurant=sessionStorage.getItem("edmel_manager_restaurant");
-  const selectedRestaurant=managerMemberships.find(row=>row.restaurant_id===preferredRestaurant)||managerMemberships[0];
+  const selectedRestaurant=managerMemberships.find(row=>row.restaurant_id===requestedRestaurantId)||managerMemberships.find(row=>row.restaurant_id===preferredRestaurant)||managerMemberships[0];
   RESTAURANT_ID=selectedRestaurant.restaurant_id;
   RESTAURANT_SLUG=selectedRestaurant.restaurant_slug||"";
   const restaurantSelector=$("restaurantWorkspaceSelector");
