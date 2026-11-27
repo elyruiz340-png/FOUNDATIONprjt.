@@ -215,7 +215,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
    <div class="field"><label for="pin">6-Digit PIN</label><input id="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="current-password" required></div>
   </div>
   <div id="passwordLoginFields" hidden>
-   <div class="field"><label for="managerEmailLogin">Email</label><input id="managerEmailLogin" type="email" maxlength="254" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+   <div class="field"><label for="managerEmailLogin">Username or Email</label><input id="managerEmailLogin" type="text" maxlength="254" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
    <div class="field"><label for="managerPasswordLogin">Password</label><input id="managerPasswordLogin" type="password" autocomplete="current-password"></div>
   </div>
   <button class="primary" id="loginButton" type="submit" style="width:100%">Sign In</button>
@@ -1699,10 +1699,13 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   button.disabled=true;button.textContent="Verifying...";$("loginMessage").textContent="";
   try{
    if(loginMode==="password"){
-    const email=$("managerEmailLogin").value.trim().toLowerCase(),password=$("managerPasswordLogin").value;
-    if(!email||!password)throw new Error("Enter your Manager email and password.");
-    const {data,error}=await sb.auth.signInWithPassword({email,password});
-    if(error||!data?.session)throw new Error(error?.message||"Invalid email or password.");
+    const identifier=$("managerEmailLogin").value.trim(),password=$("managerPasswordLogin").value;
+    if(!identifier||!password)throw new Error("Enter your Manager username or email and password.");
+    const {data,error}=await sb.functions.invoke("manager-password-login",{body:{identifier,password}});
+    if(error||!data?.access_token||!data?.refresh_token)throw new Error(data?.error||error?.message||"Invalid username/email or password.");
+    const {data:sessionData,error:sessionError}=await sb.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
+    if(sessionError||!sessionData?.session)throw new Error("Unable to establish your Manager session. Please try again.");
+    $("managerEmailLogin").value="";
     $("managerPasswordLogin").value="";
     await bootstrap();
    }else{
