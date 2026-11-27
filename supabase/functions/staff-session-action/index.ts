@@ -185,21 +185,24 @@ Deno.serve(async (req: Request) => {
               }, 409);
             }
           } else {
-            const isCashierSession =
-              String(selectedLink.position || "").trim().toLowerCase() === "cashier" ||
-              String(selectedLink.role || "").trim().toLowerCase() === "cashier" ||
-              (String(selectedLink.role || "").trim().toLowerCase() === "staff" &&
-                String(selectedLink.position || "").trim() === "");
-            const locked = isCashierSession && isInactive;
+            if (isManagerSession) {
+              return json({
+                error: "This Manager account already has an active session. Return to its assigned screen.",
+                active_session: true,
+                locked: false,
+              }, 409);
+            }
+
+            // Preserve the existing non-Manager session response and timeout behavior.
+            const isLocked = !Number.isFinite(lastActivityAt) ||
+              Date.now() - lastActivityAt >= INACTIVITY_TIMEOUT_MS;
             return json({
-              error: locked
+              error: isLocked
                 ? "This cashier screen is locked. Return to the existing session and enter the current cashier PIN to unlock it."
-                : isManagerSession
-                  ? "This Manager account already has an active session. Return to its assigned screen."
-                  : "This staff account already has an active session. Return to its assigned screen.",
+                : "This cashier account already has an active session. Return to its assigned screen.",
               active_session: true,
-              locked,
-            }, locked ? 423 : 409);
+              locked: isLocked,
+            }, isLocked ? 423 : 409);
           }
         }
 
