@@ -101,6 +101,16 @@ input,select{background:var(--s);border:1px solid var(--bd);border-radius:10px;p
 .branch-request-field strong{display:block;font-size:13px;font-weight:650;overflow-wrap:anywhere;white-space:pre-line}
 .branch-request-panel-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px;margin-top:22px;padding-top:16px;border-top:1px solid var(--bd)}
 .branch-request-panel-actions .btn{min-width:140px}
+.branch-review-confirm-panel{width:min(560px,calc(100vw - 32px));max-height:min(86vh,760px)}
+.branch-review-confirm-panel .branch-review-message{font-size:14px;line-height:1.55;color:var(--mu);margin:10px 0 16px}
+.branch-review-confirm-panel .branch-review-summary{padding:13px 15px;border:1px solid var(--bd);border-radius:13px;background:var(--s);margin:12px 0 16px}
+.branch-review-confirm-panel .branch-review-summary b{display:block;font-size:14px;margin-bottom:4px}
+.branch-review-confirm-panel .branch-review-reason{width:100%;min-height:112px;resize:vertical;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font:inherit}
+.branch-review-confirm-panel .branch-review-reason:focus{outline:2px solid var(--ac);outline-offset:2px}
+.branch-review-confirm-panel .branch-review-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:18px;padding-top:15px;border-top:1px solid var(--bd)}
+.branch-review-confirm-panel .branch-review-actions .btn{min-width:125px}
+@media(max-width:480px){.branch-review-confirm-panel .branch-review-actions{justify-content:stretch}.branch-review-confirm-panel .branch-review-actions .btn{flex:1;min-width:0}}
+
 @media(max-width:760px){.md.branch-request-panel{width:calc(100vw - 20px);max-height:92vh;padding:17px;border-radius:17px}.branch-request-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.branch-request-panel-head h2{font-size:19px}}
 @media(max-width:460px){.branch-request-fields{grid-template-columns:1fr}.branch-request-panel-actions{justify-content:stretch}.branch-request-panel-actions .btn{flex:1;min-width:0}}
 
@@ -2855,6 +2865,26 @@ async function loadAdminBranchGovernance(){
     ADMIN_BRANCH_GOVERNANCE_LOADING=false;
   }
 }
+function openBranchRequestReviewConfirmation(requestId,decision){
+  const request=ADMIN_BRANCH_REQUESTS.find(row=>row.id===requestId);
+  if(!request||request.status!=='pending'||!['approved','rejected'].includes(decision)){toast('This branch request is no longer pending.',1);return;}
+  const branchName=request.request_data?.name||'this branch';
+  const approving=decision==='approved';
+  const title=approving?'Approve Branch Request?':'Decline Branch Request?';
+  const message=approving
+    ?'The request will be approved for setup. The branch will remain unavailable until setup is complete and you activate it.'
+    :'The request will be declined. The Manager will need to submit a new request if they want to try again.';
+  L.innerHTML='<div class="bk branch-request-backdrop" data-a="close"></div><section class="md branch-request-panel branch-review-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="branchReviewTitle">'+
+    '<div class="branch-request-panel-head"><div><span class="bd '+(approving?'ok':'wn')+'">'+(approving?'Approval confirmation':'Decline confirmation')+'</span><h2 id="branchReviewTitle" style="margin-top:10px">'+title+'</h2><p>Review your decision before submitting it.</p></div><button class="ib" data-a="close" aria-label="Close confirmation">'+I('x')+'</button></div>'+
+    '<p class="branch-review-message">'+esc(message)+'</p>'+
+    '<div class="branch-review-summary"><b>'+esc(branchName)+'</b><span class="mu">'+esc(request.request_data?.code||'Branch code not provided')+' · Pending review</span></div>'+
+    '<label for="branchReviewReason" style="display:block;font-size:12px;font-weight:650;margin:0 0 7px"> '+(approving?'Approval':'Decline')+' reason <span class="mu">(required)</span></label>'+
+    '<textarea id="branchReviewReason" class="branch-review-reason" maxlength="500" minlength="3" placeholder="Enter the reason for your decision (3–500 characters)." aria-describedby="branchReviewReasonHint"></textarea>'+
+    '<div id="branchReviewReasonHint" class="mu" style="font-size:11px;margin-top:6px">Required · 3 to 500 characters</div>'+
+    '<div class="branch-review-actions"><button class="btn" data-a="close">Cancel</button><button class="btn '+(approving?'pri':'')+'" data-a="branch-request-review-confirm" data-id="'+esc(request.id)+'" data-decision="'+decision+'">'+(approving?'Confirm Approval':'Confirm Decline')+'</button></div>'+
+    '</section>';
+  L.querySelector('#branchReviewReason')?.focus();
+}
 function openAdminBranchRequest(requestId){
   const request=ADMIN_BRANCH_REQUESTS.find(row=>row.id===requestId);
   if(!request){toast('Branch request could not be found. Refresh the request list.',1);return;}
@@ -3183,25 +3213,32 @@ const A={
     ADMIN_BRANCH_POLICY=data;await loadAdminBranchGovernance();const governancePanel=$('#branchGovernanceWorkspace');if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Requests</h4><p>Review Manager branch creation requests and creation policy.</p></div></div>'+renderAdminBranchGovernance();toast('Manager branch creation policy saved.');
   }catch(error){toast(error?.message||'Unable to save the branch creation policy.',1);t.disabled=false;t.textContent='Save Policy';}
 },
-'branch-request-review':async t=>{
+'branch-request-review':t=>{
+  openBranchRequestReviewConfirmation(t.dataset.id||'',t.dataset.decision||'');
+},
+'branch-request-review-confirm':async t=>{
   const request=ADMIN_BRANCH_REQUESTS.find(row=>row.id===t.dataset.id);
   const decision=t.dataset.decision;
-  if(!request||request.status!=='pending'||!['approved','rejected'].includes(decision))return;
-  const branchName=request.request_data?.name||'this branch';
-  if(decision==='approved'&&!confirm('Approve '+branchName+' for setup? It will remain unavailable until setup is complete and you activate it.'))return;
-  const reason=prompt(decision==='approved'?'Enter the approval reason (at least 3 characters):':'Enter the rejection reason (at least 3 characters):','');
-  if(reason===null)return;
-  if(reason.trim().length<3||reason.trim().length>500){toast('Enter a review reason between 3 and 500 characters.',1);return;}
-  t.disabled=true;t.textContent=decision==='approved'?'Approving…':'Rejecting…';
+  const reason=$('#branchReviewReason')?.value.trim()||'';
+  if(!request||request.status!=='pending'||!['approved','rejected'].includes(decision)){toast('This branch request is no longer pending.',1);closeL();return;}
+  if(reason.length<3||reason.length>500){toast('Enter a reason between 3 and 500 characters.',1);$('#branchReviewReason')?.focus();return;}
+  const buttons=$$('.branch-review-actions button',L);buttons.forEach(button=>button.disabled=true);
+  t.textContent=decision==='approved'?'Approving…':'Declining…';
   try{
-    const {data,error}=await sb.rpc('edmel_review_branch_creation_request',{p_request_id:request.id,p_decision:decision,p_reason:reason.trim()});
+    const {data,error}=await sb.rpc('edmel_review_branch_creation_request',{p_request_id:request.id,p_decision:decision,p_reason:reason});
     if(error)throw error;
     if(data?.success!==true||data.status!==decision)throw new Error('The branch request review was not confirmed.');
-    await loadAdminBranchGovernance();const governancePanel=$('#branchGovernanceWorkspace');if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Governance</h4><p>Manager creation permissions and approval requests</p></div></div>'+renderAdminBranchGovernance();
+    await loadAdminBranchGovernance();
+    const governancePanel=$('#branchGovernanceWorkspace');
+    if(governancePanel)governancePanel.innerHTML='<div class="branch-section-heading"><span class="branch-section-index">05</span><div><h4>Branch Requests</h4><p>Review Manager branch creation requests and creation policy.</p></div></div>'+renderAdminBranchGovernance();
     if(decision==='approved'){ADMIN_BRANCH_LOADED=false;await loadAdminBranches();}
     closeL();dotU();
-    toast(decision==='approved'?'Branch request approved. Complete setup, then activate the branch.':'Branch request rejected.');
-  }catch(error){toast(error?.message||'Unable to review this branch request.',1);t.disabled=false;t.textContent=decision==='approved'?'Approve for Setup':'Reject';}
+    toast(decision==='approved'?'Branch request approved. Complete setup, then activate the branch.':'Branch request declined.');
+  }catch(error){
+    toast(error?.message||'Unable to review this branch request.',1);
+    buttons.forEach(button=>button.disabled=false);
+    t.textContent=decision==='approved'?'Confirm Approval':'Confirm Decline';
+  }
 },
 addbr:()=>{if(CURRENT_AUTH_ROLE!=='owner'){toast('Only the restaurant Owner can create branches.',1);return;}openBranchCreateModal()},
 'branch-create-next':()=>{
