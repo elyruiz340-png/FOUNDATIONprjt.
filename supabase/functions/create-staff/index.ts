@@ -58,7 +58,7 @@ Deno.serve(async (req: Request) => {
     if (!["Cashier", "Manager", "Kitchen Staff", "Dispatcher"].includes(position)) return json({ error: "Invalid staff position" }, 400);
     if (username.length < 3 || username.length > 40 || !/^[A-Za-z0-9._-]+$/.test(username)) return json({ error: "Invalid username format" }, 400);
     if (position !== "Manager" && !/^[0-9]{6}$/.test(pin)) return json({ error: "PIN must contain exactly six digits" }, 400);
-    if (position === "Manager" && managerEmail && (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(managerEmail) || managerEmail.length > 254)) return json({ error: "Enter a valid Manager email address" }, 400);
+    if (position === "Manager" && managerEmail && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(managerEmail) || managerEmail.length > 254)) return json({ error: "Enter a valid Manager email address" }, 400);
     if (position === "Manager" && managerEmail && !managerRedirectTo) return json({ error: "Manager invitation redirect is missing. Refresh Admin and try again." }, 400);
     const rolePermissionKeys: Record<string, string[]> = {
       "Cashier": ["orders", "void", "tables", "stocks", "settings"],
