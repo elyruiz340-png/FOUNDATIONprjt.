@@ -5231,7 +5231,7 @@ async function staffAddForm(){
   const singleOptions=activeBranches.map(branch=>'<option value="'+esc(branch.id)+'"'+(branch.id===preferredBranch?' selected':'')+'>'+esc(branch.name)+' · '+esc(branch.code||'')+'</option>').join('');
   const multiOptions=activeBranches.map(branch=>'<label class="row" style="justify-content:flex-start;gap:10px;padding:7px 0"><input type="checkbox" data-staff-branch="'+esc(branch.id)+'" '+(branch.id===preferredBranch?'checked':'')+'><span><strong>'+esc(branch.name)+'</strong><span class="mu" style="display:block;font-size:12px">'+esc(branch.code||'Branch')+'</span></span></label>').join('');
   L.innerHTML=`<div class="bk" data-a="close"></div><div class="md staff-add-panel" role="dialog" aria-modal="true" aria-labelledby="staffFormTitle">
-    <h3 id="staffFormTitle">Add Staff Member</h3><p class="note">Create a staff account with an initial six-digit PIN. No personal email is required.</p>
+    <h3 id="staffFormTitle">Add Staff Member</h3><p class="note">Create a staff account. Managers receive a secure email invitation; other staff use a six-digit PIN.</p>
     <form id="staffAddForm" autocomplete="off">
       <div class="fl"><label for="staffFullName">Full Name *</label><input id="staffFullName" required maxlength="100" placeholder="Enter full name"></div>
       <div class="fl"><label for="staffDisplayName">Display Name</label><input id="staffDisplayName" maxlength="60" placeholder="Optional display name"></div>
@@ -5240,17 +5240,24 @@ async function staffAddForm(){
       <div class="fl"><label for="staffRole">Account Role</label><input id="staffRole" value="Staff" disabled></div>
       <div class="fl" id="staffSingleBranchWrap"><label for="staffBranchSelect">Assigned Branch *</label><select id="staffBranchSelect" required>${singleOptions}</select></div>
       <div class="fl" id="staffMultiBranchWrap" hidden><label>Assigned Branches *</label><div style="border:1px solid var(--bd);border-radius:12px;padding:10px;max-height:180px;overflow:auto">${multiOptions}</div><p class="note">Managers can be assigned to multiple active branches. The same initial permission set will apply to each selected branch.</p></div>
-      <div class="fl"><label for="staffPin">Initial Staff PIN *</label><input id="staffPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter six-digit PIN"></div>
-      <div class="fl"><label for="staffPinConfirm">Confirm Staff PIN *</label><input id="staffPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter six-digit PIN"></div>
+      <div class="fl" id="staffManagerEmailWrap" hidden><label for="staffManagerEmail">Manager Email *</label><input id="staffManagerEmail" type="email" maxlength="254" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="manager@example.com"><p class="note">An invitation will be sent to this address to verify the email and create a password.</p></div>
+      <div id="staffPinFields">
+        <div class="fl"><label for="staffPin">Initial Staff PIN *</label><input id="staffPin" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Enter six-digit PIN"></div>
+        <div class="fl"><label for="staffPinConfirm">Confirm Staff PIN *</label><input id="staffPinConfirm" type="password" inputmode="numeric" required minlength="6" maxlength="6" pattern="[0-9]{6}" autocomplete="new-password" placeholder="Re-enter six-digit PIN"></div>
+      </div>
       <div class="fl" id="staffRolePermissionWrap"><label>Position Permissions</label><div id="staffRolePermissionOptions" class="g" style="gap:8px"></div></div>
       <div class="fl" id="managerPermissionDraftWrap" hidden><label>Manager Access</label><button id="staffManagerPermissionsButton" class="btn" type="button">Manage Permissions</button><p id="staffManagerPermissionStatus" class="note">Configure module and branch permissions before creating this Manager.</p></div>
-      <p class="mu">PIN values are sent only to the secure account-creation endpoint and are never logged or stored as plain text.</p>
+      <p class="mu" id="staffCredentialNote">PIN values are sent only to the secure account-creation endpoint and are never logged or stored as plain text.</p>
       <p id="staffFormMsg" class="note" role="status" aria-live="polite"></p>
       <div class="tb"><button id="staffCreateBtn" class="btn pri" type="submit">Create Staff Account</button><button class="btn" type="button" data-a="close">Cancel</button></div>
     </form>
   </div>`;
   const form=L.querySelector('#staffAddForm'),submitBtn=L.querySelector('#staffCreateBtn'),message=L.querySelector('#staffFormMsg');
   const positionInput=L.querySelector('#staffPosition');
+  const managerEmailInput=L.querySelector('#staffManagerEmail');
+  const pinFields=L.querySelector('#staffPinFields');
+  const pinInput=L.querySelector('#staffPin');
+  const pinConfirmInput=L.querySelector('#staffPinConfirm');
   let managerAssignments=null;
   const rolePermissionConfig={
     'Cashier':[{key:'orders',label:'Orders',checked:true},{key:'void',label:'Void Orders',checked:false},{key:'tables',label:'Tables',checked:true},{key:'stocks',label:'Stocks',checked:true},{key:'settings',label:'Settings',checked:false}],
@@ -5266,6 +5273,14 @@ async function staffAddForm(){
     const isManager=positionInput.value==='Manager';
     L.querySelector('#staffRolePermissionWrap').hidden=isManager;
     L.querySelector('#managerPermissionDraftWrap').hidden=!isManager;
+    L.querySelector('#staffManagerEmailWrap').hidden=!isManager;
+    pinFields.hidden=isManager;
+    managerEmailInput.required=isManager;
+    pinInput.required=!isManager;
+    pinConfirmInput.required=!isManager;
+    L.querySelector('#staffCredentialNote').textContent=isManager
+      ? 'The Manager must verify this email address and create a password before signing in.'
+      : 'PIN values are sent only to the secure account-creation endpoint and are never logged or stored as plain text.';
     if(isManager){
       L.querySelector('#staffRolePermissionOptions').innerHTML='';
       return;
@@ -5309,9 +5324,15 @@ async function staffAddForm(){
     const displayName=L.querySelector('#staffDisplayName').value.trim();
     const position=positionInput.value;
     const username=L.querySelector('#staffUsername').value.trim();
-    const pin=L.querySelector('#staffPin').value;
-    const confirmPin=L.querySelector('#staffPinConfirm').value;
-    if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
+    const isManager=position==='Manager';
+    const managerEmail=managerEmailInput.value.trim().toLowerCase();
+    const pin=pinInput.value;
+    const confirmPin=pinConfirmInput.value;
+    if(isManager){
+      if(!managerEmail||managerEmail.length>254||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(managerEmail)){
+        message.textContent='Enter a valid Manager email address.';managerEmailInput.focus();return;
+      }
+    }else if(pin!==confirmPin){message.textContent='The PIN entries do not match.';return;}
     const branchIds=position==='Manager'
       ? [...L.querySelectorAll('[data-staff-branch]:checked')].map(input=>input.dataset.staffBranch)
       : [L.querySelector('#staffBranchSelect').value];
@@ -5324,15 +5345,15 @@ async function staffAddForm(){
     }
     submitBtn.disabled=true;message.textContent='Creating staff account securely…';
     try{
-      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:CURRENT_RESTAURANT_ID,branch_ids:branchIds,full_name:fullName,display_name:displayName,position,username,permissions,manager_assignments:position==='Manager'?managerAssignments:undefined,pin}});
+      const {data,error}=await sb.functions.invoke('create-staff',{body:{restaurant_id:CURRENT_RESTAURANT_ID,branch_ids:branchIds,full_name:fullName,display_name:displayName,position,username,permissions,manager_assignments:isManager?managerAssignments:undefined,manager_email:isManager?managerEmail:undefined,manager_redirect_to:isManager?new URL('manager.html',window.location.href).toString():undefined,pin:isManager?undefined:pin}});
       if(error){let errorMessage=error.message||'Unable to create staff account.';if(error.context&&typeof error.context.json==='function'){try{const detail=await error.context.json();if(detail&&detail.error)errorMessage=detail.error;}catch(_){}}throw new Error(errorMessage);}
       if(!data||data.success!==true)throw new Error(data?.error||'Staff account creation was not confirmed.');
-      L.querySelector('#staffPin').value='';L.querySelector('#staffPinConfirm').value='';
-      message.textContent='Staff account created. Refreshing staff list…';
+      pinInput.value='';pinConfirmInput.value='';managerEmailInput.value='';
+      message.textContent=isManager?'Manager account created. Invitation email sent; refreshing staff list…':'Staff account created. Refreshing staff list…';
       try{await writeAdminAudit('Staff & Permissions','Created staff account','staff_account',data.staff_id||null,{full_name:fullName,display_name:displayName,position,username,branch_ids:branchIds,permissions});}catch(ae){toast('Staff account created, but audit logging failed: '+(ae.message||String(ae)),1);}
       try{await loadStaffData();ADMIN_BRANCH_LOADED=false;await loadAdminBranches();closeL();render();toast('Staff account created and branch access assigned');}
       catch(refreshError){staffLoadError=refreshError.message||String(refreshError);closeL();render();toast('Staff created, but the list could not refresh');}
-    }catch(error){L.querySelector('#staffPin').value='';L.querySelector('#staffPinConfirm').value='';message.textContent=error.message||'Unable to create staff account. Please try again.';submitBtn.disabled=false;}
+    }catch(error){pinInput.value='';pinConfirmInput.value='';message.textContent=error.message||'Unable to create staff account. Please try again.';submitBtn.disabled=false;}
   };
 }
 
