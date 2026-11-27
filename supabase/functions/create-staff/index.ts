@@ -154,10 +154,12 @@ Deno.serve(async (req: Request) => {
         redirectUrl = new URL(managerRedirectTo);
         const originUrl = new URL(originHeader);
         const localDevelopment = originUrl.hostname === "localhost" || originUrl.hostname === "127.0.0.1";
+        const redirectParams = [...redirectUrl.searchParams.entries()];
         if ((!localDevelopment && originUrl.protocol !== "https:") ||
             redirectUrl.origin !== originUrl.origin ||
             !redirectUrl.pathname.endsWith("/manager.html") ||
-            redirectUrl.username || redirectUrl.password || redirectUrl.search || redirectUrl.hash) {
+            redirectUrl.username || redirectUrl.password || redirectParams.length !== 1 ||
+            redirectParams[0][0] !== "restaurant_id" || redirectParams[0][1] !== restaurantId || redirectUrl.hash) {
           throw new Error("Invalid invitation redirect");
         }
       } catch (_error) {
