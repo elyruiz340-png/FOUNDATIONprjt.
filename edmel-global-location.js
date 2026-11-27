@@ -141,8 +141,9 @@
           const result = await invoke({ action: 'search', country_code: code, query });
           if (activeCode !== code || city.value.trim() !== query) return;
           const candidates = (result.places || []).filter(p => p && p.name && p.type === 'settlement');
-          const inSelectedRegion = activeRegionId == null ? candidates : candidates.filter(p => Number(p.admin1_id ?? p.region_id ?? p.admin1) === Number(activeRegionId));
-          const places = (inSelectedRegion.length ? inSelectedRegion : candidates).slice(0, 100);
+          const hasRegionMetadata = candidates.some(p => p.admin1_id != null || p.region_id != null || p.admin1 != null);
+          const inSelectedRegion = activeRegionId == null || !hasRegionMetadata ? candidates : candidates.filter(p => Number(p.admin1_id ?? p.region_id ?? p.admin1) === Number(activeRegionId));
+          const places = inSelectedRegion.slice(0, 100);
           fill(cityList, places, p => p.name, p => p.population ? Number(p.population).toLocaleString() + ' population' : '');
           const exact = places.find(p => key(p.name) === key(query));
           if (exact?.timezone_id && timezone && !timezone.value) timezone.value = exact.timezone_id;
