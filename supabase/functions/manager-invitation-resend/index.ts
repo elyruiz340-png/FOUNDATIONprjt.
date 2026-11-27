@@ -21,7 +21,7 @@ Deno.serve(async (req: Request) => {
   if (!url || !serviceRoleKey) return json({ error: "Server configuration error" }, 500);
 
   const authHeader = req.headers.get("Authorization") || "";
-  const tokenMatch = authHeader.match(/^Bearer\\s+(.+)$/i);
+  const tokenMatch = authHeader.match(/^Bearer\s+(.+)$/i);
   if (!tokenMatch) return json({ error: "Authentication required" }, 401);
 
   const admin = createClient(url, serviceRoleKey, {
