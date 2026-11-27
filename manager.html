@@ -420,7 +420,19 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
       <div class="field"><label for="managerBranchName">Branch Name *</label><input id="managerBranchName" maxlength="80" required placeholder="e.g. Downtown Branch"></div>
       <div class="field"><label for="managerBranchCode">Branch Code *</label><input id="managerBranchCode" maxlength="20" required placeholder="e.g. DOWNTOWN"></div>
       <div class="field"><label for="managerBranchTimezone">IANA Timezone *</label><input id="managerBranchTimezone" maxlength="80" required placeholder="e.g. Asia/Manila"></div>
-      <div class="field"><label for="managerBranchAddress">Branch Address</label><input id="managerBranchAddress" maxlength="240" placeholder="Optional branch address"></div>
+      <div class="field"><label for="managerBranchAddress">Complete Address</label><input id="managerBranchAddress" maxlength="240" placeholder="Street, building, unit, etc."></div>
+      <div class="field"><label for="managerBranchCountry">Country (ISO Code)</label><input id="managerBranchCountry" maxlength="2" placeholder="e.g. PH"></div>
+      <div class="field"><label for="managerBranchState">State / Province / Region</label><input id="managerBranchState" maxlength="120"></div>
+      <div class="field"><label for="managerBranchCity">City / Municipality</label><input id="managerBranchCity" maxlength="120"></div>
+      <div class="field"><label for="managerBranchDistrict">District / Area</label><input id="managerBranchDistrict" maxlength="120"></div>
+      <div class="field"><label for="managerBranchPostal">Postal Code</label><input id="managerBranchPostal" maxlength="24"></div>
+      <div class="field"><label for="managerBranchContact">Contact Number</label><input id="managerBranchContact" maxlength="40"></div>
+      <div class="field"><label for="managerBranchEmail">Email</label><input id="managerBranchEmail" type="email" maxlength="254"></div>
+      <div class="field"><label for="managerBranchWebsite">Website</label><input id="managerBranchWebsite" type="url" maxlength="500" placeholder="https://"></div>
+      <div class="field"><label for="managerBranchLocale">Locale / Language</label><input id="managerBranchLocale" maxlength="35" placeholder="e.g. en-PH"></div>
+      <div class="field"><label for="managerBranchDateFormat">Date Format</label><input id="managerBranchDateFormat" maxlength="40" placeholder="e.g. DD/MM/YYYY"></div>
+      <div class="field"><label for="managerBranchTimeFormat">Time Format</label><select id="managerBranchTimeFormat"><option value="">Default</option><option value="12h">12-hour</option><option value="24h">24-hour</option></select></div>
+      <div class="field"><label for="managerBranchNumberFormat">Number Format</label><input id="managerBranchNumberFormat" maxlength="40" placeholder="e.g. 1,234.56"></div>
      </div>
      <div class="field"><label>Branch Operating Hours *</label><div class="manager-branch-hours" id="managerBranchHoursEditor"></div></div>
      <div class="field"><label>Business & Operations Settings Modes</label><div class="manager-branch-mode-grid" id="managerBranchModesEditor"></div></div>
@@ -947,7 +959,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const ids=visibleAccess.map(row=>row.branch_id);
   if(!ids.length)throw new Error("No active branch assignments were found for this Manager account. Contact the Owner or Admin.");
   const {data:rows,error:branchError}=await sb.from("restaurant_branches")
-   .select("id,name,code,is_default,is_active").eq("restaurant_id",RESTAURANT_ID).in("id",ids).eq("is_active",true);
+   .select("id,name,code,is_default,is_active,country_code,state_province,city,district,postal_code,timezone,locale").eq("restaurant_id",RESTAURANT_ID).in("id",ids).eq("is_active",true);
   if(branchError)throw branchError;
   branches=rows||[];
   if(!branches.length)throw new Error("No active assigned branches are available for this Manager account.");
@@ -987,13 +999,15 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const code=$("managerBranchCode").value.trim().toUpperCase();
   const timezone=$("managerBranchTimezone").value.trim();
   const address=$("managerBranchAddress").value.trim()||null;
+  const countryCode=$("managerBranchCountry").value.trim().toUpperCase();
+  if(countryCode&&!/^[A-Z]{2}$/.test(countryCode))throw new Error("Country must be a two-letter ISO code, such as PH.");
   if(!name||name.length>80)throw new Error("Branch name must contain 1 to 80 characters.");
   if(!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code))throw new Error("Branch code must contain 2 to 20 letters, numbers, hyphens or underscores.");
   if(!timezone||timezone.length>80)throw new Error("Enter a valid IANA timezone, such as Asia/Manila.");
   try{new Intl.DateTimeFormat("en-US",{timeZone:timezone});}catch(_){throw new Error("Enter a valid IANA timezone, such as Asia/Manila.");}
   const settingsModes={};
   for(const key of ["business_profile","tax","service_charge","discounts_vouchers","payment_methods","receipt_settings"])settingsModes[key]=$("managerBranchMode_"+key).value;
-  const payload={name,code,address,timezone,operating_hours:managerReadBranchOperatingHours(),settings_modes:settingsModes,menu_catalog_mode:$("managerBranchMenuMode").value};
+  const payload={name,code,address,timezone,operating_hours:managerReadBranchOperatingHours(),settings_modes:settingsModes,menu_catalog_mode:$("managerBranchMenuMode").value,country_code:countryCode||null,state_province:$("managerBranchState").value.trim()||null,city:$("managerBranchCity").value.trim()||null,district:$("managerBranchDistrict").value.trim()||null,postal_code:$("managerBranchPostal").value.trim()||null,contact_number:$("managerBranchContact").value.trim()||null,email:$("managerBranchEmail").value.trim()||null,website:$("managerBranchWebsite").value.trim()||null,locale:$("managerBranchLocale").value.trim()||null,date_format:$("managerBranchDateFormat").value.trim()||null,time_format:$("managerBranchTimeFormat").value||null,number_format:$("managerBranchNumberFormat").value.trim()||null};
   const mode=managerBranchPolicy?.manager_creation_mode||"not_allowed";
   if(mode!=="approval_required"||!managerCanCreateBranch())throw new Error("Branch requests must be enabled by the Owner/Admin before you can submit.");
   button.disabled=true;button.textContent="Submitting…";
@@ -1164,7 +1178,7 @@ html[data-motion=reduced] *,html[data-motion=reduced] *::before,html[data-motion
   const branchIds=visibleBranchAccess.map(row=>row.branch_id);
   if(!branchIds.length)throw new Error("No active branch assignments were found for this Manager account. Contact the Owner or Admin.");
   const {data:branchRows,error:branchError}=await sb.from("restaurant_branches")
-    .select("id,name,code,is_default,is_active").eq("restaurant_id",RESTAURANT_ID)
+    .select("id,name,code,is_default,is_active,country_code,state_province,city,district,postal_code,timezone,locale").eq("restaurant_id",RESTAURANT_ID)
     .in("id",branchIds).eq("is_active",true);
   if(branchError)throw branchError;
   branches=(branchRows||[]);
