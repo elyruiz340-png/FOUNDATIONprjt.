@@ -2591,6 +2591,7 @@ async function markAllAdminSecurityNotificationsRead(){
 async function bell(){
   if(CURRENT_AUTH_ROLE==='owner'&&CURRENT_RESTAURANT_ID&&!ADMIN_BRANCH_GOVERNANCE_LOADING)await loadAdminBranchGovernance();
   await loadAdminSecurityNotifications();
+  dotU();
   const pendingRequests=ADMIN_BRANCH_REQUESTS.filter(request=>request.status==='pending');
   const requestItems=pendingRequests.map(request=>'<div class="row" tabindex="0" role="button" style="cursor:pointer;align-items:flex-start" data-a="branch-request-open" data-id="'+esc(request.id)+'"><span><b>New Branch Request</b><br>'+esc(request.request_data?.name||'Unnamed branch')+' · '+esc(request.request_data?.code||'')+'<br><span class="mu">'+esc(request.created_at?new Date(request.created_at).toLocaleString():'Recently submitted')+'</span></span><span class="bd wn">Pending</span></div>').join('');
   const securityItems=ADMIN_SECURITY_NOTIFICATIONS.map(n=>'<div class="row" tabindex="0" data-a="security-notification-read" data-id="'+esc(n.id)+'" style="align-items:flex-start;cursor:pointer"><span>'+(n.is_read?'':'<b>● </b>')+'<b>'+esc(n.title)+'</b><br><span class="mu">'+esc(n.message)+' · '+esc(n.created_at?new Date(n.created_at).toLocaleString():'Recently')+'</span></span><span class="bd '+(n.is_read?'':'wn')+'">'+(n.is_read?'Read':'New')+'</span></div>').join('');
