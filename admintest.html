@@ -2563,19 +2563,48 @@ drawer(o.id,`<p>${bdg(o.s)} · ${o.t} · ${o.branchName||'Unassigned'}</p>${o.it
 function search(){L.innerHTML=`<div class="bk" data-a="close"></div><div class="pn s" role="dialog" aria-modal="true" aria-label="Search"><input id="q" style="width:100%" placeholder="Search orders, menu, staff, branches, inventory…" aria-label="Search"><div id="res" style="margin-top:10px"></div></div>`;const r=$('#res'),go=()=>{const q=$('#q').value.trim().toLowerCase();if(!q){r.innerHTML='<p class="mu">Type to search demo data. Press Esc to close.</p>';return}
 const hits=[...ORD.filter(o=>o.id.toLowerCase().includes(q)).map(o=>['Order',o.id,'order',o.id]),...MENU.filter(m=>m.n.toLowerCase().includes(q)).map(m=>['Menu',m.n,'go','menu']),...STAFF.filter(s=>s.n.toLowerCase().includes(q)).map(s=>['Staff',s.n,'go','staff'])].slice(0,8);
 r.innerHTML=hits.length?hits.map(h=>`<div class="row" style="cursor:pointer" tabindex="0" data-a="${h[2]=='order'?'order':'go'}" data-i="${h[3]}" data-p="${h[3]}"><span>${h[1]}</span><span class="mu">${h[0]}</span></div>`).join(''):empty('No results. Try an order ID, menu item or staff name.')};$('#q').oninput=go;go();$('#q').focus()}
+async function loadAdminSecurityNotifications(){
+  ADMIN_SECURITY_NOTIFICATIONS_ERROR='';
+  if(!CURRENT_RESTAURANT_ID||!CURRENT_AUTH_USER_ID){ADMIN_SECURITY_NOTIFICATIONS=[];return;}
+  const {data,error}=await sb.from('manager_security_notifications')
+    .select('id,event_type,title,message,is_read,created_at')
+    .eq('restaurant_id',CURRENT_RESTAURANT_ID)
+    .eq('recipient_user_id',CURRENT_AUTH_USER_ID)
+    .order('created_at',{ascending:false}).limit(30);
+  if(error){ADMIN_SECURITY_NOTIFICATIONS_ERROR=error.message||'Unable to load security notifications.';ADMIN_SECURITY_NOTIFICATIONS=[];return;}
+  ADMIN_SECURITY_NOTIFICATIONS=data||[];
+}
+async function markAdminSecurityNotificationRead(id){
+  const {error}=await sb.from('manager_security_notifications')
+    .update({is_read:true,read_at:new Date().toISOString()})
+    .eq('id',id).eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_user_id',CURRENT_AUTH_USER_ID);
+  if(error){toast('Unable to update security notification: '+error.message,1);return;}
+  await loadAdminSecurityNotifications();bell();dotU();
+}
+async function markAllAdminSecurityNotificationsRead(){
+  const {error}=await sb.from('manager_security_notifications')
+    .update({is_read:true,read_at:new Date().toISOString()})
+    .eq('restaurant_id',CURRENT_RESTAURANT_ID).eq('recipient_user_id',CURRENT_AUTH_USER_ID).eq('is_read',false);
+  if(error){toast('Unable to mark security notifications as read: '+error.message,1);return;}
+  await loadAdminSecurityNotifications();bell();dotU();
+}
 async function bell(){
   if(CURRENT_AUTH_ROLE==='owner'&&CURRENT_RESTAURANT_ID&&!ADMIN_BRANCH_GOVERNANCE_LOADING)await loadAdminBranchGovernance();
+  await loadAdminSecurityNotifications();
   const pendingRequests=ADMIN_BRANCH_REQUESTS.filter(request=>request.status==='pending');
   const requestItems=pendingRequests.map(request=>'<div class="row" tabindex="0" role="button" style="cursor:pointer;align-items:flex-start" data-a="branch-request-open" data-id="'+esc(request.id)+'"><span><b>New Branch Request</b><br>'+esc(request.request_data?.name||'Unnamed branch')+' · '+esc(request.request_data?.code||'')+'<br><span class="mu">'+esc(request.created_at?new Date(request.created_at).toLocaleString():'Recently submitted')+'</span></span><span class="bd wn">Pending</span></div>').join('');
+  const securityItems=ADMIN_SECURITY_NOTIFICATIONS.map(n=>'<div class="row" tabindex="0" data-a="security-notification-read" data-id="'+esc(n.id)+'" style="align-items:flex-start;cursor:pointer"><span>'+(n.is_read?'':'<b>● </b>')+'<b>'+esc(n.title)+'</b><br><span class="mu">'+esc(n.message)+' · '+esc(n.created_at?new Date(n.created_at).toLocaleString():'Recently')+'</span></span><span class="bd '+(n.is_read?'':'wn')+'">'+(n.is_read?'Read':'New')+'</span></div>').join('');
   const sampleItems=NT.slice(0,4).map((n,i)=>'<div class="row" tabindex="0" data-a="nt" data-i="'+i+'"><span>'+(n.r?'':'● ')+esc(n.ty)+'<br><span class="mu">'+esc(n.m)+'</span></span></div>').join('');
   L.innerHTML='<div class="bk" data-a="close" style="background:none"></div><div class="pn" role="dialog" aria-label="Notifications"><div class="row"><b>Notifications</b><span class="sp"></span><button class="btn" data-a="branch-notifications-refresh">Refresh</button></div>'+
     (ADMIN_BRANCH_GOVERNANCE_ERROR?'<div class="msg er">'+esc(ADMIN_BRANCH_GOVERNANCE_ERROR)+'</div>':'')+
+    (ADMIN_SECURITY_NOTIFICATIONS_ERROR?'<div class="msg er">Security notifications: '+esc(ADMIN_SECURITY_NOTIFICATIONS_ERROR)+'</div>':'')+
     (pendingRequests.length?'<div class="note" style="margin:8px 0">Branch requests awaiting your review</div>'+requestItems:'')+
+    (ADMIN_SECURITY_NOTIFICATIONS.length?'<div class="note" style="margin:12px 0 6px">Manager Security</div>'+securityItems:'')+
     (sampleItems?'<div class="note" style="margin:12px 0 6px">Other notifications</div>'+sampleItems:'')+
-    (!pendingRequests.length&&!sampleItems?empty('You’re all caught up.'):'')+
-    '<div class="row" style="margin-top:8px"><button class="btn" data-a="readall">Mark all read</button><button class="btn" data-a="clrn">Clear sample notifications</button></div></div>';
+    (!pendingRequests.length&&!ADMIN_SECURITY_NOTIFICATIONS.length&&!sampleItems?empty('You’re all caught up.'):'')+
+    '<div class="row" style="margin-top:8px"><button class="btn" data-a="security-notifications-readall">Mark security alerts read</button><button class="btn" data-a="readall">Mark sample notifications read</button><button class="btn" data-a="clrn">Clear sample notifications</button></div></div>';
 }
-const dotU=()=>{$('#dot').style.display=(NT.some(n=>!n.r)||(CURRENT_AUTH_ROLE==='owner'&&ADMIN_BRANCH_REQUESTS.some(request=>request.status==='pending')))?'block':'none'};
+const dotU=()=>{$('#dot').style.display=(NT.some(n=>!n.r)||ADMIN_SECURITY_NOTIFICATIONS.some(n=>!n.is_read)||(CURRENT_AUTH_ROLE==='owner'&&ADMIN_BRANCH_REQUESTS.some(request=>request.status==='pending')))?'block':'none'};
 
 /* 9. NAVIGATION + INTERACTIONS */
 let navIndicatorFrame=0;
@@ -3186,7 +3215,7 @@ async function openBranchEditModal(branch){
 
 const A={
 'branch-request-open':t=>openAdminBranchRequest(t.dataset.id||''),
-'branch-notifications-refresh':async()=>{await loadAdminBranchGovernance();bell();dotU();},
+'branch-notifications-refresh':async()=>{await loadAdminBranchGovernance();await loadAdminSecurityNotifications();bell();dotU();},
 'branch-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';ADMIN_GLOBAL_BRANCH_FILTER=ADMIN_BRANCH_SELECTED_ID||'all';render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
 'branch-filter-select':t=>{ADMIN_BRANCH_SELECTED_ID=t.dataset.id||'';render();loadAdminBranchReadiness(ADMIN_BRANCH_SELECTED_ID);},
 'branch-refresh':()=>{ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_ERROR='';loadAdminBranches()},
@@ -3409,6 +3438,8 @@ brd:t=>{const i=+t.dataset.i,f=fin('tm',[i]);drawer(BS[i],`<div class="big">${M(
 hl:t=>{const h=HEALTH[t.dataset.i];drawer(h[0],`<p><span class="bd ${h[1]}">● ${h[2]}</span></p><p>${h[3]}</p>`)},
 test:()=>{toast('Simulated test passed for 4 of 5 services');setTimeout(()=>toast('AI service is offline in this demo. No AI API is connected.',1),500)},
 pr:t=>{S.per=t.dataset.v;render({transition:true})},ntab:t=>{S.nt=t.dataset.v;render()},
+'security-notification-read':t=>markAdminSecurityNotificationRead(t.dataset.id),
+'security-notifications-readall':()=>markAllAdminSecurityNotificationsRead(),
 readall:()=>{NT.forEach(n=>n.r=1);bell();dotU()},clrn:()=>{NT.length=0;bell();dotU()},
 nt:t=>{NT[t.dataset.i].r=1;bell();dotU()},
 allnt:()=>drawer('All notifications',NT.map(n=>`<div class="row"><span>${n.r?'':'● '}${n.ty}<br><span class="mu">${n.m}</span></span></div>`).join('')||empty('You’re all caught up.')),
@@ -4391,6 +4422,8 @@ Object.assign(PG,{menu:menuPage});
 const originalStart=start;
 let CURRENT_AUTH_USER_ID='';
 let CURRENT_AUTH_ROLE='';
+let ADMIN_SECURITY_NOTIFICATIONS=[];
+let ADMIN_SECURITY_NOTIFICATIONS_ERROR='';
 async function chooseAdminRestaurant(memberships){
   if(memberships.length===1)return memberships[0];
   return await new Promise(resolve=>{
