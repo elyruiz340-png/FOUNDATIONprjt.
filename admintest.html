@@ -3442,19 +3442,19 @@ order:t=>orderDrawer(t.dataset.i),
 cust:()=>modal('Customize Overview',WID.map(w=>[w[1],'checkbox',!S.w[w[0]]]),()=>true,'Done'),
 profile:()=>drawer('My Account',`<div class="account-drawer-content">
  <section class="account-identity-card">
-  <div class="account-identity-main"><div class="account-avatar">${I('user',25)}</div><div class="account-identity-copy"><b>Owner Account</b><span>${esc(S.user||'')}</span><small>Restaurant Owner</small></div></div>
+  <div class="account-identity-main"><div class="account-avatar">${I('users',25)}</div><div class="account-identity-copy"><b>Owner Account</b><span>${esc(S.user||'')}</span><small>Restaurant Owner</small></div></div>
   <div class="account-status-row"><span>Account status</span><strong><i></i> Active</strong></div>
  </section>
  <section class="account-menu-section"><h4>ACCOUNT MANAGEMENT</h4>
-  <button class="account-menu-item" data-a="account-profile"><span class="account-menu-icon">${I('user',20)}</span><span class="account-menu-copy"><b>Account Profile</b><small>Personal and account information</small></span><span class="account-menu-arrow">›</span></button>
-  <button class="account-menu-item" data-a="account-settings"><span class="account-menu-icon">${I('settings',20)}</span><span class="account-menu-copy"><b>System Settings</b><small>Preferences and configurations</small></span><span class="account-menu-arrow">›</span></button>
+  <button class="account-menu-item" data-a="account-profile"><span class="account-menu-icon">${I('users',20)}</span><span class="account-menu-copy"><b>Account Profile</b><small>Personal and account information</small></span><span class="account-menu-arrow">›</span></button>
+  <button class="account-menu-item" data-a="account-settings"><span class="account-menu-icon">${I('cog',20)}</span><span class="account-menu-copy"><b>System Settings</b><small>Preferences and configurations</small></span><span class="account-menu-arrow">›</span></button>
  </section>
  <section class="account-menu-section"><h4>SUPPORT &amp; INFORMATION</h4>
-  <button class="account-menu-item" data-a="account-coming-soon" data-page="help"><span class="account-menu-icon">${I('help',20)}</span><span class="account-menu-copy"><b>Help Center</b><small>Guides and assistance</small></span><span class="account-menu-tag">Coming Soon</span></button>
-  <button class="account-menu-item" data-a="account-coming-soon" data-page="terms"><span class="account-menu-icon">${I('file',20)}</span><span class="account-menu-copy"><b>Terms &amp; Conditions</b><small>Platform terms</small></span><span class="account-menu-arrow">›</span></button>
+  <button class="account-menu-item" data-a="account-coming-soon" data-page="help"><span class="account-menu-icon">${I('activity',20)}</span><span class="account-menu-copy"><b>Help Center</b><small>Guides and assistance</small></span><span class="account-menu-tag">Coming Soon</span></button>
+  <button class="account-menu-item" data-a="account-coming-soon" data-page="terms"><span class="account-menu-icon">${I('log',20)}</span><span class="account-menu-copy"><b>Terms &amp; Conditions</b><small>Platform terms</small></span><span class="account-menu-arrow">›</span></button>
   <button class="account-menu-item" data-a="account-coming-soon" data-page="privacy"><span class="account-menu-icon">${I('shield',20)}</span><span class="account-menu-copy"><b>Privacy Policy</b><small>Data and privacy information</small></span><span class="account-menu-arrow">›</span></button>
  </section>
- <div class="account-menu-bottom"><button class="account-signout" data-a="signout"><span>${I('logout',19)}</span><span class="account-signout-copy"><b>Sign Out</b><small>Sign out of your account securely</small></span><span class="account-menu-arrow">›</span></button><p>EDMEL Restaurant Management System</p></div>
+ <div class="account-menu-bottom"><button class="account-signout" data-a="signout"><span>${I('log',19)}</span><span class="account-signout-copy"><b>Sign Out</b><small>Sign out of your account securely</small></span><span class="account-menu-arrow">›</span></button><p>EDMEL Restaurant Management System</p></div>
 </div>`),
 signout:async()=>{await sb.auth.signOut();ORD.length=0;CURRENT_RESTAURANT_ID=null;CURRENT_RESTAURANT_SLUG='';CURRENT_AUTH_ROLE='';CURRENT_AUTH_USER_ID='';ADMIN_SECURITY_NOTIFICATIONS=[];ADMIN_SECURITY_NOTIFICATIONS_ERROR='';ADMIN_BRANCH_ROWS=[];ADMIN_BRANCH_ASSIGNMENTS=[];ADMIN_BRANCH_STAFF=[];ADMIN_BRANCH_LOADED=false;ADMIN_BRANCH_LOADING=false;ADMIN_BRANCH_ERROR='';ADMIN_BRANCH_SELECTED_ID='';ADMIN_GLOBAL_BRANCH_FILTER='all';closeL();showLogin()},
 refresh:()=>load(true),
